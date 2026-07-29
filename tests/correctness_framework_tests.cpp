@@ -91,12 +91,11 @@ void test_dtype_host_and_runtime(cudaStream_t stream) {
               "dtype NaN roundtrip policy is incorrect for " + rc::to_string(type));
     }
     if (traits.supports_infinity) {
-      const double infinity_conversion = rc::decode_scalar(
-          type, rc::encode_scalar(type, std::numeric_limits<double>::infinity()));
-      require(traits.saturates_finite
-                  ? std::isfinite(infinity_conversion) &&
-                        std::abs(infinity_conversion) <= traits.max_finite
-                  : std::isinf(infinity_conversion),
+      const double infinity_conversion =
+          rc::decode_scalar(type, rc::encode_scalar(type, std::numeric_limits<double>::infinity()));
+      require(traits.saturates_finite ? std::isfinite(infinity_conversion) &&
+                                            std::abs(infinity_conversion) <= traits.max_finite
+                                      : std::isinf(infinity_conversion),
               "dtype infinity conversion policy is incorrect for " + rc::to_string(type));
     }
     const auto quantized = rc::quantize_master_data(master, type);

@@ -1,0 +1,12 @@
+/build*/
+/out/
+/CMakeFiles/
+/CMakeCache.txt
+/.cache/
+__pycache__/
+*.py[cod]
+*.ncu-rep
+*.nsys-rep
+/reports/runs/
+/reports/profiles/
+/reports/sanitizer/

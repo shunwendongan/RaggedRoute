@@ -1,0 +1,12 @@
+{
+  "schema_version": "raggedroute.profile_suite.v1",
+  "suite_id": "rtx3080_representative_v1",
+  "note": "Nsight diagnostics only; profiler durations are never release scores.",
+  "cases": [
+    {"id": "dense.square", "operator": "dense_gemm", "level": "l1", "params": {"M": 256, "N": 256, "K": 256}},
+    {"id": "topk.short_rows", "operator": "topk_gate", "level": "l1", "params": {"T": 2048, "E": 64}},
+    {"id": "histogram.skew", "operator": "histogram", "level": "l1", "params": {"T": 2048, "E": 64, "top_k": 2, "distribution": "zipf", "zipf_s": 1.4}},
+    {"id": "permute.skew", "operator": "token_permute", "level": "l1", "params": {"T": 512, "E": 64, "top_k": 2, "K": 256, "distribution": "zipf", "zipf_s": 1.4, "materialize_sorted_route": true}},
+    {"id": "grouped.skew", "operator": "grouped_gemm", "level": "l1", "params": {"T": 512, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}}
+  ]
+}

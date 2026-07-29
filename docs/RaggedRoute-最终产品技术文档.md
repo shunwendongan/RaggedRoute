@@ -5,7 +5,8 @@
 > 主开发平台：NVIDIA RTX 3080（Ampere，SM 8.6）  
 > 可选迁移平台：NVIDIA H100（Hopper，SM 9.0 / SM90a）；实测前仅为 roadmap  
 > Blackwell：仅保留接口与调研预案；未在实卡验证前不宣称支持或性能  
-> 文档版本：v2.0，2026-07-29
+> 文档版本：v2.1，2026-07-29
+> Benchmark 可执行契约：[benchmark-architecture.md](benchmark-architecture.md)
 
 ## 0. 先给结论
 
@@ -158,7 +159,7 @@ size_t get_histogram_workspace_size(const HistogramArgs& args);
 RaggedRoute/
 ├── CMakeLists.txt
 ├── cmake/
-├── include/minimoe/
+├── include/raggedroute/
 │   ├── common.cuh
 │   ├── dispatch.h
 │   └── operators.h
@@ -338,8 +339,9 @@ Kernel Body 是本算子库的主要性能指标，也是展示 CUDA 优化能�
 | 层级 | 测量对象 | 包含 | 典型用途 |
 |---|---|---|---|
 | L1 Kernel Body | 一个具体 CUDA kernel | kernel 本体；输入、输出、workspace 和必要前置状态已准备 | 每个算子的主要优化数字与版本消融 |
-| L2 Operator Steady-State | 一个公开算子调用 | 每次调用必需的清零、cursor reset、动态 metadata 及内部多个 kernel；workspace 已预分配 | 验证没有通过隐藏准备成本制造虚高结果 |
-| L3 Operator-chain Steady-State | 七算子微流水线 | Router 可选路径、Top-K、统计/scan、permute、一次 Expert Linear、unpermute | 验证组合价值；不称为完整 MoE FFN |
+| L2 Device Operator Steady-State | 一个 device-side 公开算子调用 | 每次调用必需的清零、cursor reset、device dynamic metadata 及内部多个 kernel；workspace 已预分配 | 验证没有通过隐藏准备成本制造虚高结果；输入相关 host prepare 进入 L4 |
+| L3 `chain_from_tokens` | 完整七算子微流水线 | Dense Router Projection、Top-K、统计/scan、permute、一次 Expert Linear、unpermute | 固定从 token 开始的完整 7 算子口径 |
+| L3 `chain_from_logits` | 预计算 logits 后的六算子微流水线 | Top-K、统计/scan、permute、一次 Expert Linear、unpermute | 单独 suite/基线；不得冒充七算子链 |
 | L4 Host End-to-End | C++/PyTorch 扩展真实调用 | host dispatch、kernel launch 和最终同步 | 可选工程指标，不作为单 kernel 优化主结果 |
 
 简历优先选择一个主算子的 L1 结果和一个 L3 结果；README 保存四层完整数据。
@@ -366,8 +368,9 @@ Kernel Body 是本算子库的主要性能指标，也是展示 CUDA 优化能�
 - 所有输入、输出、handle、descriptor 和 workspace 在 warmup 前分配并初始化。
 - warmup 与 measured loop 分离；次数、随机种子和采样策略写入 config。
 - CUDA Event 记录在被测 kernel 所用的同一 stream；计时前清空该 stream 的前序工作，停止 event 后再同步。
-- 超短 kernel 在一个 event pair 中连续普通 launch $N$ 次，使用 `elapsed/N`，不引入其他执行模式。
-- 至少进行 3 次独立进程运行；主报告使用 median、p95、MAD/IQR 或 CV，min 只作补充。
+- 超短 kernel 可在一个 event pair 中连续普通 launch $N$ 次，使用 `elapsed/N`，不引入其他执行模式。该值必须命名为 `batch_mean_us`；它的 p95 是“批次均值的 p95”，不是单次调用尾延迟。单调用 p95 必须使用 `N=1` 的独立采样协议。
+- adapter 必须声明 repeat policy。Histogram L1 可以在不溢出时累加；Token Permute L1 会推进 cursor，当前实现强制 `N=1`，L2 则把每轮 cursor reset 计入时间。
+- 至少进行 3 次独立进程运行；保存全部 raw batch means，主报告使用 process median 的 median，并补充 p95、MAD/IQR 或 CV，min 只作补充。
 - 正式 benchmark 循环内不进行日志、随机数生成、分配、H2D/D2H 或无关 kernel。
 - 测试结束抽样校验输出，避免某个优化版本改变数学语义。
 
@@ -404,7 +407,7 @@ H100 的结果必须相对 H100 上重新测得的基线，不拿 RTX 3080 的�
 ### 4.6 结果聚合
 
 - 展示完整 per-shape latency/speedup heatmap；
-- 分别报告 unweighted geometric mean 和真实 trace 权重下的 weighted geometric mean；
+- 跨 shape 的归一化比较可报告 unweighted geometric mean；真实 trace 同时报告加权总耗时，并以 `sum(weight*baseline_latency) / sum(weight*candidate_latency)` 计算总体 speedup。不得把 weighted geometric mean 称为真实部署耗时收益；
 - 报告 `speedup>1` 的 shape coverage 与最大 regression；
 - Dense/Grouped GEMM 报告 latency、useful TFLOP/s 和相对强基线效率；
 - memory-bound 算子报告 logical effective GB/s，同时用 profiler 解释 physical L2/DRAM traffic；
@@ -435,6 +438,17 @@ H100 的结果必须相对 H100 上重新测得的基线，不拿 RTX 3080 的�
 6. correctness 稳定后分别运行 benchmark 与 profiler。
 
 CUDA-GDB 适合定位错误，不是主要性能工具；Nsight Compute 用于单 kernel 因果分析，Nsight Systems 仅用于可选的 L3/L4 timeline 与 host launch gap。
+
+### 4.9 可执行发布门禁
+
+测试、正式性能评测和 profiler 必须是独立 target：
+
+1. `correctness_tests`：reference、边界和 chain 对拍，不创建 CUDA Event，不产出性能结论；
+2. `benchmark_smoke`：只检查所有 adapter、层级和 schema 可运行，dirty worktree 与少量 sample 均允许，数字不可进入报告；
+3. `benchmark_release`：Release build、clean Git、验证开启、warmup≥10、samples≥20、至少三次独立进程，原始 JSONL 和 manifest 不覆盖旧 run；
+4. `profile`：只采集代表 shape 的 `.ncu-rep`/timeline。Nsight 的 replay、cache/clock control 和序列化会改变 duration，其时间不得作为正式 latency。
+
+公共 runner 的可执行生命周期和七个 adapter 的个性化 reset/reference/metrics 见 [Benchmark 架构与发布协议](benchmark-architecture.md)。CPU/PyTorch oracle 与 performance baseline 必须是两个字段：oracle 只判断正确性，cuBLAS/CUTLASS/CUB 或语义一致的 production implementation 才能成为 speedup 分母。
 
 ---
 
@@ -1237,20 +1251,24 @@ GPT 最适合承担机械工作和假设生成，开发者负责语义、证据�
 ### 16.1 每条 benchmark 记录至少包含
 
 ```text
-run_id, timestamp, git_sha, gpu_name, gpu_uuid, compute_capability,
-driver, cuda, compiler, operator, kernel, version, measurement_level,
-excluded_steps, workspace_bytes, dtype, T, E, k, M, N, K,
-distribution, zipf_s, cache_mode, warmup, kernel_repeats, samples,
-process_run, seed,
-latency_us_p50, latency_us_p90, latency_us_min, cv,
+schema_version, run_id, timestamp_utc, build_git_sha, runtime_git_sha,
+build_git_dirty, runtime_git_dirty, build_type, compiler_flags,
+gpu_name, gpu_uuid, pci_bus_id, compute_capability, driver, cuda_runtime,
+cuda_toolkit, compiler, operator, variant, measurement_level, protocol,
+excluded_steps, workspace_bytes, cache_mode, warmup, kernel_repeats,
+samples, process_run, seed,
+batch_mean_us_p50, batch_mean_us_p90, batch_mean_us_p95,
+batch_mean_us_min, batch_mean_us_mean, batch_mean_us_stddev, cv,
+raw_batch_mean_samples_us,
 logical_bytes, effective_gbps, flops, tflops,
-baseline_name, baseline_version, baseline_math_mode, baseline_latency_us_p50, speedup,
-registers_per_thread, smem_per_block, achieved_occupancy,
-l1_hit_rate, l2_hit_rate, dram_bytes, dram_pct,
-sm_pct, long_scoreboard_pct, notes
+baseline_name, baseline_version, baseline_math_mode,
+baseline_batch_mean_us_p50, speedup,
+case_config{}, variant_config{}, operator_metrics{}, profiler_metrics{}
 ```
 
-`measurement_level` 固定为 `L1_kernel_body`、`L2_operator_steady`、`L3_chain_steady` 或 `L4_host_call`；`excluded_steps` 即使为空也保留，L1 必须列出 reset/metadata 等排除项。`kernel_repeats` 是一个 event pair 内的普通 launch 次数，`samples` 是进程内采样数，`process_run` 区分至少三次独立进程运行。`workspace_bytes` 报告预分配量；`baseline_math_mode` 记录 TF32、accumulator、fast-math/精度策略等公平性条件。
+`measurement_level` 固定为 `L1_kernel_body`、`L2_operator_steady`、`L3_chain_steady` 或 `L4_host_call`；`excluded_steps` 即使为空也保留，L1 必须列出 reset/metadata 等排除项。`kernel_repeats` 是一个 event pair 内的普通 launch 次数，一个 raw sample 是 `event_elapsed/kernel_repeats`，因此统一命名 `batch_mean_us`。`samples` 是进程内采样数，`process_run` 区分至少三次独立进程运行。`workspace_bytes` 报告预分配量；`baseline_math_mode` 记录 TF32、accumulator、fast-math/精度策略等公平性条件。
+
+`case_config` 保存 shape、stride/layout/alignment、dtype/accumulator/output、Top-K normalization/tie/NaN、trace hash、mapping 与可选输出；`variant_config` 保存 tile/stage/vector/scheduler；`operator_metrics` 保存 rows、atomic、barrier/shuffle、active experts、metadata loads 等个性化指标。关键条件不得塞进自由文本 `notes`。
 
 不可用的 profiler 字段留空并记录原因，不要填 0。每个 speedup 都存 baseline 原始 latency，不只存比值。
 
@@ -1292,7 +1310,8 @@ L2 成本审计表：
 
 | 测量层级 | 测量对象 | 包含范围 | RTX 3080 latency | 对应基线 latency | speedup | H100 latency |
 |---|---|---|---:|---:|---:|---:|
-| L3 Operator-chain | 七算子微流水线 | 每次必要 reset、动态 metadata 与全部 kernel；workspace 预分配 | `[待实测]` | `[待实测]` | `[待实测]` | `[未测试]` |
+| L3 `chain_from_tokens` | 从 tokens 开始的完整七算子微流水线 | 每次必要 reset、动态 metadata 与全部 kernel；workspace 预分配 | `[待实测]` | `[待实测]` | `[待实测]` | `[未测试]` |
+| L3 `chain_from_logits` | 从预计算 logits 开始的六算子微流水线 | 每次必要 reset、动态 metadata 与全部 kernel；workspace 预分配 | `[待实测]` | `[待实测]` | `[待实测]` | `[未测试]` |
 | L4 Host call（可选） | C++/PyTorch 扩展真实调用 | host dispatch、launch 与最终同步 | `[待实测]` | `[待实测]` | `[待实测]` | `[未测试]` |
 
 ---

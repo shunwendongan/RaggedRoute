@@ -1,0 +1,121 @@
+{
+  "version": 4,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 24,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "installDir": "${sourceDir}/out/install/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "BUILD_TESTING": "ON",
+        "RAGGEDROUTE_ENABLE_INSTALL": "ON"
+      }
+    },
+    {
+      "name": "cpu-debug",
+      "displayName": "CPU-only Debug",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "RAGGEDROUTE_ENABLE_CUDA": "OFF"
+      }
+    },
+    {
+      "name": "cpu-release",
+      "displayName": "CPU-only Release",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "RAGGEDROUTE_ENABLE_CUDA": "OFF"
+      }
+    },
+    {
+      "name": "cuda-base",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "RAGGEDROUTE_ENABLE_CUDA": "ON",
+        "RAGGEDROUTE_BUILD_BENCHMARKS": "ON"
+      }
+    },
+    {
+      "name": "rtx3080-sm86-debug",
+      "displayName": "RTX 3080 (SM86) Debug",
+      "inherits": "cuda-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CUDA_ARCHITECTURES": "86-real"
+      }
+    },
+    {
+      "name": "rtx3080-sm86-release",
+      "displayName": "RTX 3080 (SM86) Release",
+      "inherits": "cuda-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CUDA_ARCHITECTURES": "86-real"
+      }
+    },
+    {
+      "name": "h100-sm90-debug",
+      "displayName": "H100 portable path (SM90) Debug",
+      "inherits": "cuda-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CUDA_ARCHITECTURES": "90-real"
+      }
+    },
+    {
+      "name": "h100-sm90-release",
+      "displayName": "H100 portable path (SM90) Release",
+      "inherits": "cuda-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CUDA_ARCHITECTURES": "90-real"
+      }
+    },
+    {
+      "name": "h100-sm90a-debug",
+      "displayName": "H100 accelerated path (SM90a) Debug",
+      "inherits": "cuda-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CUDA_ARCHITECTURES": "90a-real",
+        "RAGGEDROUTE_ENABLE_SM90A_EXPERIMENTS": "ON"
+      }
+    },
+    {
+      "name": "h100-sm90a-release",
+      "displayName": "H100 accelerated path (SM90a) Release",
+      "inherits": "cuda-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CUDA_ARCHITECTURES": "90a-real",
+        "RAGGEDROUTE_ENABLE_SM90A_EXPERIMENTS": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "build-cpu-debug", "configurePreset": "cpu-debug" },
+    { "name": "build-cpu-release", "configurePreset": "cpu-release" },
+    { "name": "build-rtx3080-sm86-debug", "configurePreset": "rtx3080-sm86-debug" },
+    { "name": "build-rtx3080-sm86-release", "configurePreset": "rtx3080-sm86-release" },
+    { "name": "build-h100-sm90-debug", "configurePreset": "h100-sm90-debug" },
+    { "name": "build-h100-sm90-release", "configurePreset": "h100-sm90-release" },
+    { "name": "build-h100-sm90a-debug", "configurePreset": "h100-sm90a-debug" },
+    { "name": "build-h100-sm90a-release", "configurePreset": "h100-sm90a-release" }
+  ],
+  "testPresets": [
+    { "name": "test-cpu-debug", "configurePreset": "cpu-debug", "output": { "outputOnFailure": true } },
+    { "name": "test-cpu-release", "configurePreset": "cpu-release", "output": { "outputOnFailure": true } },
+    { "name": "test-rtx3080-sm86-debug", "configurePreset": "rtx3080-sm86-debug", "output": { "outputOnFailure": true } },
+    { "name": "test-rtx3080-sm86-release", "configurePreset": "rtx3080-sm86-release", "output": { "outputOnFailure": true } }
+  ]
+}

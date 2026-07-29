@@ -143,6 +143,17 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     raggedroute_apply_target_settings(raggedroute_correctness_tests)
     add_test(NAME raggedroute_correctness COMMAND raggedroute_correctness_tests)
     set_tests_properties(raggedroute_correctness PROPERTIES SKIP_RETURN_CODE 77)
+
+    add_executable(raggedroute_correctness_framework_tests
+      tests/correctness_framework_tests.cpp)
+    target_link_libraries(raggedroute_correctness_framework_tests PRIVATE
+      raggedroute_baseline_ops
+      raggedroute_correctness_framework)
+    raggedroute_apply_target_settings(raggedroute_correctness_framework_tests)
+    add_test(NAME raggedroute_correctness_framework
+      COMMAND raggedroute_correctness_framework_tests)
+    set_tests_properties(raggedroute_correctness_framework
+      PROPERTIES SKIP_RETURN_CODE 77)
   endif()
 
   if(RAGGEDROUTE_BUILD_BENCHMARKS)

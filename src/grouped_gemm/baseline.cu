@@ -43,8 +43,8 @@ cudaError_t launch_grouped_gemm_naive(const float* x_permuted, const float* expe
   }
   const dim3 block(16, 16, 1);
   constexpr unsigned int kMaxGridY = 65535;
-  const auto grid_x = static_cast<unsigned int>(
-      (static_cast<std::size_t>(output) + block.x - 1) / block.x);
+  const auto grid_x =
+      static_cast<unsigned int>((static_cast<std::size_t>(output) + block.x - 1) / block.x);
   const auto required_grid_y = static_cast<unsigned int>(
       (static_cast<std::size_t>(max_expert_tokens) + block.y - 1) / block.y);
   const dim3 grid(grid_x, required_grid_y < kMaxGridY ? required_grid_y : kMaxGridY, experts);

@@ -96,7 +96,7 @@ flowchart TD
 
 ### Correctness
 
-- `raggedroute_correctness_tests` 直接调用 adapter，不创建 CUDA Event，不输出性能结论；
+- `raggedroute_correctness_tests` 直接调用七个 adapter 与两条 chain；`raggedroute_correctness_framework_tests` 独立覆盖 dtype/replay/redzone/zero-size/randomized/caller-stream 合同；两者都不创建 CUDA Event、不输出性能结论；
 - 覆盖 non-aligned shape、tie、NaN、Inf、Zipf、single-hot、可选 mapping 和两条 L3 chain；
 - `tests/test_scripts.py` 检查 suite schema、release gate 与状态型 repeat policy；
 - sanitizer 是 correctness gate，不是 benchmark。

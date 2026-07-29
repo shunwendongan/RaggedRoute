@@ -27,12 +27,12 @@ Correctness, release performance, and profiling are separate flows:
 
 | Flow | Purpose | Produces performance claims? |
 |---|---|---|
-| `raggedroute_correctness_tests` / CTest | Reference and edge-case validation | No |
+| Two correctness executables / CTest | Adapter/reference plus dtype, replay, redzone, edge, randomized, and stream-contract validation | No |
 | `benchmark_smoke.json` | Fast executable/schema smoke | No |
 | `benchmark_rtx3080_release.json` | Clean-Git, Release, 3-process raw measurement | Baseline latency only |
 | `profile_benchmarks.py` | Nsight Compute diagnosis | No; profiler duration is not a score |
 
-See [Benchmark architecture](docs/benchmark-architecture.md), [implementation status](docs/implementation-status.md), and the [full technical design](docs/RaggedRoute-最终产品技术文档.md).
+See [Benchmark architecture](docs/benchmark-architecture.md), [implementation status](docs/implementation-status.md), the [RTX 3080 naive baseline report](docs/reports/rtx3080-naive-baseline-e37c132.md), and the [full technical design](docs/RaggedRoute-最终产品技术文档.md).
 
 ## Build profiles
 

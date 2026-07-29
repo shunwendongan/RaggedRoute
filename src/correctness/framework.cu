@@ -1,4 +1,9 @@
-#include "raggedroute/correctness/framework.h"
+#include <cuda_bf16.h>
+#include <cuda_fp16.h>
+#include <cuda_fp4.h>
+#include <cuda_fp6.h>
+#include <cuda_fp8.h>
+#include <cuda_runtime.h>
 
 #include <cmath>
 #include <cstring>
@@ -6,12 +11,7 @@
 #include <stdexcept>
 #include <utility>
 
-#include <cuda_bf16.h>
-#include <cuda_fp16.h>
-#include <cuda_fp4.h>
-#include <cuda_fp6.h>
-#include <cuda_fp8.h>
-#include <cuda_runtime.h>
+#include "raggedroute/correctness/framework.h"
 
 namespace raggedroute::correctness {
 namespace {
@@ -29,9 +29,15 @@ __global__ void dtype_roundtrip_kernel(ScalarType type, const float* input, floa
   for (std::size_t index = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
        index < elements; index += stride) {
     switch (type) {
-      case ScalarType::kFp32: output[index] = input[index]; break;
-      case ScalarType::kFp16: output[index] = roundtrip_value<__half>(input[index]); break;
-      case ScalarType::kBf16: output[index] = roundtrip_value<__nv_bfloat16>(input[index]); break;
+      case ScalarType::kFp32:
+        output[index] = input[index];
+        break;
+      case ScalarType::kFp16:
+        output[index] = roundtrip_value<__half>(input[index]);
+        break;
+      case ScalarType::kBf16:
+        output[index] = roundtrip_value<__nv_bfloat16>(input[index]);
+        break;
       case ScalarType::kFp8E4M3:
         output[index] = roundtrip_value<__nv_fp8_e4m3>(input[index]);
         break;
@@ -67,44 +73,64 @@ void CheckReport::skip(std::string reason) {
 
 std::string to_string(ScalarType value) {
   switch (value) {
-    case ScalarType::kFp32: return "fp32";
-    case ScalarType::kFp16: return "fp16";
-    case ScalarType::kBf16: return "bf16";
-    case ScalarType::kFp8E4M3: return "fp8_e4m3";
-    case ScalarType::kFp8E5M2: return "fp8_e5m2";
-    case ScalarType::kFp6E2M3: return "fp6_e2m3";
-    case ScalarType::kFp6E3M2: return "fp6_e3m2";
-    case ScalarType::kFp4E2M1: return "fp4_e2m1";
+    case ScalarType::kFp32:
+      return "fp32";
+    case ScalarType::kFp16:
+      return "fp16";
+    case ScalarType::kBf16:
+      return "bf16";
+    case ScalarType::kFp8E4M3:
+      return "fp8_e4m3";
+    case ScalarType::kFp8E5M2:
+      return "fp8_e5m2";
+    case ScalarType::kFp6E2M3:
+      return "fp6_e2m3";
+    case ScalarType::kFp6E3M2:
+      return "fp6_e3m2";
+    case ScalarType::kFp4E2M1:
+      return "fp4_e2m1";
   }
   throw std::invalid_argument("unknown ScalarType");
 }
 
 std::string to_string(MathMode value) {
   switch (value) {
-    case MathMode::kStrictFp32: return "strict_fp32";
-    case MathMode::kTf32: return "tf32";
-    case MathMode::kFp16AccFp32: return "fp16_acc_fp32";
-    case MathMode::kBf16AccFp32: return "bf16_acc_fp32";
-    case MathMode::kFp8AccFp32: return "fp8_acc_fp32";
+    case MathMode::kStrictFp32:
+      return "strict_fp32";
+    case MathMode::kTf32:
+      return "tf32";
+    case MathMode::kFp16AccFp32:
+      return "fp16_acc_fp32";
+    case MathMode::kBf16AccFp32:
+      return "bf16_acc_fp32";
+    case MathMode::kFp8AccFp32:
+      return "fp8_acc_fp32";
   }
   throw std::invalid_argument("unknown MathMode");
 }
 
 std::string to_string(CapabilityLevel value) {
   switch (value) {
-    case CapabilityLevel::kRuntimeVerified: return "runtime_verified";
-    case CapabilityLevel::kCompileOnly: return "compile_only";
-    case CapabilityLevel::kReferenceOnly: return "reference_only";
-    case CapabilityLevel::kUnsupported: return "unsupported";
+    case CapabilityLevel::kRuntimeVerified:
+      return "runtime_verified";
+    case CapabilityLevel::kCompileOnly:
+      return "compile_only";
+    case CapabilityLevel::kReferenceOnly:
+      return "reference_only";
+    case CapabilityLevel::kUnsupported:
+      return "unsupported";
   }
   throw std::invalid_argument("unknown CapabilityLevel");
 }
 
 std::string to_string(CheckStatus value) {
   switch (value) {
-    case CheckStatus::kPass: return "pass";
-    case CheckStatus::kFail: return "fail";
-    case CheckStatus::kSkip: return "skip";
+    case CheckStatus::kPass:
+      return "pass";
+    case CheckStatus::kFail:
+      return "fail";
+    case CheckStatus::kSkip:
+      return "skip";
   }
   throw std::invalid_argument("unknown CheckStatus");
 }
@@ -239,15 +265,13 @@ CapabilityLevel dtype_capability(ScalarType type, const DeviceCapability& device
 }
 
 std::size_t logical_storage_bytes(ScalarType type, std::size_t elements) {
-  const std::size_t bits =
-      checked_mul(elements, static_cast<std::size_t>(dtype_traits(type).logical_bits),
-                  "logical dtype bits");
+  const std::size_t bits = checked_mul(
+      elements, static_cast<std::size_t>(dtype_traits(type).logical_bits), "logical dtype bits");
   return checked_add(bits, 7, "logical dtype rounding") / 8;
 }
 
 std::size_t wrapper_storage_bytes(ScalarType type, std::size_t elements) {
-  return checked_mul(elements,
-                     static_cast<std::size_t>(dtype_traits(type).storage_unit_bits / 8),
+  return checked_mul(elements, static_cast<std::size_t>(dtype_traits(type).storage_unit_bits / 8),
                      "dtype wrapper bytes");
 }
 
@@ -259,13 +283,20 @@ std::uint32_t encode_scalar(ScalarType type, double value) {
       std::memcpy(&bits, &input, sizeof(bits));
       return bits;
     }
-    case ScalarType::kFp16: return __half_raw(__float2half_rn(input)).x;
-    case ScalarType::kBf16: return __nv_bfloat16_raw(__float2bfloat16_rn(input)).x;
-    case ScalarType::kFp8E4M3: return __nv_fp8_e4m3(input).__x;
-    case ScalarType::kFp8E5M2: return __nv_fp8_e5m2(input).__x;
-    case ScalarType::kFp6E2M3: return __nv_fp6_e2m3(input).__x;
-    case ScalarType::kFp6E3M2: return __nv_fp6_e3m2(input).__x;
-    case ScalarType::kFp4E2M1: return __nv_fp4_e2m1(input).__x;
+    case ScalarType::kFp16:
+      return __half_raw(__float2half_rn(input)).x;
+    case ScalarType::kBf16:
+      return __nv_bfloat16_raw(__float2bfloat16_rn(input)).x;
+    case ScalarType::kFp8E4M3:
+      return __nv_fp8_e4m3(input).__x;
+    case ScalarType::kFp8E5M2:
+      return __nv_fp8_e5m2(input).__x;
+    case ScalarType::kFp6E2M3:
+      return __nv_fp6_e2m3(input).__x;
+    case ScalarType::kFp6E3M2:
+      return __nv_fp6_e3m2(input).__x;
+    case ScalarType::kFp4E2M1:
+      return __nv_fp4_e2m1(input).__x;
   }
   throw std::invalid_argument("unknown scalar type");
 }
@@ -332,8 +363,8 @@ cudaError_t launch_dtype_roundtrip(ScalarType type, const float* input, float* o
   if (elements == 0) return cudaSuccess;
   if (input == nullptr || output == nullptr) return cudaErrorInvalidValue;
   const std::size_t blocks = (elements + kThreads - 1) / kThreads;
-  dtype_roundtrip_kernel<<<static_cast<unsigned int>(blocks > 65535 ? 65535 : blocks),
-                           kThreads, 0, stream>>>(type, input, output, elements);
+  dtype_roundtrip_kernel<<<static_cast<unsigned int>(blocks > 65535 ? 65535 : blocks), kThreads, 0,
+                           stream>>>(type, input, output, elements);
   return cudaGetLastError();
 }
 

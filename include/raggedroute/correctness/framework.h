@@ -1,13 +1,13 @@
 #pragma once
 
+#include <cuda_runtime_api.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <map>
 #include <optional>
 #include <string>
 #include <vector>
-
-#include <cuda_runtime_api.h>
 
 namespace raggedroute::correctness {
 
@@ -147,46 +147,40 @@ float quantize_tf32(float value);
 cudaError_t launch_dtype_roundtrip(ScalarType type, const float* input, float* output,
                                    std::size_t elements, cudaStream_t stream);
 
-std::vector<double> dense_gemm_reference(const std::vector<double>& a,
-                                         const std::vector<double>& b,
+std::vector<double> dense_gemm_reference(const std::vector<double>& a, const std::vector<double>& b,
                                          const std::vector<double>& c, int m, int n, int k,
                                          double alpha, double beta);
 Top2Reference top2_selected_softmax_reference(const std::vector<double>& logits, int tokens,
-                                               int experts);
-std::vector<std::int32_t> histogram_reference(const std::vector<std::int32_t>& ids,
                                               int experts);
-std::vector<std::int32_t> exclusive_scan_reference(
-    const std::vector<std::int32_t>& counts);
+std::vector<std::int32_t> histogram_reference(const std::vector<std::int32_t>& ids, int experts);
+std::vector<std::int32_t> exclusive_scan_reference(const std::vector<std::int32_t>& counts);
 std::vector<double> grouped_gemm_reference(const std::vector<double>& x_permuted,
                                            const std::vector<double>& expert_weights,
-                                           const std::vector<std::int32_t>& offsets,
-                                           int experts, int hidden, int output);
+                                           const std::vector<std::int32_t>& offsets, int experts,
+                                           int hidden, int output);
 std::vector<double> unpermute_reference(const std::vector<double>& y_permuted,
                                         const std::vector<std::int32_t>& route_pos,
                                         const std::vector<double>& route_weights, int tokens,
                                         int top_k, int output);
 
-CheckReport compare_floating(const CaseDescriptor& descriptor,
-                             const std::vector<double>& actual,
+CheckReport compare_floating(const CaseDescriptor& descriptor, const std::vector<double>& actual,
                              const std::vector<double>& expected, double absolute_tolerance,
                              double relative_tolerance);
 CheckReport compare_gemm(const CaseDescriptor& descriptor, const std::vector<double>& actual,
                          const std::vector<double>& expected, const std::vector<double>& a,
-                         const std::vector<double>& b, int m, int n, int k,
-                         ScalarType accumulator);
+                         const std::vector<double>& b, int m, int n, int k, ScalarType accumulator);
 CheckReport validate_histogram(const CaseDescriptor& descriptor,
                                const std::vector<std::int32_t>& ids,
                                const std::vector<std::int32_t>& counts, int experts);
-CheckReport validate_scan(const CaseDescriptor& descriptor,
-                          const std::vector<std::int32_t>& counts,
+CheckReport validate_scan(const CaseDescriptor& descriptor, const std::vector<std::int32_t>& counts,
                           const std::vector<std::int32_t>& offsets);
 CheckReport validate_permute(const CaseDescriptor& descriptor, const std::vector<double>& x,
                              const std::vector<std::int32_t>& ids,
                              const std::vector<std::int32_t>& offsets,
                              const std::vector<double>& x_permuted,
                              const std::vector<std::int32_t>& route_pos,
-                             const std::vector<std::int32_t>* sorted_route, int tokens,
-                             int top_k, int hidden);
+                             const std::vector<std::int32_t>* sorted_route, int tokens, int top_k,
+                             int hidden);
 
 std::string case_to_json(const CaseDescriptor& descriptor);
 CaseDescriptor case_from_json(const std::string& json);

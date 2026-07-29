@@ -39,11 +39,10 @@ cudaError_t launch_unpermute_naive(const float* y_permuted, const std::int32_t* 
   }
   const int elements = tokens * output;
   constexpr int kThreads = 256;
-  const auto blocks = static_cast<unsigned int>(
-      (static_cast<std::size_t>(elements) + kThreads - 1) / kThreads);
-  unpermute_naive_kernel<<<blocks, kThreads, 0, caller_stream>>>(y_permuted, route_pos,
-                                                                route_weights, y, tokens, top_k,
-                                                                output);
+  const auto blocks =
+      static_cast<unsigned int>((static_cast<std::size_t>(elements) + kThreads - 1) / kThreads);
+  unpermute_naive_kernel<<<blocks, kThreads, 0, caller_stream>>>(
+      y_permuted, route_pos, route_weights, y, tokens, top_k, output);
   return cudaGetLastError();
 }
 

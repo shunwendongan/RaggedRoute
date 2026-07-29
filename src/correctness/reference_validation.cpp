@@ -1,9 +1,9 @@
-#include "raggedroute/correctness/framework.h"
-
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+
+#include "raggedroute/correctness/framework.h"
 
 namespace raggedroute::correctness {
 namespace {
@@ -24,14 +24,11 @@ bool same_class(double actual, double expected) {
   return std::isfinite(actual);
 }
 
-double unit_roundoff(ScalarType type) {
-  return dtype_traits(type).epsilon_at_one * 0.5;
-}
+double unit_roundoff(ScalarType type) { return dtype_traits(type).epsilon_at_one * 0.5; }
 
 }  // namespace
 
-std::vector<double> dense_gemm_reference(const std::vector<double>& a,
-                                         const std::vector<double>& b,
+std::vector<double> dense_gemm_reference(const std::vector<double>& a, const std::vector<double>& b,
                                          const std::vector<double>& c, int m, int n, int k,
                                          double alpha, double beta) {
   if (m < 0 || n < 0 || k < 0) throw std::invalid_argument("negative GEMM dimension");
@@ -58,7 +55,7 @@ std::vector<double> dense_gemm_reference(const std::vector<double>& a,
 }
 
 Top2Reference top2_selected_softmax_reference(const std::vector<double>& logits, int tokens,
-                                               int experts) {
+                                              int experts) {
   if (tokens < 0 || experts < 2 ||
       logits.size() != checked_mul(static_cast<std::size_t>(tokens), experts, "logits")) {
     throw std::invalid_argument("invalid Top-2 shape");
@@ -67,8 +64,7 @@ Top2Reference top2_selected_softmax_reference(const std::vector<double>& logits,
   result.ids.resize(static_cast<std::size_t>(tokens) * 2);
   result.weights.resize(static_cast<std::size_t>(tokens) * 2);
   const auto precedes = [](double value, int id, double incumbent, int incumbent_id) {
-    return incumbent_id < 0 || value > incumbent ||
-           (value == incumbent && id < incumbent_id);
+    return incumbent_id < 0 || value > incumbent || (value == incumbent && id < incumbent_id);
   };
   for (int token = 0; token < tokens; ++token) {
     double first = -std::numeric_limits<double>::infinity();
@@ -116,8 +112,7 @@ Top2Reference top2_selected_softmax_reference(const std::vector<double>& logits,
   return result;
 }
 
-std::vector<std::int32_t> histogram_reference(const std::vector<std::int32_t>& ids,
-                                              int experts) {
+std::vector<std::int32_t> histogram_reference(const std::vector<std::int32_t>& ids, int experts) {
   if (experts < 1) throw std::invalid_argument("experts must be positive");
   std::vector<std::int32_t> counts(static_cast<std::size_t>(experts), 0);
   for (std::int32_t id : ids) {
@@ -130,8 +125,7 @@ std::vector<std::int32_t> histogram_reference(const std::vector<std::int32_t>& i
   return counts;
 }
 
-std::vector<std::int32_t> exclusive_scan_reference(
-    const std::vector<std::int32_t>& counts) {
+std::vector<std::int32_t> exclusive_scan_reference(const std::vector<std::int32_t>& counts) {
   std::vector<std::int32_t> offsets(counts.size() + 1, 0);
   std::int64_t total = 0;
   for (std::size_t expert = 0; expert < counts.size(); ++expert) {
@@ -146,8 +140,8 @@ std::vector<std::int32_t> exclusive_scan_reference(
 
 std::vector<double> grouped_gemm_reference(const std::vector<double>& x,
                                            const std::vector<double>& weights,
-                                           const std::vector<std::int32_t>& offsets,
-                                           int experts, int hidden, int output) {
+                                           const std::vector<std::int32_t>& offsets, int experts,
+                                           int hidden, int output) {
   if (experts < 1 || hidden < 0 || output < 0 ||
       offsets.size() != static_cast<std::size_t>(experts) + 1) {
     throw std::invalid_argument("invalid grouped GEMM shape");
@@ -159,8 +153,8 @@ std::vector<double> grouped_gemm_reference(const std::vector<double>& x,
   }
   const std::size_t routes = static_cast<std::size_t>(offsets.back());
   if (x.size() != checked_mul(routes, hidden, "grouped X") ||
-      weights.size() != checked_mul(checked_mul(experts, hidden, "grouped weights"), output,
-                                    "grouped weights")) {
+      weights.size() !=
+          checked_mul(checked_mul(experts, hidden, "grouped weights"), output, "grouped weights")) {
     throw std::invalid_argument("grouped GEMM buffer size mismatch");
   }
   std::vector<double> y(checked_mul(routes, output, "grouped output"), 0.0);
@@ -205,8 +199,7 @@ std::vector<double> unpermute_reference(const std::vector<double>& y_permuted,
   return y;
 }
 
-CheckReport compare_floating(const CaseDescriptor& descriptor,
-                             const std::vector<double>& actual,
+CheckReport compare_floating(const CaseDescriptor& descriptor, const std::vector<double>& actual,
                              const std::vector<double>& expected, double atol, double rtol) {
   CheckReport report = report_for(descriptor);
   if (actual.size() != expected.size()) {
@@ -244,8 +237,7 @@ CheckReport compare_floating(const CaseDescriptor& descriptor,
   return report;
 }
 
-CheckReport compare_gemm(const CaseDescriptor& descriptor,
-                         const std::vector<double>& actual,
+CheckReport compare_gemm(const CaseDescriptor& descriptor, const std::vector<double>& actual,
                          const std::vector<double>& expected, const std::vector<double>& a,
                          const std::vector<double>& b, int m, int n, int k,
                          ScalarType accumulator) {
@@ -271,19 +263,18 @@ CheckReport compare_gemm(const CaseDescriptor& descriptor,
         sum_abs += std::abs(a[static_cast<std::size_t>(row) * k + inner] *
                             b[static_cast<std::size_t>(inner) * n + column]);
       }
-      const double output_rounding = descriptor.tensor_types.output == ScalarType::kFp32
-                                         ? 0.0
-                                         : unit_roundoff(descriptor.tensor_types.output) *
-                                               std::abs(expected[index]);
+      const double output_rounding =
+          descriptor.tensor_types.output == ScalarType::kFp32
+              ? 0.0
+              : unit_roundoff(descriptor.tensor_types.output) * std::abs(expected[index]);
       const double allowed = 4.0 * gamma * sum_abs + output_rounding + 1.0e-7;
       const double absolute = std::abs(actual[index] - expected[index]);
       if (absolute > report.numeric.max_abs_error) {
         report.numeric.max_abs_error = absolute;
         report.numeric.worst_index = index;
       }
-      report.numeric.max_rel_error =
-          std::max(report.numeric.max_rel_error,
-                   absolute / std::max(std::abs(expected[index]), 1.0e-30));
+      report.numeric.max_rel_error = std::max(
+          report.numeric.max_rel_error, absolute / std::max(std::abs(expected[index]), 1.0e-30));
       if (absolute > allowed) {
         report.fail({"gemm_forward_error", "GEMM exceeds accumulation-aware bound", index,
                      actual[index], expected[index], allowed});
@@ -306,7 +297,8 @@ CheckReport validate_histogram(const CaseDescriptor& descriptor,
   for (std::size_t expert = 0; expert < counts.size(); ++expert) {
     if (counts[expert] != expected[expert]) {
       report.fail({"exact_counts", "histogram count differs", expert,
-                   static_cast<double>(counts[expert]), static_cast<double>(expected[expert]), 0.0});
+                   static_cast<double>(counts[expert]), static_cast<double>(expected[expert]),
+                   0.0});
     }
     if (counts[expert] < 0) report.fail({"non_negative", "negative histogram count", expert});
     total += counts[expert];
@@ -317,8 +309,7 @@ CheckReport validate_histogram(const CaseDescriptor& descriptor,
   return report;
 }
 
-CheckReport validate_scan(const CaseDescriptor& descriptor,
-                          const std::vector<std::int32_t>& counts,
+CheckReport validate_scan(const CaseDescriptor& descriptor, const std::vector<std::int32_t>& counts,
                           const std::vector<std::int32_t>& offsets) {
   CheckReport report = report_for(descriptor);
   const auto expected = exclusive_scan_reference(counts);
@@ -343,8 +334,8 @@ CheckReport validate_permute(const CaseDescriptor& descriptor, const std::vector
                              const std::vector<std::int32_t>& offsets,
                              const std::vector<double>& xp,
                              const std::vector<std::int32_t>& route_pos,
-                             const std::vector<std::int32_t>* sorted_route, int tokens,
-                             int top_k, int hidden) {
+                             const std::vector<std::int32_t>* sorted_route, int tokens, int top_k,
+                             int hidden) {
   CheckReport report = report_for(descriptor);
   const std::size_t routes = static_cast<std::size_t>(tokens) * top_k;
   if (ids.size() != routes || route_pos.size() != routes ||

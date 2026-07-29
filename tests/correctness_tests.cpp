@@ -1,6 +1,7 @@
 #include <cuda_runtime_api.h>
 
 #include <iostream>
+#include <limits>
 #include <map>
 #include <stdexcept>
 #include <string>
@@ -58,8 +59,8 @@ int main() {
     const auto summary = rr::summarize_samples({1.0, 2.0, 3.0, 4.0, 5.0});
     require(summary.p50_us == 3.0 && summary.min_us == 1.0,
             "statistics implementation is incorrect");
-    const auto fp16 = raggedroute::correctness::dtype_traits(
-        raggedroute::correctness::ScalarType::kFp16);
+    const auto fp16 =
+        raggedroute::correctness::dtype_traits(raggedroute::correctness::ScalarType::kFp16);
     require(fp16.logical_bits == 16 && fp16.minimum_native_compute_capability == 70,
             "correctness dtype traits are incorrect");
     require(raggedroute::correctness::parse_math_mode("tf32") ==
@@ -78,6 +79,16 @@ int main() {
     require(parsed_descriptor.case_id == descriptor.case_id &&
                 parsed_descriptor.shape == descriptor.shape,
             "correctness JSON roundtrip is incorrect");
+    raggedroute::correctness::CheckReport failure_report;
+    failure_report.case_id = descriptor.case_id;
+    failure_report.operator_name = descriptor.operator_name;
+    failure_report.fail({"numeric_class", "non-finite diagnostic", 0,
+                         std::numeric_limits<double>::quiet_NaN(),
+                         std::numeric_limits<double>::infinity(), 0.0});
+    const auto failure_json = raggedroute::correctness::report_to_json(failure_report, descriptor);
+    require(failure_json.find("\"actual\":null") != std::string::npos &&
+                failure_json.find("\"expected\":null") != std::string::npos,
+            "correctness failure artifacts must remain valid JSON for NaN/Inf");
 
     cudaStream_t stream{};
     rr::cuda_check(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking),

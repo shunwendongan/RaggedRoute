@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cuda_runtime_api.h>
+
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -7,8 +9,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-#include <cuda_runtime_api.h>
 
 #include "raggedroute/correctness/framework.h"
 
@@ -53,16 +53,14 @@ class GuardedDeviceBuffer {
     count_ = count;
     payload_bytes_ = checked_mul(count, sizeof(T), "guarded payload");
     if (payload_bytes_ == 0) return;
-    allocation_bytes_ = checked_add(checked_add(kRedzoneBytes, payload_bytes_,
-                                                "front redzone"),
+    allocation_bytes_ = checked_add(checked_add(kRedzoneBytes, payload_bytes_, "front redzone"),
                                     kRedzoneBytes, "back redzone");
     cuda_check(cudaMalloc(reinterpret_cast<void**>(&allocation_), allocation_bytes_),
                "cudaMalloc guarded buffer");
     payload_ = reinterpret_cast<T*>(allocation_ + kRedzoneBytes);
     cuda_check(cudaMemsetAsync(allocation_, kCanary, allocation_bytes_, stream),
                "initialize canaries");
-    cuda_check(cudaMemsetAsync(payload_, kPoison, payload_bytes_, stream),
-               "initialize poison");
+    cuda_check(cudaMemsetAsync(payload_, kPoison, payload_bytes_, stream), "initialize poison");
   }
 
   void reset() noexcept {
@@ -75,18 +73,18 @@ class GuardedDeviceBuffer {
   void copy_from_host(const std::vector<T>& host, cudaStream_t stream) {
     if (host.size() != count_) throw std::invalid_argument("guarded buffer size mismatch");
     if (payload_bytes_ != 0) {
-      cuda_check(cudaMemcpyAsync(payload_, host.data(), payload_bytes_, cudaMemcpyHostToDevice,
-                                 stream),
-                 "guarded H2D");
+      cuda_check(
+          cudaMemcpyAsync(payload_, host.data(), payload_bytes_, cudaMemcpyHostToDevice, stream),
+          "guarded H2D");
     }
   }
 
   std::vector<T> copy_to_host(cudaStream_t stream) const {
     std::vector<T> host(count_);
     if (payload_bytes_ != 0) {
-      cuda_check(cudaMemcpyAsync(host.data(), payload_, payload_bytes_, cudaMemcpyDeviceToHost,
-                                 stream),
-                 "guarded D2H");
+      cuda_check(
+          cudaMemcpyAsync(host.data(), payload_, payload_bytes_, cudaMemcpyDeviceToHost, stream),
+          "guarded D2H");
       cuda_check(cudaStreamSynchronize(stream), "guarded D2H sync");
     }
     return host;
@@ -95,9 +93,9 @@ class GuardedDeviceBuffer {
   bool canaries_intact(cudaStream_t stream) const {
     if (allocation_ == nullptr) return true;
     std::vector<unsigned char> front(kRedzoneBytes), back(kRedzoneBytes);
-    cuda_check(cudaMemcpyAsync(front.data(), allocation_, kRedzoneBytes, cudaMemcpyDeviceToHost,
-                               stream),
-               "front canary D2H");
+    cuda_check(
+        cudaMemcpyAsync(front.data(), allocation_, kRedzoneBytes, cudaMemcpyDeviceToHost, stream),
+        "front canary D2H");
     cuda_check(cudaMemcpyAsync(back.data(), allocation_ + kRedzoneBytes + payload_bytes_,
                                kRedzoneBytes, cudaMemcpyDeviceToHost, stream),
                "back canary D2H");

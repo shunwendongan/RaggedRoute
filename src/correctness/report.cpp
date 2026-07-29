@@ -152,6 +152,23 @@ std::string case_to_json(const CaseDescriptor& descriptor) {
   output << ':';
   quoted(output, descriptor.route_distribution);
   output << ',';
+  quoted(output, "determinism");
+  output << ':';
+  quoted(output, descriptor.determinism == Determinism::kRequired ? "required" : "semantic_only");
+  output << ',';
+  quoted(output, "device_arch");
+  output << ':';
+  quoted(output, descriptor.device_arch);
+  output << ',';
+  quoted(output, "scale_mode");
+  output << ':';
+  quoted(output, descriptor.tensor_types.quantization.scale_mode == ScaleMode::kNone ? "none"
+                 : descriptor.tensor_types.quantization.scale_mode == ScaleMode::kPerTensorFp32
+                     ? "per_tensor_fp32"
+                     : "per_block_fp32");
+  output << ',';
+  quoted(output, "scale_block_elements");
+  output << ':' << descriptor.tensor_types.quantization.block_elements << ',';
   quoted(output, "shape");
   output << ":{";
   bool first = true;
@@ -177,6 +194,27 @@ CaseDescriptor case_from_json(const std::string& json) {
   descriptor.tensor_types.math_mode = parse_math_mode(json_string(json, "math_mode"));
   descriptor.data_pattern = json_string(json, "data_pattern");
   descriptor.route_distribution = json_string(json, "route_distribution");
+  const std::string determinism = json_string(json, "determinism");
+  if (determinism == "required") {
+    descriptor.determinism = Determinism::kRequired;
+  } else if (determinism == "semantic_only") {
+    descriptor.determinism = Determinism::kSemanticOnly;
+  } else {
+    throw std::invalid_argument("unknown determinism value: " + determinism);
+  }
+  descriptor.device_arch = json_string(json, "device_arch");
+  const std::string scale_mode = json_string(json, "scale_mode");
+  if (scale_mode == "none") {
+    descriptor.tensor_types.quantization.scale_mode = ScaleMode::kNone;
+  } else if (scale_mode == "per_tensor_fp32") {
+    descriptor.tensor_types.quantization.scale_mode = ScaleMode::kPerTensorFp32;
+  } else if (scale_mode == "per_block_fp32") {
+    descriptor.tensor_types.quantization.scale_mode = ScaleMode::kPerBlockFp32;
+  } else {
+    throw std::invalid_argument("unknown scale mode: " + scale_mode);
+  }
+  descriptor.tensor_types.quantization.block_elements =
+      static_cast<std::size_t>(json_integer(json, "scale_block_elements"));
   descriptor.shape = json_shape(json);
   return descriptor;
 }
@@ -225,6 +263,11 @@ std::string report_to_json(const CheckReport& report, const CaseDescriptor& desc
   quoted(output, "normalized_l2_error");
   output << ':';
   number_or_null(output, report.numeric.normalized_l2_error);
+  if (report.numeric.worst_index) {
+    output << ',';
+    quoted(output, "worst_index");
+    output << ':' << *report.numeric.worst_index;
+  }
   output << "},";
   quoted(output, "failures");
   output << ":[";

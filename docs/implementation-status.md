@@ -11,6 +11,7 @@
 - CUDA 静态库的 install/export 与 `find_package(RaggedRoute)` package config；
 - correctness framework 的 FP32/FP16/BF16/低精度 capability metadata、dtype roundtrip launcher 与 guarded-buffer 工具；低精度能力仍须按实卡等级区分；
 - correctness framework 独立 CTest suite：dtype host/runtime roundtrip、reference invariants、failure/replay、redzone、zero-size、随机与 caller-stream 合同；
+- correctness framework 的详细 dtype capability 边界、算子合同、failure JSON、sanitizer 和可选 `sm_90a`/`sm_100a` compile-only probe 见 [correctness-framework.md](correctness-framework.md)；其中跨架构编译不等同于 H100/Blackwell 实卡验证；
 - 七个 FP32 naive CUDA launcher，均使用 caller stream，hot path 无分配和无条件同步；
 - 一个公共 CUDA Event runner 和七个 typed adapter；
 - `chain_from_tokens` 完整 7 算子 L3 与 `chain_from_logits` 6 算子 L3；

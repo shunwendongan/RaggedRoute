@@ -38,6 +38,7 @@ enum class CapabilityLevel {
 };
 
 enum class ScaleMode { kNone, kPerTensorFp32, kPerBlockFp32 };
+enum class RoundingPolicy { kRoundToNearestEven, kSaturateFinite };
 enum class Determinism { kRequired, kSemanticOnly };
 enum class CheckStatus { kPass, kFail, kSkip };
 
@@ -61,10 +62,12 @@ struct DTypeTraits {
   bool supports_nan = true;
   bool supports_infinity = true;
   bool saturates_finite = false;
+  RoundingPolicy rounding = RoundingPolicy::kRoundToNearestEven;
   double max_finite = 0.0;
   double epsilon_at_one = 0.0;
   int minimum_native_compute_capability = 0;
   bool requires_arch_family_specific = false;
+  std::vector<ScalarType> allowed_accumulators;
 };
 
 struct DeviceCapability {
@@ -83,6 +86,7 @@ struct CaseDescriptor {
   std::string data_pattern = "random";
   std::string route_distribution = "uniform";
   Determinism determinism = Determinism::kRequired;
+  std::string device_arch = "unknown";
   std::uint64_t seed = 20260729ULL;
 };
 
@@ -143,6 +147,9 @@ std::size_t wrapper_storage_bytes(ScalarType type, std::size_t elements);
 std::uint32_t encode_scalar(ScalarType type, double value);
 double decode_scalar(ScalarType type, std::uint32_t storage);
 float quantize_tf32(float value);
+std::vector<double> make_deterministic_master_data(std::size_t elements, std::uint64_t seed,
+                                                   double lower = -1.0, double upper = 1.0);
+std::vector<double> quantize_master_data(const std::vector<double>& master, ScalarType type);
 
 cudaError_t launch_dtype_roundtrip(ScalarType type, const float* input, float* output,
                                    std::size_t elements, cudaStream_t stream);

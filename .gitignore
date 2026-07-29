@@ -9,3 +9,4 @@ __pycache__/
 *.nsys-rep
 /reports/runs/
 /reports/profiles/
+/reports/sanitizer/

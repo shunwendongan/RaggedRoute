@@ -9,6 +9,8 @@ function(raggedroute_initialize_options)
   option(RAGGEDROUTE_ENABLE_RDC "Enable CUDA relocatable device code" OFF)
   option(RAGGEDROUTE_ENABLE_CUBLAS "Discover CUDA::cublas for future baseline targets" ON)
   option(RAGGEDROUTE_ENABLE_SM90A_EXPERIMENTS "Mark this build as Hopper SM90a-specific" OFF)
+  option(RAGGEDROUTE_ENABLE_ARCH_COMPILE_TESTS
+         "Build standalone SM90a/SM100a low-precision dtype compile probes" OFF)
   option(RAGGEDROUTE_WARNINGS_AS_ERRORS "Treat host compiler warnings as errors" OFF)
 
   set(RAGGEDROUTE_CUDA_ARCHITECTURES "" CACHE STRING

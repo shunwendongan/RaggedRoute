@@ -61,6 +61,9 @@ void test_dtype_host_and_runtime(cudaStream_t stream) {
   cudaDeviceProp properties{};
   rc::cuda_check(cudaGetDeviceProperties(&properties, device), "get CUDA device properties");
   const rc::DeviceCapability capability{properties.major, properties.minor, false, true};
+  const auto master = rc::make_deterministic_master_data(19, 20260729ULL, -3.0, 3.0);
+  require(master == rc::make_deterministic_master_data(19, 20260729ULL, -3.0, 3.0),
+          "FP64 master data must be deterministic for a seed");
   const std::vector<rc::ScalarType> types = {rc::ScalarType::kFp32,    rc::ScalarType::kFp16,
                                              rc::ScalarType::kBf16,    rc::ScalarType::kFp8E4M3,
                                              rc::ScalarType::kFp8E5M2, rc::ScalarType::kFp6E2M3,
@@ -69,10 +72,37 @@ void test_dtype_host_and_runtime(cudaStream_t stream) {
     const rc::DTypeTraits traits = rc::dtype_traits(type);
     require(traits.logical_bits <= traits.storage_unit_bits,
             "logical bits must not exceed storage unit bits");
+    require(traits.allowed_accumulators == std::vector<rc::ScalarType>({rc::ScalarType::kFp32}),
+            "dtype accumulator policy must require FP32 accumulation");
     for (const double value : {0.0, -0.0, 0.5, 1.0, -1.0, traits.max_finite * 0.75}) {
       const double decoded = rc::decode_scalar(type, rc::encode_scalar(type, value));
       require(std::isfinite(decoded) && std::abs(decoded) <= traits.max_finite,
               "dtype host roundtrip violates finite range for " + rc::to_string(type));
+    }
+    if (traits.saturates_finite) {
+      const double saturated =
+          rc::decode_scalar(type, rc::encode_scalar(type, traits.max_finite * 4.0));
+      require(std::isfinite(saturated) && std::abs(saturated) <= traits.max_finite,
+              "saturating dtype overflow must remain finite for " + rc::to_string(type));
+    }
+    if (traits.supports_nan) {
+      require(std::isnan(rc::decode_scalar(
+                  type, rc::encode_scalar(type, std::numeric_limits<double>::quiet_NaN()))),
+              "dtype NaN roundtrip policy is incorrect for " + rc::to_string(type));
+    }
+    if (traits.supports_infinity) {
+      const double infinity_conversion = rc::decode_scalar(
+          type, rc::encode_scalar(type, std::numeric_limits<double>::infinity()));
+      require(traits.saturates_finite
+                  ? std::isfinite(infinity_conversion) &&
+                        std::abs(infinity_conversion) <= traits.max_finite
+                  : std::isinf(infinity_conversion),
+              "dtype infinity conversion policy is incorrect for " + rc::to_string(type));
+    }
+    const auto quantized = rc::quantize_master_data(master, type);
+    for (std::size_t index = 0; index < master.size(); ++index) {
+      require(quantized[index] == rc::decode_scalar(type, rc::encode_scalar(type, master[index])),
+              "master-data quantization must decode actual storage bits");
     }
     const rc::CapabilityLevel level = rc::dtype_capability(type, capability);
     if (type == rc::ScalarType::kFp32 || type == rc::ScalarType::kFp16 ||
@@ -105,6 +135,7 @@ void test_dtype_host_and_runtime(cudaStream_t stream) {
     rc::GuardedDeviceBuffer<float> device_input(input.size(), stream);
     rc::GuardedDeviceBuffer<float> device_output(input.size(), stream);
     device_input.copy_from_host(input, stream);
+    const std::uint64_t input_hash = device_input.payload_hash(stream);
     const auto launch = rc::observe_launch(
         [&] {
           return rc::launch_dtype_roundtrip(type, device_input.data(), device_output.data(),
@@ -115,6 +146,8 @@ void test_dtype_host_and_runtime(cudaStream_t stream) {
             "dtype runtime roundtrip launch failed for " + rc::to_string(type));
     require(device_output.copy_to_host(stream) == expected,
             "dtype runtime roundtrip differs from host encoding");
+    require(device_input.payload_hash(stream) == input_hash,
+            "dtype roundtrip changed the input payload");
     require(device_input.canaries_intact(stream) && device_output.canaries_intact(stream),
             "dtype roundtrip changed a redzone");
   }
@@ -216,6 +249,24 @@ void test_zero_and_stream_contract(cudaStream_t stream) {
       ops::launch_topk_gate_naive(nullptr, nullptr, nullptr, 1, 1, stream) == cudaErrorInvalidValue,
       "Top-K E=1 must be rejected");
   cudaGetLastError();
+
+  rc::GuardedDeviceBuffer<float> zero_dense(4, stream);
+  require(ops::launch_dense_gemm_naive(nullptr, nullptr, zero_dense.data(), 2, 2, 0, stream) ==
+              cudaSuccess,
+          "K=0 dense GEMM must launch without input matrices");
+  rc::cuda_check(cudaStreamSynchronize(stream), "sync K=0 dense GEMM");
+  require(zero_dense.copy_to_host(stream) == std::vector<float>(4, 0.0F),
+          "K=0 dense GEMM must write mathematical zeros");
+
+  rc::GuardedDeviceBuffer<std::int32_t> zero_offsets(2, stream);
+  zero_offsets.copy_from_host({0, 2}, stream);
+  rc::GuardedDeviceBuffer<float> zero_grouped(4, stream);
+  require(ops::launch_grouped_gemm_naive(nullptr, nullptr, zero_offsets.data(), zero_grouped.data(),
+                                         1, 0, 2, 2, stream) == cudaSuccess,
+          "K=0 grouped GEMM must launch without input matrices");
+  rc::cuda_check(cudaStreamSynchronize(stream), "sync K=0 grouped GEMM");
+  require(zero_grouped.copy_to_host(stream) == std::vector<float>(4, 0.0F),
+          "K=0 grouped GEMM must write mathematical zeros");
 
   const std::vector<float> a = {1.0F, 2.0F, 3.0F, 4.0F};
   const std::vector<float> b = {5.0F, 6.0F, 7.0F, 8.0F};

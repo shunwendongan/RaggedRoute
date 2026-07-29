@@ -90,6 +90,10 @@ class GuardedDeviceBuffer {
     return host;
   }
 
+  std::uint64_t payload_hash(cudaStream_t stream) const {
+    return hash_vector(copy_to_host(stream));
+  }
+
   bool canaries_intact(cudaStream_t stream) const {
     if (allocation_ == nullptr) return true;
     std::vector<unsigned char> front(kRedzoneBytes), back(kRedzoneBytes);

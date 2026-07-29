@@ -37,8 +37,8 @@ cudaError_t launch_grouped_gemm_naive(const float* x_permuted, const float* expe
     return cudaErrorInvalidValue;
   }
   if (max_expert_tokens == 0 || output == 0) return cudaSuccess;
-  if (hidden == 0 || x_permuted == nullptr || expert_weights == nullptr || offsets == nullptr ||
-      y_permuted == nullptr) {
+  if (offsets == nullptr || y_permuted == nullptr ||
+      (hidden != 0 && (x_permuted == nullptr || expert_weights == nullptr))) {
     return cudaErrorInvalidValue;
   }
   const dim3 block(16, 16, 1);

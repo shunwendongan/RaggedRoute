@@ -32,7 +32,7 @@ Correctness, release performance, and profiling are separate flows:
 | `benchmark_rtx3080_release.json` | Clean-Git, Release, 3-process raw measurement | Baseline latency only |
 | `profile_benchmarks.py` | Nsight Compute diagnosis | No; profiler duration is not a score |
 
-See [Benchmark architecture](docs/benchmark-architecture.md), [implementation status](docs/implementation-status.md), the [RTX 3080 naive baseline report](docs/reports/rtx3080-naive-baseline-e37c132.md), and the [full technical design](docs/RaggedRoute-最终产品技术文档.md).
+See [Benchmark architecture](docs/benchmark-architecture.md), the [correctness framework](docs/correctness-framework.md), [implementation status](docs/implementation-status.md), the [RTX 3080 naive baseline report](docs/reports/rtx3080-naive-baseline-e37c132.md), and the [full technical design](docs/RaggedRoute-最终产品技术文档.md).
 
 ## Build profiles
 
@@ -88,7 +88,8 @@ Valid provider values are `AUTO`, `SYSTEM`, `FETCH`, and `OFF`. `AUTO` discovers
 
 ## Install and consume
 
-CUDA-enabled builds export the baseline library as `RaggedRoute::baseline_ops`:
+CUDA-enabled builds export `RaggedRoute::baseline_ops` and the separate
+`RaggedRoute::correctness_framework` test-support library:
 
 ```powershell
 cmake --install out\build\rtx3080-sm86-release
@@ -98,7 +99,9 @@ An external CMake project can then use:
 
 ```cmake
 find_package(RaggedRoute CONFIG REQUIRED)
-target_link_libraries(my_target PRIVATE RaggedRoute::baseline_ops)
+target_link_libraries(my_target PRIVATE
+  RaggedRoute::baseline_ops
+  RaggedRoute::correctness_framework)
 ```
 
 The package config discovers the consumer's CUDA Toolkit and propagates the C++17 requirement from the public headers.

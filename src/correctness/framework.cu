@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstring>
 #include <limits>
+#include <random>
 #include <stdexcept>
 #include <utility>
 
@@ -186,63 +187,76 @@ DTypeTraits dtype_traits(ScalarType type) {
       traits.logical_bits = traits.storage_unit_bits = 32;
       traits.max_finite = std::numeric_limits<float>::max();
       traits.epsilon_at_one = std::numeric_limits<float>::epsilon();
+      traits.allowed_accumulators = {ScalarType::kFp32};
       break;
     case ScalarType::kFp16:
       traits.logical_bits = traits.storage_unit_bits = 16;
       traits.max_finite = 65504.0;
       traits.epsilon_at_one = std::ldexp(1.0, -10);
       traits.minimum_native_compute_capability = 70;
+      traits.allowed_accumulators = {ScalarType::kFp32};
       break;
     case ScalarType::kBf16:
       traits.logical_bits = traits.storage_unit_bits = 16;
       traits.max_finite = 3.3895313892515355e38;
       traits.epsilon_at_one = std::ldexp(1.0, -7);
       traits.minimum_native_compute_capability = 80;
+      traits.allowed_accumulators = {ScalarType::kFp32};
       break;
     case ScalarType::kFp8E4M3:
       traits.logical_bits = traits.storage_unit_bits = 8;
       traits.supports_infinity = false;
       traits.saturates_finite = true;
+      traits.rounding = RoundingPolicy::kSaturateFinite;
       traits.max_finite = 448.0;
       traits.epsilon_at_one = std::ldexp(1.0, -3);
       traits.minimum_native_compute_capability = 90;
+      traits.allowed_accumulators = {ScalarType::kFp32};
       break;
     case ScalarType::kFp8E5M2:
       traits.logical_bits = traits.storage_unit_bits = 8;
       traits.saturates_finite = true;
+      traits.rounding = RoundingPolicy::kSaturateFinite;
       traits.max_finite = 57344.0;
       traits.epsilon_at_one = std::ldexp(1.0, -2);
       traits.minimum_native_compute_capability = 90;
+      traits.allowed_accumulators = {ScalarType::kFp32};
       break;
     case ScalarType::kFp6E2M3:
       traits.logical_bits = 6;
       traits.storage_unit_bits = 8;
       traits.supports_nan = traits.supports_infinity = false;
       traits.saturates_finite = true;
+      traits.rounding = RoundingPolicy::kSaturateFinite;
       traits.max_finite = 7.5;
       traits.epsilon_at_one = std::ldexp(1.0, -3);
       traits.minimum_native_compute_capability = 100;
       traits.requires_arch_family_specific = true;
+      traits.allowed_accumulators = {ScalarType::kFp32};
       break;
     case ScalarType::kFp6E3M2:
       traits.logical_bits = 6;
       traits.storage_unit_bits = 8;
       traits.supports_nan = traits.supports_infinity = false;
       traits.saturates_finite = true;
+      traits.rounding = RoundingPolicy::kSaturateFinite;
       traits.max_finite = 28.0;
       traits.epsilon_at_one = std::ldexp(1.0, -2);
       traits.minimum_native_compute_capability = 100;
       traits.requires_arch_family_specific = true;
+      traits.allowed_accumulators = {ScalarType::kFp32};
       break;
     case ScalarType::kFp4E2M1:
       traits.logical_bits = 4;
       traits.storage_unit_bits = 8;
       traits.supports_nan = traits.supports_infinity = false;
       traits.saturates_finite = true;
+      traits.rounding = RoundingPolicy::kSaturateFinite;
       traits.max_finite = 6.0;
       traits.epsilon_at_one = 0.5;
       traits.minimum_native_compute_capability = 100;
       traits.requires_arch_family_specific = true;
+      traits.allowed_accumulators = {ScalarType::kFp32};
       break;
   }
   return traits;
@@ -356,6 +370,26 @@ float quantize_tf32(float value) {
   bits = (bits + 0x00000fffU + lsb) & 0xffffe000U;
   std::memcpy(&value, &bits, sizeof(value));
   return value;
+}
+
+std::vector<double> make_deterministic_master_data(std::size_t elements, std::uint64_t seed,
+                                                   double lower, double upper) {
+  if (!std::isfinite(lower) || !std::isfinite(upper) || lower > upper) {
+    throw std::invalid_argument("invalid deterministic master-data range");
+  }
+  std::mt19937_64 generator(seed);
+  std::uniform_real_distribution<double> distribution(lower, upper);
+  std::vector<double> values(elements);
+  for (double& value : values) value = distribution(generator);
+  return values;
+}
+
+std::vector<double> quantize_master_data(const std::vector<double>& master, ScalarType type) {
+  std::vector<double> quantized(master.size());
+  for (std::size_t index = 0; index < master.size(); ++index) {
+    quantized[index] = decode_scalar(type, encode_scalar(type, master[index]));
+  }
+  return quantized;
 }
 
 cudaError_t launch_dtype_roundtrip(ScalarType type, const float* input, float* output,

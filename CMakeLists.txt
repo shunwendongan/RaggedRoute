@@ -119,6 +119,7 @@ if(RAGGEDROUTE_ENABLE_CUDA)
       "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>")
     target_link_libraries(raggedroute_benchmark_core PUBLIC
       raggedroute_baseline_ops
+      raggedroute_correctness_framework
       CUDA::cudart)
     target_compile_definitions(raggedroute_benchmark_core PRIVATE
       RAGGEDROUTE_GIT_SHA="${RAGGEDROUTE_GIT_SHA}"
@@ -142,7 +143,9 @@ if(RAGGEDROUTE_ENABLE_CUDA)
       raggedroute_correctness_framework)
     raggedroute_apply_target_settings(raggedroute_correctness_tests)
     add_test(NAME raggedroute_correctness COMMAND raggedroute_correctness_tests)
-    set_tests_properties(raggedroute_correctness PROPERTIES SKIP_RETURN_CODE 77)
+    set_tests_properties(raggedroute_correctness PROPERTIES
+      LABELS "correctness_smoke;correctness"
+      SKIP_RETURN_CODE 77)
 
     add_executable(raggedroute_correctness_framework_tests
       tests/correctness_framework_tests.cpp)
@@ -150,10 +153,48 @@ if(RAGGEDROUTE_ENABLE_CUDA)
       raggedroute_baseline_ops
       raggedroute_correctness_framework)
     raggedroute_apply_target_settings(raggedroute_correctness_framework_tests)
-    add_test(NAME raggedroute_correctness_framework
-      COMMAND raggedroute_correctness_framework_tests)
-    set_tests_properties(raggedroute_correctness_framework
-      PROPERTIES SKIP_RETURN_CODE 77)
+    function(raggedroute_add_correctness_framework_test name suite labels)
+      add_test(NAME ${name}
+        COMMAND raggedroute_correctness_framework_tests --suite ${suite})
+      set_tests_properties(${name} PROPERTIES
+        LABELS "${labels};correctness"
+        SKIP_RETURN_CODE 77)
+    endfunction()
+    raggedroute_add_correctness_framework_test(raggedroute_correctness_dtype dtype "dtype")
+    raggedroute_add_correctness_framework_test(raggedroute_correctness_selftest selftest
+      "correctness_selftest")
+    raggedroute_add_correctness_framework_test(raggedroute_correctness_edge edge
+      "correctness_edge")
+    raggedroute_add_correctness_framework_test(raggedroute_correctness_randomized randomized
+      "correctness_randomized")
+    raggedroute_add_correctness_framework_test(raggedroute_correctness_stream stream
+      "stream_contract")
+    add_test(NAME raggedroute_correctness_replay
+      COMMAND raggedroute_correctness_framework_tests --suite edge --replay
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/correctness/replay_dense_gemm.json")
+    set_tests_properties(raggedroute_correctness_replay PROPERTIES
+      LABELS "correctness_replay;correctness"
+      SKIP_RETURN_CODE 77)
+  endif()
+
+  if(RAGGEDROUTE_ENABLE_ARCH_COMPILE_TESTS)
+    if(CMAKE_VERSION VERSION_LESS "4.0")
+      message(FATAL_ERROR
+        "RAGGEDROUTE_ENABLE_ARCH_COMPILE_TESTS requires CMake 4.x for 90a/100a architecture names")
+    endif()
+    foreach(_raggedroute_probe_arch IN ITEMS 90a-real 100a-real)
+      string(REPLACE "-" "_" _raggedroute_probe_suffix "${_raggedroute_probe_arch}")
+      add_library(raggedroute_dtype_probe_${_raggedroute_probe_suffix} OBJECT EXCLUDE_FROM_ALL
+        tests/correctness/dtype_compile_probe.cu)
+      target_include_directories(raggedroute_dtype_probe_${_raggedroute_probe_suffix} PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+      set_target_properties(raggedroute_dtype_probe_${_raggedroute_probe_suffix} PROPERTIES
+        CUDA_ARCHITECTURES "${_raggedroute_probe_arch}")
+      raggedroute_apply_target_settings(raggedroute_dtype_probe_${_raggedroute_probe_suffix})
+    endforeach()
+    add_custom_target(raggedroute_arch_compile_tests
+      DEPENDS raggedroute_dtype_probe_90a_real raggedroute_dtype_probe_100a_real
+      COMMENT "Compile dtype declarations for Hopper and Blackwell target architectures")
   endif()
 
   if(RAGGEDROUTE_BUILD_BENCHMARKS)
@@ -181,8 +222,11 @@ if(RAGGEDROUTE_ENABLE_CUDA)
       LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
       RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
       INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
-      DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/raggedroute/baseline_ops.h"
+      DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/raggedroute")
+    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/raggedroute/correctness/"
+      DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/raggedroute/correctness"
+      FILES_MATCHING PATTERN "*.h")
     install(EXPORT RaggedRouteTargets
       FILE RaggedRouteTargets.cmake
       NAMESPACE RaggedRoute::

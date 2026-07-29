@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "raggedroute/benchmark/types.h"
+#include "raggedroute/correctness/framework.h"
 
 namespace raggedroute::benchmark {
 
@@ -210,25 +211,20 @@ inline std::vector<std::int32_t> offsets_from_counts(const std::vector<std::int3
 inline ValidationResult compare_floats(const std::vector<float>& actual,
                                        const std::vector<float>& expected, double atol,
                                        double rtol) {
-  if (actual.size() != expected.size()) {
-    return {false, "output size mismatch", std::nullopt, std::nullopt};
+  correctness::CaseDescriptor descriptor;
+  descriptor.case_id = "benchmark_post_measurement_validation";
+  descriptor.operator_name = "benchmark_adapter";
+  descriptor.variant_name = "cuda_naive";
+  std::vector<double> actual_double(actual.begin(), actual.end());
+  std::vector<double> expected_double(expected.begin(), expected.end());
+  const correctness::CheckReport report =
+      correctness::compare_floating(descriptor, actual_double, expected_double, atol, rtol);
+  if (report.ok()) {
+    return {true, "matched reference", report.numeric.max_abs_error, report.numeric.max_rel_error};
   }
-  double max_abs = 0.0;
-  double max_rel = 0.0;
-  for (std::size_t i = 0; i < actual.size(); ++i) {
-    const double abs_error = std::abs(static_cast<double>(actual[i]) - expected[i]);
-    const double denom = std::max(std::abs(static_cast<double>(expected[i])), 1.0e-12);
-    const double rel_error = abs_error / denom;
-    max_abs = std::max(max_abs, abs_error);
-    max_rel = std::max(max_rel, rel_error);
-    if (!std::isfinite(actual[i]) || abs_error > atol + rtol * denom) {
-      std::ostringstream message;
-      message << "mismatch at index " << i << ": actual=" << actual[i]
-              << ", expected=" << expected[i];
-      return {false, message.str(), max_abs, max_rel};
-    }
-  }
-  return {true, "matched reference", max_abs, max_rel};
+  const std::string message =
+      report.failures.empty() ? "correctness comparison failed" : report.failures.front().message;
+  return {false, message, report.numeric.max_abs_error, report.numeric.max_rel_error};
 }
 
 inline void top2_selected_softmax_reference(const std::vector<float>& logits, int tokens,

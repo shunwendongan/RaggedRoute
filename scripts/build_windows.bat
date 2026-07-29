@@ -3,6 +3,7 @@ setlocal EnableExtensions
 
 set "PRESET=%~1"
 if "%PRESET%"=="" set "PRESET=rtx3080-sm86-release"
+set "TARGET=%~2"
 
 set "RAGGEDROUTE_ENV_VSDEVCMD=%VSDEVCMD%"
 set "VSDEVCMD="
@@ -20,4 +21,8 @@ if not exist "%VSDEVCMD%" (
 call "%VSDEVCMD%" -arch=amd64 -host_arch=amd64 >nul
 if errorlevel 1 exit /b %errorlevel%
 
-cmake --build --preset "build-%PRESET%" --parallel
+if defined TARGET (
+  cmake --build --preset "build-%PRESET%" --target "%TARGET%" --parallel
+) else (
+  cmake --build --preset "build-%PRESET%" --parallel
+)

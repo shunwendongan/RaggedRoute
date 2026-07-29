@@ -1,0 +1,14 @@
+{
+  "schema_version": "raggedroute.promotion_policy.v1",
+  "correctness_required": true,
+  "minimum_independent_process_runs": 3,
+  "maximum_all_samples_cv": 0.10,
+  "minimum_speedup_shape_coverage": 0.80,
+  "minimum_trace_ratio_of_sums_speedup": 1.03,
+  "maximum_single_shape_regression_fraction": 0.05,
+  "maximum_workspace_growth_fraction": 0.25,
+  "require_same_gpu_uuid": true,
+  "require_same_case_config": true,
+  "require_same_math_semantics": true,
+  "notes": "Initial policy for promoting an optimized variant into default dispatch. Threshold changes require a reviewed policy version bump."
+}

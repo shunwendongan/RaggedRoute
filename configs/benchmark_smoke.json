@@ -1,0 +1,72 @@
+{
+  "schema_version": "raggedroute.suite.v1",
+  "suite_id": "all_operators_smoke",
+  "protocol": "smoke",
+  "process_runs": 1,
+  "common": {
+    "warmup": 2,
+    "samples": 3,
+    "kernel_repeats": 2,
+    "seed": 20260729,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "dense_gemm.fp32.tiny_non_aligned",
+      "operator": "dense_gemm",
+      "levels": ["l1", "l2"],
+      "params": {"M": 17, "N": 19, "K": 13}
+    },
+    {
+      "id": "topk_gate.selected_softmax.tiny",
+      "operator": "topk_gate",
+      "levels": ["l1", "l2"],
+      "params": {"T": 33, "E": 16}
+    },
+    {
+      "id": "histogram.zipf.tiny",
+      "operator": "histogram",
+      "levels": ["l1", "l2"],
+      "params": {"T": 33, "E": 16, "top_k": 2, "distribution": "zipf", "zipf_s": 1.0}
+    },
+    {
+      "id": "exclusive_scan.e33",
+      "operator": "exclusive_scan",
+      "levels": ["l1", "l2"],
+      "params": {"E": 33, "R": 66}
+    },
+    {
+      "id": "token_permute.zipf.tail",
+      "operator": "token_permute",
+      "levels": ["l1", "l2"],
+      "kernel_repeats_by_level": {"l1": 1, "l2": 2},
+      "params": {"T": 17, "E": 8, "top_k": 2, "K": 19, "distribution": "zipf", "zipf_s": 1.0, "materialize_sorted_route": true}
+    },
+    {
+      "id": "grouped_gemm.zipf.tail",
+      "operator": "grouped_gemm",
+      "levels": ["l1", "l2"],
+      "params": {"T": 17, "E": 8, "top_k": 2, "K": 13, "N": 11, "distribution": "zipf", "zipf_s": 1.0}
+    },
+    {
+      "id": "unpermute.zipf.tail",
+      "operator": "unpermute",
+      "levels": ["l1", "l2"],
+      "params": {"T": 17, "E": 8, "top_k": 2, "N": 19, "distribution": "zipf", "zipf_s": 1.0}
+    },
+    {
+      "id": "chain_from_tokens.full7.tiny",
+      "suite": "chain_from_tokens",
+      "levels": ["l3"],
+      "kernel_repeats_by_level": {"l3": 1},
+      "params": {"T": 8, "E": 4, "K": 8, "N": 7, "distribution": "uniform"}
+    },
+    {
+      "id": "chain_from_logits.six_ops.zipf",
+      "suite": "chain_from_logits",
+      "levels": ["l3"],
+      "kernel_repeats_by_level": {"l3": 1},
+      "params": {"T": 8, "E": 4, "K": 8, "N": 7, "distribution": "zipf", "zipf_s": 1.4}
+    }
+  ]
+}

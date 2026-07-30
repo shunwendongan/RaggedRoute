@@ -1,6 +1,6 @@
 # 实现状态与证据边界
 
-更新时间：2026-07-29
+更新时间：2026-07-30
 
 ## 已实现
 
@@ -14,8 +14,9 @@
 - CUDA runtime/cuBLAS、CUDA 13 bundled CCCL、外部 CCCL/CUTLASS 的 `AUTO|SYSTEM|FETCH|OFF` 发现策略；CCCL/CUTLASS Fetch 固定 tag；
 - CUDA 静态库的 install/export 与 `find_package(RaggedRoute)` package config；
 - correctness framework 的 FP32/FP16/BF16/低精度 capability metadata、dtype roundtrip launcher 与 guarded-buffer 工具；低精度能力仍须按实卡等级区分；
-- correctness framework 独立 CTest suite：dtype host/runtime roundtrip、reference invariants、failure/replay、redzone、zero-size、随机与 caller-stream 合同；
+- correctness framework 独立 CTest suite：dtype host/runtime roundtrip、reference invariants、failure artifact 序列化 roundtrip、redzone、zero-size、随机与 caller-stream 合同；当前不提供可执行的 failure replay；
 - correctness framework 的详细 dtype capability 边界、算子合同、failure JSON、sanitizer 和可选 `sm_90a`/`sm_100a` compile-only probe 见 [correctness-framework.md](correctness-framework.md)；其中跨架构编译不等同于 H100/Blackwell 实卡验证；
+- Compute Sanitizer 默认执行七个非零尺寸 L2 operator 和两条 L3 chain，覆盖 memcheck、initcheck、racecheck 与 synccheck；
 - 七个 FP32 naive CUDA launcher，均使用 caller stream，hot path 无分配和无条件同步；
 - 一个公共 CUDA Event runner 和七个 typed adapter；
 - `chain_from_tokens` 完整 7 算子 L3 与 `chain_from_logits` 6 算子 L3；
@@ -27,10 +28,10 @@
 
 ## 尚未实现，禁止据此宣称
 
-- 本次 P0 runtime/API 改动尚未在本轮 Windows + RTX 3080（SM86）环境重新构建、运行 CTest 与 benchmark smoke；本机 macOS 仅完成 host-side 配置和脚本测试，不能代替 CUDA 验证；
+- 通用的 failure artifact 自动重放、失败用例最小化与随机 GPU fuzz；当前 artifact 只保存和校验诊断信息；
 - FP16/Tensor Core、`cp.async`、persistent grouped scheduler 等优化版本；
 - cuBLAS/CUTLASS/CUB 强性能基线；
-- shape-aware default dispatch 和 promotion policy 的实际候选数据；
+- shape-aware default dispatch、promotion evaluator 和实际候选数据；`configs/benchmark_promotion_policy.json` 当前只是 roadmap 草案，不会自动产生晋升结论；
 - H100/Blackwell 实卡支持、正确性或性能；本机 SM90/SM90a 交叉编译不等同于 H100 验证；
 - 完整 MoE FFN、训练、多 GPU 或 All-to-All。
 

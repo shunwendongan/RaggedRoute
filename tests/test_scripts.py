@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import importlib.util
 import pathlib
 import tempfile
@@ -96,6 +97,72 @@ class SuiteTests(unittest.TestCase):
 
     def test_percentile_interpolates(self) -> None:
         self.assertEqual(aggregate_results.percentile([1.0, 2.0, 3.0], 0.5), 2.0)
+
+    @staticmethod
+    def make_benchmark_record(process_run: int) -> dict:
+        return {
+            "run_id": "run",
+            "case_id": "case",
+            "operator": "histogram",
+            "variant": "cuda_naive",
+            "measurement_level": "L2_operator_steady",
+            "cache_mode": "warm",
+            "protocol": "smoke",
+            "warmup": 2,
+            "kernel_repeats": 2,
+            "samples": 3,
+            "seed": 123,
+            "process_run": process_run,
+            "excluded_steps": ["h2d_copy"],
+            "workspace_bytes": 0,
+            "case_config": {"E": 8},
+            "variant_config": {"algorithm": "global_atomic"},
+            "work": {
+                "logical_bytes": 96.0,
+                "flops": 0.0,
+                "effective_gbps_batch_p50": 1.0 / process_run,
+                "operator_metrics": {"counts_reset_bytes": 32},
+            },
+            "environment": {
+                "gpu_uuid": "gpu",
+                "build_git_sha": "abc",
+                "build_type": "Release",
+                "compute_capability": "8.6",
+                "cuda_compiler": "13.3",
+                "cuda_runtime": 13030,
+                "cuda_driver": 13030,
+            },
+            "timing": {
+                "batch_mean_us_p50": float(process_run),
+                "raw_batch_mean_samples_us": [float(process_run)],
+            },
+        }
+
+    def test_aggregate_accepts_compatible_process_records(self) -> None:
+        records = [self.make_benchmark_record(1), self.make_benchmark_record(2)]
+        summary = aggregate_results.aggregate_records(records)
+        self.assertEqual(len(summary), 1)
+        self.assertEqual(summary[0]["process_runs"], 2)
+
+    def test_aggregate_rejects_mixed_measurement_conditions(self) -> None:
+        mutations = (
+            ("kernel_repeats", 3),
+            ("seed", 456),
+            ("workspace_bytes", 32),
+        )
+        for field, value in mutations:
+            with self.subTest(field=field):
+                first = self.make_benchmark_record(1)
+                second = copy.deepcopy(self.make_benchmark_record(2))
+                second[field] = value
+                with self.assertRaisesRegex(ValueError, field):
+                    aggregate_results.aggregate_records([first, second])
+
+        first = self.make_benchmark_record(1)
+        second = copy.deepcopy(self.make_benchmark_record(2))
+        second["environment"]["cuda_driver"] = 13040
+        with self.assertRaisesRegex(ValueError, "cuda_driver"):
+            aggregate_results.aggregate_records([first, second])
 
 
 if __name__ == "__main__":

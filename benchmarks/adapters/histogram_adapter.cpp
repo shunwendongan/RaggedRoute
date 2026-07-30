@@ -87,11 +87,15 @@ class HistogramAdapter final : public BenchmarkAdapter {
             {"privatization", false},
             {"threads_per_block", static_cast<std::int64_t>(256)}};
   }
-  WorkEstimate work_estimate() const override {
+  WorkEstimate work_estimate(MeasurementLevel level) const override {
     WorkEstimate work;
     work.logical_bytes =
         sizeof(std::int32_t) * static_cast<double>(ids_host_.size() + expected_.size());
     work.operator_metrics["global_atomic_operations"] = static_cast<std::int64_t>(ids_host_.size());
+    if (level == MeasurementLevel::kOperatorSteady) {
+      work.logical_bytes += static_cast<double>(counts_.bytes());
+      work.operator_metrics["counts_reset_bytes"] = static_cast<std::int64_t>(counts_.bytes());
+    }
     return work;
   }
   std::vector<std::string> excluded_steps(MeasurementLevel level) const override {

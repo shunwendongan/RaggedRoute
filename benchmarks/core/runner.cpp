@@ -336,7 +336,7 @@ BenchmarkRecord run_benchmark(BenchmarkAdapter& adapter, const RunOptions& optio
   record.workspace_bytes = adapter.workspace_bytes();
   record.case_config = adapter.case_config();
   record.variant_config = adapter.variant_config();
-  record.work = adapter.work_estimate();
+  record.work = adapter.work_estimate(options.level);
   record.environment = collect_environment();
   record.timing = summarize_samples(samples);
   record.validation = validation;

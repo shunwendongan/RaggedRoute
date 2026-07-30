@@ -86,10 +86,10 @@ class UnpermuteAdapter final : public BenchmarkAdapter {
   void prepare_sample(MeasurementLevel, cudaStream_t) override {}
   void enqueue(MeasurementLevel level, cudaStream_t stream) override {
     if (level == MeasurementLevel::kKernelBody) {
-      cuda_check(ops::launch_unpermute_naive(y_permuted_.data(), route_pos_.data(),
-                                              route_weights_.data(), y_.data(), tokens_, top_k_,
-                                              output_, stream),
-                 "launch_unpermute_naive");
+      cuda_check(
+          ops::launch_unpermute_naive(y_permuted_.data(), route_pos_.data(), route_weights_.data(),
+                                      y_.data(), tokens_, top_k_, output_, stream),
+          "launch_unpermute_naive");
       return;
     }
     UnpermuteArgs args;
@@ -121,7 +121,7 @@ class UnpermuteAdapter final : public BenchmarkAdapter {
     return {{"ownership", std::string("token_owned")},
             {"vector_width_bytes", static_cast<std::int64_t>(4)}};
   }
-  WorkEstimate work_estimate() const override {
+  WorkEstimate work_estimate(MeasurementLevel) const override {
     WorkEstimate work;
     work.flops = static_cast<double>((2 * top_k_ - 1) * tokens_ * output_);
     work.logical_bytes =

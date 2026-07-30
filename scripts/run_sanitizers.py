@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the small correctness edge suite under each Compute Sanitizer tool."""
+"""Run all seven operators and both chains under each Compute Sanitizer tool."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--executable",
         type=Path,
-        help="Override the correctness framework executable path.",
+        help="Override the all-operator correctness executable path.",
     )
     return parser.parse_args()
 
@@ -28,8 +28,8 @@ def find_executable(build_dir: Path, override: Path | None) -> Path:
     if override is not None:
         return override
     names = (
-        "raggedroute_correctness_framework_tests.exe",
-        "raggedroute_correctness_framework_tests",
+        "raggedroute_correctness_tests.exe",
+        "raggedroute_correctness_tests",
     )
     for name in names:
         candidate = build_dir / name
@@ -72,8 +72,6 @@ def main() -> int:
             "--error-exitcode",
             "99",
             str(executable),
-            "--suite",
-            "edge",
         ]
         execution = command
         if Path(sanitizer).suffix.lower() in {".bat", ".cmd"}:

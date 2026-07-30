@@ -90,7 +90,7 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
     args.top_k = top_k_;
     args.hidden = hidden_;
     operator_check(token_permute(args, make_runtime_context(stream, architecture_, cursors_.data(),
-                                                             cursors_.bytes())),
+                                                            cursors_.bytes())),
                    "token_permute operator");
   }
 
@@ -143,14 +143,19 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
             {"copy", std::string("scalar")},
             {"cursor", std::string("global_atomic")}};
   }
-  WorkEstimate work_estimate() const override {
+  WorkEstimate work_estimate(MeasurementLevel level) const override {
     WorkEstimate work;
     work.logical_bytes = 2.0 * sizeof(float) * route_pairs_ * hidden_ +
                          2.0 * sizeof(std::int32_t) * route_pairs_ +
                          (materialize_sorted_route_ ? sizeof(std::int32_t) * route_pairs_ : 0.0);
     work.operator_metrics["copied_rows"] = static_cast<std::int64_t>(route_pairs_);
+    if (level == MeasurementLevel::kOperatorSteady) {
+      work.logical_bytes += static_cast<double>(cursors_.bytes());
+      work.operator_metrics["cursor_reset_bytes"] = static_cast<std::int64_t>(cursors_.bytes());
+    }
     return work;
   }
+  std::size_t workspace_bytes() const override { return cursors_.bytes(); }
   std::vector<std::string> excluded_steps(MeasurementLevel level) const override {
     std::vector<std::string> excluded = {"input_generation", "h2d_copy", "workspace_allocation"};
     if (level == MeasurementLevel::kKernelBody) excluded.push_back("cursor_reset");

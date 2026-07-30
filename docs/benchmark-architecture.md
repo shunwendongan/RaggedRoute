@@ -96,7 +96,7 @@ flowchart TD
 
 ### Correctness
 
-- `raggedroute_correctness_tests` 直接调用七个 adapter 与两条 chain；`raggedroute_correctness_framework_tests` 独立覆盖 dtype/replay/redzone/zero-size/randomized/caller-stream 合同；两者都不创建 CUDA Event、不输出性能结论；
+- `raggedroute_correctness_tests` 直接调用七个 adapter 与两条 chain；`raggedroute_correctness_framework_tests` 独立覆盖 dtype、failure artifact roundtrip、redzone、zero-size、randomized/caller-stream 合同；两者都不创建 CUDA Event、不输出性能结论；当前不提供可执行的 failure replay；
 - 覆盖 non-aligned shape、tie、NaN、Inf、Zipf、single-hot、可选 mapping 和两条 L3 chain；
 - `tests/test_scripts.py` 检查 suite schema、release gate 与状态型 repeat policy；
 - sanitizer 是 correctness gate，不是 benchmark。
@@ -116,8 +116,7 @@ flowchart TD
 - 输出路径必须不存在，脚本拒绝覆盖旧 run；
 - raw JSONL 和 manifest 保留，聚合器不会删除原始样本。
 
-候选 variant 是否进入默认 dispatch 由版本化的
-`configs/benchmark_promotion_policy.json` 决定，而不是观察一个最佳点：正确性必须全过，至少三次独立进程，检查 CV、获益 shape coverage、trace ratio-of-sums、最大单点退化和 workspace 增长。当前只有 naive baseline，因此该 policy 尚不产生晋升结论。
+`configs/benchmark_promotion_policy.json` 是候选 variant 未来进入默认 dispatch 时使用的版本化标准草案：正确性必须全过，至少三次独立进程，并检查 CV、获益 shape coverage、trace ratio-of-sums、最大单点退化和 workspace 增长。当前没有 promotion evaluator，只有 naive baseline，因此该文件不会自动产生晋升结论。
 
 ### Profile
 

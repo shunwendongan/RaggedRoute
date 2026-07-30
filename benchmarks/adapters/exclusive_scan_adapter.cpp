@@ -41,8 +41,9 @@ class ExclusiveScanAdapter final : public BenchmarkAdapter {
   void prepare_sample(MeasurementLevel, cudaStream_t) override {}
   void enqueue(MeasurementLevel level, cudaStream_t stream) override {
     if (level == MeasurementLevel::kKernelBody) {
-      cuda_check(ops::launch_exclusive_scan_naive(counts_.data(), offsets_.data(), experts_, stream),
-                 "launch_exclusive_scan_naive");
+      cuda_check(
+          ops::launch_exclusive_scan_naive(counts_.data(), offsets_.data(), experts_, stream),
+          "launch_exclusive_scan_naive");
       return;
     }
     ExclusiveScanArgs args;
@@ -69,7 +70,7 @@ class ExclusiveScanAdapter final : public BenchmarkAdapter {
   FieldMap variant_config() const override {
     return {{"threads", static_cast<std::int64_t>(1)}, {"algorithm", std::string("sequential")}};
   }
-  WorkEstimate work_estimate() const override {
+  WorkEstimate work_estimate(MeasurementLevel) const override {
     WorkEstimate work;
     work.logical_bytes = sizeof(std::int32_t) * static_cast<double>(experts_ + experts_ + 1);
     work.operator_metrics["integer_additions"] = static_cast<std::int64_t>(experts_);

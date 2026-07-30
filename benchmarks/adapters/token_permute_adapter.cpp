@@ -14,8 +14,9 @@ namespace {
 
 class TokenPermuteAdapter final : public BenchmarkAdapter {
  public:
+  explicit TokenPermuteAdapter(const std::string& variant_name) : variant_name_(variant_name) {}
   std::string operator_name() const override { return "token_permute"; }
-  std::string variant_name() const override { return "cuda_naive"; }
+  std::string variant_name() const override { return variant_name_; }
   std::string description() const override {
     return "Atomic-cursor placement with scalar FP32 row copy";
   }
@@ -177,6 +178,7 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
   }
 
   int tokens_ = 0, experts_ = 0, top_k_ = 0, hidden_ = 0, route_pairs_ = 0;
+  std::string variant_name_;
   DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   double zipf_s_ = 0.0;
   bool materialize_sorted_route_ = true;
@@ -189,6 +191,8 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
 
 }  // namespace
 
-AdapterPtr make_token_permute_adapter() { return std::make_unique<TokenPermuteAdapter>(); }
+AdapterPtr make_token_permute_adapter(const std::string& variant_name) {
+  return std::make_unique<TokenPermuteAdapter>(variant_name);
+}
 
 }  // namespace raggedroute::benchmark

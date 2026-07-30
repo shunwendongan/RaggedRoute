@@ -23,6 +23,8 @@
 - 一个公共 CUDA Event runner 和七个 typed adapter；
 - `chain_from_tokens` 完整 7 算子 L3 与 `chain_from_logits` 6 算子 L3；
 - L1/L2 reset 成本边界、状态型 repeat policy、raw JSONL 和聚合 JSON/CSV；
+- `raggedroute.suite.v2` 多 variant logical case：每个 case 至少两个唯一 variant、恰好一个 `promotion_baseline`，并复用 case ID、seed、params、level、cache 与采样协议；suite v1 与 `raggedroute.benchmark.v1` raw evidence 保持兼容；
+- registry 为 typed adapter 注入标准实现元数据；`raggedroute.aggregate.v2` 从 v2 manifest 保留完整配对字段，`raggedroute.comparison.v1` 对 GPU/build/语义/math/seed/level/cache/repeats/排除项严格 fail-closed，并输出 per-pair speedup、shape geometric mean 和具备权重时的 trace ratio-of-sums；
 - correctness、benchmark smoke、release benchmark、Nsight profile 四个独立入口；
 - RTX 3080（CUDA 13.3 / MSVC 19.44 / CMake 4.3.1）SM86 Debug/Release 均已构建；CTest、CUDA smoke 均已通过；Release binary 检查为 `sm_86`；
 - commit `e37c132` 的 RTX 3080 正式 baseline suite 已完成：3 个独立进程、78 条 raw records、26 个聚合组、全部后置验证通过；结果与噪声限制见 [baseline report](reports/rtx3080-naive-baseline-e37c132.md)；
@@ -33,7 +35,7 @@
 - 通用的 failure artifact 自动重放、失败用例最小化与随机 GPU fuzz；当前 artifact 只保存和校验诊断信息；
 - FP16/Tensor Core、`cp.async`、persistent grouped scheduler 等优化版本；
 - cuBLAS/CUTLASS/CUB 强性能基线；
-- shape-aware default dispatch、promotion evaluator 和实际候选数据；`configs/benchmark_promotion_policy.json` 当前只是 roadmap 草案，不会自动产生晋升结论；
+- shape-aware default dispatch、promotion evaluator 和实际 library/optimized 候选数据；现有 comparison 只计算严格配对结果，`configs/benchmark_promotion_policy.json` 仍不会自动产生晋升结论；
 - H100/Blackwell 实卡支持、正确性或性能；本机 SM90/SM90a 交叉编译不等同于 H100 验证；
 - 完整 MoE FFN、训练、多 GPU 或 All-to-All。
 

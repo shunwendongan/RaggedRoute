@@ -38,7 +38,14 @@ void run_adapter_case(const Case& test_case, cudaStream_t stream, std::uint64_t 
   const auto result = adapter->validate(stream);
   require(result.ok, test_case.name + ": " + result.message);
   require(!adapter->case_config().empty(), test_case.name + " has no case config");
-  require(!adapter->variant_config().empty(), test_case.name + " has no variant config");
+  const auto variant_config = adapter->variant_config();
+  require(!variant_config.empty(), test_case.name + " has no variant config");
+  for (const std::string field :
+       {"implementation_category", "implementation_version", "implementation_revision",
+        "dependency_revision", "algorithm_id", "math_mode"}) {
+    require(variant_config.count(field) == 1,
+            test_case.name + " variant config is missing " + field);
+  }
   std::cout << "PASS " << test_case.name << " - " << result.message << '\n';
 }
 

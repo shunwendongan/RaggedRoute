@@ -1,13 +1,13 @@
 # RaggedRoute 后续开发路线
 
-> **状态：规划中，未实现。** 本文描述候选 variant 评估闭环与完整工作负载/结果管线；出现的 schema、脚本、门禁和制品名称均是后续目标，不代表当前仓库已经提供这些能力。当前可执行范围仍以 `implementation-status.md` 为准。
+> **状态：部分实现。** 里程碑 A1/A2 的 suite v2、多 variant registry、aggregate v2 和严格配对 comparison 已实现；A3 promotion evaluator 与里程碑 B 仍是计划。当前可执行范围及证据边界以 `implementation-status.md` 为准。
 
 ## 1. 依赖顺序
 
 按以下顺序推进，前一里程碑验收后才能把后一里程碑用于正式性能结论：
 
-1. 多 variant suite 与 registry；
-2. 可审计聚合与严格配对比较；
+1. 多 variant suite 与 registry（已实现）；
+2. 可审计聚合与严格配对比较（已实现）；
 3. 版本化 workload、真实 route trace 与 working-set sweep；
 4. 三态 promotion evaluator；
 5. profiler 指标、图表和 release bundle 固化。
@@ -18,18 +18,18 @@
 
 ### A1. 多 variant suite 与 registry
 
-- [ ] 定义 `raggedroute.suite.v2`：一个 logical case 包含 `variants[]`，且恰好一个 variant 标记为 `promotion_baseline`。
-- [ ] 同一 logical case 的所有 variant 复用 case ID、seed、params、measurement level、cache mode、warmup、samples 与 kernel repeats；执行顺序可以确定性打乱。
-- [ ] runner 继续接受 suite v1，并将其视为单 variant case；v1 输出语义不得改变。
-- [ ] registry 让同一个 typed adapter 复用输入、CPU oracle、reset、validation 与计时边界，只替换 implementation strategy，禁止 variant 私自增删被测步骤。
-- [ ] `variant_config` 至少记录实现类别与版本、依赖 revision、算法 ID、math mode，以及 tile、stage、vector width、scheduler 等优化参数；关键公平性字段不得只写进 notes。
+- [x] 定义 `raggedroute.suite.v2`：一个 logical case 包含至少两个 `variants[]`，且恰好一个 variant 标记为 `promotion_baseline`。
+- [x] 同一 logical case 的所有 variant 复用 case ID、seed、params、measurement level、cache mode、warmup、samples 与 kernel repeats；执行顺序确定性打乱。
+- [x] runner 继续接受 suite v1，并将其视为单 variant case；v1 raw schema 与输出语义不变。
+- [x] registry 将 variant 名传给同一个 typed adapter，并统一注入实现类别/版本/revision、依赖 revision、算法 ID 与 math mode；具体 library strategy 由对应 adapter 在接入时选择。
+- [x] adapter 自有 `variant_config` 继续记录 tile、stage、vector width、scheduler 等参数；标准公平性字段由 registry 强制补全。
 
 ### A2. 聚合与公平配对
 
-- [ ] 定义 `raggedroute.aggregate.v2`，完整保留 environment、protocol、seed、timing boundary、`excluded_steps`、workspace、case/variant/workload config 和全部配对键。
-- [ ] 新增 `raggedroute.comparison.v1` 与 `scripts/compare_results.py`。只有 GPU、build、input/weight/accumulator/output dtype、math mode、layout、shape、seed、measurement level、cache mode、repeats 和排除项全部一致时才计算 speedup。
-- [ ] 缺失 baseline/candidate、重复配对键、字段缺失或任一公平性条件不一致时 fail closed：不计算 speedup，并输出可审计原因。
-- [ ] shape-balanced 汇总可用 unweighted geometric mean；真实 trace 总收益必须使用 `sum(weight * baseline_latency) / sum(weight * candidate_latency)`，不得用 weighted geometric mean 冒充部署收益。
+- [x] 定义 `raggedroute.aggregate.v2`，从 run manifest 完整保留 environment、protocol、seed、timing boundary、`excluded_steps`、workspace、case/variant/workload config 和全部配对键。
+- [x] 新增 `raggedroute.comparison.v1` 与 `scripts/compare_results.py`。只有 GPU、build、case semantics、math mode、seed、measurement level、cache mode、repeats、samples 和排除项全部一致时才计算 speedup。
+- [x] 缺失 baseline/candidate、重复配对键、字段缺失或任一公平性条件不一致时 fail closed，不生成部分 speedup。
+- [x] shape-balanced 汇总使用 unweighted geometric mean；仅当所有 pair 都提供非负 `trace_weight` 时才计算 ratio-of-sums，否则保存 `null + reason`。
 
 ### A3. 质量门禁与三态 promotion
 
@@ -71,9 +71,9 @@
 
 ## 4. 验收测试
 
-- [ ] suite v1/v2 兼容；多 variant 确实复用 case ID、seed、输入、协议与计时边界。
-- [ ] 公平 join 拒绝矩阵覆盖每个配对字段的缺失、不一致、重复与 baseline 缺失。
-- [ ] comparison 验证单 shape speedup、unweighted geometric mean 和 trace ratio-of-sums；不得丢失原始 latency。
+- [x] suite v1/v2 兼容；多 variant 复用 case ID、seed、params、协议与计时边界。
+- [x] 公平 join 拒绝矩阵覆盖 GPU、build、case config、math、seed、level、cache、repeats、排除项、candidate/baseline 缺失与重复。
+- [x] comparison 验证单 shape speedup、unweighted geometric mean 和 trace ratio-of-sums；保留 baseline/candidate 原始 latency。
 - [ ] promotion 覆盖三种状态、高 CV、缺 trace、门禁缺失、coverage、最大退化，以及 workspace 的 64 MiB/25% 两条边界。
 - [ ] route trace 覆盖损坏 hash、长度错误、越界 id、token 内重复 expert 与非法权重；`synthetic_from_ids` 标签不可省略。
 - [ ] working-set rotation 验证 requested/resolved bytes、副本轮转、L2 元数据和 cold-scrub repeats 约束。

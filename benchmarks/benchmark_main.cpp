@@ -123,7 +123,11 @@ int main(int argc, char** argv) {
         std::cout << '\n';
       }
       for (const auto& name : rr::available_suites()) {
-        std::cout << "suite/" << name << ": cuda_naive\n";
+        std::cout << "suite/" << name << ':';
+        for (const auto& variant : rr::available_suite_variants(name)) {
+          std::cout << ' ' << variant;
+        }
+        std::cout << '\n';
       }
       return 0;
     }

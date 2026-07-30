@@ -21,7 +21,9 @@ import sys
 from typing import Any
 
 
-SCHEMA = "raggedroute.suite.v1"
+SCHEMA_V1 = "raggedroute.suite.v1"
+SCHEMA_V2 = "raggedroute.suite.v2"
+SUPPORTED_SCHEMAS = {SCHEMA_V1, SCHEMA_V2}
 
 
 def command_output(command: list[str], cwd: pathlib.Path) -> str:
@@ -46,14 +48,56 @@ def file_sha256(path: pathlib.Path) -> str:
 def load_suite(path: pathlib.Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as stream:
         suite = json.load(stream)
-    if suite.get("schema_version") != SCHEMA:
-        raise ValueError(f"expected schema_version={SCHEMA}")
+    schema = suite.get("schema_version")
+    if schema not in SUPPORTED_SCHEMAS:
+        raise ValueError(f"unsupported schema_version={schema!r}")
     if not isinstance(suite.get("cases"), list) or not suite["cases"]:
         raise ValueError("suite must contain a non-empty cases list")
     ids = [case.get("id") for case in suite["cases"]]
     if any(not case_id for case_id in ids) or len(ids) != len(set(ids)):
         raise ValueError("every case requires a unique non-empty id")
+    for case in suite["cases"]:
+        if bool(case.get("operator")) == bool(case.get("suite")):
+            raise ValueError(
+                f"case {case['id']} requires exactly one operator or suite"
+            )
+        if schema == SCHEMA_V1:
+            if "variants" in case:
+                raise ValueError(f"suite v1 case {case['id']} cannot define variants")
+            continue
+        if "variant" in case:
+            raise ValueError(f"suite v2 case {case['id']} must use variants[]")
+        variants = case.get("variants")
+        if not isinstance(variants, list) or len(variants) < 2:
+            raise ValueError(
+                f"suite v2 case {case['id']} requires at least two variants"
+            )
+        names = [variant.get("name") for variant in variants if isinstance(variant, dict)]
+        if len(names) != len(variants) or any(not name for name in names):
+            raise ValueError(f"case {case['id']} has an invalid variant entry")
+        if len(names) != len(set(names)):
+            raise ValueError(f"case {case['id']} has duplicate variant names")
+        baselines = [
+            variant for variant in variants if variant.get("promotion_baseline") is True
+        ]
+        if len(baselines) != 1:
+            raise ValueError(
+                f"case {case['id']} requires exactly one promotion_baseline"
+            )
     return suite
+
+
+def case_variants(
+    suite: dict[str, Any], case: dict[str, Any]
+) -> list[dict[str, Any]]:
+    if suite["schema_version"] == SCHEMA_V2:
+        return list(case["variants"])
+    return [
+        {
+            "name": case.get("variant", "cuda_naive"),
+            "promotion_baseline": True,
+        }
+    ]
 
 
 def git_state(repo: pathlib.Path) -> tuple[str, bool, str]:
@@ -87,22 +131,24 @@ def case_command(
     run_id: str,
     output: pathlib.Path,
     expected_git_sha: str = "",
+    variant: dict[str, Any] | None = None,
 ) -> list[str]:
     common = dict(suite.get("common", {}))
     common.update(case.get("common", {}))
     repeats = case.get("kernel_repeats_by_level", {}).get(
         level, common.get("kernel_repeats", 1)
     )
-    if bool(case.get("operator")) == bool(case.get("suite")):
-        raise ValueError(f"case {case['id']} requires exactly one operator or suite")
     target_flag = "--operator" if case.get("operator") else "--suite"
     target_name = case.get("operator") or case["suite"]
+    variant_name = (
+        variant["name"] if variant is not None else case.get("variant", "cuda_naive")
+    )
     command = [
         str(binary),
         target_flag,
         target_name,
         "--variant",
-        case.get("variant", "cuda_naive"),
+        variant_name,
         "--level",
         level,
         "--protocol",
@@ -185,7 +231,11 @@ def main() -> int:
         "--format=csv,noheader,nounits",
     ]
     manifest = {
-        "schema_version": "raggedroute.run_manifest.v1",
+        "schema_version": (
+            "raggedroute.run_manifest.v2"
+            if suite["schema_version"] == SCHEMA_V2
+            else "raggedroute.run_manifest.v1"
+        ),
         "created_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
         "run_id": run_id,
         "suite": suite,
@@ -214,15 +264,17 @@ def main() -> int:
     seed = int(suite.get("common", {}).get("seed", 20260729))
     for process_run in range(1, process_runs + 1):
         work = [
-            (case, level)
+            (case, variant, level)
             for case in suite["cases"]
+            for variant in case_variants(suite, case)
             for level in case.get("levels", ["l1"])
         ]
         random.Random(seed + process_run).shuffle(work)
-        for case, level in work:
+        for case, variant, level in work:
             command = case_command(
                 binary, suite, case, level, process_run, run_id, output,
                 sha if suite.get("protocol", "smoke") == "release" else "",
+                variant,
             )
             manifest["commands"].append(command)
             print("+", shlex.join(command), flush=True)

@@ -51,6 +51,14 @@ make_adapter
 
 新 variant 必须走同一个 adapter contract，不能通过改计时边界获得 speedup。
 
+### 多 variant 与严格比较层
+
+`raggedroute.suite.v2` 在一个 logical case 内声明至少两个 `variants[]`，并要求恰好一个 `promotion_baseline`。所有 variant 共享 case ID、seed、params、level、cache、warmup、samples 与 repeats；suite v1 继续按原有单 variant 行为执行，raw record 仍为 `raggedroute.benchmark.v1`。
+
+registry 将 variant 名交给同一个 typed adapter，并统一补充 `implementation_category`、`implementation_version`、`implementation_revision`、`dependency_revision`、`algorithm_id` 与 `math_mode`。输入/oracle/reset/validation/timing contract 仍由 typed adapter 独占，library strategy 只能替换被测实现。
+
+v2 run manifest 可生成 `raggedroute.aggregate.v2`；其中保留 protocol、environment、seed、measurement boundary、排除项、workspace、case/variant/workload config 与进程环境快照。`scripts/compare_results.py` 只接受 aggregate v2；缺 baseline/candidate、重复 variant、字段缺失或 GPU/build/语义/math/seed/level/cache/repeats/排除项不一致时立即拒绝整个比较，不输出部分 speedup。
+
 ## 2. 七个 adapter 保留的个性化逻辑
 
 | Adapter | 专有 case/config | L1 前置状态 | L2 必含成本 | 当前 oracle/检查 |
@@ -174,6 +182,14 @@ python scripts\run_benchmarks.py `
 python scripts\aggregate_results.py reports\runs\smoke.jsonl `
   --json reports\runs\smoke.aggregate.json `
   --csv reports\runs\smoke.aggregate.csv
+
+# suite v2 additionally supplies its run manifest and then performs strict pairing.
+python scripts\aggregate_results.py reports\runs\paired.jsonl `
+  --manifest reports\runs\paired.jsonl.manifest.json `
+  --json reports\runs\paired.aggregate.json `
+  --csv reports\runs\paired.aggregate.csv
+python scripts\compare_results.py reports\runs\paired.aggregate.json `
+  --output reports\runs\paired.comparison.json
 ```
 
 正式评测只能在代码提交、重新配置 Release build、worktree clean 且 correctness/sanitizer 通过后运行。

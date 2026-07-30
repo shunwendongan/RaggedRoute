@@ -15,8 +15,9 @@ namespace {
 
 class TopKGateAdapter final : public BenchmarkAdapter {
  public:
+  explicit TopKGateAdapter(const std::string& variant_name) : variant_name_(variant_name) {}
   std::string operator_name() const override { return "topk_gate"; }
-  std::string variant_name() const override { return "cuda_naive"; }
+  std::string variant_name() const override { return variant_name_; }
   std::string description() const override {
     return "One CUDA thread per row with deterministic Top-2 selected-softmax";
   }
@@ -121,6 +122,7 @@ class TopKGateAdapter final : public BenchmarkAdapter {
     }
   }
   int tokens_ = 0, experts_ = 0;
+  std::string variant_name_;
   DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   std::string input_mode_;
   std::vector<float> logits_host_, weights_expected_;
@@ -131,6 +133,8 @@ class TopKGateAdapter final : public BenchmarkAdapter {
 
 }  // namespace
 
-AdapterPtr make_topk_gate_adapter() { return std::make_unique<TopKGateAdapter>(); }
+AdapterPtr make_topk_gate_adapter(const std::string& variant_name) {
+  return std::make_unique<TopKGateAdapter>(variant_name);
+}
 
 }  // namespace raggedroute::benchmark

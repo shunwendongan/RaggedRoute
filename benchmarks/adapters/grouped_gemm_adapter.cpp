@@ -116,7 +116,7 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
             {"tile_n", static_cast<std::int64_t>(16)},
             {"scheduler", std::string("grid_z_per_expert")}};
   }
-  WorkEstimate work_estimate() const override {
+  WorkEstimate work_estimate(MeasurementLevel) const override {
     WorkEstimate work;
     work.flops = 2.0 * route_pairs_ * hidden_ * output_;
     work.logical_bytes = sizeof(float) * (static_cast<double>(route_pairs_) * hidden_ +

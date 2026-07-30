@@ -1,5 +1,6 @@
 #include <cuda_runtime_api.h>
 
+#include <algorithm>
 #include <iostream>
 #include <limits>
 #include <map>
@@ -153,9 +154,44 @@ int main() {
       }
 
       auto permute = rr::make_adapter("token_permute", "cuda_naive");
-      permute->setup({{"T", "4"}, {"E", "4"}, {"top_k", "2"}, {"K", "4"}}, seed, stream);
+      permute->setup({{"T", "4"}, {"E", "8"}, {"top_k", "2"}, {"K", "4"}}, seed, stream);
       require(permute->repeat_policy(rr::MeasurementLevel::kKernelBody).max_repeats == 1,
               "stateful permute L1 must reject batched repeats");
+      require(permute->workspace_bytes() == 8 * sizeof(std::int32_t),
+              "permute must report its cursor workspace");
+      const auto permute_l1 = permute->work_estimate(rr::MeasurementLevel::kKernelBody);
+      const auto permute_l2 = permute->work_estimate(rr::MeasurementLevel::kOperatorSteady);
+      require(permute_l2.logical_bytes - permute_l1.logical_bytes == 8 * sizeof(std::int32_t),
+              "permute L2 work must include cursor reset bytes");
+      const auto permute_l1_excluded = permute->excluded_steps(rr::MeasurementLevel::kKernelBody);
+      const auto permute_l2_excluded =
+          permute->excluded_steps(rr::MeasurementLevel::kOperatorSteady);
+      require(std::find(permute_l1_excluded.begin(), permute_l1_excluded.end(), "cursor_reset") !=
+                      permute_l1_excluded.end() &&
+                  std::find(permute_l2_excluded.begin(), permute_l2_excluded.end(),
+                            "cursor_reset") == permute_l2_excluded.end(),
+              "permute reset exclusion must distinguish L1 from L2");
+
+      auto histogram = rr::make_adapter("histogram", "cuda_naive");
+      histogram->setup({{"T", "4"}, {"E", "8"}, {"top_k", "2"}}, seed, stream);
+      const auto histogram_l1 = histogram->work_estimate(rr::MeasurementLevel::kKernelBody);
+      const auto histogram_l2 = histogram->work_estimate(rr::MeasurementLevel::kOperatorSteady);
+      require(histogram_l2.logical_bytes - histogram_l1.logical_bytes == 8 * sizeof(std::int32_t),
+              "histogram L2 work must include counts reset bytes");
+      const auto histogram_l1_excluded =
+          histogram->excluded_steps(rr::MeasurementLevel::kKernelBody);
+      const auto histogram_l2_excluded =
+          histogram->excluded_steps(rr::MeasurementLevel::kOperatorSteady);
+      require(std::find(histogram_l1_excluded.begin(), histogram_l1_excluded.end(),
+                        "counts_reset") != histogram_l1_excluded.end() &&
+                  std::find(histogram_l2_excluded.begin(), histogram_l2_excluded.end(),
+                            "counts_reset") == histogram_l2_excluded.end(),
+              "histogram reset exclusion must distinguish L1 from L2");
+
+      auto chain = rr::make_suite_adapter("chain_from_logits", "cuda_naive");
+      chain->setup({{"T", "4"}, {"E", "4"}, {"K", "4"}, {"N", "4"}}, seed, stream);
+      require(chain->workspace_bytes() == 4 * sizeof(std::int32_t),
+              "chain must report its cursor workspace");
 
       bool rejected = false;
       try {

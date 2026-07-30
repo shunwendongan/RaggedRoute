@@ -196,7 +196,7 @@ void test_references_and_invariants() {
           "Grouped GEMM + Unpermute reference chain failed");
 }
 
-void test_failure_detection_and_replay(cudaStream_t stream) {
+void test_failure_detection_and_artifact_roundtrip(cudaStream_t stream) {
   rc::CaseDescriptor descriptor = make_case("framework.failure", "dense_gemm", 17);
   descriptor.shape = {{"M", 2}, {"N", 2}, {"K", 2}};
   const rc::CheckReport mismatch = rc::compare_floating(descriptor, {1.0}, {2.0}, 0.0, 0.0);
@@ -216,18 +216,18 @@ void test_failure_detection_and_replay(cudaStream_t stream) {
   rc::cuda_check(cudaStreamSynchronize(stream), "sync canary corruption");
   require(!buffer.canaries_intact(stream), "redzone corruption must be detected");
 
-  const auto replay_path =
-      (std::filesystem::temp_directory_path() / "raggedroute_correctness_replay.json").string();
-  rc::save_case_json(replay_path, descriptor);
-  const auto loaded = rc::load_case_json(replay_path);
+  const auto artifact_path =
+      (std::filesystem::temp_directory_path() / "raggedroute_correctness_artifact.json").string();
+  rc::save_case_json(artifact_path, descriptor);
+  const auto loaded = rc::load_case_json(artifact_path);
   require(loaded.case_id == descriptor.case_id && loaded.shape == descriptor.shape &&
               loaded.seed == descriptor.seed,
-          "case JSON replay changed descriptor fields");
-  rc::save_failure_artifact(replay_path, mismatch, descriptor);
-  const auto loaded_failure_case = rc::load_case_json(replay_path);
+          "case artifact roundtrip changed descriptor fields");
+  rc::save_failure_artifact(artifact_path, mismatch, descriptor);
+  const auto loaded_failure_case = rc::load_case_json(artifact_path);
   require(loaded_failure_case.case_id == descriptor.case_id,
-          "failure artifact cannot be replayed as a case descriptor");
-  std::filesystem::remove(replay_path);
+          "failure artifact does not expose its embedded case descriptor");
+  std::filesystem::remove(artifact_path);
 }
 
 void test_zero_and_stream_contract(cudaStream_t stream) {
@@ -319,16 +319,13 @@ void test_randomized_reference_suite() {
 
 int main(int argc, char** argv) {
   std::string suite = "all";
-  std::string replay_path;
   for (int index = 1; index < argc; ++index) {
     const std::string argument = argv[index];
     if (argument == "--suite" && index + 1 < argc)
       suite = argv[++index];
-    else if (argument == "--replay" && index + 1 < argc)
-      replay_path = argv[++index];
     else if (argument == "--help") {
       std::cout << "raggedroute_correctness_framework_tests [--suite "
-                   "all|dtype|selftest|edge|randomized|stream] [--replay FILE]\n";
+                   "all|dtype|selftest|edge|randomized|stream]\n";
       return 0;
     } else {
       std::cerr << "unknown argument: " << argument << '\n';
@@ -345,13 +342,9 @@ int main(int argc, char** argv) {
     rc::cuda_check(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking),
                    "create correctness framework stream");
     try {
-      if (!replay_path.empty()) {
-        const auto replay = rc::load_case_json(replay_path);
-        require(!replay.case_id.empty() && !replay.operator_name.empty(),
-                "replay descriptor is incomplete");
-      }
       if (suite == "all" || suite == "dtype") test_dtype_host_and_runtime(stream);
-      if (suite == "all" || suite == "selftest") test_failure_detection_and_replay(stream);
+      if (suite == "all" || suite == "selftest")
+        test_failure_detection_and_artifact_roundtrip(stream);
       if (suite == "all" || suite == "edge") test_references_and_invariants();
       if (suite == "all" || suite == "edge" || suite == "stream")
         test_zero_and_stream_contract(stream);

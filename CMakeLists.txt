@@ -194,13 +194,6 @@ if(RAGGEDROUTE_ENABLE_CUDA)
       "correctness_randomized")
     raggedroute_add_correctness_framework_test(raggedroute_correctness_stream stream
       "stream_contract")
-    add_test(NAME raggedroute_correctness_replay
-      COMMAND raggedroute_correctness_framework_tests --suite edge --replay
-        "${CMAKE_CURRENT_SOURCE_DIR}/tests/correctness/replay_dense_gemm.json")
-    set_tests_properties(raggedroute_correctness_replay PROPERTIES
-      LABELS "correctness_replay;correctness"
-      SKIP_RETURN_CODE 77)
-
     add_executable(raggedroute_operator_api_tests tests/operator_api_tests.cpp)
     target_link_libraries(raggedroute_operator_api_tests PRIVATE
       raggedroute_runtime

@@ -84,7 +84,7 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
             {"outputs_per_thread", static_cast<std::int64_t>(1)},
             {"math_path", std::string("cuda_core_scalar")}};
   }
-  WorkEstimate work_estimate() const override {
+  WorkEstimate work_estimate(MeasurementLevel) const override {
     WorkEstimate work;
     work.flops = 2.0 * m_ * n_ * k_;
     work.logical_bytes =

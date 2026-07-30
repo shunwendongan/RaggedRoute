@@ -52,8 +52,9 @@ hardware.
 
 Failure artifacts are JSON and contain the deterministic case descriptor,
 dtype and math mode, seed, dimensions, CUDA errors, guard state, numerical
-diagnostics, and the worst mismatch.  The framework test binary accepts
-`--replay FILE` to load either a case or failure artifact deterministically.
+diagnostics, and the worst mismatch.  The framework validates case/failure
+artifact serialization roundtrips, but it does not currently execute a saved
+artifact as a replayed operator case.
 
 ## Test entry points
 
@@ -66,8 +67,7 @@ ctest --test-dir out/build/rtx3080-sm86-debug -L correctness_edge --output-on-fa
 ```
 
 The labels are `dtype`, `correctness_smoke`, `correctness_edge`,
-`correctness_randomized`, `correctness_selftest`, `correctness_replay`, and
-`stream_contract`.
+`correctness_randomized`, `correctness_selftest`, and `stream_contract`.
 The smoke test retains the seven baseline operators and the two chain suites.
 
 To compile the future dtype declarations without adding fat-binary code to the
@@ -90,5 +90,6 @@ python scripts/run_sanitizers.py --build-dir out/build/rtx3080-sm86-debug `
 ```
 
 The script runs memcheck, initcheck, racecheck, and synccheck with a non-zero
-error exit code.  It deliberately uses the edge suite, not the self-test,
-because the self-test intentionally corrupts a redzone.
+error exit code.  Its default executable runs non-zero cases for all seven L2
+operators and both L3 chains.  It does not run the framework self-test, which
+intentionally corrupts a redzone.

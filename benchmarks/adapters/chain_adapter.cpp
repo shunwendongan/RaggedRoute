@@ -135,9 +135,10 @@ class ChainAdapter final : public BenchmarkAdapter {
     permute_args.experts = experts_;
     permute_args.top_k = 2;
     permute_args.hidden = hidden_;
-    operator_check(token_permute(permute_args, make_runtime_context(stream, architecture_,
-                                                                     cursors_.data(), cursors_.bytes())),
-                   "chain token_permute operator");
+    operator_check(
+        token_permute(permute_args, make_runtime_context(stream, architecture_, cursors_.data(),
+                                                         cursors_.bytes())),
+        "chain token_permute operator");
 
     // Passing R is a truthful worst-case launch bound. No input-dependent host
     // max-M computation is hidden outside the L3 interval.
@@ -212,7 +213,7 @@ class ChainAdapter final : public BenchmarkAdapter {
             {"materialize_sorted_route", false}};
   }
 
-  WorkEstimate work_estimate() const override {
+  WorkEstimate work_estimate(MeasurementLevel) const override {
     WorkEstimate work;
     if (include_router_projection_) {
       work.flops += 2.0 * tokens_ * hidden_ * experts_;
@@ -225,6 +226,7 @@ class ChainAdapter final : public BenchmarkAdapter {
     work.logical_bytes += sizeof(float) * static_cast<double>(tokens_) * experts_;
     work.logical_bytes += 2.0 * sizeof(std::int32_t) * route_pairs_;
     work.logical_bytes += 3.0 * sizeof(std::int32_t) * experts_;
+    work.logical_bytes += 2.0 * sizeof(std::int32_t) * experts_;
     work.logical_bytes += 2.0 * sizeof(float) * route_pairs_ * hidden_;
     work.logical_bytes +=
         sizeof(float) *
@@ -234,8 +236,13 @@ class ChainAdapter final : public BenchmarkAdapter {
                                            static_cast<double>(tokens_) * output_);
     work.operator_metrics["kernel_launches"] =
         static_cast<std::int64_t>(include_router_projection_ ? 9 : 8);
+    work.operator_metrics["counts_reset_bytes"] =
+        static_cast<std::int64_t>(sizeof(std::int32_t) * experts_);
+    work.operator_metrics["cursor_reset_bytes"] = static_cast<std::int64_t>(cursors_.bytes());
     return work;
   }
+
+  std::size_t workspace_bytes() const override { return cursors_.bytes(); }
 
   std::vector<std::string> excluded_steps(MeasurementLevel) const override {
     return {"input_generation", "cpu_reference", "h2d_copy", "workspace_allocation"};

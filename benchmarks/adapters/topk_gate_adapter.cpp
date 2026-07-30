@@ -94,7 +94,7 @@ class TopKGateAdapter final : public BenchmarkAdapter {
     return {{"rows_per_thread", static_cast<std::int64_t>(1)},
             {"threads_per_block", static_cast<std::int64_t>(256)}};
   }
-  WorkEstimate work_estimate() const override {
+  WorkEstimate work_estimate(MeasurementLevel) const override {
     WorkEstimate work;
     work.logical_bytes =
         sizeof(float) * static_cast<double>(tokens_) * experts_ +

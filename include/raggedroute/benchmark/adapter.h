@@ -39,7 +39,7 @@ class BenchmarkAdapter {
 
   virtual FieldMap case_config() const = 0;
   virtual FieldMap variant_config() const = 0;
-  virtual WorkEstimate work_estimate() const = 0;
+  virtual WorkEstimate work_estimate(MeasurementLevel level) const = 0;
   virtual std::size_t workspace_bytes() const { return 0; }
   virtual std::vector<std::string> excluded_steps(MeasurementLevel level) const = 0;
 };

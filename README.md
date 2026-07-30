@@ -2,7 +2,7 @@
 
 CUDA primitives and an auditable benchmark pipeline for single-GPU MoE routing and ragged expert computation.
 
-> Current milestone: a two-layer P0 API, seven FP32 naive CUDA baselines, and auditable L1/L2/L3 measurement boundaries are implemented. The public runtime dispatch accepts SM86 only; the new code must be revalidated on the Windows RTX 3080 environment before any performance claim is made.
+> Current milestone: a two-layer P0 API, seven FP32 teaching/reference CUDA baselines, and auditable L1/L2/L3 measurement boundaries are implemented and revalidated on RTX 3080 / SM86. This is a reproducible resume project, not a production-ready operator library.
 
 ## Operators
 
@@ -36,7 +36,7 @@ Correctness, release performance, and profiling are separate flows:
 
 | Flow | Purpose | Produces performance claims? |
 |---|---|---|
-| Two correctness executables / CTest | Adapter/reference plus dtype, replay, redzone, edge, randomized, and stream-contract validation | No |
+| Two correctness executables / CTest | Adapter/reference plus dtype, failure-artifact roundtrip, redzone, edge, randomized, and stream-contract validation | No |
 | `benchmark_smoke.json` | Fast executable/schema smoke | No |
 | `benchmark_rtx3080_release.json` | Clean-Git, Release, 3-process raw measurement | Baseline latency only |
 | `profile_benchmarks.py` | Nsight Compute diagnosis | No; profiler duration is not a score |
@@ -143,4 +143,4 @@ out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
 
 Implemented now: caller-stream naive launchers, an SM86-only public runtime/dispatch layer, typed adapters, CPU oracles, raw samples, p50/p90/p95 of batch means, explicit excluded steps, L1/L2 cost boundaries, and both L3 chains. L2/L3 call the public wrappers, so histogram counts reset and permute cursor reset are included there while L1 keeps them as explicit preconditions.
 
-Not implemented yet: FP16/Tensor Core optimized variants, cuBLAS/CUTLASS/CUB performance baselines, default shape dispatch, or H100/Blackwell validation. Those must be added as new variants and measured under the same contract before reporting speedup.
+Not implemented yet: executable failure replay, FP16/Tensor Core optimized variants, cuBLAS/CUTLASS/CUB performance baselines, automatic promotion evaluation, default shape dispatch, or H100/Blackwell validation. The promotion policy file is a roadmap draft only. Those capabilities must be implemented and measured under the same contract before reporting speedup or support.

@@ -16,6 +16,8 @@
 
 #include "raggedroute/benchmark/types.h"
 #include "raggedroute/correctness/framework.h"
+#include "raggedroute/dispatch.h"
+#include "raggedroute/operators.h"
 
 namespace raggedroute::benchmark {
 
@@ -23,6 +25,37 @@ inline void cuda_check(cudaError_t status, const char* operation) {
   if (status != cudaSuccess) {
     throw std::runtime_error(std::string(operation) + ": " + cudaGetErrorString(status));
   }
+}
+
+inline void operator_check(const ::raggedroute::Status& status, const char* operation) {
+  if (!status.ok()) {
+    std::string message(operation);
+    message += ": ";
+    message += status.message == nullptr ? "operator error" : status.message;
+    if (status.cuda_error != cudaSuccess) {
+      message += ": ";
+      message += cudaGetErrorString(status.cuda_error);
+    }
+    throw std::runtime_error(message);
+  }
+}
+
+inline ::raggedroute::DeviceArchitecture current_device_architecture() {
+  ::raggedroute::DeviceArchitecture architecture = ::raggedroute::DeviceArchitecture::kOther;
+  operator_check(::raggedroute::query_current_device_architecture(&architecture),
+                 "query current CUDA architecture");
+  return architecture;
+}
+
+inline ::raggedroute::RuntimeContext make_runtime_context(
+    cudaStream_t stream, ::raggedroute::DeviceArchitecture architecture, void* workspace = nullptr,
+    std::size_t workspace_bytes = 0) {
+  ::raggedroute::RuntimeContext context;
+  context.stream = stream;
+  context.workspace = workspace;
+  context.workspace_bytes = workspace_bytes;
+  context.architecture = architecture;
+  return context;
 }
 
 template <typename T>

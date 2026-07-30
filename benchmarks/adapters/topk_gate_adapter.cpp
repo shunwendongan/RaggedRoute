@@ -27,6 +27,7 @@ class TopKGateAdapter final : public BenchmarkAdapter {
 
   void setup(const OptionMap& options, std::uint64_t seed, cudaStream_t stream) override {
     reject_unknown(options);
+    architecture_ = current_device_architecture();
     tokens_ = get_int_option(options, "T", 128);
     experts_ = get_int_option(options, "E", 16, 2);
     if (experts_ > 64) throw std::invalid_argument("current Top-K adapter supports 2<=E<=64");
@@ -55,10 +56,21 @@ class TopKGateAdapter final : public BenchmarkAdapter {
   }
 
   void prepare_sample(MeasurementLevel, cudaStream_t) override {}
-  void enqueue(MeasurementLevel, cudaStream_t stream) override {
-    cuda_check(ops::launch_topk_gate_naive(logits_.data(), ids_.data(), weights_.data(), tokens_,
-                                           experts_, stream),
-               "launch_topk_gate_naive");
+  void enqueue(MeasurementLevel level, cudaStream_t stream) override {
+    if (level == MeasurementLevel::kKernelBody) {
+      cuda_check(ops::launch_topk_gate_naive(logits_.data(), ids_.data(), weights_.data(), tokens_,
+                                             experts_, stream),
+                 "launch_topk_gate_naive");
+      return;
+    }
+    TopKGateArgs args;
+    args.logits = logits_.data();
+    args.expert_ids = ids_.data();
+    args.weights = weights_.data();
+    args.tokens = tokens_;
+    args.experts = experts_;
+    operator_check(topk_gate(args, make_runtime_context(stream, architecture_)),
+                   "topk_gate operator");
   }
   ValidationResult validate(cudaStream_t stream) override {
     const auto ids = ids_.copy_to_host(stream);
@@ -109,6 +121,7 @@ class TopKGateAdapter final : public BenchmarkAdapter {
     }
   }
   int tokens_ = 0, experts_ = 0;
+  DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   std::string input_mode_;
   std::vector<float> logits_host_, weights_expected_;
   std::vector<std::int32_t> ids_expected_;

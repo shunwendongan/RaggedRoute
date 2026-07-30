@@ -32,6 +32,7 @@ class ChainAdapter final : public BenchmarkAdapter {
 
   void setup(const OptionMap& options, std::uint64_t seed, cudaStream_t stream) override {
     reject_unknown(options);
+    architecture_ = current_device_architecture();
     tokens_ = get_int_option(options, "T", 64);
     experts_ = get_int_option(options, "E", 8, 2);
     if (experts_ > 64) throw std::invalid_argument("current chain adapters support E<=64");
@@ -92,35 +93,74 @@ class ChainAdapter final : public BenchmarkAdapter {
     if (level != MeasurementLevel::kChainSteady) {
       throw std::invalid_argument("chain adapter only supports L3");
     }
+    const RuntimeContext context = make_runtime_context(stream, architecture_);
     if (include_router_projection_) {
-      cuda_check(ops::launch_dense_gemm_naive(x_.data(), router_weights_.data(), logits_.data(),
-                                              tokens_, experts_, hidden_, stream),
-                 "chain dense_gemm");
+      DenseGemmArgs args;
+      args.a = x_.data();
+      args.b = router_weights_.data();
+      args.c = logits_.data();
+      args.m = tokens_;
+      args.n = experts_;
+      args.k = hidden_;
+      operator_check(dense_gemm(args, context), "chain dense_gemm operator");
     }
-    cuda_check(ops::launch_topk_gate_naive(logits_.data(), ids_.data(), route_weights_.data(),
-                                           tokens_, experts_, stream),
-               "chain topk_gate");
-    cuda_check(cudaMemsetAsync(counts_.data(), 0, counts_.bytes(), stream), "chain counts reset");
-    cuda_check(
-        ops::launch_histogram_naive(ids_.data(), counts_.data(), route_pairs_, experts_, stream),
-        "chain histogram");
-    cuda_check(ops::launch_exclusive_scan_naive(counts_.data(), offsets_.data(), experts_, stream),
-               "chain exclusive_scan");
-    cuda_check(cudaMemsetAsync(cursors_.data(), 0, cursors_.bytes(), stream), "chain cursor reset");
-    cuda_check(ops::launch_token_permute_naive(
-                   x_.data(), ids_.data(), offsets_.data(), cursors_.data(), x_permuted_.data(),
-                   route_pos_.data(), nullptr, tokens_, 2, hidden_, stream),
-               "chain token_permute");
+    TopKGateArgs topk_args;
+    topk_args.logits = logits_.data();
+    topk_args.expert_ids = ids_.data();
+    topk_args.weights = route_weights_.data();
+    topk_args.tokens = tokens_;
+    topk_args.experts = experts_;
+    operator_check(topk_gate(topk_args, context), "chain topk_gate operator");
+
+    HistogramArgs histogram_args;
+    histogram_args.expert_ids = ids_.data();
+    histogram_args.counts = counts_.data();
+    histogram_args.route_pairs = route_pairs_;
+    histogram_args.experts = experts_;
+    operator_check(histogram(histogram_args, context), "chain histogram operator");
+
+    ExclusiveScanArgs scan_args;
+    scan_args.counts = counts_.data();
+    scan_args.offsets = offsets_.data();
+    scan_args.experts = experts_;
+    operator_check(exclusive_scan(scan_args, context), "chain exclusive_scan operator");
+
+    TokenPermuteArgs permute_args;
+    permute_args.x = x_.data();
+    permute_args.expert_ids = ids_.data();
+    permute_args.offsets = offsets_.data();
+    permute_args.x_permuted = x_permuted_.data();
+    permute_args.route_pos = route_pos_.data();
+    permute_args.tokens = tokens_;
+    permute_args.experts = experts_;
+    permute_args.top_k = 2;
+    permute_args.hidden = hidden_;
+    operator_check(token_permute(permute_args, make_runtime_context(stream, architecture_,
+                                                                     cursors_.data(), cursors_.bytes())),
+                   "chain token_permute operator");
+
     // Passing R is a truthful worst-case launch bound. No input-dependent host
     // max-M computation is hidden outside the L3 interval.
-    cuda_check(ops::launch_grouped_gemm_naive(x_permuted_.data(), expert_weights_.data(),
-                                              offsets_.data(), y_permuted_.data(), experts_,
-                                              hidden_, output_, route_pairs_, stream),
-               "chain grouped_gemm");
-    cuda_check(
-        ops::launch_unpermute_naive(y_permuted_.data(), route_pos_.data(), route_weights_.data(),
-                                    y_.data(), tokens_, 2, output_, stream),
-        "chain unpermute");
+    GroupedGemmArgs grouped_args;
+    grouped_args.x_permuted = x_permuted_.data();
+    grouped_args.expert_weights = expert_weights_.data();
+    grouped_args.offsets = offsets_.data();
+    grouped_args.y_permuted = y_permuted_.data();
+    grouped_args.experts = experts_;
+    grouped_args.hidden = hidden_;
+    grouped_args.output = output_;
+    grouped_args.max_expert_tokens = route_pairs_;
+    operator_check(grouped_gemm(grouped_args, context), "chain grouped_gemm operator");
+
+    UnpermuteArgs unpermute_args;
+    unpermute_args.y_permuted = y_permuted_.data();
+    unpermute_args.route_pos = route_pos_.data();
+    unpermute_args.route_weights = route_weights_.data();
+    unpermute_args.y = y_.data();
+    unpermute_args.tokens = tokens_;
+    unpermute_args.top_k = 2;
+    unpermute_args.output = output_;
+    operator_check(unpermute(unpermute_args, context), "chain unpermute operator");
   }
 
   ValidationResult validate(cudaStream_t stream) override {
@@ -257,6 +297,7 @@ class ChainAdapter final : public BenchmarkAdapter {
   }
 
   bool include_router_projection_ = false;
+  DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   int tokens_ = 0, experts_ = 0, hidden_ = 0, output_ = 0;
   int route_pairs_ = 0, active_experts_ = 0;
   double zipf_s_ = 0.0;

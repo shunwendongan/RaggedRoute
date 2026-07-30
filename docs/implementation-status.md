@@ -4,6 +4,10 @@
 
 ## 已实现
 
+- P0 公共运行时：无堆分配的 `Status`、公共 shape/dtype/layout/variant 类型、caller-stream `RuntimeContext` 与可单测的 compute-capability→SM86 分派；当前运行时只接受 `SM86 + FP32 + contiguous row-major + cuda_naive`，其他架构/精度/layout/variant 均显式返回不支持，避免把未实测路径包装成“兼容”；
+- 两层 API：保留 `raggedroute::ops::launch_*_naive` 作为 L1 Kernel Entry；新增 `raggedroute::{dense_gemm, topk_gate, histogram, exclusive_scan, token_permute, grouped_gemm, unpermute}` 作为 L2/L3 Operator Wrapper。Wrapper 使用 caller stream，不在 hot path 分配/同步；Histogram 在 Wrapper 内清零 counts，Permute 使用 caller workspace（`E * sizeof(int32_t)`）并在 Wrapper 内清零 cursor；
+- Benchmark 接入：L1 继续调用低层 launcher；L2 和两个 L3 chain 改为经过公开 Wrapper，架构查询在 setup 阶段缓存，不计入 event 计时；
+- 公共 API correctness：新增纯 dispatch、参数/Workspace 拒绝、Dense GEMM、Histogram reset、Permute workspace reset 与 redzone 覆盖；
 - 模块化 CMake 3.24+：`RAGGEDROUTE_ENABLE_CUDA=OFF` 时不启用 CUDA language，保留 host-side schema tests；开启后才发现 `CUDAToolkit`；
 - CMake presets：本地 RTX 3080 `sm_86`、H100 portable `sm_90`、H100 accelerated `sm_90a` 各自独立 Debug/Release 输出目录；
 - Debug CUDA 使用 `-G`；Release CUDA 使用 `-lineinfo` 且不带 `-G`；默认不开 fast-math，RDC 默认关闭；
@@ -23,6 +27,7 @@
 
 ## 尚未实现，禁止据此宣称
 
+- 本次 P0 runtime/API 改动尚未在本轮 Windows + RTX 3080（SM86）环境重新构建、运行 CTest 与 benchmark smoke；本机 macOS 仅完成 host-side 配置和脚本测试，不能代替 CUDA 验证；
 - FP16/Tensor Core、`cp.async`、persistent grouped scheduler 等优化版本；
 - cuBLAS/CUTLASS/CUB 强性能基线；
 - shape-aware default dispatch 和 promotion policy 的实际候选数据；

@@ -25,6 +25,7 @@ class UnpermuteAdapter final : public BenchmarkAdapter {
 
   void setup(const OptionMap& options, std::uint64_t seed, cudaStream_t stream) override {
     reject_unknown(options);
+    architecture_ = current_device_architecture();
     tokens_ = get_int_option(options, "T", 128);
     experts_ = get_int_option(options, "E", 16);
     top_k_ = get_int_option(options, "top_k", 2);
@@ -83,11 +84,24 @@ class UnpermuteAdapter final : public BenchmarkAdapter {
   }
 
   void prepare_sample(MeasurementLevel, cudaStream_t) override {}
-  void enqueue(MeasurementLevel, cudaStream_t stream) override {
-    cuda_check(
-        ops::launch_unpermute_naive(y_permuted_.data(), route_pos_.data(), route_weights_.data(),
-                                    y_.data(), tokens_, top_k_, output_, stream),
-        "launch_unpermute_naive");
+  void enqueue(MeasurementLevel level, cudaStream_t stream) override {
+    if (level == MeasurementLevel::kKernelBody) {
+      cuda_check(ops::launch_unpermute_naive(y_permuted_.data(), route_pos_.data(),
+                                              route_weights_.data(), y_.data(), tokens_, top_k_,
+                                              output_, stream),
+                 "launch_unpermute_naive");
+      return;
+    }
+    UnpermuteArgs args;
+    args.y_permuted = y_permuted_.data();
+    args.route_pos = route_pos_.data();
+    args.route_weights = route_weights_.data();
+    args.y = y_.data();
+    args.tokens = tokens_;
+    args.top_k = top_k_;
+    args.output = output_;
+    operator_check(unpermute(args, make_runtime_context(stream, architecture_)),
+                   "unpermute operator");
   }
   ValidationResult validate(cudaStream_t stream) override {
     return compare_floats(y_.copy_to_host(stream), expected_, 1.0e-6, 1.0e-5);
@@ -131,6 +145,7 @@ class UnpermuteAdapter final : public BenchmarkAdapter {
     }
   }
   int tokens_ = 0, experts_ = 0, top_k_ = 0, output_ = 0, route_pairs_ = 0;
+  DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   double zipf_s_ = 0.0;
   std::string distribution_;
   std::vector<std::int32_t> route_pos_host_;

@@ -25,6 +25,7 @@ class ExclusiveScanAdapter final : public BenchmarkAdapter {
 
   void setup(const OptionMap& options, std::uint64_t seed, cudaStream_t stream) override {
     reject_unknown(options);
+    architecture_ = current_device_architecture();
     experts_ = get_int_option(options, "E", 16);
     if (experts_ > 64) throw std::invalid_argument("current scan adapter supports E<=64");
     routes_ = get_int_option(options, "R", 256);
@@ -38,9 +39,18 @@ class ExclusiveScanAdapter final : public BenchmarkAdapter {
     counts_.copy_from_host(counts_host_, stream);
   }
   void prepare_sample(MeasurementLevel, cudaStream_t) override {}
-  void enqueue(MeasurementLevel, cudaStream_t stream) override {
-    cuda_check(ops::launch_exclusive_scan_naive(counts_.data(), offsets_.data(), experts_, stream),
-               "launch_exclusive_scan_naive");
+  void enqueue(MeasurementLevel level, cudaStream_t stream) override {
+    if (level == MeasurementLevel::kKernelBody) {
+      cuda_check(ops::launch_exclusive_scan_naive(counts_.data(), offsets_.data(), experts_, stream),
+                 "launch_exclusive_scan_naive");
+      return;
+    }
+    ExclusiveScanArgs args;
+    args.counts = counts_.data();
+    args.offsets = offsets_.data();
+    args.experts = experts_;
+    operator_check(exclusive_scan(args, make_runtime_context(stream, architecture_)),
+                   "exclusive_scan operator");
   }
   ValidationResult validate(cudaStream_t stream) override {
     const auto actual = offsets_.copy_to_host(stream);
@@ -79,6 +89,7 @@ class ExclusiveScanAdapter final : public BenchmarkAdapter {
     }
   }
   int experts_ = 0, routes_ = 0;
+  DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   double zipf_s_ = 0.0;
   std::string distribution_;
   std::vector<std::int32_t> counts_host_, expected_;

@@ -26,6 +26,7 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
 
   void setup(const OptionMap& options, std::uint64_t seed, cudaStream_t stream) override {
     reject_unknown(options);
+    architecture_ = current_device_architecture();
     tokens_ = get_int_option(options, "T", 128);
     experts_ = get_int_option(options, "E", 16);
     top_k_ = get_int_option(options, "top_k", 2);
@@ -73,11 +74,25 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
   }
 
   void prepare_sample(MeasurementLevel, cudaStream_t) override {}
-  void enqueue(MeasurementLevel, cudaStream_t stream) override {
-    cuda_check(ops::launch_grouped_gemm_naive(x_.data(), weights_.data(), offsets_.data(),
-                                              output_buffer_.data(), experts_, hidden_, output_,
-                                              max_expert_tokens_, stream),
-               "launch_grouped_gemm_naive");
+  void enqueue(MeasurementLevel level, cudaStream_t stream) override {
+    if (level == MeasurementLevel::kKernelBody) {
+      cuda_check(ops::launch_grouped_gemm_naive(x_.data(), weights_.data(), offsets_.data(),
+                                                output_buffer_.data(), experts_, hidden_, output_,
+                                                max_expert_tokens_, stream),
+                 "launch_grouped_gemm_naive");
+      return;
+    }
+    GroupedGemmArgs args;
+    args.x_permuted = x_.data();
+    args.expert_weights = weights_.data();
+    args.offsets = offsets_.data();
+    args.y_permuted = output_buffer_.data();
+    args.experts = experts_;
+    args.hidden = hidden_;
+    args.output = output_;
+    args.max_expert_tokens = max_expert_tokens_;
+    operator_check(grouped_gemm(args, make_runtime_context(stream, architecture_)),
+                   "grouped_gemm operator");
   }
   ValidationResult validate(cudaStream_t stream) override {
     return compare_floats(output_buffer_.copy_to_host(stream), expected_, 1.0e-4, 2.0e-5 * hidden_);
@@ -125,6 +140,7 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
     }
   }
   int tokens_ = 0, experts_ = 0, top_k_ = 0, hidden_ = 0, output_ = 0;
+  DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   int route_pairs_ = 0, max_expert_tokens_ = 0, active_experts_ = 0;
   double zipf_s_ = 0.0;
   std::string distribution_;

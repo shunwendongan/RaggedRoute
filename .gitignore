@@ -10,3 +10,4 @@ __pycache__/
 /reports/runs/
 /reports/profiles/
 /reports/sanitizer/
+.DS_Store

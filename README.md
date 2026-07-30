@@ -2,7 +2,7 @@
 
 CUDA primitives and an auditable benchmark pipeline for single-GPU MoE routing and ragged expert computation.
 
-> Current milestone: the benchmark architecture, seven FP32 naive CUDA baselines, and L1/L2/L3 validation are implemented on an NVIDIA RTX 3080 (SM86). No optimization speedup is claimed yet.
+> Current milestone: a two-layer P0 API, seven FP32 naive CUDA baselines, and auditable L1/L2/L3 measurement boundaries are implemented. The public runtime dispatch accepts SM86 only; the new code must be revalidated on the Windows RTX 3080 environment before any performance claim is made.
 
 ## Operators
 
@@ -18,6 +18,15 @@ The registry exposes exactly seven operator adapters. Two separately named L3 su
 
 - `chain_from_tokens`: all seven operators, including router projection;
 - `chain_from_logits`: the six operators after precomputed router logits.
+
+## P0 API layers
+
+The project deliberately keeps two interfaces rather than hiding an L1 result inside an end-to-end wrapper:
+
+- `raggedroute::ops::launch_*_naive`: low-level Kernel Entry for L1 Kernel Body measurement. Its reset/workspace preconditions are explicit.
+- `raggedroute::{dense_gemm, topk_gate, histogram, exclusive_scan, token_permute, grouped_gemm, unpermute}`: public Operator Wrapper for L2/L3. It validates the P0 contract, uses the caller's stream, performs no hot-path allocation or forced synchronization, and includes mandatory device-side resets.
+
+`RuntimeContext` carries the stream, caller-preallocated workspace, and a cached architecture. P0 currently dispatches only contiguous row-major FP32 operators on SM86 to `cuda_naive`; unsupported architectures, dtypes, layouts, and variants fail explicitly rather than being treated as validated fallbacks. `histogram` clears its counts internally, while `token_permute` requires `E * sizeof(int32_t)` bytes of caller workspace for its cursors and clears that workspace internally.
 
 ## Benchmark design
 
@@ -88,7 +97,8 @@ Valid provider values are `AUTO`, `SYSTEM`, `FETCH`, and `OFF`. `AUTO` discovers
 
 ## Install and consume
 
-CUDA-enabled builds export `RaggedRoute::baseline_ops` and the separate
+CUDA-enabled builds export `RaggedRoute::runtime` (the public operator API),
+`RaggedRoute::baseline_ops` (low-level L1 entries), and the separate
 `RaggedRoute::correctness_framework` test-support library:
 
 ```powershell
@@ -100,8 +110,7 @@ An external CMake project can then use:
 ```cmake
 find_package(RaggedRoute CONFIG REQUIRED)
 target_link_libraries(my_target PRIVATE
-  RaggedRoute::baseline_ops
-  RaggedRoute::correctness_framework)
+  RaggedRoute::runtime)
 ```
 
 The package config discovers the consumer's CUDA Toolkit and propagates the C++17 requirement from the public headers.
@@ -132,6 +141,6 @@ out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
 
 ## Evidence boundary
 
-Implemented now: caller-stream naive launchers, typed adapters, CPU oracles, raw samples, p50/p90/p95 of batch means, explicit excluded steps, L1/L2 cost boundaries, and both L3 chains.
+Implemented now: caller-stream naive launchers, an SM86-only public runtime/dispatch layer, typed adapters, CPU oracles, raw samples, p50/p90/p95 of batch means, explicit excluded steps, L1/L2 cost boundaries, and both L3 chains. L2/L3 call the public wrappers, so histogram counts reset and permute cursor reset are included there while L1 keeps them as explicit preconditions.
 
 Not implemented yet: FP16/Tensor Core optimized variants, cuBLAS/CUTLASS/CUB performance baselines, default shape dispatch, or H100/Blackwell validation. Those must be added as new variants and measured under the same contract before reporting speedup.

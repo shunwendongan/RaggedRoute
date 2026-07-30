@@ -31,6 +31,7 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
 
   void setup(const OptionMap& options, std::uint64_t seed, cudaStream_t stream) override {
     reject_unknown(options);
+    architecture_ = current_device_architecture();
     tokens_ = get_int_option(options, "T", 128);
     experts_ = get_int_option(options, "E", 16);
     top_k_ = get_int_option(options, "top_k", 2);
@@ -69,12 +70,28 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
   }
 
   void enqueue(MeasurementLevel level, cudaStream_t stream) override {
-    if (level == MeasurementLevel::kOperatorSteady) reset_cursors(stream);
-    cuda_check(ops::launch_token_permute_naive(
-                   x_.data(), ids_.data(), offsets_.data(), cursors_.data(), x_permuted_.data(),
-                   route_pos_.data(), materialize_sorted_route_ ? sorted_route_.data() : nullptr,
-                   tokens_, top_k_, hidden_, stream),
-               "launch_token_permute_naive");
+    if (level == MeasurementLevel::kKernelBody) {
+      cuda_check(ops::launch_token_permute_naive(
+                     x_.data(), ids_.data(), offsets_.data(), cursors_.data(), x_permuted_.data(),
+                     route_pos_.data(), materialize_sorted_route_ ? sorted_route_.data() : nullptr,
+                     tokens_, top_k_, hidden_, stream),
+                 "launch_token_permute_naive");
+      return;
+    }
+    TokenPermuteArgs args;
+    args.x = x_.data();
+    args.expert_ids = ids_.data();
+    args.offsets = offsets_.data();
+    args.x_permuted = x_permuted_.data();
+    args.route_pos = route_pos_.data();
+    args.sorted_route = materialize_sorted_route_ ? sorted_route_.data() : nullptr;
+    args.tokens = tokens_;
+    args.experts = experts_;
+    args.top_k = top_k_;
+    args.hidden = hidden_;
+    operator_check(token_permute(args, make_runtime_context(stream, architecture_, cursors_.data(),
+                                                             cursors_.bytes())),
+                   "token_permute operator");
   }
 
   ValidationResult validate(cudaStream_t stream) override {
@@ -155,6 +172,7 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
   }
 
   int tokens_ = 0, experts_ = 0, top_k_ = 0, hidden_ = 0, route_pairs_ = 0;
+  DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   double zipf_s_ = 0.0;
   bool materialize_sorted_route_ = true;
   std::string distribution_;

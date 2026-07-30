@@ -86,6 +86,31 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     POSITION_INDEPENDENT_CODE ON)
   raggedroute_apply_target_settings(raggedroute_baseline_ops)
 
+  # Public P0 operator layer. The low-level baseline launchers remain public
+  # for L1 kernel-body studies; this target owns checked dispatch, workspace
+  # contracts, and L2/L3 operator semantics.
+  add_library(raggedroute_runtime STATIC
+    src/runtime/dispatch.cpp
+    src/dense_gemm/operator.cpp
+    src/topk_gate/operator.cpp
+    src/histogram/operator.cpp
+    src/scan/operator.cpp
+    src/permute/operator.cpp
+    src/grouped_gemm/operator.cpp
+    src/unpermute/operator.cpp)
+  add_library(RaggedRoute::runtime ALIAS raggedroute_runtime)
+  target_include_directories(raggedroute_runtime PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
+  target_compile_features(raggedroute_runtime PUBLIC cxx_std_17)
+  target_link_libraries(raggedroute_runtime PUBLIC
+    raggedroute_baseline_ops
+    CUDA::cudart)
+  set_target_properties(raggedroute_runtime PROPERTIES
+    EXPORT_NAME runtime
+    POSITION_INDEPENDENT_CODE ON)
+  raggedroute_apply_target_settings(raggedroute_runtime)
+
   add_library(raggedroute_correctness_framework STATIC
     src/correctness/framework.cu
     src/correctness/reference_validation.cpp
@@ -118,7 +143,7 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     target_include_directories(raggedroute_benchmark_core PUBLIC
       "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>")
     target_link_libraries(raggedroute_benchmark_core PUBLIC
-      raggedroute_baseline_ops
+      raggedroute_runtime
       raggedroute_correctness_framework
       CUDA::cudart)
     target_compile_definitions(raggedroute_benchmark_core PRIVATE
@@ -175,6 +200,16 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     set_tests_properties(raggedroute_correctness_replay PROPERTIES
       LABELS "correctness_replay;correctness"
       SKIP_RETURN_CODE 77)
+
+    add_executable(raggedroute_operator_api_tests tests/operator_api_tests.cpp)
+    target_link_libraries(raggedroute_operator_api_tests PRIVATE
+      raggedroute_runtime
+      raggedroute_correctness_framework)
+    raggedroute_apply_target_settings(raggedroute_operator_api_tests)
+    add_test(NAME raggedroute_operator_api COMMAND raggedroute_operator_api_tests)
+    set_tests_properties(raggedroute_operator_api PROPERTIES
+      LABELS "operator_api;correctness;sm86"
+      SKIP_RETURN_CODE 77)
   endif()
 
   if(RAGGEDROUTE_ENABLE_ARCH_COMPILE_TESTS)
@@ -216,13 +251,19 @@ if(RAGGEDROUTE_ENABLE_CUDA)
       VERSION "${PROJECT_VERSION}"
       COMPATIBILITY SameMajorVersion)
 
-    install(TARGETS raggedroute_baseline_ops raggedroute_correctness_framework
+    install(TARGETS raggedroute_baseline_ops raggedroute_runtime raggedroute_correctness_framework
       EXPORT RaggedRouteTargets
       ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
       LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
       RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
       INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/raggedroute/baseline_ops.h"
+    install(FILES
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/raggedroute/baseline_ops.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/raggedroute/status.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/raggedroute/types.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/raggedroute/runtime.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/raggedroute/dispatch.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/raggedroute/operators.h"
       DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/raggedroute")
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/raggedroute/correctness/"
       DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/raggedroute/correctness"

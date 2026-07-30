@@ -29,6 +29,7 @@ class HistogramAdapter final : public BenchmarkAdapter {
 
   void setup(const OptionMap& options, std::uint64_t seed, cudaStream_t stream) override {
     reject_unknown(options);
+    architecture_ = current_device_architecture();
     tokens_ = get_int_option(options, "T", 128);
     experts_ = get_int_option(options, "E", 16);
     top_k_ = get_int_option(options, "top_k", 2);
@@ -50,10 +51,19 @@ class HistogramAdapter final : public BenchmarkAdapter {
     if (level == MeasurementLevel::kKernelBody) reset_counts(stream);
   }
   void enqueue(MeasurementLevel level, cudaStream_t stream) override {
-    if (level == MeasurementLevel::kOperatorSteady) reset_counts(stream);
-    cuda_check(ops::launch_histogram_naive(ids_.data(), counts_.data(),
-                                           static_cast<int>(ids_host_.size()), experts_, stream),
-               "launch_histogram_naive");
+    if (level == MeasurementLevel::kKernelBody) {
+      cuda_check(ops::launch_histogram_naive(ids_.data(), counts_.data(),
+                                             static_cast<int>(ids_host_.size()), experts_, stream),
+                 "launch_histogram_naive");
+      return;
+    }
+    HistogramArgs args;
+    args.expert_ids = ids_.data();
+    args.counts = counts_.data();
+    args.route_pairs = static_cast<int>(ids_host_.size());
+    args.experts = experts_;
+    operator_check(histogram(args, make_runtime_context(stream, architecture_)),
+                   "histogram operator");
   }
   ValidationResult validate(cudaStream_t stream) override {
     const auto actual = counts_.copy_to_host(stream);
@@ -103,6 +113,7 @@ class HistogramAdapter final : public BenchmarkAdapter {
                "reset histogram counts");
   }
   int tokens_ = 0, experts_ = 0, top_k_ = 0, max_count_ = 0;
+  DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   double zipf_s_ = 0.0;
   std::string distribution_;
   std::vector<std::int32_t> ids_host_, expected_;

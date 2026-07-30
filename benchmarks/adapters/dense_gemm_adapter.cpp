@@ -23,6 +23,7 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
 
   void setup(const OptionMap& options, std::uint64_t seed, cudaStream_t stream) override {
     reject_unknown(options);
+    architecture_ = current_device_architecture();
     m_ = get_int_option(options, "M", 128);
     n_ = get_int_option(options, "N", 128);
     k_ = get_int_option(options, "K", 128);
@@ -47,9 +48,21 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
   }
 
   void prepare_sample(MeasurementLevel, cudaStream_t) override {}
-  void enqueue(MeasurementLevel, cudaStream_t stream) override {
-    cuda_check(ops::launch_dense_gemm_naive(a_.data(), b_.data(), c_.data(), m_, n_, k_, stream),
-               "launch_dense_gemm_naive");
+  void enqueue(MeasurementLevel level, cudaStream_t stream) override {
+    if (level == MeasurementLevel::kKernelBody) {
+      cuda_check(ops::launch_dense_gemm_naive(a_.data(), b_.data(), c_.data(), m_, n_, k_, stream),
+                 "launch_dense_gemm_naive");
+      return;
+    }
+    DenseGemmArgs args;
+    args.a = a_.data();
+    args.b = b_.data();
+    args.c = c_.data();
+    args.m = m_;
+    args.n = n_;
+    args.k = k_;
+    operator_check(dense_gemm(args, make_runtime_context(stream, architecture_)),
+                   "dense_gemm operator");
   }
   ValidationResult validate(cudaStream_t stream) override {
     return compare_floats(c_.copy_to_host(stream), expected_, 1.0e-5, 2.0e-5 * k_);
@@ -93,6 +106,7 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
     }
   }
   int m_ = 0, n_ = 0, k_ = 0;
+  DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   std::vector<float> a_host_, b_host_, expected_;
   DeviceBuffer<float> a_, b_, c_;
 };

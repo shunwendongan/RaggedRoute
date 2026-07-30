@@ -7,11 +7,12 @@
 按以下顺序推进，前一里程碑验收后才能把后一里程碑用于正式性能结论：
 
 1. 多 variant suite 与 registry；
-2. 可审计聚合、严格配对比较与三态 promotion；
+2. 可审计聚合与严格配对比较；
 3. 版本化 workload、真实 route trace 与 working-set sweep；
-4. profiler 指标、图表和 release bundle 固化。
+4. 三态 promotion evaluator；
+5. profiler 指标、图表和 release bundle 固化。
 
-`raggedroute.suite.v1`、`raggedroute.benchmark.v1` 与 `raggedroute.aggregate.v1` 在迁移期继续可读；v2 不覆盖已有 raw evidence。
+`raggedroute.suite.v1`、`raggedroute.benchmark.v1` 与 `raggedroute.aggregate.v1` 在迁移期继续可读；v2 不覆盖已有 raw evidence。现有 v1 的计时与结果边界以 [benchmark-architecture.md](benchmark-architecture.md) 为准，本文只定义新增能力。
 
 ## 2. 里程碑 A：候选 variant 评估闭环
 
@@ -31,6 +32,8 @@
 - [ ] shape-balanced 汇总可用 unweighted geometric mean；真实 trace 总收益必须使用 `sum(weight * baseline_latency) / sum(weight * candidate_latency)`，不得用 weighted geometric mean 冒充部署收益。
 
 ### A3. 质量门禁与三态 promotion
+
+> **执行依赖：** A3 的 schema 与 policy 可以提前设计，但只有 B2 的 trace 证据和 B3 的 cache 语义到位后，evaluator 才能产生 `eligible` 或 `rejected`；在此之前一律为 `inconclusive`。
 
 - [ ] 定义 `raggedroute.quality_gate.v1` 和 `raggedroute.promotion_decision.v1`，实现 evaluator，输出仅允许 `eligible`、`rejected`、`inconclusive`。
 - [ ] evaluator 只生成证据和建议，不自动修改 runtime 默认 dispatch。

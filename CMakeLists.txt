@@ -114,7 +114,14 @@ if(RAGGEDROUTE_ENABLE_CUDA)
   add_library(raggedroute_correctness_framework STATIC
     src/correctness/framework.cu
     src/correctness/reference_validation.cpp
-    src/correctness/report.cpp)
+    src/correctness/report.cpp
+    src/dense_gemm/cpu_reference/reference.cpp
+    src/topk_gate/cpu_reference/reference.cpp
+    src/histogram/cpu_reference/reference.cpp
+    src/scan/cpu_reference/reference.cpp
+    src/permute/cpu_reference/reference.cpp
+    src/grouped_gemm/cpu_reference/reference.cpp
+    src/unpermute/cpu_reference/reference.cpp)
   add_library(RaggedRoute::correctness_framework ALIAS raggedroute_correctness_framework)
   target_include_directories(raggedroute_correctness_framework PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"

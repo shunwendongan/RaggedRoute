@@ -14,8 +14,9 @@ namespace {
 
 class GroupedGemmAdapter final : public BenchmarkAdapter {
  public:
+  explicit GroupedGemmAdapter(const std::string& variant_name) : variant_name_(variant_name) {}
   std::string operator_name() const override { return "grouped_gemm"; }
-  std::string variant_name() const override { return "cuda_naive"; }
+  std::string variant_name() const override { return variant_name_; }
   std::string description() const override {
     return "Single-launch FP32 grouped GEMM with one grid-z slice per expert";
   }
@@ -140,6 +141,7 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
     }
   }
   int tokens_ = 0, experts_ = 0, top_k_ = 0, hidden_ = 0, output_ = 0;
+  std::string variant_name_;
   DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   int route_pairs_ = 0, max_expert_tokens_ = 0, active_experts_ = 0;
   double zipf_s_ = 0.0;
@@ -152,6 +154,8 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
 
 }  // namespace
 
-AdapterPtr make_grouped_gemm_adapter() { return std::make_unique<GroupedGemmAdapter>(); }
+AdapterPtr make_grouped_gemm_adapter(const std::string& variant_name) {
+  return std::make_unique<GroupedGemmAdapter>(variant_name);
+}
 
 }  // namespace raggedroute::benchmark

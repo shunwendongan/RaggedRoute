@@ -15,8 +15,9 @@ namespace {
 
 class HistogramAdapter final : public BenchmarkAdapter {
  public:
+  explicit HistogramAdapter(const std::string& variant_name) : variant_name_(variant_name) {}
   std::string operator_name() const override { return "histogram"; }
-  std::string variant_name() const override { return "cuda_naive"; }
+  std::string variant_name() const override { return variant_name_; }
   std::string description() const override { return "One global atomicAdd per route pair"; }
   bool supports(MeasurementLevel level) const override {
     return level == MeasurementLevel::kKernelBody || level == MeasurementLevel::kOperatorSteady;
@@ -117,6 +118,7 @@ class HistogramAdapter final : public BenchmarkAdapter {
                "reset histogram counts");
   }
   int tokens_ = 0, experts_ = 0, top_k_ = 0, max_count_ = 0;
+  std::string variant_name_;
   DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   double zipf_s_ = 0.0;
   std::string distribution_;
@@ -126,6 +128,8 @@ class HistogramAdapter final : public BenchmarkAdapter {
 
 }  // namespace
 
-AdapterPtr make_histogram_adapter() { return std::make_unique<HistogramAdapter>(); }
+AdapterPtr make_histogram_adapter(const std::string& variant_name) {
+  return std::make_unique<HistogramAdapter>(variant_name);
+}
 
 }  // namespace raggedroute::benchmark

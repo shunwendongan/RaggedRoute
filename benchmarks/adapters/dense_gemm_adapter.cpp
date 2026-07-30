@@ -13,8 +13,9 @@ namespace {
 
 class DenseGemmAdapter final : public BenchmarkAdapter {
  public:
+  explicit DenseGemmAdapter(const std::string& variant_name) : variant_name_(variant_name) {}
   std::string operator_name() const override { return "dense_gemm"; }
-  std::string variant_name() const override { return "cuda_naive"; }
+  std::string variant_name() const override { return variant_name_; }
   std::string description() const override { return "One CUDA thread per FP32 output element"; }
   bool supports(MeasurementLevel level) const override {
     return level == MeasurementLevel::kKernelBody || level == MeasurementLevel::kOperatorSteady;
@@ -106,6 +107,7 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
     }
   }
   int m_ = 0, n_ = 0, k_ = 0;
+  std::string variant_name_;
   DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   std::vector<float> a_host_, b_host_, expected_;
   DeviceBuffer<float> a_, b_, c_;
@@ -113,6 +115,8 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
 
 }  // namespace
 
-AdapterPtr make_dense_gemm_adapter() { return std::make_unique<DenseGemmAdapter>(); }
+AdapterPtr make_dense_gemm_adapter(const std::string& variant_name) {
+  return std::make_unique<DenseGemmAdapter>(variant_name);
+}
 
 }  // namespace raggedroute::benchmark

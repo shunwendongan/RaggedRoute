@@ -34,6 +34,8 @@ Floating payloads use `ConstTensorView`/`MutableTensorView`, whose `TensorSpec` 
 
 One common runner owns CUDA Event timing, warmup, sampling, cache policy, environment capture, and versioned JSONL. Each adapter owns its typed parameters, reset semantics, reference implementation, validation tolerance, logical work, and operator-specific metrics.
 
+Suite v2 groups multiple implementations under one logical case and one promotion baseline. The registry supplies standard implementation provenance, aggregate v2 retains every strict pairing key, and comparison v1 fails closed before computing speedup when hardware, build, semantics, seed, level, cache, repeats, or excluded steps differ. Suite v1 and existing benchmark v1 raw records remain readable.
+
 Correctness, release performance, and profiling are separate flows:
 
 | Flow | Purpose | Produces performance claims? |

@@ -14,13 +14,13 @@ namespace {
 
 class ChainAdapter final : public BenchmarkAdapter {
  public:
-  explicit ChainAdapter(bool include_router_projection)
-      : include_router_projection_(include_router_projection) {}
+  ChainAdapter(bool include_router_projection, const std::string& variant_name)
+      : include_router_projection_(include_router_projection), variant_name_(variant_name) {}
 
   std::string operator_name() const override {
     return include_router_projection_ ? "chain_from_tokens" : "chain_from_logits";
   }
-  std::string variant_name() const override { return "cuda_naive"; }
+  std::string variant_name() const override { return variant_name_; }
   std::string description() const override {
     return include_router_projection_ ? "Seven-operator token-to-output baseline chain"
                                       : "Six-operator logits-to-output baseline chain";
@@ -304,6 +304,7 @@ class ChainAdapter final : public BenchmarkAdapter {
   }
 
   bool include_router_projection_ = false;
+  std::string variant_name_;
   DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   int tokens_ = 0, experts_ = 0, hidden_ = 0, output_ = 0;
   int route_pairs_ = 0, active_experts_ = 0;
@@ -320,8 +321,8 @@ class ChainAdapter final : public BenchmarkAdapter {
 
 }  // namespace
 
-AdapterPtr make_chain_adapter(bool include_router_projection) {
-  return std::make_unique<ChainAdapter>(include_router_projection);
+AdapterPtr make_chain_adapter(bool include_router_projection, const std::string& variant_name) {
+  return std::make_unique<ChainAdapter>(include_router_projection, variant_name);
 }
 
 }  // namespace raggedroute::benchmark

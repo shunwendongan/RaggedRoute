@@ -9,18 +9,9 @@
 #include <string>
 #include <vector>
 
-namespace raggedroute::correctness {
+#include "raggedroute/types.h"
 
-enum class ScalarType {
-  kFp32,
-  kFp16,
-  kBf16,
-  kFp8E4M3,
-  kFp8E5M2,
-  kFp6E2M3,
-  kFp6E3M2,
-  kFp4E2M1,
-};
+namespace raggedroute::correctness {
 
 enum class MathMode {
   kStrictFp32,

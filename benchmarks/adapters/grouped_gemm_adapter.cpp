@@ -83,10 +83,10 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
       return;
     }
     GroupedGemmArgs args;
-    args.x_permuted = x_.data();
-    args.expert_weights = weights_.data();
+    args.x_permuted.data = x_.data();
+    args.expert_weights.data = weights_.data();
     args.offsets = offsets_.data();
-    args.y_permuted = output_buffer_.data();
+    args.y_permuted.data = output_buffer_.data();
     args.experts = experts_;
     args.hidden = hidden_;
     args.output = output_;

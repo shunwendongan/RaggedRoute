@@ -3,10 +3,9 @@
 #include <cstdint>
 #include <limits>
 
+#include "../runtime/operator_internal.h"
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/operators.h"
-
-#include "../runtime/operator_internal.h"
 
 namespace raggedroute {
 
@@ -17,23 +16,29 @@ std::size_t get_token_permute_workspace_size(const TokenPermuteArgs& args) noexc
 Status token_permute(const TokenPermuteArgs& args, const RuntimeContext& context) noexcept {
   if (args.tokens < 0 || args.experts <= 0 || args.experts > 64 || args.top_k <= 0 ||
       args.top_k > args.experts || args.hidden < 0) {
-    return detail::invalid_argument(
-        "token_permute requires T>=0, 1<=top_k<=E<=64, and hidden>=0");
+    return detail::invalid_argument("token_permute requires T>=0, 1<=top_k<=E<=64, and hidden>=0");
   }
   if (args.tokens > 0 && args.tokens > (std::numeric_limits<int>::max() / args.top_k)) {
     return detail::invalid_argument("token_permute route count exceeds int32 indexing");
   }
 
+  OperatorSignature signature;
+  signature.input = args.x.spec;
+  signature.output = args.x_permuted.spec;
   DispatchDecision decision;
-  Status status = detail::dispatch_operator(OperatorKind::kTokenPermute, args.scalar_type,
-                                            args.layout, args.kernel_variant,
+  Status status = detail::dispatch_operator(OperatorKind::kTokenPermute, signature, args.kernel,
                                             context.architecture, &decision);
   if (!status.ok()) return status;
-  (void)decision;
+  status = detail::require_naive_implementation(decision);
+  if (!status.ok()) return status;
   if (args.tokens == 0) return success_status();
   if (args.expert_ids == nullptr || args.offsets == nullptr || args.route_pos == nullptr ||
-      (args.hidden != 0 && (args.x == nullptr || args.x_permuted == nullptr))) {
+      (args.hidden != 0 && (args.x.data == nullptr || args.x_permuted.data == nullptr))) {
     return detail::invalid_argument("token_permute received a null device pointer");
+  }
+  if (!detail::is_aligned(args.x.data, alignof(float)) ||
+      !detail::is_aligned(args.x_permuted.data, alignof(float))) {
+    return detail::invalid_argument("token_permute FP32 buffers must be 4-byte aligned");
   }
 
   const std::size_t workspace_bytes = get_token_permute_workspace_size(args);
@@ -47,14 +52,15 @@ Status token_permute(const TokenPermuteArgs& args, const RuntimeContext& context
 
   // L2/L3 include the cursor reset; L1 callers use the raw launcher and make
   // the reset an explicit precondition.
-  status = detail::cuda_status(cudaMemsetAsync(context.workspace, 0, workspace_bytes, context.stream),
-                               "token_permute cursor reset failed");
+  status =
+      detail::cuda_status(cudaMemsetAsync(context.workspace, 0, workspace_bytes, context.stream),
+                          "token_permute cursor reset failed");
   if (!status.ok()) return status;
   return detail::cuda_status(
       ops::launch_token_permute_naive(
-          args.x, args.expert_ids, args.offsets,
-          static_cast<std::int32_t*>(context.workspace), args.x_permuted, args.route_pos,
-          args.sorted_route, args.tokens, args.top_k, args.hidden, context.stream),
+          static_cast<const float*>(args.x.data), args.expert_ids, args.offsets,
+          static_cast<std::int32_t*>(context.workspace), static_cast<float*>(args.x_permuted.data),
+          args.route_pos, args.sorted_route, args.tokens, args.top_k, args.hidden, context.stream),
       "token_permute kernel launch failed");
 }
 

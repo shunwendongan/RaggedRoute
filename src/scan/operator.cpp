@@ -1,7 +1,6 @@
+#include "../runtime/operator_internal.h"
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/operators.h"
-
-#include "../runtime/operator_internal.h"
 
 namespace raggedroute {
 
@@ -16,11 +15,11 @@ Status exclusive_scan(const ExclusiveScanArgs& args, const RuntimeContext& conte
   }
 
   DispatchDecision decision;
-  Status status = detail::dispatch_operator(OperatorKind::kExclusiveScan, ScalarType::kFloat32,
-                                            args.layout, args.kernel_variant,
+  Status status = detail::dispatch_operator(OperatorKind::kExclusiveScan, {}, args.kernel,
                                             context.architecture, &decision);
   if (!status.ok()) return status;
-  (void)decision;
+  status = detail::require_naive_implementation(decision);
+  if (!status.ok()) return status;
   if (args.counts == nullptr || args.offsets == nullptr) {
     return detail::invalid_argument("exclusive_scan received a null device pointer");
   }

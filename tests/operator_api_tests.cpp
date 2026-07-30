@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "../src/runtime/operator_internal.h"
 #include "raggedroute/correctness/guarded_buffer.h"
 #include "raggedroute/dispatch.h"
 #include "raggedroute/operators.h"
@@ -27,43 +28,119 @@ void require_status(const raggedroute::Status& status, const char* operation) {
   }
 }
 
+raggedroute::OperatorSignature fp32_signature(raggedroute::OperatorKind kind) {
+  using namespace raggedroute;
+  OperatorSignature signature;
+  switch (kind) {
+    case OperatorKind::kDenseGemm:
+    case OperatorKind::kGroupedGemm:
+    case OperatorKind::kUnpermute:
+      signature.input = TensorSpec{};
+      signature.weight = TensorSpec{};
+      signature.accumulator = ScalarType::kFp32;
+      signature.output = TensorSpec{};
+      break;
+    case OperatorKind::kTopKGate:
+      signature.input = TensorSpec{};
+      signature.accumulator = ScalarType::kFp32;
+      signature.output = TensorSpec{};
+      break;
+    case OperatorKind::kTokenPermute:
+      signature.input = TensorSpec{};
+      signature.output = TensorSpec{};
+      break;
+    case OperatorKind::kHistogram:
+    case OperatorKind::kExclusiveScan:
+      break;
+  }
+  return signature;
+}
+
 void test_pure_dispatch() {
   using namespace raggedroute;
   require(classify_compute_capability(8, 6) == DeviceArchitecture::kSm86,
           "8.6 must classify as SM86");
   require(classify_compute_capability(8, 0) == DeviceArchitecture::kOther,
           "SM80 must not silently claim SM86 support");
-  require(classify_compute_capability(9, 0) == DeviceArchitecture::kOther,
-          "Hopper must not silently claim P0 support");
+  require(classify_compute_capability(9, 0) == DeviceArchitecture::kSm90,
+          "Hopper must classify as SM90 without implying runtime support");
+
+  const std::vector<OperatorKind> operators = {
+      OperatorKind::kDenseGemm,     OperatorKind::kTopKGate,     OperatorKind::kHistogram,
+      OperatorKind::kExclusiveScan, OperatorKind::kTokenPermute, OperatorKind::kGroupedGemm,
+      OperatorKind::kUnpermute};
+  for (const OperatorKind kind : operators) {
+    DispatchRequest request;
+    request.operator_kind = kind;
+    request.architecture = DeviceArchitecture::kSm86;
+    request.signature = fp32_signature(kind);
+    DispatchDecision decision;
+    require_status(select_kernel(request, &decision), "SM86 FP32 auto dispatch");
+    require(decision.kernel.family == KernelFamily::kCudaNaive &&
+                decision.kernel.implementation_id == 0,
+            "SM86 auto dispatch must select cuda_naive implementation zero");
+  }
 
   DispatchRequest request;
   request.operator_kind = OperatorKind::kDenseGemm;
   request.architecture = DeviceArchitecture::kSm86;
-  request.requested_variant = KernelVariant::kAuto;
-  request.scalar_type = ScalarType::kFloat32;
-  request.layout = TensorLayout::kRowMajorContiguous;
+  request.signature = fp32_signature(request.operator_kind);
   DispatchDecision decision;
-  require_status(select_kernel(request, &decision), "SM86 auto dispatch");
-  require(decision.kernel_variant == KernelVariant::kCudaNaive,
-          "SM86 auto dispatch must select cuda_naive in P0");
-
   request.architecture = DeviceArchitecture::kOther;
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedArchitecture,
           "unsupported hardware must be rejected explicitly");
+  request.architecture = DeviceArchitecture::kSm90;
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedArchitecture,
+          "SM90 classification must not imply unvalidated runtime support");
   request.architecture = DeviceArchitecture::kSm86;
-  request.scalar_type = ScalarType::kFloat16;
+  request.signature.input->dtype = ScalarType::kFp16;
+  request.signature.weight->dtype = ScalarType::kFp16;
+  request.signature.output->dtype = ScalarType::kFp16;
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedDataType,
-          "FP16 must not be claimed before its P1 implementation");
-  request.scalar_type = ScalarType::kFloat32;
-  request.layout = TensorLayout::kStrided;
+          "a valid FP16 signature must remain unsupported before its kernel exists");
+  request.signature.input->dtype = ScalarType::kBf16;
+  request.signature.weight->dtype = ScalarType::kBf16;
+  request.signature.output->dtype = ScalarType::kBf16;
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedDataType,
+          "a valid BF16 signature must remain unsupported before its kernel exists");
+  request.signature = fp32_signature(request.operator_kind);
+  request.signature.input->layout = TensorLayout::kStrided;
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedLayout,
-          "strided tensors must be rejected by the P0 contract");
-  request.layout = TensorLayout::kRowMajorContiguous;
-  request.requested_variant = KernelVariant::kExperimental;
+          "strided tensors must be rejected by the v0.2 contract");
+  request.signature.input->layout = TensorLayout::kRowMajorContiguous;
+  request.signature.input->strides[0] = 1;
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedLayout,
+          "explicit strides must be rejected until strided kernels exist");
+  request.signature = fp32_signature(request.operator_kind);
+  request.signature.weight.reset();
+  require(select_kernel(request, &decision).code == StatusCode::kInvalidArgument,
+          "missing dtype roles must be rejected as malformed dispatch requests");
+  request.signature = fp32_signature(request.operator_kind);
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 0};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
-          "unimplemented variants must not be selected");
+          "unimplemented optimized kernels must not be selected");
+  request.requested_kernel = {KernelFamily::kCudaNaive, 1};
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+          "the naive family must reject unknown implementation ids");
+  request.requested_kernel = {KernelFamily::kAuto, 1};
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+          "automatic dispatch must reject non-zero implementation ids");
+  request.requested_kernel = {};
   require(select_kernel(request, nullptr).code == StatusCode::kInvalidArgument,
           "null dispatch output must be rejected");
+
+  DispatchDecision wrapper_decision;
+  wrapper_decision.kernel = {KernelFamily::kCudaOptimized, 0};
+  require(detail::require_naive_implementation(wrapper_decision).code ==
+              StatusCode::kUnsupportedKernelVariant,
+          "a wrapper must fail closed when dispatch selects an unimplemented family");
+  wrapper_decision.kernel = {KernelFamily::kCudaNaive, 7};
+  require(detail::require_naive_implementation(wrapper_decision).code ==
+              StatusCode::kUnsupportedKernelVariant,
+          "a wrapper must fail closed when dispatch selects an unimplemented id");
+  wrapper_decision.kernel = {KernelFamily::kCudaNaive, 0};
+  require(detail::require_naive_implementation(wrapper_decision).ok(),
+          "a wrapper must accept the implemented cuda_naive default");
 }
 
 void test_argument_and_workspace_contracts(const raggedroute::RuntimeContext& context) {
@@ -72,6 +149,32 @@ void test_argument_and_workspace_contracts(const raggedroute::RuntimeContext& co
   invalid_dense.m = -1;
   require(dense_gemm(invalid_dense, context).code == StatusCode::kInvalidArgument,
           "negative dense GEMM dimensions must be rejected");
+
+  DenseGemmArgs future_dense;
+  future_dense.a.spec.dtype = ScalarType::kFp16;
+  future_dense.b.spec.dtype = ScalarType::kFp16;
+  future_dense.c.spec.dtype = ScalarType::kFp16;
+  require(dense_gemm(future_dense, context).code == StatusCode::kUnsupportedDataType,
+          "the public wrapper must not reinterpret an FP16 signature as FP32");
+  future_dense = {};
+  future_dense.a.spec.strides[0] = 1;
+  require(dense_gemm(future_dense, context).code == StatusCode::kUnsupportedLayout,
+          "the public wrapper must reject explicit strides before a strided kernel exists");
+  future_dense = {};
+  future_dense.m = 1;
+  future_dense.n = 1;
+  alignas(float) unsigned char misaligned_storage[sizeof(float) + 1]{};
+  future_dense.c.data = misaligned_storage + 1;
+  require(dense_gemm(future_dense, context).code == StatusCode::kInvalidArgument,
+          "the public wrapper must reject misaligned FP32 payloads before launch");
+
+  TokenPermuteArgs mismatched_permute;
+  mismatched_permute.experts = 2;
+  mismatched_permute.top_k = 1;
+  mismatched_permute.x.spec.dtype = ScalarType::kFp16;
+  mismatched_permute.x_permuted.spec.dtype = ScalarType::kBf16;
+  require(token_permute(mismatched_permute, context).code == StatusCode::kUnsupportedDataType,
+          "permute input and output storage dtypes must match");
 
   TokenPermuteArgs permute;
   permute.tokens = 1;
@@ -96,9 +199,9 @@ void test_dense_gemm(const raggedroute::RuntimeContext& context) {
   b.copy_from_host({5.0F, 6.0F, 7.0F, 8.0F}, context.stream);
 
   raggedroute::DenseGemmArgs args;
-  args.a = a.data();
-  args.b = b.data();
-  args.c = c.data();
+  args.a.data = a.data();
+  args.b.data = b.data();
+  args.c.data = c.data();
   args.m = 2;
   args.n = 2;
   args.k = 2;
@@ -142,10 +245,10 @@ void test_permute_workspace_reset(const raggedroute::RuntimeContext& context) {
   cursors.copy_from_host({99, 99}, context.stream);
 
   raggedroute::TokenPermuteArgs args;
-  args.x = x.data();
+  args.x.data = x.data();
   args.expert_ids = ids.data();
   args.offsets = offsets.data();
-  args.x_permuted = x_permuted.data();
+  args.x_permuted.data = x_permuted.data();
   args.route_pos = route_pos.data();
   args.sorted_route = sorted_route.data();
   args.tokens = 2;
@@ -184,11 +287,12 @@ void test_permute_workspace_reset(const raggedroute::RuntimeContext& context) {
               "permuted row does not equal its source token row");
     }
   }
-  require(x.canaries_intact(context.stream) && ids.canaries_intact(context.stream) &&
-              offsets.canaries_intact(context.stream) && x_permuted.canaries_intact(context.stream) &&
-              route_pos.canaries_intact(context.stream) && sorted_route.canaries_intact(context.stream) &&
-              cursors.canaries_intact(context.stream),
-          "permute changed a redzone");
+  require(
+      x.canaries_intact(context.stream) && ids.canaries_intact(context.stream) &&
+          offsets.canaries_intact(context.stream) && x_permuted.canaries_intact(context.stream) &&
+          route_pos.canaries_intact(context.stream) &&
+          sorted_route.canaries_intact(context.stream) && cursors.canaries_intact(context.stream),
+      "permute changed a redzone");
 }
 
 }  // namespace

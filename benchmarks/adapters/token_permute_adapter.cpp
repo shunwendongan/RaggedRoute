@@ -79,10 +79,10 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
       return;
     }
     TokenPermuteArgs args;
-    args.x = x_.data();
+    args.x.data = x_.data();
     args.expert_ids = ids_.data();
     args.offsets = offsets_.data();
-    args.x_permuted = x_permuted_.data();
+    args.x_permuted.data = x_permuted_.data();
     args.route_pos = route_pos_.data();
     args.sorted_route = materialize_sorted_route_ ? sorted_route_.data() : nullptr;
     args.tokens = tokens_;

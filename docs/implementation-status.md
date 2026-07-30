@@ -4,10 +4,11 @@
 
 ## 已实现
 
-- P0 公共运行时：无堆分配的 `Status`、公共 shape/dtype/layout/variant 类型、caller-stream `RuntimeContext` 与可单测的 compute-capability→SM86 分派；当前运行时只接受 `SM86 + FP32 + contiguous row-major + cuda_naive`，其他架构/精度/layout/variant 均显式返回不支持，避免把未实测路径包装成“兼容”；
+- v0.2 公共运行时：完成一次不保留旧 `float*` shim 的 source-breaking 收口；浮点 payload 使用带 dtype/layout/element-strides 的 `ConstTensorView`/`MutableTensorView`，路由 metadata 保持强类型 int32；runtime 与 correctness 共用一套 `ScalarType`，`KernelSelection` 分离 family 与 operator-local implementation id；
+- 可单测的 compute-capability 分派显式区分 SM86、SM90 与其他架构；当前可执行路径只接受 `SM86 + 全 FP32 + zero-stride contiguous row-major + cuda_naive implementation 0`，FP16/BF16 签名虽可表达但显式返回不支持，SM90 也不据交叉编译结果宣称实卡支持；
 - 两层 API：保留 `raggedroute::ops::launch_*_naive` 作为 L1 Kernel Entry；新增 `raggedroute::{dense_gemm, topk_gate, histogram, exclusive_scan, token_permute, grouped_gemm, unpermute}` 作为 L2/L3 Operator Wrapper。Wrapper 使用 caller stream，不在 hot path 分配/同步；Histogram 在 Wrapper 内清零 counts，Permute 使用 caller workspace（`E * sizeof(int32_t)`）并在 Wrapper 内清零 cursor；
 - Benchmark 接入：L1 继续调用低层 launcher；L2 和两个 L3 chain 改为经过公开 Wrapper，架构查询在 setup 阶段缓存，不计入 event 计时；
-- 公共 API correctness：新增纯 dispatch、参数/Workspace 拒绝、Dense GEMM、Histogram reset、Permute workspace reset 与 redzone 覆盖；
+- 公共 API correctness：覆盖七算子 role signature、SM86 FP32、尚未实现的 FP16/BF16、SM90、layout/stride、kernel family/id、参数/Workspace 拒绝、Dense GEMM、Histogram reset、Permute workspace reset 与 redzone；
 - 模块化 CMake 3.24+：`RAGGEDROUTE_ENABLE_CUDA=OFF` 时不启用 CUDA language，保留 host-side schema tests；开启后才发现 `CUDAToolkit`；
 - CMake presets：本地 RTX 3080 `sm_86`、H100 portable `sm_90`、H100 accelerated `sm_90a` 各自独立 Debug/Release 输出目录；
 - Debug CUDA 使用 `-G`；Release CUDA 使用 `-lineinfo` 且不带 `-G`；默认不开 fast-math，RDC 默认关闭；
@@ -36,3 +37,5 @@
 - 完整 MoE FFN、训练、多 GPU 或 All-to-All。
 
 因此当前提交是 benchmark 基础设施和 naive baseline milestone，不是“七个算子已经优化完成”。任何正式 speedup 必须等候选 variant 与同机同语义 performance baseline 接入后再生成。
+
+候选 variant 评估闭环、trace/working-set workload、profile metrics、图表与 release bundle 的后续实施顺序见 [development-roadmap.md](development-roadmap.md)。该文档全部是计划，不属于上方“已实现”事实。

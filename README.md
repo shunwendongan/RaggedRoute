@@ -2,7 +2,7 @@
 
 CUDA primitives and an auditable benchmark pipeline for single-GPU MoE routing and ragged expert computation.
 
-> Current milestone: a two-layer P0 API, seven FP32 teaching/reference CUDA baselines, and auditable L1/L2/L3 measurement boundaries are implemented and revalidated on RTX 3080 / SM86. This is a reproducible resume project, not a production-ready operator library.
+> Current milestone: the source-breaking v0.2 public API, seven FP32 teaching/reference CUDA baselines, and auditable L1/L2/L3 measurement boundaries are implemented and revalidated on RTX 3080 / SM86. This is a reproducible resume project, not a production-ready operator library.
 
 ## Operators
 
@@ -19,14 +19,16 @@ The registry exposes exactly seven operator adapters. Two separately named L3 su
 - `chain_from_tokens`: all seven operators, including router projection;
 - `chain_from_logits`: the six operators after precomputed router logits.
 
-## P0 API layers
+## v0.2 API layers
 
 The project deliberately keeps two interfaces rather than hiding an L1 result inside an end-to-end wrapper:
 
 - `raggedroute::ops::launch_*_naive`: low-level Kernel Entry for L1 Kernel Body measurement. Its reset/workspace preconditions are explicit.
-- `raggedroute::{dense_gemm, topk_gate, histogram, exclusive_scan, token_permute, grouped_gemm, unpermute}`: public Operator Wrapper for L2/L3. It validates the P0 contract, uses the caller's stream, performs no hot-path allocation or forced synchronization, and includes mandatory device-side resets.
+- `raggedroute::{dense_gemm, topk_gate, histogram, exclusive_scan, token_permute, grouped_gemm, unpermute}`: public Operator Wrapper for L2/L3. It validates the v0.2 contract, uses the caller's stream, performs no hot-path allocation or forced synchronization, and includes mandatory device-side resets.
 
-`RuntimeContext` carries the stream, caller-preallocated workspace, and a cached architecture. P0 currently dispatches only contiguous row-major FP32 operators on SM86 to `cuda_naive`; unsupported architectures, dtypes, layouts, and variants fail explicitly rather than being treated as validated fallbacks. `histogram` clears its counts internally, while `token_permute` requires `E * sizeof(int32_t)` bytes of caller workspace for its cursors and clears that workspace internally.
+Floating payloads use `ConstTensorView`/`MutableTensorView`, whose `TensorSpec` records storage dtype, layout, and element strides. Integer routing metadata remains strongly typed. Runtime and correctness share one `ScalarType` vocabulary; FP8/FP6/FP4 enum values describe reference storage only and do not imply operator support. `KernelSelection` separates the stable `Auto`/`CudaNaive`/`CudaOptimized` family from an operator-local implementation id.
+
+`RuntimeContext` carries the stream, caller-preallocated workspace, and a cached architecture. v0.2 currently dispatches only zero-stride contiguous row-major, all-FP32 operators on SM86 to `cuda_naive`; FP16/BF16 signatures are representable but explicitly unsupported until real kernels exist. SM90 is classified separately but remains unvalidated and unsupported. `histogram` clears its counts internally, while `token_permute` requires `E * sizeof(int32_t)` bytes of caller workspace for its cursors and clears that workspace internally.
 
 ## Benchmark design
 
@@ -108,12 +110,13 @@ cmake --install out\build\rtx3080-sm86-release
 An external CMake project can then use:
 
 ```cmake
-find_package(RaggedRoute CONFIG REQUIRED)
+find_package(RaggedRoute 0.2 CONFIG REQUIRED)
 target_link_libraries(my_target PRIVATE
   RaggedRoute::runtime)
 ```
 
 The package config discovers the consumer's CUDA Toolkit and propagates the C++17 requirement from the public headers.
+Because v0.2 removes the v0.1 pointer-based API, the package deliberately rejects a 0.1 version request; downstream targets must rebuild against the v0.2 headers.
 On Windows, consume a Release installation from a Release consumer (or install both configurations into the same prefix before selecting a Debug consumer), because the static CUDA libraries use the matching MSVC runtime.
 
 ## Run the smoke suite
@@ -141,6 +144,8 @@ out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
 
 ## Evidence boundary
 
-Implemented now: caller-stream naive launchers, an SM86-only public runtime/dispatch layer, typed adapters, CPU oracles, raw samples, p50/p90/p95 of batch means, explicit excluded steps, L1/L2 cost boundaries, and both L3 chains. L2/L3 call the public wrappers, so histogram counts reset and permute cursor reset are included there while L1 keeps them as explicit preconditions.
+Implemented now: caller-stream naive launchers, the v0.2 self-describing tensor API, an SM86-only executable runtime/dispatch layer, typed adapters, CPU oracles, raw samples, p50/p90/p95 of batch means, explicit excluded steps, L1/L2 cost boundaries, and both L3 chains. L2/L3 call the public wrappers, so histogram counts reset and permute cursor reset are included there while L1 keeps them as explicit preconditions.
 
 Not implemented yet: executable failure replay, FP16/Tensor Core optimized variants, cuBLAS/CUTLASS/CUB performance baselines, automatic promotion evaluation, default shape dispatch, or H100/Blackwell validation. The promotion policy file is a roadmap draft only. Those capabilities must be implemented and measured under the same contract before reporting speedup or support.
+
+The staged plan for multi-variant comparison, promotion evidence, trace/working-set workloads, profiler metrics, plots, and frozen release artifacts is tracked in [Development roadmap](docs/development-roadmap.md). Planned items are not current capabilities.

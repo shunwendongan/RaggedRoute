@@ -93,10 +93,10 @@ class UnpermuteAdapter final : public BenchmarkAdapter {
       return;
     }
     UnpermuteArgs args;
-    args.y_permuted = y_permuted_.data();
+    args.y_permuted.data = y_permuted_.data();
     args.route_pos = route_pos_.data();
-    args.route_weights = route_weights_.data();
-    args.y = y_.data();
+    args.route_weights.data = route_weights_.data();
+    args.y.data = y_.data();
     args.tokens = tokens_;
     args.top_k = top_k_;
     args.output = output_;

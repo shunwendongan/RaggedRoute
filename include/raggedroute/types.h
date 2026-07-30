@@ -1,5 +1,8 @@
 #pragma once
 
+#include <array>
+#include <cstdint>
+
 namespace raggedroute {
 
 enum class OperatorKind {
@@ -17,25 +20,63 @@ enum class OperatorKind {
 enum class DeviceArchitecture {
   kAuto = 0,
   kSm86,
+  kSm90,
   kOther,
 };
 
-enum class KernelVariant {
+// Stable implementation families exposed by the public operator API. Library
+// baselines such as cuBLAS/CUTLASS/CUB remain benchmark-only variants.
+enum class KernelFamily {
   kAuto = 0,
   kCudaNaive,
-  kExperimental,
+  kCudaOptimized,
 };
 
+struct KernelSelection {
+  KernelFamily family = KernelFamily::kAuto;
+  // Zero selects the family default. Non-zero ids are operator-local research
+  // controls and are not portable between operators.
+  std::uint32_t implementation_id = 0;
+};
+
+// Storage vocabulary shared by the runtime and correctness framework. An enum
+// value describes representation only; runtime support is a separate dispatch
+// and capability decision.
 enum class ScalarType {
-  kFloat32 = 0,
-  kFloat16,
-  kBfloat16,
+  kFp32 = 0,
+  kFp16,
+  kBf16,
+  kFp8E4M3,
+  kFp8E5M2,
+  kFp6E2M3,
+  kFp6E3M2,
+  kFp4E2M1,
 };
 
 enum class TensorLayout {
   kRowMajorContiguous = 0,
   kColumnMajorContiguous,
   kStrided,
+};
+
+// Strides are expressed in elements in logical dimension order. All-zero
+// strides mean canonical contiguous strides inferred from the operator shape.
+// v0.2 executes only all-zero, row-major-contiguous specs, but preserving the
+// fields now prevents dtype work from forcing another public API rewrite.
+struct TensorSpec {
+  ScalarType dtype = ScalarType::kFp32;
+  TensorLayout layout = TensorLayout::kRowMajorContiguous;
+  std::array<std::int64_t, 3> strides = {0, 0, 0};
+};
+
+struct ConstTensorView {
+  const void* data = nullptr;
+  TensorSpec spec{};
+};
+
+struct MutableTensorView {
+  void* data = nullptr;
+  TensorSpec spec{};
 };
 
 enum class TopKNormalization {
@@ -48,7 +89,7 @@ enum class TopKTieBreak {
 
 enum class TopKNaNPolicy {
   // NaN is ordered as -Inf. An all-NaN row returns ids {0, 1} and weights
-  // {0.5, 0.5}; this is the fixed P0 contract.
+  // {0.5, 0.5}; this is the fixed v0.2 contract.
   kNegativeInfinityAllNaNFallback01 = 0,
 };
 

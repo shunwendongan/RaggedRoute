@@ -146,6 +146,6 @@ out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
 
 Implemented now: caller-stream naive launchers, the v0.2 self-describing tensor API, an SM86-only executable runtime/dispatch layer, typed adapters, CPU oracles, raw samples, p50/p90/p95 of batch means, explicit excluded steps, L1/L2 cost boundaries, and both L3 chains. L2/L3 call the public wrappers, so histogram counts reset and permute cursor reset are included there while L1 keeps them as explicit preconditions.
 
-Not implemented yet: executable failure replay, FP16/Tensor Core optimized variants, cuBLAS/CUTLASS/CUB performance baselines, automatic promotion evaluation, default shape dispatch, or H100/Blackwell validation. The promotion policy file is a roadmap draft only. Those capabilities must be implemented and measured under the same contract before reporting speedup or support.
+Not implemented yet: executable failure replay, FP16/Tensor Core optimized variants, cuBLAS/CUTLASS/CUB performance baselines, automatic promotion evaluation, default shape dispatch, or H100/Blackwell validation. `configs/benchmark_promotion_policy.json` currently expresses policy only; it is not an evaluator and cannot change dispatch. Those capabilities must be implemented and measured under the same contract before reporting speedup or support.
 
 The staged plan for multi-variant comparison, promotion evidence, trace/working-set workloads, profiler metrics, plots, and frozen release artifacts is tracked in [Development roadmap](docs/development-roadmap.md). Planned items are not current capabilities.

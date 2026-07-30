@@ -56,7 +56,7 @@ The repository uses CMake presets with isolated output directories under `out/bu
 | `h100-sm90-debug`, `h100-sm90-release` | `90-real` | Portable H100 path; cross-compile locally, validate on H100 |
 | `h100-sm90a-debug`, `h100-sm90a-release` | `90a-real` | Separate Hopper accelerated path; no support claim before H100 validation |
 
-On Windows, install CMake 3.24+, Ninja, Python 3, CUDA Toolkit, and Visual Studio 2022 Build Tools. The wrapper prefers `vswhere`, then uses an existing `VSDEVCMD` value, and finally checks the standard VS 2022 Build Tools location.
+On Windows, install CMake 3.24+, Ninja, Python 3, CUDA Toolkit, and Visual Studio 2022 Build Tools. Both wrappers call one shared environment resolver: it accepts an already initialized Developer Shell, honors an explicit `VSDEVCMD`, discovers the latest x64 C++ workload through `vswhere`, checks standard VS 2022 editions as a fallback, and verifies that `cl.exe` is usable. This avoids pinning a machine-specific compiler path. Run raw `cmake --build` only from an initialized Developer Shell; from an ordinary PowerShell use the wrappers below.
 
 ```powershell
 # Defaults to rtx3080-sm86-release.
@@ -70,8 +70,8 @@ cmd /c scripts\build_windows.bat rtx3080-sm86-debug
 ctest --preset test-rtx3080-sm86-debug
 
 # CPU-only configuration: no NVCC probe or CUDA target.
-cmake --preset cpu-debug
-cmake --build --preset build-cpu-debug
+cmd /c scripts\configure_windows.bat cpu-debug
+cmd /c scripts\build_windows.bat cpu-debug
 ctest --preset test-cpu-debug
 ```
 
@@ -144,7 +144,7 @@ out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
 
 ## Evidence boundary
 
-Implemented now: caller-stream naive launchers, the v0.2 self-describing tensor API, an SM86-only executable runtime/dispatch layer, typed adapters, CPU oracles, raw samples, p50/p90/p95 of batch means, explicit excluded steps, L1/L2 cost boundaries, and both L3 chains. L2/L3 call the public wrappers, so histogram counts reset and permute cursor reset are included there while L1 keeps them as explicit preconditions.
+Implemented now: caller-stream naive launchers, the v0.2 self-describing tensor API, an SM86-only executable runtime/dispatch layer, typed adapters, per-operator CPU oracle implementations behind one correctness facade, raw samples, p50/p90/p95 of batch means, explicit excluded steps, L1/L2 cost boundaries, and both L3 chains. L2/L3 call the public wrappers, so histogram counts reset and permute cursor reset are included there while L1 keeps them as explicit preconditions. Third-party dependency and source provenance rules are recorded in `THIRD_PARTY_NOTICES.md`.
 
 Not implemented yet: executable failure replay, FP16/Tensor Core optimized variants, cuBLAS/CUTLASS/CUB performance baselines, automatic promotion evaluation, default shape dispatch, or H100/Blackwell validation. `configs/benchmark_promotion_policy.json` currently expresses policy only; it is not an evaluator and cannot change dispatch. Those capabilities must be implemented and measured under the same contract before reporting speedup or support.
 

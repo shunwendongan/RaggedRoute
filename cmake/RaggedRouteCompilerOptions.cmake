@@ -2,9 +2,9 @@ include_guard(GLOBAL)
 
 function(raggedroute_configure_compiler_options)
   if(MSVC)
-    message(STATUS "RaggedRoute host compiler: MSVC ${MSVC_VERSION}")
+    message(STATUS "RaggedRoute host compiler: MSVC ${MSVC_VERSION} at ${CMAKE_CXX_COMPILER}")
   else()
-    message(STATUS "RaggedRoute host compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+    message(STATUS "RaggedRoute host compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION} at ${CMAKE_CXX_COMPILER}")
   endif()
 endfunction()
 

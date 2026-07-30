@@ -28,6 +28,22 @@ aggregate_results = load_module(
 
 
 class SuiteTests(unittest.TestCase):
+    def test_windows_entrypoints_share_dynamic_msvc_discovery(self) -> None:
+        setup = (ROOT / "scripts" / "setup_msvc_env.bat").read_text(encoding="utf-8")
+        configure = (ROOT / "scripts" / "configure_windows.bat").read_text(
+            encoding="utf-8"
+        )
+        build = (ROOT / "scripts" / "build_windows.bat").read_text(encoding="utf-8")
+
+        self.assertIn("VSDEVCMD", setup)
+        self.assertIn("vswhere", setup.lower())
+        self.assertIn("VSCMD_VER", setup)
+        self.assertIn("where cl.exe", setup)
+        self.assertIn("setup_msvc_env.bat", configure)
+        self.assertIn("setup_msvc_env.bat", build)
+        self.assertNotIn("vswhere", configure.lower())
+        self.assertNotIn("vswhere", build.lower())
+
     def test_smoke_suite_is_versioned_and_unique(self) -> None:
         suite = run_benchmarks.load_suite(ROOT / "configs" / "benchmark_smoke.json")
         self.assertEqual(suite["schema_version"], "raggedroute.suite.v1")

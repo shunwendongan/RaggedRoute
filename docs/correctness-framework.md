@@ -6,6 +6,13 @@ post-measurement floating-point report into their lightweight
 `ValidationResult`.  References, device-to-host copies, guards, and sanitizer
 runs are outside the measured CUDA-event interval.
 
+Each operator owns its CPU algorithm under
+`src/<operator>/cpu_reference/reference.cpp`.  The installed correctness
+header remains the single facade, so relocating the implementations does not
+create seven competing public APIs.  Floating oracles compute in `double`,
+integer metadata is checked exactly, and shared checked-arithmetic helpers
+guard shape and offset conversion.
+
 ## Precision capability policy
 
 | Storage type | Current framework status | RTX 3080 / SM86 | H100 / SM90a | Blackwell / SM100a |
@@ -59,12 +66,16 @@ artifact as a replayed operator case.
 ## Test entry points
 
 ```powershell
-cmake --preset rtx3080-sm86-debug
-cmake --build --preset build-rtx3080-sm86-debug --parallel 4
+cmd /c scripts\configure_windows.bat rtx3080-sm86-debug
+cmd /c scripts\build_windows.bat rtx3080-sm86-debug
 ctest --test-dir out/build/rtx3080-sm86-debug --output-on-failure
 ctest --test-dir out/build/rtx3080-sm86-debug -L dtype --output-on-failure
 ctest --test-dir out/build/rtx3080-sm86-debug -L correctness_edge --output-on-failure
 ```
+
+The Windows wrappers dynamically resolve and validate the active MSVC x64
+toolchain.  Direct `cmake --build` commands require an already initialized
+Visual Studio Developer Shell.
 
 The labels are `dtype`, `correctness_smoke`, `correctness_edge`,
 `correctness_randomized`, `correctness_selftest`, and `stream_contract`.

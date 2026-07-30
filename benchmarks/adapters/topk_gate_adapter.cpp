@@ -64,9 +64,9 @@ class TopKGateAdapter final : public BenchmarkAdapter {
       return;
     }
     TopKGateArgs args;
-    args.logits = logits_.data();
+    args.logits.data = logits_.data();
     args.expert_ids = ids_.data();
-    args.weights = weights_.data();
+    args.weights.data = weights_.data();
     args.tokens = tokens_;
     args.experts = experts_;
     operator_check(topk_gate(args, make_runtime_context(stream, architecture_)),

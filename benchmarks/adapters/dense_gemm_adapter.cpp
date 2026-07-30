@@ -55,9 +55,9 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
       return;
     }
     DenseGemmArgs args;
-    args.a = a_.data();
-    args.b = b_.data();
-    args.c = c_.data();
+    args.a.data = a_.data();
+    args.b.data = b_.data();
+    args.c.data = c_.data();
     args.m = m_;
     args.n = n_;
     args.k = k_;

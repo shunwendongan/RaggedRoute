@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(RaggedRoute VERSION 0.1.0 LANGUAGES CXX)
+project(RaggedRoute VERSION 0.2.0 LANGUAGES CXX)
 
 include(CTest)
 include(GNUInstallDirs)
@@ -242,7 +242,7 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     write_basic_package_version_file(
       "${CMAKE_CURRENT_BINARY_DIR}/RaggedRouteConfigVersion.cmake"
       VERSION "${PROJECT_VERSION}"
-      COMPATIBILITY SameMajorVersion)
+      COMPATIBILITY SameMinorVersion)
 
     install(TARGETS raggedroute_baseline_ops raggedroute_runtime raggedroute_correctness_framework
       EXPORT RaggedRouteTargets

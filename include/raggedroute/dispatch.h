@@ -1,22 +1,32 @@
 #pragma once
 
+#include <optional>
+
 #include "raggedroute/status.h"
 #include "raggedroute/types.h"
 
 namespace raggedroute {
 
+// Floating operand roles used as the dispatch key. std::nullopt means that the
+// role is not part of the operator contract (for example Histogram and Scan).
+struct OperatorSignature {
+  std::optional<TensorSpec> input;
+  std::optional<TensorSpec> weight;
+  std::optional<ScalarType> accumulator;
+  std::optional<TensorSpec> output;
+};
+
 struct DispatchRequest {
   OperatorKind operator_kind = OperatorKind::kDenseGemm;
   DeviceArchitecture architecture = DeviceArchitecture::kAuto;
-  KernelVariant requested_variant = KernelVariant::kAuto;
-  ScalarType scalar_type = ScalarType::kFloat32;
-  TensorLayout layout = TensorLayout::kRowMajorContiguous;
+  KernelSelection requested_kernel;
+  OperatorSignature signature;
 };
 
 struct DispatchDecision {
   OperatorKind operator_kind = OperatorKind::kDenseGemm;
   DeviceArchitecture architecture = DeviceArchitecture::kOther;
-  KernelVariant kernel_variant = KernelVariant::kCudaNaive;
+  KernelSelection kernel;
 };
 
 DeviceArchitecture classify_compute_capability(int major, int minor) noexcept;
@@ -30,8 +40,9 @@ Status query_current_device_architecture(DeviceArchitecture* architecture) noexc
 Status resolve_device_architecture(DeviceArchitecture requested,
                                    DeviceArchitecture* resolved) noexcept;
 
-// Pure, testable dispatch after architecture resolution. P0 intentionally
-// accepts only FP32 contiguous row-major cuda_naive on SM86.
+// Pure, testable dispatch after architecture resolution. v0.2 intentionally
+// accepts only the operator-appropriate all-FP32, contiguous row-major
+// cuda_naive signatures on SM86.
 Status select_kernel(const DispatchRequest& request, DispatchDecision* decision) noexcept;
 
 }  // namespace raggedroute

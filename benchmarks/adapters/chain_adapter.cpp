@@ -96,18 +96,18 @@ class ChainAdapter final : public BenchmarkAdapter {
     const RuntimeContext context = make_runtime_context(stream, architecture_);
     if (include_router_projection_) {
       DenseGemmArgs args;
-      args.a = x_.data();
-      args.b = router_weights_.data();
-      args.c = logits_.data();
+      args.a.data = x_.data();
+      args.b.data = router_weights_.data();
+      args.c.data = logits_.data();
       args.m = tokens_;
       args.n = experts_;
       args.k = hidden_;
       operator_check(dense_gemm(args, context), "chain dense_gemm operator");
     }
     TopKGateArgs topk_args;
-    topk_args.logits = logits_.data();
+    topk_args.logits.data = logits_.data();
     topk_args.expert_ids = ids_.data();
-    topk_args.weights = route_weights_.data();
+    topk_args.weights.data = route_weights_.data();
     topk_args.tokens = tokens_;
     topk_args.experts = experts_;
     operator_check(topk_gate(topk_args, context), "chain topk_gate operator");
@@ -126,10 +126,10 @@ class ChainAdapter final : public BenchmarkAdapter {
     operator_check(exclusive_scan(scan_args, context), "chain exclusive_scan operator");
 
     TokenPermuteArgs permute_args;
-    permute_args.x = x_.data();
+    permute_args.x.data = x_.data();
     permute_args.expert_ids = ids_.data();
     permute_args.offsets = offsets_.data();
-    permute_args.x_permuted = x_permuted_.data();
+    permute_args.x_permuted.data = x_permuted_.data();
     permute_args.route_pos = route_pos_.data();
     permute_args.tokens = tokens_;
     permute_args.experts = experts_;
@@ -143,10 +143,10 @@ class ChainAdapter final : public BenchmarkAdapter {
     // Passing R is a truthful worst-case launch bound. No input-dependent host
     // max-M computation is hidden outside the L3 interval.
     GroupedGemmArgs grouped_args;
-    grouped_args.x_permuted = x_permuted_.data();
-    grouped_args.expert_weights = expert_weights_.data();
+    grouped_args.x_permuted.data = x_permuted_.data();
+    grouped_args.expert_weights.data = expert_weights_.data();
     grouped_args.offsets = offsets_.data();
-    grouped_args.y_permuted = y_permuted_.data();
+    grouped_args.y_permuted.data = y_permuted_.data();
     grouped_args.experts = experts_;
     grouped_args.hidden = hidden_;
     grouped_args.output = output_;
@@ -154,10 +154,10 @@ class ChainAdapter final : public BenchmarkAdapter {
     operator_check(grouped_gemm(grouped_args, context), "chain grouped_gemm operator");
 
     UnpermuteArgs unpermute_args;
-    unpermute_args.y_permuted = y_permuted_.data();
+    unpermute_args.y_permuted.data = y_permuted_.data();
     unpermute_args.route_pos = route_pos_.data();
-    unpermute_args.route_weights = route_weights_.data();
-    unpermute_args.y = y_.data();
+    unpermute_args.route_weights.data = route_weights_.data();
+    unpermute_args.y.data = y_.data();
     unpermute_args.tokens = tokens_;
     unpermute_args.top_k = 2;
     unpermute_args.output = output_;

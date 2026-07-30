@@ -64,15 +64,17 @@ void test_dtype_host_and_runtime(cudaStream_t stream) {
   const auto master = rc::make_deterministic_master_data(19, 20260729ULL, -3.0, 3.0);
   require(master == rc::make_deterministic_master_data(19, 20260729ULL, -3.0, 3.0),
           "FP64 master data must be deterministic for a seed");
-  const std::vector<rc::ScalarType> types = {rc::ScalarType::kFp32,    rc::ScalarType::kFp16,
-                                             rc::ScalarType::kBf16,    rc::ScalarType::kFp8E4M3,
-                                             rc::ScalarType::kFp8E5M2, rc::ScalarType::kFp6E2M3,
-                                             rc::ScalarType::kFp6E3M2, rc::ScalarType::kFp4E2M1};
-  for (const rc::ScalarType type : types) {
+  const std::vector<raggedroute::ScalarType> types = {
+      raggedroute::ScalarType::kFp32,    raggedroute::ScalarType::kFp16,
+      raggedroute::ScalarType::kBf16,    raggedroute::ScalarType::kFp8E4M3,
+      raggedroute::ScalarType::kFp8E5M2, raggedroute::ScalarType::kFp6E2M3,
+      raggedroute::ScalarType::kFp6E3M2, raggedroute::ScalarType::kFp4E2M1};
+  for (const raggedroute::ScalarType type : types) {
     const rc::DTypeTraits traits = rc::dtype_traits(type);
     require(traits.logical_bits <= traits.storage_unit_bits,
             "logical bits must not exceed storage unit bits");
-    require(traits.allowed_accumulators == std::vector<rc::ScalarType>({rc::ScalarType::kFp32}),
+    require(traits.allowed_accumulators ==
+                std::vector<raggedroute::ScalarType>({raggedroute::ScalarType::kFp32}),
             "dtype accumulator policy must require FP32 accumulation");
     for (const double value : {0.0, -0.0, 0.5, 1.0, -1.0, traits.max_finite * 0.75}) {
       const double decoded = rc::decode_scalar(type, rc::encode_scalar(type, value));
@@ -104,8 +106,8 @@ void test_dtype_host_and_runtime(cudaStream_t stream) {
               "master-data quantization must decode actual storage bits");
     }
     const rc::CapabilityLevel level = rc::dtype_capability(type, capability);
-    if (type == rc::ScalarType::kFp32 || type == rc::ScalarType::kFp16 ||
-        type == rc::ScalarType::kBf16) {
+    if (type == raggedroute::ScalarType::kFp32 || type == raggedroute::ScalarType::kFp16 ||
+        type == raggedroute::ScalarType::kBf16) {
       require(level == rc::CapabilityLevel::kRuntimeVerified,
               "SM86 core dtype must be runtime verified");
     } else {
@@ -113,19 +115,20 @@ void test_dtype_host_and_runtime(cudaStream_t stream) {
               "future dtype must remain reference-only on SM86");
     }
   }
-  require(rc::logical_storage_bytes(rc::ScalarType::kFp4E2M1, 2) == 1,
+  require(rc::logical_storage_bytes(raggedroute::ScalarType::kFp4E2M1, 2) == 1,
           "two FP4 values must use one logical byte");
-  require(rc::logical_storage_bytes(rc::ScalarType::kFp6E2M3, 4) == 3,
+  require(rc::logical_storage_bytes(raggedroute::ScalarType::kFp6E2M3, 4) == 3,
           "four FP6 values must use three logical bytes");
-  require(rc::wrapper_storage_bytes(rc::ScalarType::kFp6E3M2, 4) == 4,
+  require(rc::wrapper_storage_bytes(raggedroute::ScalarType::kFp6E3M2, 4) == 4,
           "FP6 wrapper storage must remain explicit");
   require(rc::quantize_tf32(1.0F) == 1.0F &&
               std::isinf(rc::quantize_tf32(std::numeric_limits<float>::infinity())),
           "TF32 quantizer must preserve exact and special values");
 
   const std::vector<float> input = {-3.25F, -1.0F, -0.0F, 0.5F, 1.0F, 3.25F};
-  for (const rc::ScalarType type :
-       {rc::ScalarType::kFp32, rc::ScalarType::kFp16, rc::ScalarType::kBf16}) {
+  for (const raggedroute::ScalarType type :
+       {raggedroute::ScalarType::kFp32, raggedroute::ScalarType::kFp16,
+        raggedroute::ScalarType::kBf16}) {
     std::vector<float> expected(input.size());
     for (std::size_t index = 0; index < input.size(); ++index) {
       expected[index] =
@@ -160,7 +163,7 @@ void test_references_and_invariants() {
   require(gemm == std::vector<double>({19.0, 22.0, 43.0, 50.0}),
           "dense GEMM reference is incorrect");
   require_report(rc::compare_gemm(dense, gemm, gemm, {1.0, 2.0, 3.0, 4.0}, {5.0, 6.0, 7.0, 8.0}, 2,
-                                  2, 2, rc::ScalarType::kFp32));
+                                  2, 2, raggedroute::ScalarType::kFp32));
 
   const auto all_nan = rc::top2_selected_softmax_reference(
       {std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),

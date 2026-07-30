@@ -60,8 +60,7 @@ int main() {
     const auto summary = rr::summarize_samples({1.0, 2.0, 3.0, 4.0, 5.0});
     require(summary.p50_us == 3.0 && summary.min_us == 1.0,
             "statistics implementation is incorrect");
-    const auto fp16 =
-        raggedroute::correctness::dtype_traits(raggedroute::correctness::ScalarType::kFp16);
+    const auto fp16 = raggedroute::correctness::dtype_traits(raggedroute::ScalarType::kFp16);
     require(fp16.logical_bits == 16 && fp16.minimum_native_compute_capability == 70,
             "correctness dtype traits are incorrect");
     require(raggedroute::correctness::parse_math_mode("tf32") ==

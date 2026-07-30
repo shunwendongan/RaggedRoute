@@ -10,41 +10,37 @@
 namespace raggedroute {
 
 // Unless a field says otherwise, non-null pointers are CUDA device pointers.
-// P0 requires contiguous row-major storage, valid route ids in [0, experts),
-// monotonic offsets with offsets[experts] equal to the route count, and
-// non-overlapping input/output buffers. Device-side value validation would add
-// a synchronization or an extra kernel and is therefore not part of the
-// steady-state P0 contract.
+// v0.2 requires zero-stride contiguous row-major storage, valid route ids in
+// [0, experts), monotonic offsets with offsets[experts] equal to the route
+// count, and non-overlapping input/output buffers. Device-side value validation
+// would add a synchronization or an extra kernel and is therefore not part of
+// the steady-state v0.2 contract.
 
 struct DenseGemmArgs {
-  const float* a = nullptr;
-  const float* b = nullptr;
-  float* c = nullptr;
+  ConstTensorView a;
+  ConstTensorView b;
+  MutableTensorView c;
   int m = 0;
   int n = 0;
   int k = 0;
   float alpha = 1.0F;
   float beta = 0.0F;
-  ScalarType scalar_type = ScalarType::kFloat32;
-  TensorLayout layout_a = TensorLayout::kRowMajorContiguous;
-  TensorLayout layout_b = TensorLayout::kRowMajorContiguous;
-  TensorLayout layout_c = TensorLayout::kRowMajorContiguous;
-  KernelVariant kernel_variant = KernelVariant::kAuto;
+  ScalarType accumulator_dtype = ScalarType::kFp32;
+  KernelSelection kernel;
 };
 
 struct TopKGateArgs {
-  const float* logits = nullptr;
+  ConstTensorView logits;
   std::int32_t* expert_ids = nullptr;
-  float* weights = nullptr;
+  MutableTensorView weights;
   int tokens = 0;
   int experts = 0;
   int top_k = 2;
-  ScalarType scalar_type = ScalarType::kFloat32;
-  TensorLayout layout = TensorLayout::kRowMajorContiguous;
+  ScalarType accumulator_dtype = ScalarType::kFp32;
   TopKNormalization normalization = TopKNormalization::kSelectedSoftmax;
   TopKTieBreak tie_break = TopKTieBreak::kLowerExpertId;
   TopKNaNPolicy nan_policy = TopKNaNPolicy::kNegativeInfinityAllNaNFallback01;
-  KernelVariant kernel_variant = KernelVariant::kAuto;
+  KernelSelection kernel;
 };
 
 struct HistogramArgs {
@@ -52,23 +48,21 @@ struct HistogramArgs {
   std::int32_t* counts = nullptr;
   int route_pairs = 0;
   int experts = 0;
-  TensorLayout layout = TensorLayout::kRowMajorContiguous;
-  KernelVariant kernel_variant = KernelVariant::kAuto;
+  KernelSelection kernel;
 };
 
 struct ExclusiveScanArgs {
   const std::int32_t* counts = nullptr;
   std::int32_t* offsets = nullptr;
   int experts = 0;
-  TensorLayout layout = TensorLayout::kRowMajorContiguous;
-  KernelVariant kernel_variant = KernelVariant::kAuto;
+  KernelSelection kernel;
 };
 
 struct TokenPermuteArgs {
-  const float* x = nullptr;
+  ConstTensorView x;
   const std::int32_t* expert_ids = nullptr;
   const std::int32_t* offsets = nullptr;
-  float* x_permuted = nullptr;
+  MutableTensorView x_permuted;
   std::int32_t* route_pos = nullptr;
   // Optional inverse mapping: sorted_route[route_pos[r]] == r.
   std::int32_t* sorted_route = nullptr;
@@ -76,40 +70,34 @@ struct TokenPermuteArgs {
   int experts = 0;
   int top_k = 0;
   int hidden = 0;
-  ScalarType scalar_type = ScalarType::kFloat32;
-  TensorLayout layout = TensorLayout::kRowMajorContiguous;
-  KernelVariant kernel_variant = KernelVariant::kAuto;
+  KernelSelection kernel;
 };
 
 struct GroupedGemmArgs {
-  const float* x_permuted = nullptr;
-  const float* expert_weights = nullptr;
+  ConstTensorView x_permuted;
+  ConstTensorView expert_weights;
   const std::int32_t* offsets = nullptr;
-  float* y_permuted = nullptr;
+  MutableTensorView y_permuted;
   int experts = 0;
   int hidden = 0;
   int output = 0;
-  // Caller-provided launch bound. P0 never synchronizes to read offsets on the
+  // Caller-provided launch bound. v0.2 never synchronizes to read offsets on the
   // host; R=tokens*top_k is a valid conservative value for a full chain.
   int max_expert_tokens = 0;
-  ScalarType scalar_type = ScalarType::kFloat32;
-  TensorLayout layout_x = TensorLayout::kRowMajorContiguous;
-  TensorLayout layout_weights = TensorLayout::kRowMajorContiguous;
-  TensorLayout layout_y = TensorLayout::kRowMajorContiguous;
-  KernelVariant kernel_variant = KernelVariant::kAuto;
+  ScalarType accumulator_dtype = ScalarType::kFp32;
+  KernelSelection kernel;
 };
 
 struct UnpermuteArgs {
-  const float* y_permuted = nullptr;
+  ConstTensorView y_permuted;
   const std::int32_t* route_pos = nullptr;
-  const float* route_weights = nullptr;
-  float* y = nullptr;
+  ConstTensorView route_weights;
+  MutableTensorView y;
   int tokens = 0;
   int top_k = 0;
   int output = 0;
-  ScalarType scalar_type = ScalarType::kFloat32;
-  TensorLayout layout = TensorLayout::kRowMajorContiguous;
-  KernelVariant kernel_variant = KernelVariant::kAuto;
+  ScalarType accumulator_dtype = ScalarType::kFp32;
+  KernelSelection kernel;
 };
 
 std::size_t get_dense_gemm_workspace_size(const DenseGemmArgs& args) noexcept;

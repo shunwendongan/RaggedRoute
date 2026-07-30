@@ -1,7 +1,6 @@
+#include "../runtime/operator_internal.h"
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/operators.h"
-
-#include "../runtime/operator_internal.h"
 
 namespace raggedroute {
 
@@ -20,20 +19,29 @@ Status topk_gate(const TopKGateArgs& args, const RuntimeContext& context) noexce
     return detail::invalid_argument("topk_gate received unsupported semantic policy");
   }
 
+  OperatorSignature signature;
+  signature.input = args.logits.spec;
+  signature.accumulator = args.accumulator_dtype;
+  signature.output = args.weights.spec;
   DispatchDecision decision;
-  Status status = detail::dispatch_operator(OperatorKind::kTopKGate, args.scalar_type,
-                                            args.layout, args.kernel_variant,
+  Status status = detail::dispatch_operator(OperatorKind::kTopKGate, signature, args.kernel,
                                             context.architecture, &decision);
   if (!status.ok()) return status;
-  (void)decision;
+  status = detail::require_naive_implementation(decision);
+  if (!status.ok()) return status;
   if (args.tokens == 0) return success_status();
-  if (args.logits == nullptr || args.expert_ids == nullptr || args.weights == nullptr) {
+  if (args.logits.data == nullptr || args.expert_ids == nullptr || args.weights.data == nullptr) {
     return detail::invalid_argument("topk_gate received a null device pointer");
+  }
+  if (!detail::is_aligned(args.logits.data, alignof(float)) ||
+      !detail::is_aligned(args.weights.data, alignof(float))) {
+    return detail::invalid_argument("topk_gate FP32 buffers must be 4-byte aligned");
   }
 
   return detail::cuda_status(
-      ops::launch_topk_gate_naive(args.logits, args.expert_ids, args.weights, args.tokens,
-                                  args.experts, context.stream),
+      ops::launch_topk_gate_naive(static_cast<const float*>(args.logits.data), args.expert_ids,
+                                  static_cast<float*>(args.weights.data), args.tokens, args.experts,
+                                  context.stream),
       "topk_gate kernel launch failed");
 }
 

@@ -1,0 +1,75 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "library_baseline_smoke",
+  "protocol": "smoke",
+  "process_runs": 1,
+  "common": {
+    "warmup": 1,
+    "samples": 2,
+    "kernel_repeats": 1,
+    "seed": 20260731,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "dense_gemm.fp32.library_smoke",
+      "operator": "dense_gemm",
+      "levels": ["l2"],
+      "params": {"M": 17, "N": 19, "K": 13},
+      "variants": [
+        {"name": "cublaslt", "promotion_baseline": true},
+        {"name": "cuda_naive", "promotion_baseline": false}
+      ]
+    },
+    {
+      "id": "histogram.int32.library_smoke",
+      "operator": "histogram",
+      "levels": ["l2"],
+      "params": {"T": 33, "E": 16, "top_k": 2, "distribution": "zipf", "zipf_s": 1.0},
+      "variants": [
+        {"name": "cub_device_histogram", "promotion_baseline": true},
+        {"name": "cuda_naive", "promotion_baseline": false}
+      ]
+    },
+    {
+      "id": "exclusive_scan.int32.library_smoke",
+      "operator": "exclusive_scan",
+      "levels": ["l2"],
+      "params": {"E": 33, "R": 66},
+      "variants": [
+        {"name": "cub_device_scan", "promotion_baseline": true},
+        {"name": "cuda_naive", "promotion_baseline": false}
+      ]
+    },
+    {
+      "id": "token_permute.full_from_ids.library_smoke",
+      "operator": "token_permute",
+      "levels": ["l2"],
+      "params": {"T": 17, "E": 8, "top_k": 2, "K": 19, "distribution": "zipf", "zipf_s": 1.0, "materialize_sorted_route": true},
+      "variants": [
+        {"name": "vllm_moe_permute", "promotion_baseline": true},
+        {"name": "cuda_naive_from_ids", "promotion_baseline": false}
+      ]
+    },
+    {
+      "id": "grouped_gemm.fp32.library_smoke",
+      "operator": "grouped_gemm",
+      "levels": ["l2"],
+      "params": {"T": 17, "E": 8, "top_k": 2, "K": 13, "N": 11, "distribution": "zipf", "zipf_s": 1.0},
+      "variants": [
+        {"name": "cublas_per_expert", "promotion_baseline": true},
+        {"name": "cuda_naive", "promotion_baseline": false}
+      ]
+    },
+    {
+      "id": "unpermute.fp32.library_smoke",
+      "operator": "unpermute",
+      "levels": ["l2"],
+      "params": {"T": 17, "E": 8, "top_k": 2, "N": 19, "distribution": "zipf", "zipf_s": 1.0},
+      "variants": [
+        {"name": "vllm_finalize_routing", "promotion_baseline": true},
+        {"name": "cuda_naive", "promotion_baseline": false}
+      ]
+    }
+  ]
+}

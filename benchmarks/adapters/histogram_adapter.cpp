@@ -8,6 +8,7 @@
 
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/benchmark/adapter_utils.h"
+#include "raggedroute/benchmark/library_baselines.h"
 #include "raggedroute/benchmark/registry.h"
 
 namespace raggedroute::benchmark {
@@ -18,11 +19,20 @@ class HistogramAdapter final : public BenchmarkAdapter {
   explicit HistogramAdapter(const std::string& variant_name) : variant_name_(variant_name) {}
   std::string operator_name() const override { return "histogram"; }
   std::string variant_name() const override { return variant_name_; }
-  std::string description() const override { return "One global atomicAdd per route pair"; }
+  std::string description() const override {
+    if (variant_name_ == "cub_device_histogram") {
+      return "CUB device-wide even histogram over discrete int32 expert ids";
+    }
+    return "One global atomicAdd per route pair";
+  }
   bool supports(MeasurementLevel level) const override {
+    if (variant_name_ == "cub_device_histogram") {
+      return level == MeasurementLevel::kOperatorSteady;
+    }
     return level == MeasurementLevel::kKernelBody || level == MeasurementLevel::kOperatorSteady;
   }
   RepeatPolicy repeat_policy(MeasurementLevel level) const override {
+    if (variant_name_ == "cub_device_histogram") return {};
     if (level != MeasurementLevel::kKernelBody || max_count_ == 0) return {};
     const int cap = std::numeric_limits<std::int32_t>::max() / max_count_;
     return {cap, "L1 histogram accumulates counts across batched launches"};
@@ -47,11 +57,29 @@ class HistogramAdapter final : public BenchmarkAdapter {
     counts_.resize(expected_.size());
     ids_.copy_from_host(ids_host_, stream);
     reset_counts(stream);
+#if RAGGEDROUTE_HAS_CCCL
+    if (variant_name_ == "cub_device_histogram") {
+      cuda_check(library_baseline::query_cub_histogram_workspace(ids_host_.size(), experts_,
+                                                                 &library_workspace_bytes_),
+                 "query CUB histogram workspace");
+      library_workspace_.resize(library_workspace_bytes_);
+    }
+#endif
   }
   void prepare_sample(MeasurementLevel level, cudaStream_t stream) override {
+    if (variant_name_ == "cub_device_histogram") return;
     if (level == MeasurementLevel::kKernelBody) reset_counts(stream);
   }
   void enqueue(MeasurementLevel level, cudaStream_t stream) override {
+#if RAGGEDROUTE_HAS_CCCL
+    if (variant_name_ == "cub_device_histogram") {
+      cuda_check(library_baseline::launch_cub_histogram(
+                     ids_.data(), counts_.data(), ids_host_.size(), experts_,
+                     library_workspace_.data(), library_workspace_bytes_, stream),
+                 "CUB DeviceHistogram::HistogramEven");
+      return;
+    }
+#endif
     if (level == MeasurementLevel::kKernelBody) {
       cuda_check(ops::launch_histogram_naive(ids_.data(), counts_.data(),
                                              static_cast<int>(ids_host_.size()), experts_, stream),
@@ -84,15 +112,29 @@ class HistogramAdapter final : public BenchmarkAdapter {
             {"max_count", static_cast<std::int64_t>(max_count_)}};
   }
   FieldMap variant_config() const override {
+    if (variant_name_ == "cub_device_histogram") {
+      return {{"api", std::string("cub::DeviceHistogram::HistogramEven")},
+              {"lower_level", static_cast<std::int64_t>(0)},
+              {"upper_level", static_cast<std::int64_t>(experts_)},
+              {"output_reset", std::string("inside_library_call")}};
+    }
     return {{"atomic_scope", std::string("device")},
             {"privatization", false},
             {"threads_per_block", static_cast<std::int64_t>(256)}};
   }
+  std::size_t workspace_bytes() const override { return library_workspace_bytes_; }
   WorkEstimate work_estimate(MeasurementLevel level) const override {
     WorkEstimate work;
     work.logical_bytes =
         sizeof(std::int32_t) * static_cast<double>(ids_host_.size() + expected_.size());
-    work.operator_metrics["global_atomic_operations"] = static_cast<std::int64_t>(ids_host_.size());
+    if (variant_name_ == "cub_device_histogram") {
+      work.operator_metrics["histogram_input_items"] =
+          static_cast<std::int64_t>(ids_host_.size());
+      work.operator_metrics["histogram_bins"] = static_cast<std::int64_t>(experts_);
+    } else {
+      work.operator_metrics["global_atomic_operations"] =
+          static_cast<std::int64_t>(ids_host_.size());
+    }
     if (level == MeasurementLevel::kOperatorSteady) {
       work.logical_bytes += static_cast<double>(counts_.bytes());
       work.operator_metrics["counts_reset_bytes"] = static_cast<std::int64_t>(counts_.bytes());
@@ -119,11 +161,13 @@ class HistogramAdapter final : public BenchmarkAdapter {
   }
   int tokens_ = 0, experts_ = 0, top_k_ = 0, max_count_ = 0;
   std::string variant_name_;
+  std::size_t library_workspace_bytes_ = 0;
   DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   double zipf_s_ = 0.0;
   std::string distribution_;
   std::vector<std::int32_t> ids_host_, expected_;
   DeviceBuffer<std::int32_t> ids_, counts_;
+  DeviceBuffer<std::uint8_t> library_workspace_;
 };
 
 }  // namespace

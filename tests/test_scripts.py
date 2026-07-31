@@ -70,17 +70,49 @@ class SuiteTests(unittest.TestCase):
 
         self.assertIn("VSDEVCMD", setup)
         self.assertIn("vswhere", setup.lower())
-        self.assertIn("VSCMD_VER", setup)
+        self.assertIn("RAGGEDROUTE_VS_INSTALL_ROOT", setup)
+        self.assertIn("VSINSTALLDIR", setup)
+        self.assertIn("VS2022_HOME", setup)
         self.assertIn("where cl.exe", setup)
         self.assertIn("setup_msvc_env.bat", configure)
         self.assertIn("setup_msvc_env.bat", build)
+        self.assertIn("cmake --fresh --preset", configure)
+        self.assertIn("CMAKE_CXX_COMPILER:FILEPATH", build)
+        self.assertIn("CMAKE_CUDA_COMPILER", build)
+        self.assertIn("CUDA_PATH", build)
+        self.assertIn("configure_windows.bat", build)
         self.assertNotIn("vswhere", configure.lower())
         self.assertNotIn("vswhere", build.lower())
+
+    def test_fetchcontent_names_remain_windows_path_safe(self) -> None:
+        dependencies = (ROOT / "cmake" / "RaggedRouteDependencies.cmake").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("FetchContent_Declare(rr_cccl", dependencies)
+        self.assertIn("FetchContent_Declare(rr_cutlass", dependencies)
+        self.assertIn("CUTLASS_ENABLE_HEADERS_ONLY ON", dependencies)
+        self.assertIn("CUTLASS_ENABLE_TOOLS OFF", dependencies)
+        self.assertNotIn("FetchContent_Declare(raggedroute_cccl_source", dependencies)
+        self.assertNotIn("FetchContent_Declare(raggedroute_cutlass_source", dependencies)
 
     def test_smoke_suite_is_versioned_and_unique(self) -> None:
         suite = run_benchmarks.load_suite(ROOT / "configs" / "benchmark_smoke.json")
         self.assertEqual(suite["schema_version"], "raggedroute.suite.v1")
         self.assertEqual(len(suite["cases"]), 9)
+
+    def test_library_smoke_suite_has_strong_promotion_baselines(self) -> None:
+        suite = run_benchmarks.load_suite(
+            ROOT / "configs" / "benchmark_library_smoke.json"
+        )
+        self.assertEqual(suite["schema_version"], "raggedroute.suite.v2")
+        self.assertEqual(len(suite["cases"]), 6)
+        for case in suite["cases"]:
+            baseline = next(
+                variant
+                for variant in case["variants"]
+                if variant["promotion_baseline"]
+            )
+            self.assertNotIn(baseline["name"], {"cuda_naive", "cuda_naive_from_ids"})
 
     def test_suite_v2_expands_variants_without_changing_logical_case(self) -> None:
         suite = make_suite_v2()

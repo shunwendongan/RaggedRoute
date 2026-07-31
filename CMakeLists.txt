@@ -86,6 +86,56 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     POSITION_INDEPENDENT_CODE ON)
   raggedroute_apply_target_settings(raggedroute_baseline_ops)
 
+  # Benchmark-only production/library baselines. These never participate in
+  # the public runtime dispatch or install/export surface.
+  set(_raggedroute_library_baseline_sources
+    src/unpermute/library_baseline/vllm_unpermute.cu)
+  set(_raggedroute_library_baseline_libraries CUDA::cudart)
+  set(_raggedroute_has_cublas 0)
+  set(_raggedroute_has_cccl 0)
+  set(_raggedroute_has_cutlass 0)
+  if(RAGGEDROUTE_ENABLE_CUBLAS AND TARGET CUDA::cublas AND TARGET CUDA::cublasLt)
+    list(APPEND _raggedroute_library_baseline_sources
+      src/dense_gemm/library_baseline/cublas_gemm.cpp
+      src/grouped_gemm/library_baseline/cublas_grouped.cpp)
+    list(APPEND _raggedroute_library_baseline_libraries CUDA::cublas CUDA::cublasLt)
+    set(_raggedroute_has_cublas 1)
+  endif()
+  if(TARGET RaggedRoute::cccl)
+    list(APPEND _raggedroute_library_baseline_sources
+      src/histogram/library_baseline/cub_histogram.cu
+      src/scan/library_baseline/cub_scan.cu
+      src/permute/library_baseline/vllm_permute.cu)
+    list(APPEND _raggedroute_library_baseline_libraries RaggedRoute::cccl)
+    set(_raggedroute_has_cccl 1)
+  endif()
+  if(TARGET RaggedRoute::cutlass)
+    list(APPEND _raggedroute_library_baseline_sources
+      src/grouped_gemm/library_baseline/cutlass_grouped.cu)
+    list(APPEND _raggedroute_library_baseline_libraries RaggedRoute::cutlass)
+    set(_raggedroute_has_cutlass 1)
+  endif()
+  set(_raggedroute_library_baseline_definitions
+    RAGGEDROUTE_HAS_VLLM_UNPERMUTE=1
+    RAGGEDROUTE_HAS_CUBLAS=${_raggedroute_has_cublas}
+    RAGGEDROUTE_HAS_CCCL=${_raggedroute_has_cccl}
+    RAGGEDROUTE_HAS_CUTLASS=${_raggedroute_has_cutlass}
+    RAGGEDROUTE_CUDATOOLKIT_VERSION="${CMAKE_CUDA_COMPILER_VERSION}"
+    RAGGEDROUTE_CCCL_CONFIG_REVISION="${RAGGEDROUTE_CCCL_GIT_TAG}"
+    RAGGEDROUTE_CUTLASS_CONFIG_REVISION="${RAGGEDROUTE_CUTLASS_GIT_TAG}")
+  add_library(raggedroute_library_baselines STATIC ${_raggedroute_library_baseline_sources})
+  target_include_directories(raggedroute_library_baselines PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>")
+  target_compile_features(raggedroute_library_baselines PUBLIC cxx_std_17)
+  target_compile_definitions(raggedroute_library_baselines PUBLIC
+    ${_raggedroute_library_baseline_definitions})
+  target_link_libraries(raggedroute_library_baselines PUBLIC
+    ${_raggedroute_library_baseline_libraries})
+  set_target_properties(raggedroute_library_baselines PROPERTIES
+    CUDA_SEPARABLE_COMPILATION ${RAGGEDROUTE_ENABLE_RDC}
+    POSITION_INDEPENDENT_CODE ON)
+  raggedroute_apply_target_settings(raggedroute_library_baselines)
+
   # Public P0 operator layer. The low-level baseline launchers remain public
   # for L1 kernel-body studies; this target owns checked dispatch, workspace
   # contracts, and L2/L3 operator semantics.
@@ -152,6 +202,7 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     target_link_libraries(raggedroute_benchmark_core PUBLIC
       raggedroute_runtime
       raggedroute_correctness_framework
+      raggedroute_library_baselines
       CUDA::cudart)
     target_compile_definitions(raggedroute_benchmark_core PRIVATE
       RAGGEDROUTE_GIT_SHA="${RAGGEDROUTE_GIT_SHA}"

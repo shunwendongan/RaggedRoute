@@ -4,6 +4,13 @@
 #include <stdexcept>
 #include <utility>
 
+#if RAGGEDROUTE_HAS_CCCL
+#include <cub/version.cuh>
+#endif
+#if RAGGEDROUTE_HAS_CUTLASS
+#include <cutlass/version.h>
+#endif
+
 namespace raggedroute::benchmark {
 namespace {
 
@@ -58,6 +65,34 @@ VariantDescriptor naive_descriptor(const std::string& algorithm_id) {
           "not_applicable", algorithm_id,   "strict_fp32"};
 }
 
+VariantDescriptor descriptor(std::string name, std::string category, std::string version,
+                             std::string dependency, std::string algorithm_id) {
+  return {std::move(name),       std::move(category),     std::move(version),
+          std::move(dependency), std::move(algorithm_id), "strict_fp32"};
+}
+
+std::string cuda_library_revision() {
+  return std::string("CUDA Toolkit ") + RAGGEDROUTE_CUDATOOLKIT_VERSION;
+}
+
+std::string cccl_revision() {
+#if RAGGEDROUTE_HAS_CCCL
+  return "CUB_VERSION=" + std::to_string(CUB_VERSION) +
+         "; configured=" + RAGGEDROUTE_CCCL_CONFIG_REVISION;
+#else
+  return "unavailable";
+#endif
+}
+
+std::string cutlass_revision() {
+#if RAGGEDROUTE_HAS_CUTLASS
+  return "CUTLASS_VERSION=" + std::to_string(CUTLASS_VERSION) +
+         "; configured=" + RAGGEDROUTE_CUTLASS_CONFIG_REVISION;
+#else
+  return "unavailable";
+#endif
+}
+
 const VariantDescriptor& find_descriptor(const std::vector<VariantDescriptor>& descriptors,
                                          const std::string& target_name,
                                          const std::string& variant_name) {
@@ -86,14 +121,77 @@ std::vector<std::string> available_operators() {
 }
 
 std::vector<VariantDescriptor> available_variant_descriptors(const std::string& operator_name) {
-  if (operator_name == "dense_gemm") return {naive_descriptor("thread_per_output")};
+  if (operator_name == "dense_gemm") {
+    std::vector<VariantDescriptor> variants = {naive_descriptor("thread_per_output")};
+#if RAGGEDROUTE_HAS_CUBLAS
+    variants.push_back(descriptor("cublaslt", "nvidia_cuda_library", "cublasLtMatmul.v1",
+                                  cuda_library_revision(), "cublaslt_heuristic_0"));
+    variants.push_back(descriptor("cublas", "nvidia_cuda_library", "cublasSgemm.v1",
+                                  cuda_library_revision(), "cublas_sgemm_pedantic"));
+#endif
+    return variants;
+  }
   if (operator_name == "topk_gate") return {naive_descriptor("serial_row_top2")};
-  if (operator_name == "histogram") return {naive_descriptor("global_atomic")};
-  if (operator_name == "exclusive_scan") return {naive_descriptor("single_thread_exclusive")};
-  if (operator_name == "token_permute") return {naive_descriptor("atomic_cursor_scalar_copy")};
-  if (operator_name == "grouped_gemm") return {naive_descriptor("grid_z_per_expert")};
+  if (operator_name == "histogram") {
+    std::vector<VariantDescriptor> variants = {naive_descriptor("global_atomic")};
+#if RAGGEDROUTE_HAS_CCCL
+    variants.push_back(descriptor("cub_device_histogram", "nvidia_cccl",
+                                  "cub::DeviceHistogram::HistogramEven", cccl_revision(),
+                                  "histogram_even_discrete_int32"));
+#endif
+    return variants;
+  }
+  if (operator_name == "exclusive_scan") {
+    std::vector<VariantDescriptor> variants = {naive_descriptor("single_thread_exclusive")};
+#if RAGGEDROUTE_HAS_CCCL
+    variants.push_back(descriptor("cub_device_scan", "nvidia_cccl", "cub::DeviceScan::ExclusiveSum",
+                                  cccl_revision(), "device_scan_plus_terminal_offset"));
+    variants.push_back(descriptor("cub_block_scan", "nvidia_cccl", "cub::BlockScan::ExclusiveSum",
+                                  cccl_revision(), "block_scan_128_threads"));
+    variants.push_back(descriptor("cub_warp_scan", "nvidia_cccl", "cub::WarpScan::ExclusiveSum",
+                                  cccl_revision(), "warp_scan_32_threads"));
+#endif
+    return variants;
+  }
+  if (operator_name == "token_permute") {
+    std::vector<VariantDescriptor> variants = {naive_descriptor("atomic_cursor_scalar_copy")};
+    variants.push_back(descriptor("cuda_naive_from_ids", "in_tree_cuda",
+                                  "raggedroute.cuda_naive_from_ids.v1", "not_applicable",
+                                  "histogram_scan_atomic_permute"));
+#if RAGGEDROUTE_HAS_CCCL
+    const std::string vllm_dependency =
+        "vllm@837eae64580c885101ee95b073aafb27a485e7ce; " + cccl_revision();
+    variants.push_back(descriptor("vllm_moe_permute", "adapted_production_cuda",
+                                  "vllm.moe_permute_with_scratch.fp32.v1", vllm_dependency,
+                                  "radix_sort_scan_expand_rows"));
+    variants.push_back(descriptor("vllm_expand_rows", "adapted_production_cuda",
+                                  "vllm.expandInputRowsKernelLauncher.fp32.v1", vllm_dependency,
+                                  "prepared_mapping_expand_rows"));
+#endif
+    return variants;
+  }
+  if (operator_name == "grouped_gemm") {
+    std::vector<VariantDescriptor> variants = {naive_descriptor("grid_z_per_expert")};
+#if RAGGEDROUTE_HAS_CUBLAS
+    variants.push_back(descriptor("cublas_per_expert", "nvidia_cuda_library",
+                                  "cublasSgemm.per_active_expert.v1", cuda_library_revision(),
+                                  "host_loop_active_experts"));
+#endif
+#if RAGGEDROUTE_HAS_CUTLASS
+    variants.push_back(descriptor("cutlass_grouped", "nvidia_cutlass",
+                                  "cutlass::gemm::device::GemmGrouped.fp32.v1", cutlass_revision(),
+                                  "device_scheduled_simt_fp32"));
+#endif
+    return variants;
+  }
   if (operator_name == "unpermute") {
-    return {naive_descriptor("token_owned_scalar_gather_reduce")};
+    std::vector<VariantDescriptor> variants = {
+        naive_descriptor("token_owned_scalar_gather_reduce")};
+    variants.push_back(descriptor("vllm_finalize_routing", "adapted_production_cuda",
+                                  "vllm.finalizeMoeRoutingKernelLauncher.fp32.v1",
+                                  "vllm@837eae64580c885101ee95b073aafb27a485e7ce",
+                                  "token_owned_vector_finalize"));
+    return variants;
   }
   return {};
 }

@@ -6,6 +6,7 @@
 
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/benchmark/adapter_utils.h"
+#include "raggedroute/benchmark/library_baselines.h"
 #include "raggedroute/benchmark/registry.h"
 
 namespace raggedroute::benchmark {
@@ -14,6 +15,12 @@ namespace {
 class DenseGemmAdapter final : public BenchmarkAdapter {
  public:
   explicit DenseGemmAdapter(const std::string& variant_name) : variant_name_(variant_name) {}
+  ~DenseGemmAdapter() override {
+#if RAGGEDROUTE_HAS_CUBLAS
+    library_baseline::destroy_dense_cublaslt_plan(cublaslt_plan_);
+    library_baseline::destroy_dense_cublas_plan(cublas_plan_);
+#endif
+  }
   std::string operator_name() const override { return "dense_gemm"; }
   std::string variant_name() const override { return variant_name_; }
   std::string description() const override { return "One CUDA thread per FP32 output element"; }
@@ -46,10 +53,32 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
     c_.resize(expected_.size());
     a_.copy_from_host(a_host_, stream);
     b_.copy_from_host(b_host_, stream);
+#if RAGGEDROUTE_HAS_CUBLAS
+    if (variant_name_ == "cublaslt") {
+      cublaslt_plan_ = library_baseline::create_dense_cublaslt_plan(
+          m_, n_, k_, 64ULL * 1024ULL * 1024ULL, &library_workspace_bytes_);
+      library_workspace_.resize(library_workspace_bytes_);
+    } else if (variant_name_ == "cublas") {
+      cublas_plan_ = library_baseline::create_dense_cublas_plan();
+    }
+#endif
   }
 
   void prepare_sample(MeasurementLevel, cudaStream_t) override {}
   void enqueue(MeasurementLevel level, cudaStream_t stream) override {
+#if RAGGEDROUTE_HAS_CUBLAS
+    if (variant_name_ == "cublaslt") {
+      library_baseline::launch_dense_cublaslt(cublaslt_plan_, a_.data(), b_.data(), c_.data(),
+                                              library_workspace_.data(), library_workspace_bytes_,
+                                              stream);
+      return;
+    }
+    if (variant_name_ == "cublas") {
+      library_baseline::launch_dense_cublas(cublas_plan_, a_.data(), b_.data(), c_.data(), m_, n_,
+                                            k_, stream);
+      return;
+    }
+#endif
     if (level == MeasurementLevel::kKernelBody) {
       cuda_check(ops::launch_dense_gemm_naive(a_.data(), b_.data(), c_.data(), m_, n_, k_, stream),
                  "launch_dense_gemm_naive");
@@ -81,6 +110,17 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
             {"beta", 0.0}};
   }
   FieldMap variant_config() const override {
+    if (variant_name_ == "cublaslt") {
+      return {{"api", std::string("cublasLtMatmul")},
+              {"heuristic_rank", static_cast<std::int64_t>(0)},
+              {"workspace_limit_bytes", static_cast<std::int64_t>(64ULL * 1024ULL * 1024ULL)},
+              {"compute_type", std::string("CUBLAS_COMPUTE_32F_PEDANTIC")}};
+    }
+    if (variant_name_ == "cublas") {
+      return {{"api", std::string("cublasSgemm")},
+              {"math_mode", std::string("strict_fp32")},
+              {"layout_adapter", std::string("row_major_as_transposed_column_major")}};
+    }
     return {{"threads_per_block", static_cast<std::int64_t>(256)},
             {"outputs_per_thread", static_cast<std::int64_t>(1)},
             {"math_path", std::string("cuda_core_scalar")}};
@@ -94,6 +134,7 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
     work.operator_metrics["output_elements"] = static_cast<std::int64_t>(m_) * n_;
     return work;
   }
+  std::size_t workspace_bytes() const override { return library_workspace_bytes_; }
   std::vector<std::string> excluded_steps(MeasurementLevel) const override {
     return {"input_generation", "cpu_reference", "h2d_copy", "workspace_allocation"};
   }
@@ -108,9 +149,15 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
   }
   int m_ = 0, n_ = 0, k_ = 0;
   std::string variant_name_;
+#if RAGGEDROUTE_HAS_CUBLAS
+  library_baseline::DenseCublasLtPlan* cublaslt_plan_ = nullptr;
+  library_baseline::DenseCublasPlan* cublas_plan_ = nullptr;
+#endif
+  std::size_t library_workspace_bytes_ = 0;
   DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   std::vector<float> a_host_, b_host_, expected_;
   DeviceBuffer<float> a_, b_, c_;
+  DeviceBuffer<std::uint8_t> library_workspace_;
 };
 
 }  // namespace

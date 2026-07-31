@@ -6,6 +6,7 @@
 
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/benchmark/adapter_utils.h"
+#include "raggedroute/benchmark/library_baselines.h"
 #include "raggedroute/benchmark/registry.h"
 
 namespace raggedroute::benchmark {
@@ -86,6 +87,15 @@ class UnpermuteAdapter final : public BenchmarkAdapter {
 
   void prepare_sample(MeasurementLevel, cudaStream_t) override {}
   void enqueue(MeasurementLevel level, cudaStream_t stream) override {
+#if RAGGEDROUTE_HAS_VLLM_UNPERMUTE
+    if (variant_name_ == "vllm_finalize_routing") {
+      cuda_check(library_baseline::launch_vllm_finalize_routing(
+                     y_permuted_.data(), y_.data(), route_weights_.data(), route_pos_.data(),
+                     tokens_, top_k_, output_, stream),
+                 "vLLM finalizeMoeRoutingKernel");
+      return;
+    }
+#endif
     if (level == MeasurementLevel::kKernelBody) {
       cuda_check(
           ops::launch_unpermute_naive(y_permuted_.data(), route_pos_.data(), route_weights_.data(),
@@ -119,6 +129,12 @@ class UnpermuteAdapter final : public BenchmarkAdapter {
             {"zipf_s", zipf_s_}};
   }
   FieldMap variant_config() const override {
+    if (variant_name_ == "vllm_finalize_routing") {
+      return {{"upstream_symbol", std::string("finalizeMoeRoutingKernelLauncher")},
+              {"ownership", std::string("token_owned")},
+              {"vector_width_bytes", static_cast<std::int64_t>(output_ % 4 == 0 ? 16 : 4)},
+              {"alignment_policy", std::string("float4_fast_scalar_fallback")}};
+    }
     return {{"ownership", std::string("token_owned")},
             {"vector_width_bytes", static_cast<std::int64_t>(4)}};
   }

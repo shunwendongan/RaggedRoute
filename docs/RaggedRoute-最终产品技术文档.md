@@ -1250,10 +1250,13 @@ GPT 最适合承担机械工作和假设生成，开发者负责语义、证据�
 
 ### 16.1 每条 benchmark 记录至少包含
 
-下表是接入 optimized variant 与强基线后的最终扩展 schema。当前 naive milestone 的
-`raggedroute.benchmark.v1` 只输出已有可执行语义的 case/variant、环境、workspace、
-logical work、timing 和 validation 字段；`baseline_*`、`speedup`、`profiler_metrics`、
-runtime Git 字段与自动 promotion 属于 roadmap，未实现前不得宣称已可用。
+下表是接入 optimized variant 与强基线后的最终扩展 schema。当前
+`raggedroute.benchmark.v1` raw record 已可记录实际注册的 naive、cuBLAS/CUB/CUTLASS/vLLM
+benchmark variant，以及 case/variant、环境、workspace、logical work、timing 和 validation。
+同一 logical case 的 `raggedroute.suite.v2` 会经 run manifest 生成 `aggregate.v2` 和
+`comparison.v1`，由 comparison 保存严格配对后的 baseline latency 与 speedup；raw JSON
+schema 不因 library variant 而升级。`profiler_metrics`、runtime Git 字段与自动 promotion
+仍属于 roadmap，未实现前不得宣称已可用。
 
 ```text
 schema_version, run_id, timestamp_utc, build_git_sha, runtime_git_sha,

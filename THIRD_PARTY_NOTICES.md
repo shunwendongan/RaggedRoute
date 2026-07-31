@@ -24,6 +24,7 @@ RaggedRoute kernels.
 | NVIDIA CUDA Toolkit / cuBLAS | <https://developer.nvidia.com/cuda-toolkit> | System dependency | NVIDIA CUDA Toolkit terms |
 | NVIDIA CCCL / CUB | <https://github.com/NVIDIA/cccl> | Header-only, system or pinned FetchContent | Apache-2.0 with LLVM exceptions |
 | NVIDIA CUTLASS | <https://github.com/NVIDIA/cutlass> | Header-only/templates, system or pinned FetchContent | BSD-3-Clause |
+| vLLM permute/unpermute adaptation | <https://github.com/vllm-project/vllm/tree/837eae64580c885101ee95b073aafb27a485e7ce> | Modified FP32 benchmark-only source in `src/{permute,unpermute}/library_baseline` | Apache-2.0; retained in `third_party/licenses/vLLM-Apache-2.0.txt` |
 
 This file records provenance; it does not replace the license distributed by each dependency.
 When a source snapshot or adaptation is added, its applicable license text is retained alongside

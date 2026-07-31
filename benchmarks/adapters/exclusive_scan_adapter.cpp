@@ -6,6 +6,7 @@
 
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/benchmark/adapter_utils.h"
+#include "raggedroute/benchmark/library_baselines.h"
 #include "raggedroute/benchmark/registry.h"
 
 namespace raggedroute::benchmark {
@@ -20,6 +21,9 @@ class ExclusiveScanAdapter final : public BenchmarkAdapter {
     return "Single-thread int32 exclusive scan for tiny expert counts";
   }
   bool supports(MeasurementLevel level) const override {
+    if (variant_name_ == "cub_device_scan") {
+      return level == MeasurementLevel::kOperatorSteady;
+    }
     return level == MeasurementLevel::kKernelBody || level == MeasurementLevel::kOperatorSteady;
   }
   RepeatPolicy repeat_policy(MeasurementLevel) const override { return {}; }
@@ -38,9 +42,41 @@ class ExclusiveScanAdapter final : public BenchmarkAdapter {
     counts_.resize(counts_host_.size());
     offsets_.resize(expected_.size());
     counts_.copy_from_host(counts_host_, stream);
+#if RAGGEDROUTE_HAS_CCCL
+    if (variant_name_ == "cub_device_scan") {
+      cuda_check(
+          library_baseline::query_cub_device_scan_workspace(experts_, &library_workspace_bytes_),
+          "query CUB DeviceScan workspace");
+      library_workspace_.resize(library_workspace_bytes_);
+    }
+    if (variant_name_ == "cub_warp_scan" && experts_ > 32) {
+      throw std::invalid_argument("cub_warp_scan requires E<=32");
+    }
+#endif
   }
   void prepare_sample(MeasurementLevel, cudaStream_t) override {}
   void enqueue(MeasurementLevel level, cudaStream_t stream) override {
+#if RAGGEDROUTE_HAS_CCCL
+    if (variant_name_ == "cub_device_scan") {
+      cuda_check(library_baseline::launch_cub_device_scan(counts_.data(), offsets_.data(), experts_,
+                                                          library_workspace_.data(),
+                                                          library_workspace_bytes_, stream),
+                 "CUB DeviceScan::ExclusiveSum");
+      return;
+    }
+    if (variant_name_ == "cub_block_scan") {
+      cuda_check(library_baseline::launch_cub_block_scan(counts_.data(), offsets_.data(), experts_,
+                                                         stream),
+                 "CUB BlockScan::ExclusiveSum");
+      return;
+    }
+    if (variant_name_ == "cub_warp_scan") {
+      cuda_check(
+          library_baseline::launch_cub_warp_scan(counts_.data(), offsets_.data(), experts_, stream),
+          "CUB WarpScan::ExclusiveSum");
+      return;
+    }
+#endif
     if (level == MeasurementLevel::kKernelBody) {
       cuda_check(
           ops::launch_exclusive_scan_naive(counts_.data(), offsets_.data(), experts_, stream),
@@ -69,6 +105,17 @@ class ExclusiveScanAdapter final : public BenchmarkAdapter {
             {"zipf_s", zipf_s_}};
   }
   FieldMap variant_config() const override {
+    if (variant_name_ == "cub_device_scan") {
+      return {{"api", std::string("cub::DeviceScan::ExclusiveSum")}, {"completion_kernel", true}};
+    }
+    if (variant_name_ == "cub_block_scan") {
+      return {{"api", std::string("cub::BlockScan::ExclusiveSum")},
+              {"threads", static_cast<std::int64_t>(128)}};
+    }
+    if (variant_name_ == "cub_warp_scan") {
+      return {{"api", std::string("cub::WarpScan::ExclusiveSum")},
+              {"threads", static_cast<std::int64_t>(32)}};
+    }
     return {{"threads", static_cast<std::int64_t>(1)}, {"algorithm", std::string("sequential")}};
   }
   WorkEstimate work_estimate(MeasurementLevel) const override {
@@ -77,6 +124,7 @@ class ExclusiveScanAdapter final : public BenchmarkAdapter {
     work.operator_metrics["integer_additions"] = static_cast<std::int64_t>(experts_);
     return work;
   }
+  std::size_t workspace_bytes() const override { return library_workspace_bytes_; }
   std::vector<std::string> excluded_steps(MeasurementLevel) const override {
     return {"count_generation", "h2d_copy", "workspace_allocation"};
   }
@@ -92,11 +140,13 @@ class ExclusiveScanAdapter final : public BenchmarkAdapter {
   }
   int experts_ = 0, routes_ = 0;
   std::string variant_name_;
+  std::size_t library_workspace_bytes_ = 0;
   DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   double zipf_s_ = 0.0;
   std::string distribution_;
   std::vector<std::int32_t> counts_host_, expected_;
   DeviceBuffer<std::int32_t> counts_, offsets_;
+  DeviceBuffer<std::uint8_t> library_workspace_;
 };
 
 }  // namespace

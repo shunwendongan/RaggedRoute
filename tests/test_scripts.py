@@ -29,6 +29,12 @@ aggregate_results = load_module(
 compare_results = load_module(
     "compare_results", ROOT / "scripts" / "compare_results.py"
 )
+profile_benchmarks = load_module(
+    "profile_benchmarks", ROOT / "scripts" / "profile_benchmarks.py"
+)
+freeze_results = load_module(
+    "freeze_results", ROOT / "scripts" / "freeze_results.py"
+)
 
 
 def make_suite_v2() -> dict:
@@ -77,6 +83,10 @@ class SuiteTests(unittest.TestCase):
         self.assertIn("setup_msvc_env.bat", configure)
         self.assertIn("setup_msvc_env.bat", build)
         self.assertIn("cmake --fresh --preset", configure)
+        self.assertIn("-DCMAKE_CXX_COMPILER=%RAGGEDROUTE_MSVC_CL%", configure)
+        self.assertIn("-DCMAKE_CUDA_COMPILER=%RAGGEDROUTE_NVCC%", configure)
+        self.assertIn("-DCMAKE_CUDA_HOST_COMPILER=%RAGGEDROUTE_MSVC_CL%", configure)
+        self.assertIn("RAGGEDROUTE_FETCH_REFERENCES", configure)
         self.assertIn("CMAKE_CXX_COMPILER:FILEPATH", build)
         self.assertIn("CMAKE_CUDA_COMPILER", build)
         self.assertIn("CUDA_PATH", build)
@@ -113,6 +123,114 @@ class SuiteTests(unittest.TestCase):
                 if variant["promotion_baseline"]
             )
             self.assertNotIn(baseline["name"], {"cuda_naive", "cuda_naive_from_ids"})
+
+    def test_library_release_suite_is_strict_and_uses_strong_baselines(self) -> None:
+        suite = run_benchmarks.load_suite(
+            ROOT / "configs" / "benchmark_rtx3080_library_release.json"
+        )
+        self.assertEqual(suite["schema_version"], "raggedroute.suite.v2")
+        self.assertEqual(suite["protocol"], "release")
+        self.assertEqual(suite["process_runs"], 3)
+        self.assertEqual(len(suite["cases"]), 6)
+        for case in suite["cases"]:
+            baseline = next(
+                variant for variant in case["variants"] if variant["promotion_baseline"]
+            )
+            self.assertNotIn(baseline["name"], {"cuda_naive", "cuda_naive_from_ids"})
+
+    def test_profile_v2_covers_all_operators_and_skips_warmups(self) -> None:
+        config = profile_benchmarks.load_config(
+            ROOT / "configs" / "profile_representative.json"
+        )
+        self.assertEqual(config["schema_version"], "raggedroute.profile_suite.v2")
+        self.assertEqual(
+            {case["operator"] for case in config["cases"]},
+            set(profile_benchmarks.KERNEL_PATTERNS),
+        )
+        commands = profile_benchmarks.compute_commands(
+            pathlib.Path("bench.exe"), config, pathlib.Path("reports"), "ncu"
+        )
+        self.assertEqual(len(commands), 7)
+        for case_id, command, report in commands:
+            self.assertIn("--clock-control", command)
+            self.assertEqual(command[command.index("--clock-control") + 1], "none")
+            self.assertEqual(command[command.index("--launch-skip") + 1], "5")
+            self.assertEqual(command[command.index("--launch-count") + 1], "1")
+            self.assertEqual(command[command.index("--warmup") + 1], "5")
+            self.assertEqual(report.name, f"{case_id}.basic.ncu-rep")
+        system = profile_benchmarks.target_command(
+            pathlib.Path("bench.exe"), config["system_case"], system=True
+        )
+        self.assertEqual(system[system.index("--suite") + 1], "chain_from_tokens")
+        benchmark_main = (ROOT / "benchmarks" / "benchmark_main.cpp").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("iteration < run.warmup", benchmark_main)
+        self.assertIn("profile warmup synchronization", benchmark_main)
+
+    def test_profile_v1_remains_readable(self) -> None:
+        config = {
+            "schema_version": "raggedroute.profile_suite.v1",
+            "suite_id": "legacy",
+            "cases": [
+                {"id": "dense", "operator": "dense_gemm", "params": {"M": 1, "N": 1, "K": 1}}
+            ],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "profile.json"
+            path.write_text(json.dumps(config), encoding="utf-8")
+            self.assertEqual(profile_benchmarks.load_config(path)["suite_id"], "legacy")
+
+    def test_profile_metric_statuses_never_turn_missing_into_zero(self) -> None:
+        class Metric:
+            def value(self):
+                return 42
+
+            def unit(self):
+                return "%"
+
+        class Action:
+            def metric_names(self):
+                return ["sm__throughput.avg.pct_of_peak_sustained_elapsed"]
+
+            def __getitem__(self, name):
+                if name != "sm__throughput.avg.pct_of_peak_sustained_elapsed":
+                    raise KeyError(name)
+                return Metric()
+
+        supported = {"dram__throughput.avg.pct_of_peak_sustained_elapsed"}
+        snapshot = profile_benchmarks.metric_snapshot(Action(), supported)
+        self.assertEqual(snapshot["sm_throughput_pct"]["status"], "collected")
+        self.assertEqual(snapshot["dram_throughput_pct"]["status"], "not_collected")
+        self.assertEqual(
+            snapshot["registers_per_thread"]["status"], "unsupported_or_unknown"
+        )
+        self.assertIsNone(snapshot["registers_per_thread"]["value"])
+
+    def test_freeze_bundle_excludes_profiler_binaries_and_refuses_overwrite(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            profile = root / "profile"
+            benchmark = root / "benchmark"
+            output = root / "artifacts"
+            (profile / "analysis").mkdir(parents=True)
+            (profile / "reports").mkdir()
+            benchmark.mkdir()
+            (profile / "analysis" / "ncu_metrics.json").write_text("[]\n", encoding="utf-8")
+            (profile / "analysis" / "REPORT.md").write_text("# report\n", encoding="utf-8")
+            (profile / "reports" / "dense.basic.ncu-rep").write_bytes(b"report")
+            (profile / "manifest.json").write_text("{}\n", encoding="utf-8")
+            (benchmark / "naive.jsonl").write_text("{}\n", encoding="utf-8")
+            (benchmark / "naive.aggregate.json").write_text("{}\n", encoding="utf-8")
+            destination = freeze_results.freeze_bundle(
+                "run", profile, benchmark, output
+            )
+            self.assertTrue((destination / "SHA256SUMS").is_file())
+            self.assertFalse(list(destination.rglob("*.ncu-rep")))
+            manifest = json.loads((destination / "manifest.json").read_text(encoding="utf-8"))
+            self.assertFalse(manifest["raw_profiler_reports"][0]["committed"])
+            with self.assertRaises(FileExistsError):
+                freeze_results.freeze_bundle("run", profile, benchmark, output)
 
     def test_suite_v2_expands_variants_without_changing_logical_case(self) -> None:
         suite = make_suite_v2()
@@ -361,6 +479,12 @@ class SuiteTests(unittest.TestCase):
         )
         self.assertEqual(document["schema_version"], "raggedroute.comparison.v1")
         self.assertEqual(document["comparisons"][0]["speedup"], 2.0)
+        self.assertIn("baseline_p95_us", document["comparisons"][0])
+        self.assertIn("candidate_p95_us", document["comparisons"][0])
+        self.assertIn("p95_ratio", document["comparisons"][0])
+        self.assertIn("baseline_all_samples_cv", document["comparisons"][0])
+        self.assertIn("candidate_all_samples_cv", document["comparisons"][0])
+        self.assertIn("baseline_process_runs", document["comparisons"][0])
         candidate_summary = document["summary"]["candidate_variants"][0]
         self.assertEqual(
             candidate_summary["shape_balanced_geometric_mean_speedup"], 2.0

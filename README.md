@@ -45,7 +45,8 @@ Correctness, release performance, and profiling are separate flows:
 | Two correctness executables / CTest | Adapter/reference plus dtype, failure-artifact roundtrip, redzone, edge, randomized, and stream-contract validation | No |
 | `benchmark_smoke.json` | Fast executable/schema smoke | No |
 | `benchmark_rtx3080_release.json` | Clean-Git, Release, 3-process raw measurement | Baseline latency only |
-| `profile_benchmarks.py` | Nsight Compute diagnosis | No; profiler duration is not a score |
+| `benchmark_rtx3080_library_release.json` | Clean-Git, strict-FP32 library/reference pairing | Contract-matched comparison only |
+| `profile_benchmarks.py` | NSYS system trace plus seven filtered NCU cases | No; profiler duration is not a score |
 
 See [Benchmark architecture](docs/benchmark-architecture.md), the [correctness framework](docs/correctness-framework.md), [implementation status](docs/implementation-status.md), the [RTX 3080 naive baseline report](docs/reports/rtx3080-naive-baseline-e37c132.md), and the [full technical design](docs/RaggedRoute-最终产品技术文档.md).
 
@@ -60,10 +61,11 @@ The repository uses CMake presets with isolated output directories under `out/bu
 | `h100-sm90-debug`, `h100-sm90-release` | `90-real` | Portable H100 path; cross-compile locally, validate on H100 |
 | `h100-sm90a-debug`, `h100-sm90a-release` | `90a-real` | Separate Hopper accelerated path; no support claim before H100 validation |
 
-On Windows, install CMake 3.24+, Ninja, Python 3, CUDA Toolkit, and Visual Studio 2022 Build Tools. Both wrappers call one shared environment resolver: it accepts a usable initialized Developer Shell, honors explicit `RAGGEDROUTE_VSDEVCMD`/`VSDEVCMD` overrides, checks `RAGGEDROUTE_VS_INSTALL_ROOT`, `VSINSTALLDIR`, and `VS2022_HOME`, discovers the latest x64 C++ workload through `vswhere`, checks standard VS 2022 editions as a fallback, and verifies that `cl.exe` is usable. This avoids pinning a machine-specific compiler path. Configure always uses a fresh CMake cache, and the build wrapper automatically reconfigures if an existing cache names a missing or different MSVC compiler or CUDA Toolkit compiler. Run raw `cmake --build` only from an initialized Developer Shell; from an ordinary PowerShell use the wrappers below.
+On Windows, install CMake 3.24+, Ninja, Python 3, CUDA Toolkit, and Visual Studio 2022 Build Tools. Both wrappers call one shared environment resolver: it accepts a usable initialized Developer Shell, honors explicit `RAGGEDROUTE_VSDEVCMD`/`VSDEVCMD` overrides, checks `RAGGEDROUTE_VS_INSTALL_ROOT`, `VSINSTALLDIR`, and `VS2022_HOME`, discovers the latest x64 C++ workload through `vswhere`, checks standard VS 2022 editions as a fallback, and verifies that `cl.exe` is usable. This avoids pinning a machine-specific compiler path. Configure always uses a fresh CMake cache and explicitly passes the resolved MSVC/NVCC paths so an earlier MSYS2 compiler cannot win Ninja discovery. Set `RAGGEDROUTE_FETCH_REFERENCES=ON` when the Release evidence run must fetch the pinned CCCL/CUTLASS references. The build wrapper automatically reconfigures if an existing cache names a missing or different compiler. Run raw `cmake --build` only from an initialized Developer Shell; from an ordinary PowerShell use the wrappers below.
 
 ```powershell
 # Defaults to rtx3080-sm86-release.
+$env:RAGGEDROUTE_FETCH_REFERENCES = "ON" # Required for the pinned CUTLASS evidence variant.
 cmd /c scripts\configure_windows.bat
 cmd /c scripts\build_windows.bat
 ctest --preset test-rtx3080-sm86-release

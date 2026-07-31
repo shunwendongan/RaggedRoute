@@ -79,8 +79,9 @@
 - [ ] promotion 覆盖三种状态、高 CV、缺 trace、门禁缺失、coverage、最大退化，以及 workspace 的 64 MiB/25% 两条边界。
 - [ ] route trace 覆盖损坏 hash、长度错误、越界 id、token 内重复 expert 与非法权重；`synthetic_from_ids` 标签不可省略。
 - [ ] working-set rotation 验证 requested/resolved bytes、副本轮转、L2 元数据和 cold-scrub repeats 约束。
-- [ ] profiler metric alias、缺失指标 `null + reason`、plot smoke 与 freeze bundle 完整性校验通过。
-- [ ] 完整 release 链从 suite 到 `SHA256SUMS` 可由 clean Release build 重现，且已有 artifact 不会被覆盖。
+- [x] profiler metric alias 与缺失指标状态、NSYS/NCU 文本 sidecar、freeze bundle 非覆盖和 `SHA256SUMS` 完整性校验已实现。
+- [ ] shape/working-set/distribution 图表与 plot smoke 尚未实现。
+- [ ] 完整 release 链的首次 clean Release evidence bundle 待本机采集并提交；冻结脚本已拒绝覆盖既有 artifact。
 
 ## 5. 基线口径提醒
 

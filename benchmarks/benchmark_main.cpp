@@ -28,7 +28,7 @@ void usage(std::ostream& out) {
       << "  --process-run N --seed N\n"
       << "  --run-id ID --case-id ID --output FILE.jsonl\n"
       << "  --expected-git-sha SHA   required by release orchestration\n"
-      << "  --profile-once   enqueue one validated invocation without timing\n"
+      << "  --profile-once   warm up, then enqueue one validated invocation without timing\n"
       << "  --no-validate\n";
 }
 
@@ -149,6 +149,11 @@ int main(int argc, char** argv) {
       adapter->setup(adapter_options, run.seed, stream);
       rr::cuda_check(cudaStreamSynchronize(stream), "setup synchronization");
       if (profile_once) {
+        for (int iteration = 0; iteration < run.warmup; ++iteration) {
+          adapter->prepare_sample(run.level, stream);
+          adapter->enqueue(run.level, stream);
+        }
+        rr::cuda_check(cudaStreamSynchronize(stream), "profile warmup synchronization");
         adapter->prepare_sample(run.level, stream);
         rr::cuda_check(cudaStreamSynchronize(stream), "profile preparation synchronization");
         adapter->enqueue(run.level, stream);
@@ -159,7 +164,7 @@ int main(int argc, char** argv) {
         }
         std::cout << "{\"mode\":\"profile_once\",\"operator\":\"" << adapter->operator_name()
                   << "\",\"variant\":\"" << adapter->variant_name()
-                  << "\",\"validation_ok\":true}\n";
+                  << "\",\"warmup\":" << run.warmup << ",\"validation_ok\":true}\n";
       } else {
         const rr::BenchmarkRecord record = rr::run_benchmark(*adapter, run, stream);
         const std::string json = rr::record_to_json(record);

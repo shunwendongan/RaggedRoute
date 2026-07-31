@@ -14,6 +14,8 @@
 
 `raggedroute.suite.v1`、`raggedroute.benchmark.v1` 与 `raggedroute.aggregate.v1` 在迁移期继续可读；v2 不覆盖已有 raw evidence。现有 v1 的计时与结果边界以 [benchmark-architecture.md](benchmark-architecture.md) 为准，本文只定义新增能力。
 
+七个算子的优化假设、实验决策和实际性能记录统一从 [operator-optimization-index.md](operator-optimization-index.md) 进入；每个算子独立维护，避免把 Kernel Body、operator steady-state 和 chain 结果混在一起。
+
 ## 2. 里程碑 A：候选 variant 评估闭环
 
 ### A1. 多 variant suite 与 registry

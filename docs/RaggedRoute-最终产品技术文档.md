@@ -7,6 +7,7 @@
 > Blackwell：仅保留接口与调研预案；未在实卡验证前不宣称支持或性能  
 > 文档版本：v2.1，2026-07-29
 > Benchmark 可执行契约：[benchmark-architecture.md](benchmark-architecture.md)
+> 算子级优化资料入口：[operator-optimization-index.md](operator-optimization-index.md)
 
 ## 0. 先给结论
 

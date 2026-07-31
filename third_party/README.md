@@ -7,3 +7,6 @@ header/template dependencies.
 This directory is reserved for an explicitly selected local source checkout. Any copied or
 adapted operator source belongs under the corresponding `src/<operator>/library_baseline/`
 directory together with its `UPSTREAM.md` provenance record. See `THIRD_PARTY_NOTICES.md`.
+
+Retained licenses for committed source adaptations are under `third_party/licenses/`; the
+repository does not commit CUDA Toolkit or cuBLAS binaries.

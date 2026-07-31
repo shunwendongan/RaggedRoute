@@ -1,6 +1,6 @@
 # 实现状态与证据边界
 
-更新时间：2026-07-30
+更新时间：2026-07-31
 
 ## 已实现
 
@@ -13,6 +13,7 @@
 - CMake presets：本地 RTX 3080 `sm_86`、H100 portable `sm_90`、H100 accelerated `sm_90a` 各自独立 Debug/Release 输出目录；
 - Debug CUDA 使用 `-G`；Release CUDA 使用 `-lineinfo` 且不带 `-G`；默认不开 fast-math，RDC 默认关闭；
 - CUDA runtime/cuBLAS、CUDA 13 bundled CCCL、外部 CCCL/CUTLASS 的 `AUTO|SYSTEM|FETCH|OFF` 发现策略；CCCL/CUTLASS Fetch 固定 tag；
+- Windows wrapper 通过 `RAGGEDROUTE_VSDEVCMD`、`RAGGEDROUTE_VS_INSTALL_ROOT`、Developer Shell、`VSINSTALLDIR`、`VS2022_HOME`、`vswhere` 和标准安装目录动态解析 MSVC；configure 强制 fresh cache，build 检测到缺失或不同的 cached MSVC/CUDA compiler 时自动重配，避免 Visual Studio/CUDA Toolkit 移动后复用失效绝对路径；
 - CUDA 静态库的 install/export 与 `find_package(RaggedRoute)` package config；
 - correctness framework 的 FP32/FP16/BF16/低精度 capability metadata、dtype roundtrip launcher 与 guarded-buffer 工具；低精度能力仍须按实卡等级区分；
 - correctness framework 独立 CTest suite：dtype host/runtime roundtrip、reference invariants、failure artifact 序列化 roundtrip、redzone、zero-size、随机与 caller-stream 合同；当前不提供可执行的 failure replay；
@@ -25,8 +26,11 @@
 - L1/L2 reset 成本边界、状态型 repeat policy、raw JSONL 和聚合 JSON/CSV；
 - `raggedroute.suite.v2` 多 variant logical case：每个 case 至少两个唯一 variant、恰好一个 `promotion_baseline`，并复用 case ID、seed、params、level、cache 与采样协议；suite v1 与 `raggedroute.benchmark.v1` raw evidence 保持兼容；
 - registry 为 typed adapter 注入标准实现元数据；`raggedroute.aggregate.v2` 从 v2 manifest 保留完整配对字段，`raggedroute.comparison.v1` 对 GPU/build/语义/math/seed/level/cache/repeats/排除项严格 fail-closed，并输出 per-pair speedup、shape geometric mean 和具备权重时的 trace ratio-of-sums；
+- benchmark-only library/production variants：Dense GEMM `cublaslt`/`cublas`；Histogram `cub_device_histogram`；Scan `cub_device_scan`/`cub_block_scan`/`cub_warp_scan`；Permute `cuda_naive_from_ids`、`vllm_moe_permute` 与 prepared-mapping `vllm_expand_rows`；Grouped GEMM `cublas_per_expert` 与可选 `cutlass_grouped`；Unpermute `vllm_finalize_routing`。它们不进入 v0.2 runtime dispatch；Top-K 因 tie/NaN/selected-softmax 合同尚无语义等价库实现，明确不注册伪基线；
+- 每个 `src/<operator>/library_baseline/` 均有来源记录；vLLM 固定 commit `837eae64580c885101ee95b073aafb27a485e7ce` 的改写源码保留 Apache-2.0，CUTLASS 改写入口保留 BSD-3-Clause；不提交 CUDA/cuBLAS 二进制；
+- 新增 `configs/benchmark_library_smoke.json`，覆盖六个可严格配对的 library/production 边界；本机 SM86 Debug 已通过 raw JSONL → aggregate.v2 → comparison.v1 全链路及所有后置 reference validation。该 tiny Debug smoke 只验证接口和公平 join，不产生性能结论；
 - correctness、benchmark smoke、release benchmark、Nsight profile 四个独立入口；
-- RTX 3080（CUDA 13.3 / MSVC 19.44 / CMake 4.3.1）SM86 Debug/Release 均已构建；CTest、CUDA smoke 均已通过；Release binary 检查为 `sm_86`；
+- RTX 3080（CUDA 13.3 / MSVC 19.50 / CMake 4.3.1）SM86 Debug/Release 均已在当前工具链迁移后重新构建，CTest 与 CUDA smoke 均已通过；CUTLASS v4.6.1 也在独立 Fetch Debug build 中编译并通过完整 CTest 和 grouped GEMM correctness；
 - commit `e37c132` 的 RTX 3080 正式 baseline suite 已完成：3 个独立进程、78 条 raw records、26 个聚合组、全部后置验证通过；结果与噪声限制见 [baseline report](reports/rtx3080-naive-baseline-e37c132.md)；
 - H100 SM90 与 SM90a Debug/Release 均已完成本机交叉编译，分别检查为 `sm_90` 与 `sm_90a` cubin。
 
@@ -34,11 +38,12 @@
 
 - 通用的 failure artifact 自动重放、失败用例最小化与随机 GPU fuzz；当前 artifact 只保存和校验诊断信息；
 - FP16/Tensor Core、`cp.async`、persistent grouped scheduler 等优化版本；
-- cuBLAS/CUTLASS/CUB 强性能基线；
-- shape-aware default dispatch、promotion evaluator 和实际 library/optimized 候选数据；现有 comparison 只计算严格配对结果，`configs/benchmark_promotion_policy.json` 仍不会自动产生晋升结论；
+- 与 Top-K tie/NaN/selected-softmax 合同相同的外部库基线；
+- clean-Git Release 条件下的 library/optimized shape sweep、真实 trace 及性能结论；当前 comparison 可计算严格配对结果，但 Debug smoke 不是性能证据；
+- shape-aware default dispatch、promotion evaluator；`configs/benchmark_promotion_policy.json` 仍不会自动产生晋升结论；
 - H100/Blackwell 实卡支持、正确性或性能；本机 SM90/SM90a 交叉编译不等同于 H100 验证；
 - 完整 MoE FFN、训练、多 GPU 或 All-to-All。
 
-因此当前提交是 benchmark 基础设施和 naive baseline milestone，不是“七个算子已经优化完成”。任何正式 speedup 必须等候选 variant 与同机同语义 performance baseline 接入后再生成。
+因此当前提交是 benchmark 基础设施、naive baseline 和 benchmark-only library/prod-reference milestone，不是“七个算子已经优化完成”。任何正式 speedup 必须等候选 optimized variant 与 clean-Git、同机同语义的 Release performance baseline 完成后再生成。
 
 候选 variant 评估闭环、trace/working-set workload、profile metrics、图表与 release bundle 的后续实施顺序见 [development-roadmap.md](development-roadmap.md)。该文档全部是计划，不属于上方“已实现”事实。

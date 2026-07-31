@@ -7,6 +7,7 @@
 
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/benchmark/adapter_utils.h"
+#include "raggedroute/benchmark/library_baselines.h"
 #include "raggedroute/benchmark/registry.h"
 
 namespace raggedroute::benchmark {
@@ -15,12 +16,23 @@ namespace {
 class GroupedGemmAdapter final : public BenchmarkAdapter {
  public:
   explicit GroupedGemmAdapter(const std::string& variant_name) : variant_name_(variant_name) {}
+  ~GroupedGemmAdapter() override {
+#if RAGGEDROUTE_HAS_CUBLAS
+    library_baseline::destroy_grouped_cublas_plan(cublas_plan_);
+#endif
+#if RAGGEDROUTE_HAS_CUTLASS
+    library_baseline::destroy_grouped_cutlass_plan(cutlass_plan_);
+#endif
+  }
   std::string operator_name() const override { return "grouped_gemm"; }
   std::string variant_name() const override { return variant_name_; }
   std::string description() const override {
     return "Single-launch FP32 grouped GEMM with one grid-z slice per expert";
   }
   bool supports(MeasurementLevel level) const override {
+    if (variant_name_ == "cublas_per_expert") {
+      return level == MeasurementLevel::kOperatorSteady;
+    }
     return level == MeasurementLevel::kKernelBody || level == MeasurementLevel::kOperatorSteady;
   }
   RepeatPolicy repeat_policy(MeasurementLevel) const override { return {}; }
@@ -72,10 +84,41 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
     x_.copy_from_host(x_host_, stream);
     weights_.copy_from_host(weights_host_, stream);
     offsets_.copy_from_host(offsets_host_, stream);
+#if RAGGEDROUTE_HAS_CUBLAS
+    if (variant_name_ == "cublas_per_expert") {
+      cublas_plan_ = library_baseline::create_grouped_cublas_plan();
+    }
+#endif
+#if RAGGEDROUTE_HAS_CUTLASS
+    if (variant_name_ == "cutlass_grouped") {
+      cutlass_plan_ = library_baseline::create_grouped_cutlass_plan(
+          x_.data(), weights_.data(), output_buffer_.data(), offsets_host_.data(), experts_,
+          hidden_, output_);
+      library_workspace_bytes_ = library_baseline::grouped_cutlass_workspace_bytes(cutlass_plan_);
+      library_workspace_.resize(library_workspace_bytes_);
+      library_baseline::initialize_grouped_cutlass_plan(cutlass_plan_, library_workspace_.data(),
+                                                        library_workspace_bytes_, stream);
+    }
+#endif
   }
 
   void prepare_sample(MeasurementLevel, cudaStream_t) override {}
   void enqueue(MeasurementLevel level, cudaStream_t stream) override {
+#if RAGGEDROUTE_HAS_CUBLAS
+    if (variant_name_ == "cublas_per_expert") {
+      library_baseline::launch_grouped_cublas(cublas_plan_, x_.data(), weights_.data(),
+                                              output_buffer_.data(), offsets_host_.data(), experts_,
+                                              hidden_, output_, stream);
+      return;
+    }
+#endif
+#if RAGGEDROUTE_HAS_CUTLASS
+    if (variant_name_ == "cutlass_grouped") {
+      library_baseline::launch_grouped_cutlass(cutlass_plan_, library_workspace_.data(),
+                                               library_workspace_bytes_, stream);
+      return;
+    }
+#endif
     if (level == MeasurementLevel::kKernelBody) {
       cuda_check(ops::launch_grouped_gemm_naive(x_.data(), weights_.data(), offsets_.data(),
                                                 output_buffer_.data(), experts_, hidden_, output_,
@@ -113,6 +156,18 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
             {"max_expert_tokens", static_cast<std::int64_t>(max_expert_tokens_)}};
   }
   FieldMap variant_config() const override {
+    if (variant_name_ == "cublas_per_expert") {
+      return {{"api", std::string("cublasSgemm")},
+              {"launches", static_cast<std::int64_t>(active_experts_)},
+              {"scheduler", std::string("host_loop_active_experts")},
+              {"math_mode", std::string("strict_fp32")}};
+    }
+    if (variant_name_ == "cutlass_grouped") {
+      return {{"api", std::string("cutlass::gemm::device::GemmGrouped")},
+              {"scheduler", std::string("device_only")},
+              {"operator_class", std::string("simt_fp32")},
+              {"threadblock_shape", std::string("128x128x8")}};
+    }
     return {{"tile_m", static_cast<std::int64_t>(16)},
             {"tile_n", static_cast<std::int64_t>(16)},
             {"scheduler", std::string("grid_z_per_expert")}};
@@ -127,6 +182,7 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
     work.operator_metrics["active_gemm_problems"] = static_cast<std::int64_t>(active_experts_);
     return work;
   }
+  std::size_t workspace_bytes() const override { return library_workspace_bytes_; }
   std::vector<std::string> excluded_steps(MeasurementLevel) const override {
     return {"route_generation", "offset_preparation", "input_generation", "h2d_copy",
             "workspace_allocation"};
@@ -142,6 +198,13 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
   }
   int tokens_ = 0, experts_ = 0, top_k_ = 0, hidden_ = 0, output_ = 0;
   std::string variant_name_;
+#if RAGGEDROUTE_HAS_CUBLAS
+  library_baseline::GroupedCublasPlan* cublas_plan_ = nullptr;
+#endif
+#if RAGGEDROUTE_HAS_CUTLASS
+  library_baseline::GroupedCutlassPlan* cutlass_plan_ = nullptr;
+#endif
+  std::size_t library_workspace_bytes_ = 0;
   DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   int route_pairs_ = 0, max_expert_tokens_ = 0, active_experts_ = 0;
   double zipf_s_ = 0.0;
@@ -150,6 +213,7 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
   std::vector<float> x_host_, weights_host_, expected_;
   DeviceBuffer<std::int32_t> offsets_;
   DeviceBuffer<float> x_, weights_, output_buffer_;
+  DeviceBuffer<std::uint8_t> library_workspace_;
 };
 
 }  // namespace

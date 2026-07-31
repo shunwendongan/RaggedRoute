@@ -15,8 +15,10 @@ function(raggedroute_apply_target_settings target)
     target_compile_options(${target} PRIVATE
       $<$<COMPILE_LANGUAGE:CXX>:/W4>
       $<$<COMPILE_LANGUAGE:CXX>:/permissive->
+      $<$<COMPILE_LANGUAGE:CXX>:/Zc:preprocessor>
       $<$<COMPILE_LANGUAGE:CXX>:/utf-8>
-      $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/utf-8>)
+      $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/utf-8>
+      $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/Zc:preprocessor>)
     if(RAGGEDROUTE_WARNINGS_AS_ERRORS)
       target_compile_options(${target} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/WX>)
     endif()

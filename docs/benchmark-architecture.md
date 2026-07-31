@@ -1,6 +1,6 @@
 # RaggedRoute Benchmark 架构与发布协议
 
-> 状态：v1 已实现（CUDA naive baseline）；optimized/CUDA library variants 后续按同一协议接入。
+> 状态：v1 raw evidence、v2 strict comparison 与 benchmark-only cuBLAS/CUB/CUTLASS/vLLM variants 已实现；optimized CUDA variants 后续按同一协议接入。
 > 原则：正确性测试、正式性能评测、profiler 诊断是三条独立流水线，不能互相替代。
 
 ## 1. 架构结论
@@ -61,17 +61,17 @@ v2 run manifest 可生成 `raggedroute.aggregate.v2`；其中保留 protocol、e
 
 ## 2. 七个 adapter 保留的个性化逻辑
 
-| Adapter | 专有 case/config | L1 前置状态 | L2 必含成本 | 当前 oracle/检查 |
-|---|---|---|---|---|
-| Dense GEMM | `M/N/K`、row-major、FP32、`alpha=1,beta=0` | 无 | wrapper + kernel | CPU GEMM，绝对+相对误差 |
-| Top-K Gate | `T/E`、selected-softmax、lower-id tie、NaN policy | 无 | 完整 fused kernel | ids 精确一致，weights 容差 |
-| Histogram | `T/E/top_k`、uniform/Zipf/single-hot/round-robin | `counts_zeroed` | counts reset + histogram | CPU bincount、总数不变量 |
-| Exclusive Scan | `E/R`、count distribution | 无 | 完整 scan | offsets 首尾/差分精确一致 |
-| Token Permute | `T/E/K`、distribution、是否物化 `sorted_route` | `cursor_zeroed`；L1 强制 `repeats=1` | cursor reset + placement/copy | expert segment、双向 mapping、逐行内容 |
-| Grouped GEMM | `T/E/K/N`、expert 负载分布 | packed X、offsets 已准备 | 当前 baseline 无额外动态 prepare | 逐 expert CPU GEMM、空 expert |
-| Unpermute | `T/E/N/top_k`、route mapping/weights | mapping 已准备 | gather + weighted reduce | token-owned CPU reference |
+| Adapter | 专有 case/config | L1 前置状态 | L2 必含成本 | 当前 oracle/检查 | benchmark-only variants |
+|---|---|---|---|---|---|
+| Dense GEMM | `M/N/K`、row-major、FP32、`alpha=1,beta=0` | 无 | wrapper + kernel | CPU GEMM，绝对+相对误差 | `cublaslt`、`cublas` |
+| Top-K Gate | `T/E`、selected-softmax、lower-id tie、NaN policy | 无 | 完整 fused kernel | ids 精确一致，weights 容差 | 无；见 `library_baseline/UNAVAILABLE.md` |
+| Histogram | `T/E/top_k`、uniform/Zipf/single-hot/round-robin | `counts_zeroed` | counts reset + histogram | CPU bincount、总数不变量 | `cub_device_histogram` |
+| Exclusive Scan | `E/R`、count distribution | 无 | 完整 scan | offsets 首尾/差分精确一致 | `cub_device_scan`、`cub_block_scan`、`cub_warp_scan` |
+| Token Permute | `T/E/K`、distribution、是否物化 `sorted_route` | `cursor_zeroed`；L1 强制 `repeats=1` | cursor reset + placement/copy | expert segment、双向 mapping、逐行内容 | full `cuda_naive_from_ids`、vLLM full/prepared mapping |
+| Grouped GEMM | `T/E/K/N`、expert 负载分布 | packed X、offsets 已准备 | 当前 baseline 无额外动态 prepare | 逐 expert CPU GEMM、空 expert | `cublas_per_expert`、optional `cutlass_grouped` |
+| Unpermute | `T/E/N/top_k`、route mapping/weights | mapping 已准备 | gather + weighted reduce | token-owned CPU reference | `vllm_finalize_routing` |
 
-当前 naive baseline 使用 FP32，目的是先冻结真实可执行的评测合同；它不是文档中最终 FP16/Tensor Core 版本，也不产生任何“已优化”声明。后续 FP16/CUB/cuBLAS/CUTLASS/optimized CUDA variant 应新增 variant，不覆盖这条基线证据链。
+当前 naive baseline 使用 FP32，目的是先冻结真实可执行的评测合同；它不是文档中最终 FP16/Tensor Core 版本，也不产生任何“已优化”声明。已接入的 CUB/cuBLAS/CUTLASS/vLLM 仅为 benchmark strategy，不进入 runtime dispatch；未来 FP16/optimized CUDA 继续新增 variant，不能覆盖已有 baseline 证据链。
 
 ## 3. 测量层级与两条链路
 
@@ -115,6 +115,11 @@ flowchart TD
 - 只证明所有 target、层级、JSONL 和后置校验可运行；
 - sample 很少且 worktree 可 dirty，数字不得用于 README/简历结论。
 
+`configs/benchmark_library_smoke.json` 使用 suite v2 覆盖 Dense、Histogram、Scan、full
+from-ids Permute、Grouped GEMM 和 Unpermute 的 library/production pair。它还会执行
+raw JSONL → run manifest → aggregate.v2 → comparison.v1；该 Debug/tiny case 只验证 pairing，
+不表示 library 或 naive 的性能排名。
+
 ### Release benchmark
 
 - `configs/benchmark_rtx3080_release.json`；
@@ -124,7 +129,7 @@ flowchart TD
 - 输出路径必须不存在，脚本拒绝覆盖旧 run；
 - raw JSONL 和 manifest 保留，聚合器不会删除原始样本。
 
-`configs/benchmark_promotion_policy.json` 是候选 variant 未来进入默认 dispatch 时使用的版本化标准草案：正确性必须全过，至少三次独立进程，并检查 CV、获益 shape coverage、trace ratio-of-sums、最大单点退化和 workspace 增长。当前没有 promotion evaluator，只有 naive baseline，因此该文件不会自动产生晋升结论。
+`configs/benchmark_promotion_policy.json` 是候选 variant 未来进入默认 dispatch 时使用的版本化标准草案：正确性必须全过，至少三次独立进程，并检查 CV、获益 shape coverage、trace ratio-of-sums、最大单点退化和 workspace 增长。当前没有 promotion evaluator；不论 naive、library 还是 optimized variant，该文件都不会自动产生晋升结论。
 
 ### Profile
 
@@ -163,7 +168,7 @@ speedup_trace = sum(weight_i * baseline_latency_i)
 
 环境由二进制和 run manifest 共同记录：build type、build Git SHA/dirty、CUDA compiler/runtime/driver、GPU name/UUID/PCI、compute capability、显存、SM 数，以及 `nvidia-smi` 的 clock/power/temperature 快照。不可用值应标记 unavailable/null，不能填 0 冒充实测。
 
-`oracle` 与 `performance_baseline` 是两个概念：CPU/PyTorch oracle 只判断语义；cuBLAS/CUTLASS/CUB/production implementation 才能作为公平 speedup 分母。v1 目前只有 naive CUDA variant，所以只报告 baseline latency，不报告 speedup。
+`oracle` 与 `performance_baseline` 是两个概念：CPU/PyTorch oracle 只判断语义；cuBLAS/CUTLASS/CUB/production implementation 才能成为公平 speedup 分母。v1 raw record 现在可以承载上述 benchmark-only variant，但只有 clean-Git Release、同机同语义的完整配对结果才能报告性能结论；Top-K 没有对应库 variant 时不生成虚假 speedup。
 
 ## 7. 命令
 

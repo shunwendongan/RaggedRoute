@@ -2,7 +2,7 @@
 
 CUDA primitives and an auditable benchmark pipeline for single-GPU MoE routing and ragged expert computation.
 
-> Current milestone: the source-breaking v0.2 public API, seven FP32 teaching/reference CUDA baselines, and auditable L1/L2/L3 measurement boundaries are implemented and revalidated on RTX 3080 / SM86. This is a reproducible resume project, not a production-ready operator library.
+> Current milestone: the source-breaking v0.2 public API, seven FP32 teaching/reference CUDA baselines, benchmark-only library/production variants, and auditable L1/L2/L3 measurement boundaries are implemented and revalidated on RTX 3080 / SM86. This is a reproducible resume project, not a production-ready operator library.
 
 ## Operators
 
@@ -36,6 +36,8 @@ One common runner owns CUDA Event timing, warmup, sampling, cache policy, enviro
 
 Suite v2 groups multiple implementations under one logical case and one promotion baseline. The registry supplies standard implementation provenance, aggregate v2 retains every strict pairing key, and comparison v1 fails closed before computing speedup when hardware, build, semantics, seed, level, cache, repeats, or excluded steps differ. Suite v1 and existing benchmark v1 raw records remain readable.
 
+Benchmark-only variants never enter public runtime dispatch. Dense GEMM has cuBLASLt/cuBLAS; Histogram and Scan use CUB; Grouped GEMM has a per-expert cuBLAS loop and an optional CUTLASS grouped implementation; Permute/Unpermute retain adapted vLLM FP32 references. The Top-K external baseline is deliberately unavailable because the locally available CUB APIs do not prove the project's tie/NaN/selected-softmax contract. Per-operator source provenance is recorded under `src/<operator>/library_baseline/`.
+
 Correctness, release performance, and profiling are separate flows:
 
 | Flow | Purpose | Produces performance claims? |
@@ -58,7 +60,7 @@ The repository uses CMake presets with isolated output directories under `out/bu
 | `h100-sm90-debug`, `h100-sm90-release` | `90-real` | Portable H100 path; cross-compile locally, validate on H100 |
 | `h100-sm90a-debug`, `h100-sm90a-release` | `90a-real` | Separate Hopper accelerated path; no support claim before H100 validation |
 
-On Windows, install CMake 3.24+, Ninja, Python 3, CUDA Toolkit, and Visual Studio 2022 Build Tools. Both wrappers call one shared environment resolver: it accepts an already initialized Developer Shell, honors an explicit `VSDEVCMD`, discovers the latest x64 C++ workload through `vswhere`, checks standard VS 2022 editions as a fallback, and verifies that `cl.exe` is usable. This avoids pinning a machine-specific compiler path. Run raw `cmake --build` only from an initialized Developer Shell; from an ordinary PowerShell use the wrappers below.
+On Windows, install CMake 3.24+, Ninja, Python 3, CUDA Toolkit, and Visual Studio 2022 Build Tools. Both wrappers call one shared environment resolver: it accepts a usable initialized Developer Shell, honors explicit `RAGGEDROUTE_VSDEVCMD`/`VSDEVCMD` overrides, checks `RAGGEDROUTE_VS_INSTALL_ROOT`, `VSINSTALLDIR`, and `VS2022_HOME`, discovers the latest x64 C++ workload through `vswhere`, checks standard VS 2022 editions as a fallback, and verifies that `cl.exe` is usable. This avoids pinning a machine-specific compiler path. Configure always uses a fresh CMake cache, and the build wrapper automatically reconfigures if an existing cache names a missing or different MSVC compiler or CUDA Toolkit compiler. Run raw `cmake --build` only from an initialized Developer Shell; from an ordinary PowerShell use the wrappers below.
 
 ```powershell
 # Defaults to rtx3080-sm86-release.
@@ -81,7 +83,7 @@ Release CUDA builds use `-lineinfo` and deliberately omit `-G`; Debug CUDA build
 
 ## Dependencies
 
-`CUDAToolkit` is required only when `RAGGEDROUTE_ENABLE_CUDA=ON`; CUDA runtime is linked through CMake's imported targets. cuBLAS is detected for future baseline targets. CCCL and CUTLASS are independent optional dependencies controlled per library:
+`CUDAToolkit` is required only when `RAGGEDROUTE_ENABLE_CUDA=ON`; CUDA runtime and cuBLAS/cuBLASLt are linked through CMake's imported targets for benchmark-only variants. CCCL and CUTLASS are independent optional dependencies controlled per library:
 
 ```powershell
 # AUTO (default): use Toolkit/system headers when present, without network access.
@@ -146,8 +148,8 @@ out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
 
 ## Evidence boundary
 
-Implemented now: caller-stream naive launchers, the v0.2 self-describing tensor API, an SM86-only executable runtime/dispatch layer, typed adapters, per-operator CPU oracle implementations behind one correctness facade, raw samples, p50/p90/p95 of batch means, explicit excluded steps, L1/L2 cost boundaries, and both L3 chains. L2/L3 call the public wrappers, so histogram counts reset and permute cursor reset are included there while L1 keeps them as explicit preconditions. Third-party dependency and source provenance rules are recorded in `THIRD_PARTY_NOTICES.md`.
+Implemented now: caller-stream naive launchers, the v0.2 self-describing tensor API, an SM86-only executable runtime/dispatch layer, typed adapters, per-operator CPU oracle implementations behind one correctness facade, benchmark-only cuBLAS/CUB/CUTLASS/vLLM variants, raw samples, p50/p90/p95 of batch means, explicit excluded steps, L1/L2 cost boundaries, and both L3 chains. L2/L3 call the public wrappers, so histogram counts reset and permute cursor reset are included there while L1 keeps them as explicit preconditions. `configs/benchmark_library_smoke.json` verifies raw → aggregate.v2 → comparison.v1 pairing only; its Debug/tiny-shape numbers are not performance claims. Third-party dependency and source provenance rules are recorded in `THIRD_PARTY_NOTICES.md`.
 
-Not implemented yet: executable failure replay, FP16/Tensor Core optimized variants, cuBLAS/CUTLASS/CUB performance baselines, automatic promotion evaluation, default shape dispatch, or H100/Blackwell validation. `configs/benchmark_promotion_policy.json` currently expresses policy only; it is not an evaluator and cannot change dispatch. Those capabilities must be implemented and measured under the same contract before reporting speedup or support.
+Not implemented yet: executable failure replay, FP16/Tensor Core optimized variants, a Top-K external baseline with matching semantics, clean-Git Release performance evidence for library/optimized comparisons, automatic promotion evaluation, default shape dispatch, or H100/Blackwell validation. `configs/benchmark_promotion_policy.json` currently expresses policy only; it is not an evaluator and cannot change dispatch. Those capabilities must be implemented and measured under the same contract before reporting speedup or support.
 
 The staged plan for multi-variant comparison, promotion evidence, trace/working-set workloads, profiler metrics, plots, and frozen release artifacts is tracked in [Development roadmap](docs/development-roadmap.md). Planned items are not current capabilities.

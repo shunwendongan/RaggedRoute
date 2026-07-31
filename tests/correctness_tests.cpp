@@ -1,6 +1,7 @@
 #include <cuda_runtime_api.h>
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <limits>
 #include <map>
@@ -10,6 +11,7 @@
 #include <vector>
 
 #include "raggedroute/benchmark/adapter_utils.h"
+#include "raggedroute/benchmark/library_baselines.h"
 #include "raggedroute/benchmark/registry.h"
 #include "raggedroute/benchmark/runner.h"
 #include "raggedroute/correctness/framework.h"
@@ -21,6 +23,8 @@ namespace {
 struct Case {
   std::string name;
   rr::OptionMap options;
+  std::string variant = "cuda_naive";
+  rr::MeasurementLevel level = rr::MeasurementLevel::kOperatorSteady;
 };
 
 void require(bool condition, const std::string& message) {
@@ -28,15 +32,15 @@ void require(bool condition, const std::string& message) {
 }
 
 void run_adapter_case(const Case& test_case, cudaStream_t stream, std::uint64_t seed) {
-  auto adapter = rr::make_adapter(test_case.name, "cuda_naive");
-  require(adapter->supports(rr::MeasurementLevel::kOperatorSteady),
-          test_case.name + " does not support L2");
+  auto adapter = rr::make_adapter(test_case.name, test_case.variant);
+  require(adapter->supports(test_case.level),
+          test_case.name + "/" + test_case.variant + " does not support the requested level");
   adapter->setup(test_case.options, seed, stream);
-  adapter->prepare_sample(rr::MeasurementLevel::kOperatorSteady, stream);
-  adapter->enqueue(rr::MeasurementLevel::kOperatorSteady, stream);
+  adapter->prepare_sample(test_case.level, stream);
+  adapter->enqueue(test_case.level, stream);
   rr::cuda_check(cudaStreamSynchronize(stream), "correctness case sync");
   const auto result = adapter->validate(stream);
-  require(result.ok, test_case.name + ": " + result.message);
+  require(result.ok, test_case.name + "/" + test_case.variant + ": " + result.message);
   require(!adapter->case_config().empty(), test_case.name + " has no case config");
   const auto variant_config = adapter->variant_config();
   require(!variant_config.empty(), test_case.name + " has no variant config");
@@ -46,7 +50,103 @@ void run_adapter_case(const Case& test_case, cudaStream_t stream, std::uint64_t 
     require(variant_config.count(field) == 1,
             test_case.name + " variant config is missing " + field);
   }
-  std::cout << "PASS " << test_case.name << " - " << result.message << '\n';
+  std::cout << "PASS " << test_case.name << "/" << test_case.variant << " - " << result.message
+            << '\n';
+}
+
+bool has_variant(const std::string& operator_name, const std::string& variant) {
+  const auto variants = rr::available_variants(operator_name);
+  return std::find(variants.begin(), variants.end(), variant) != variants.end();
+}
+
+void run_library_alignment_fallbacks(cudaStream_t stream) {
+#if RAGGEDROUTE_HAS_CCCL
+  if (has_variant("token_permute", "vllm_moe_permute")) {
+    constexpr int kTokens = 2;
+    constexpr int kExperts = 2;
+    constexpr int kTopK = 1;
+    constexpr int kHidden = 8;
+    rr::DeviceBuffer<float> input(kTokens * kHidden + 1);
+    rr::DeviceBuffer<float> output(kTokens * kHidden + 1);
+    rr::DeviceBuffer<std::int32_t> expert_ids(kTokens);
+    rr::DeviceBuffer<std::int32_t> route_pos(kTokens);
+    rr::DeviceBuffer<std::int32_t> sorted_route(kTokens);
+    std::vector<float> host_input(1, -1.0F);
+    for (int value = 0; value < kTokens * kHidden; ++value) {
+      host_input.push_back(static_cast<float>(value));
+    }
+    input.copy_from_host(host_input, stream);
+    rr::cuda_check(cudaMemsetAsync(output.data(), 0, output.bytes(), stream),
+                   "initialize unaligned vLLM permute output storage");
+    expert_ids.copy_from_host({1, 0}, stream);
+    std::size_t workspace_bytes = 0;
+    rr::cuda_check(rr::library_baseline::query_vllm_permute_workspace(
+                       kTokens, kExperts, kTopK, &workspace_bytes),
+                   "query unaligned vLLM permute workspace");
+    rr::DeviceBuffer<std::uint8_t> workspace(workspace_bytes);
+    rr::cuda_check(rr::library_baseline::initialize_vllm_permute_workspace(
+                       workspace.data(), workspace_bytes, kTokens, kExperts, kTopK, stream),
+                   "initialize unaligned vLLM permute workspace");
+    require(reinterpret_cast<std::uintptr_t>(input.data() + 1) % alignof(float4) != 0,
+            "permute fallback test input must be unaligned");
+    rr::cuda_check(rr::library_baseline::launch_vllm_moe_permute(
+                       input.data() + 1, expert_ids.data(), output.data() + 1, route_pos.data(),
+                       sorted_route.data(), workspace.data(), workspace_bytes, kTokens, kExperts,
+                       kTopK, kHidden, stream),
+                   "launch unaligned vLLM permute");
+    rr::cuda_check(cudaStreamSynchronize(stream), "sync unaligned vLLM permute");
+    const auto output_host = output.copy_to_host(stream);
+    const auto positions = route_pos.copy_to_host(stream);
+    const auto sorted = sorted_route.copy_to_host(stream);
+    require(positions == std::vector<std::int32_t>({1, 0}) &&
+                sorted == std::vector<std::int32_t>({1, 0}),
+            "unaligned vLLM permute mapping is incorrect");
+    for (int column = 0; column < kHidden; ++column) {
+      require(output_host[static_cast<std::size_t>(1 + column)] ==
+                  static_cast<float>(kHidden + column) &&
+                  output_host[static_cast<std::size_t>(1 + kHidden + column)] ==
+                      static_cast<float>(column),
+              "unaligned vLLM permute scalar fallback copied the wrong row");
+    }
+  }
+#endif
+
+#if RAGGEDROUTE_HAS_VLLM_UNPERMUTE
+  if (has_variant("unpermute", "vllm_finalize_routing")) {
+    constexpr int kTokens = 2;
+    constexpr int kTopK = 2;
+    constexpr int kWidth = 8;
+    rr::DeviceBuffer<float> permuted(kTokens * kTopK * kWidth + 1);
+    rr::DeviceBuffer<float> output(kTokens * kWidth + 1);
+    rr::DeviceBuffer<float> weights(kTokens * kTopK);
+    rr::DeviceBuffer<std::int32_t> route_pos(kTokens * kTopK);
+    std::vector<float> host_permuted(1, -1.0F);
+    for (int row = 0; row < kTokens * kTopK; ++row) {
+      for (int column = 0; column < kWidth; ++column) {
+        host_permuted.push_back(static_cast<float>(row + 1));
+      }
+    }
+    permuted.copy_from_host(host_permuted, stream);
+    rr::cuda_check(cudaMemsetAsync(output.data(), 0, output.bytes(), stream),
+                   "initialize unaligned vLLM unpermute output storage");
+    weights.copy_from_host({0.25F, 0.75F, 0.4F, 0.6F}, stream);
+    route_pos.copy_from_host({2, 0, 3, 1}, stream);
+    require(reinterpret_cast<std::uintptr_t>(permuted.data() + 1) % alignof(float4) != 0,
+            "unpermute fallback test input must be unaligned");
+    rr::cuda_check(rr::library_baseline::launch_vllm_finalize_routing(
+                       permuted.data() + 1, output.data() + 1, weights.data(), route_pos.data(),
+                       kTokens, kTopK, kWidth, stream),
+                   "launch unaligned vLLM unpermute");
+    rr::cuda_check(cudaStreamSynchronize(stream), "sync unaligned vLLM unpermute");
+    const auto output_host = output.copy_to_host(stream);
+    for (int column = 0; column < kWidth; ++column) {
+      require(std::fabs(output_host[static_cast<std::size_t>(1 + column)] - 1.5F) <= 1.0e-6F &&
+                  std::fabs(output_host[static_cast<std::size_t>(1 + kWidth + column)] - 2.8F) <=
+                      1.0e-6F,
+              "unaligned vLLM unpermute scalar fallback produced the wrong reduction");
+    }
+  }
+#endif
 }
 
 }  // namespace
@@ -146,6 +246,46 @@ int main() {
         run_adapter_case(test_case, stream, seed++);
       }
 
+      const std::vector<Case> library_cases = {
+          {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cublaslt"},
+          {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cublas"},
+          {"histogram", {{"T", "11"}, {"E", "8"}, {"top_k", "2"}},
+           "cub_device_histogram"},
+          {"exclusive_scan", {{"E", "7"}, {"R", "23"}}, "cub_device_scan"},
+          {"exclusive_scan", {{"E", "33"}, {"R", "67"}}, "cub_block_scan"},
+          {"exclusive_scan", {{"E", "31"}, {"R", "67"}}, "cub_warp_scan"},
+          {"token_permute",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}},
+           "cuda_naive_from_ids"},
+          {"token_permute",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}},
+           "vllm_moe_permute"},
+          {"token_permute",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "8"}},
+           "vllm_expand_rows", rr::MeasurementLevel::kKernelBody},
+          {"grouped_gemm",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
+           "cublas_per_expert"},
+          {"grouped_gemm",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
+           "cutlass_grouped", rr::MeasurementLevel::kKernelBody},
+          {"unpermute",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"N", "7"}},
+           "vllm_finalize_routing", rr::MeasurementLevel::kKernelBody},
+          {"unpermute",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"N", "8"}},
+           "vllm_finalize_routing", rr::MeasurementLevel::kOperatorSteady},
+      };
+      for (const auto& test_case : library_cases) {
+        if (has_variant(test_case.name, test_case.variant)) {
+          run_adapter_case(test_case, stream, seed++);
+        } else {
+          std::cout << "SKIP " << test_case.name << "/" << test_case.variant
+                    << " - optional dependency unavailable\n";
+        }
+      }
+      run_library_alignment_fallbacks(stream);
+
       for (const auto& suite_name : rr::available_suites()) {
         auto chain = rr::make_suite_adapter(suite_name, "cuda_naive");
         rr::OptionMap options = {
@@ -178,6 +318,29 @@ int main() {
                             "cursor_reset") == permute_l2_excluded.end(),
               "permute reset exclusion must distinguish L1 from L2");
 
+      require(std::get<std::string>(permute->case_config().at("placement_order")) ==
+                  "unstable_atomic_cursor",
+              "suite-v1 permute placement signature changed");
+      if (has_variant("token_permute", "vllm_moe_permute")) {
+        auto from_ids = rr::make_adapter("token_permute", "cuda_naive_from_ids");
+        auto vllm_full = rr::make_adapter("token_permute", "vllm_moe_permute");
+        const rr::OptionMap options = {
+            {"T", "4"}, {"E", "8"}, {"top_k", "2"}, {"K", "7"}};
+        from_ids->setup(options, seed, stream);
+        vllm_full->setup(options, seed, stream);
+        require(from_ids->case_config() == vllm_full->case_config(),
+                "full permute baselines must have an identical logical boundary");
+        const auto from_ids_work =
+            from_ids->work_estimate(rr::MeasurementLevel::kOperatorSteady);
+        const auto vllm_work = vllm_full->work_estimate(rr::MeasurementLevel::kOperatorSteady);
+        require(from_ids_work.operator_metrics.count("cursor_reset_bytes") == 1 &&
+                    from_ids_work.operator_metrics.count("counts_reset_bytes") == 1,
+                "naive-from-ids work must include its resets");
+        require(vllm_work.operator_metrics.count("cursor_reset_bytes") == 0 &&
+                    vllm_work.operator_metrics.count("counts_reset_bytes") == 0,
+                "vLLM full permute must not report naive cursor/count reset traffic");
+      }
+
       auto histogram = rr::make_adapter("histogram", "cuda_naive");
       histogram->setup({{"T", "4"}, {"E", "8"}, {"top_k", "2"}}, seed, stream);
       const auto histogram_l1 = histogram->work_estimate(rr::MeasurementLevel::kKernelBody);
@@ -193,6 +356,15 @@ int main() {
                   std::find(histogram_l2_excluded.begin(), histogram_l2_excluded.end(),
                             "counts_reset") == histogram_l2_excluded.end(),
               "histogram reset exclusion must distinguish L1 from L2");
+      if (has_variant("histogram", "cub_device_histogram")) {
+        auto cub_histogram = rr::make_adapter("histogram", "cub_device_histogram");
+        cub_histogram->setup({{"T", "4"}, {"E", "8"}, {"top_k", "2"}}, seed, stream);
+        const auto cub_work =
+            cub_histogram->work_estimate(rr::MeasurementLevel::kOperatorSteady);
+        require(cub_work.operator_metrics.count("global_atomic_operations") == 0 &&
+                    cub_work.operator_metrics.count("histogram_input_items") == 1,
+                "CUB histogram metrics must not invent its internal atomic strategy");
+      }
 
       auto chain = rr::make_suite_adapter("chain_from_logits", "cuda_naive");
       chain->setup({{"T", "4"}, {"E", "4"}, {"K", "4"}, {"N", "4"}}, seed, stream);

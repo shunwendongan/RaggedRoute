@@ -44,13 +44,16 @@ function(raggedroute_discover_cccl)
   if(RAGGEDROUTE_CCCL_PROVIDER STREQUAL "SYSTEM")
     message(FATAL_ERROR "CCCL headers were not found. Set RAGGEDROUTE_CCCL_ROOT, CCCL_ROOT, or use RAGGEDROUTE_CCCL_PROVIDER=FETCH.")
   elseif(RAGGEDROUTE_CCCL_PROVIDER STREQUAL "FETCH")
-    FetchContent_Declare(raggedroute_cccl_source
+    # Keep FetchContent identifiers short: Ninja on Windows can otherwise exceed
+    # MAX_PATH in the generated *-populate-stamp directory when the repository is
+    # checked out below a normal user profile path.
+    FetchContent_Declare(rr_cccl
       GIT_REPOSITORY https://github.com/NVIDIA/cccl.git
       GIT_TAG "${RAGGEDROUTE_CCCL_GIT_TAG}" GIT_SHALLOW TRUE)
-    FetchContent_MakeAvailable(raggedroute_cccl_source)
+    FetchContent_MakeAvailable(rr_cccl)
     raggedroute_add_header_dependency(raggedroute_cccl
-      "${raggedroute_cccl_source_SOURCE_DIR}/cub"
-      "${raggedroute_cccl_source_SOURCE_DIR}/libcudacxx/include")
+      "${rr_cccl_SOURCE_DIR}/cub"
+      "${rr_cccl_SOURCE_DIR}/libcudacxx/include")
     add_library(RaggedRoute::cccl ALIAS raggedroute_cccl)
     message(STATUS "RaggedRoute CCCL: fetched ${RAGGEDROUTE_CCCL_GIT_TAG}")
   else()
@@ -78,11 +81,23 @@ function(raggedroute_discover_cutlass)
   if(RAGGEDROUTE_CUTLASS_PROVIDER STREQUAL "SYSTEM")
     message(FATAL_ERROR "CUTLASS headers were not found. Set RAGGEDROUTE_CUTLASS_ROOT, CUTLASS_ROOT, or use RAGGEDROUTE_CUTLASS_PROVIDER=FETCH.")
   elseif(RAGGEDROUTE_CUTLASS_PROVIDER STREQUAL "FETCH")
-    FetchContent_Declare(raggedroute_cutlass_source
+    # See the CCCL note above: the short name is a Windows path-length safeguard.
+    FetchContent_Declare(rr_cutlass
       GIT_REPOSITORY https://github.com/NVIDIA/cutlass.git
       GIT_TAG "${RAGGEDROUTE_CUTLASS_GIT_TAG}" GIT_SHALLOW TRUE)
-    FetchContent_MakeAvailable(raggedroute_cutlass_source)
-    raggedroute_add_header_dependency(raggedroute_cutlass "${raggedroute_cutlass_source_SOURCE_DIR}/include")
+    # RaggedRoute consumes CUTLASS as a header/template dependency only.  Do
+    # not configure the upstream profiler/library generator: besides being
+    # unrelated to our target, its generated filenames can exceed MAX_PATH on
+    # Windows before our own code is even configured.
+    set(CUTLASS_ENABLE_HEADERS_ONLY ON CACHE BOOL "RaggedRoute uses CUTLASS headers only" FORCE)
+    set(CUTLASS_ENABLE_EXAMPLES OFF CACHE BOOL "Disable upstream CUTLASS examples" FORCE)
+    set(CUTLASS_ENABLE_TOOLS OFF CACHE BOOL "Disable upstream CUTLASS tools" FORCE)
+    set(CUTLASS_ENABLE_LIBRARY OFF CACHE BOOL "Disable upstream CUTLASS library" FORCE)
+    set(CUTLASS_ENABLE_PROFILER OFF CACHE BOOL "Disable upstream CUTLASS profiler" FORCE)
+    set(CUTLASS_ENABLE_PERFORMANCE OFF CACHE BOOL "Disable upstream CUTLASS performance targets" FORCE)
+    set(CUTLASS_ENABLE_TESTS OFF CACHE BOOL "Disable upstream CUTLASS tests" FORCE)
+    FetchContent_MakeAvailable(rr_cutlass)
+    raggedroute_add_header_dependency(raggedroute_cutlass "${rr_cutlass_SOURCE_DIR}/include")
     add_library(RaggedRoute::cutlass ALIAS raggedroute_cutlass)
     message(STATUS "RaggedRoute CUTLASS: fetched ${RAGGEDROUTE_CUTLASS_GIT_TAG}")
   else()

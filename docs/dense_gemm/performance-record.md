@@ -1,33 +1,18 @@
 # Dense GEMM 实际性能记录
 
-## 测量环境
+## 2026-07-31 / RTX 3080 strict-FP32 baseline
 
-| 字段 | 值 |
-|---|---|
-| GPU / SM | `[待填写]` |
-| CUDA / Driver / Compiler | `[待填写]` |
-| Git revision | `[待填写]` |
-| Benchmark config / seed | `[待填写]` |
-| 测量层级 | `L1/L2/L3/L4` |
-| Cache 模式 | `warm/cold/rotating` |
+- Git：`a9489abce704`（clean Release，`sm_86 + -lineinfo`）；seed `20260729`；warm cache；3 processes × 30 samples。
+- Case：row-major `M=N=K=256`，`alpha=1,beta=0`，CPU FP64-accumulation oracle 通过。
 
-## 结果表
+| Level / variant | p50 (us) | p95 (us) | CV | 说明 |
+|---|---:|---:|---:|---|
+| L1 `cuda_naive` | 27.034 | 27.136 | 0.004 | one thread per output |
+| L2 `cuda_naive` | 27.034 | 27.136 | 0.003 | public wrapper |
+| L2 cuBLASLt reference | 10.854 | 16.486 | 0.180 | strict pairing；reference p50 快 2.48× |
 
-| Case | Shape `(M,N,K)` | Variant | p50 (us) | p95 (us) | TFLOP/s | CV | Baseline speedup | Artifact |
-|---|---:|---|---:|---:|---:|---:|---:|---|
-| `[待填写]` | `[待填写]` | `[baseline/candidate]` | `[待实测]` | `[待实测]` | `[待实测]` | `[待实测]` | `[待实测]` | `[path]` |
+NCU basic：256 blocks、256 threads、0.627 waves/SM、40 registers/thread、48.5% achieved occupancy、SM/Memory 67.9%。Detailed：L2 hit 98.2%、DRAM 2.9%、long-scoreboard samples 852、无 local load/store。小网格 underfill 与缺少 tile 复用是下一步假设；不能把 profiler duration 当作上表 latency。
 
-## NCU/NSYS 摘要
+结论：保留 naive 作为教学/正确性基线；下一候选应先做 shared-memory tile/register blocking，再独立验证 `cp.async`。
 
-- Kernel duration：`[待实测]`
-- SM throughput / Tensor Core utilization：`[待实测]`
-- Occupancy / registers per thread：`[待实测]`
-- 主要 stall 或 memory signal：`[待实测]`
-- NSYS launch/host/chain 观察：`[待实测]`
-
-## 结论与限制
-
-- 保留/回退决定：`[待填写]`
-- 受益 shape：`[待填写]`
-- 退化 shape：`[待填写]`
-- 下一步实验：`[待填写]`
+完整证据：[中央报告](../reports/rtx3080-naive-profile-a9489ab.md)；[artifact bundle](../reports/artifacts/20260731T115243Z-a9489abce704-rtx3080-naive-profile-v1/)。

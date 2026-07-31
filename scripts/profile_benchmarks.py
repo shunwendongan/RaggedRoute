@@ -34,6 +34,11 @@ KERNEL_PATTERNS = {
     "grouped_gemm": "grouped_gemm_naive_kernel",
     "unpermute": "unpermute_naive_kernel",
 }
+NSYS_STATS_REPORTS = (
+    "cuda_gpu_kern_sum",
+    "cuda_api_sum",
+    "cuda_gpu_mem_time_sum",
+)
 
 METRIC_CONCEPTS: dict[str, tuple[str, ...]] = {
     "device_name": ("device__attribute_display_name",),
@@ -53,7 +58,10 @@ METRIC_CONCEPTS: dict[str, tuple[str, ...]] = {
         "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
         "gpu__compute_memory_access_throughput.avg.pct_of_peak_sustained_elapsed",
     ),
-    "dram_throughput_pct": ("dram__throughput.avg.pct_of_peak_sustained_elapsed",),
+    "dram_throughput_pct": (
+        "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+        "dram__throughput.avg.pct_of_peak_sustained_elapsed",
+    ),
     "dram_read_bytes": ("dram__bytes_read.sum",),
     "dram_write_bytes": ("dram__bytes_write.sum",),
     "l1_throughput_pct": ("l1tex__throughput.avg.pct_of_peak_sustained_active",),
@@ -79,30 +87,39 @@ METRIC_CONCEPTS: dict[str, tuple[str, ...]] = {
         "smsp__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active",
     ),
     "eligible_warps_per_scheduler": ("smsp__warps_eligible.avg.per_cycle_active",),
-    "issue_active_pct": ("smsp__issue_active.avg.pct_of_peak_sustained_active",),
+    "issue_active_pct": (
+        "sm__issue_active.avg.pct_of_peak_sustained_elapsed",
+        "smsp__issue_active.avg.pct_of_peak_sustained_active",
+    ),
     "stall_long_scoreboard": (
         "smsp__average_warps_issue_stalled_long_scoreboard_per_issue_active.ratio",
         "smsp__warps_issue_stalled_long_scoreboard_per_warp_active.pct",
+        "smsp__pcsamp_warps_issue_stalled_long_scoreboard",
     ),
     "stall_short_scoreboard": (
         "smsp__average_warps_issue_stalled_short_scoreboard_per_issue_active.ratio",
         "smsp__warps_issue_stalled_short_scoreboard_per_warp_active.pct",
+        "smsp__pcsamp_warps_issue_stalled_short_scoreboard",
     ),
     "stall_wait": (
         "smsp__average_warps_issue_stalled_wait_per_issue_active.ratio",
         "smsp__warps_issue_stalled_wait_per_warp_active.pct",
+        "smsp__pcsamp_warps_issue_stalled_wait",
     ),
     "stall_barrier": (
         "smsp__average_warps_issue_stalled_barrier_per_issue_active.ratio",
         "smsp__warps_issue_stalled_barrier_per_warp_active.pct",
+        "smsp__pcsamp_warps_issue_stalled_barrier",
     ),
     "stall_math_pipe": (
         "smsp__average_warps_issue_stalled_math_pipe_throttle_per_issue_active.ratio",
         "smsp__warps_issue_stalled_math_pipe_throttle_per_warp_active.pct",
+        "smsp__pcsamp_warps_issue_stalled_math_pipe_throttle",
     ),
     "stall_memory_throttle": (
         "smsp__average_warps_issue_stalled_mio_throttle_per_issue_active.ratio",
         "smsp__warps_issue_stalled_mio_throttle_per_warp_active.pct",
+        "smsp__pcsamp_warps_issue_stalled_mio_throttle",
     ),
 }
 
@@ -379,6 +396,42 @@ def rank_nsys_kernels(path: pathlib.Path) -> list[dict[str, Any]]:
     return ranked
 
 
+def export_nsys_stats(
+    nsys: str, report: pathlib.Path, analysis: pathlib.Path
+) -> dict[str, dict[str, Any]]:
+    """Export every normalized NSYS summary from one immutable trace."""
+    stats: dict[str, dict[str, Any]] = {}
+    for report_name in NSYS_STATS_REPORTS:
+        command = [
+            nsys,
+            "stats",
+            "--force-export=true",
+            "--report",
+            report_name,
+            "--format",
+            "csv",
+            str(report),
+        ]
+        result = run_command(command, capture=True, check=False)
+        output = analysis / f"nsys_{report_name}.csv"
+        if result.returncode == 0:
+            output.write_text(extract_csv(result.stdout), encoding="utf-8")
+            stats[report_name] = {
+                "status": "collected",
+                "path": str(output),
+                "command": command,
+            }
+        else:
+            if output.exists():
+                output.unlink()
+            stats[report_name] = {
+                "status": "failed",
+                "error": (result.stderr or result.stdout).strip(),
+                "command": command,
+            }
+    return stats
+
+
 def safe_metric(action: Any, name: str) -> tuple[Any, str | None]:
     try:
         metric = action[name]
@@ -581,20 +634,7 @@ def command_system(args: argparse.Namespace) -> int:
     run_command(command)
     if not report.is_file():
         raise RuntimeError(f"NSYS did not create {report}")
-    stats: dict[str, Any] = {}
-    for index, report_name in enumerate(("cuda_gpu_kern_sum", "cuda_api_sum", "cuda_gpu_mem_time_sum")):
-        extra = ["--force-export=true"] if index == 0 else []
-        result = run_command(
-            [nsys, "stats", *extra, "--report", report_name, "--format", "csv", str(report)],
-            capture=True,
-            check=False,
-        )
-        output = paths["analysis"] / f"nsys_{report_name}.csv"
-        if result.returncode == 0:
-            output.write_text(extract_csv(result.stdout), encoding="utf-8")
-            stats[report_name] = {"status": "collected", "path": str(output)}
-        else:
-            stats[report_name] = {"status": "failed", "error": (result.stderr or result.stdout).strip()}
+    stats = export_nsys_stats(nsys, report, paths["analysis"])
     hotspots = rank_nsys_kernels(paths["analysis"] / "nsys_cuda_gpu_kern_sum.csv")
     write_json(paths["analysis"] / "nsys_hotspots.json", hotspots)
     append_manifest(paths, {"kind": "system", "command": command, "report": str(report), "stats": stats})
@@ -633,7 +673,16 @@ def command_analyze(args: argparse.Namespace) -> int:
         )
     if not actions:
         raise ValueError("run contains no NCU reports")
-    for report in sorted(paths["reports"].glob("*.nsys-rep")):
+    nsys_reports = sorted(paths["reports"].glob("*.nsys-rep"))
+    if len(nsys_reports) > 1:
+        raise ValueError("profile run must contain at most one NSYS system report")
+    nsys_stats: dict[str, dict[str, Any]] = {}
+    if nsys_reports:
+        nsys = find_tool("nsys")
+        if not nsys:
+            raise RuntimeError("nsys was not found")
+        nsys_stats = export_nsys_stats(nsys, nsys_reports[0], paths["analysis"])
+    for report in nsys_reports:
         raw_reports.append(
             {"path": str(report), "bytes": report.stat().st_size, "sha256": sha256_file(report)}
         )
@@ -647,7 +696,11 @@ def command_analyze(args: argparse.Namespace) -> int:
     )
     manifest = json.loads(paths["manifest"].read_text(encoding="utf-8")) if paths["manifest"].is_file() else {"schema_version": SCHEMA, "run_id": paths["root"].name, "events": []}
     manifest["raw_reports"] = raw_reports
-    manifest["analysis"] = {"ncu_actions": len(actions), "created_utc": now_utc()}
+    manifest["analysis"] = {
+        "ncu_actions": len(actions),
+        "nsys_stats": nsys_stats,
+        "created_utc": now_utc(),
+    }
     write_json(paths["manifest"], manifest)
     print(paths["analysis"] / "REPORT.md")
     return 0

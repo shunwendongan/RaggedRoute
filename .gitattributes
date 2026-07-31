@@ -8,3 +8,4 @@
 *.md text eol=lf
 *.py text eol=lf
 CMakeLists.txt text eol=lf
+docs/reports/artifacts/** text eol=lf

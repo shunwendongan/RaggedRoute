@@ -191,21 +191,60 @@ class SuiteTests(unittest.TestCase):
 
         class Action:
             def metric_names(self):
-                return ["sm__throughput.avg.pct_of_peak_sustained_elapsed"]
+                return [
+                    "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+                    "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+                    "sm__issue_active.avg.pct_of_peak_sustained_elapsed",
+                    "smsp__pcsamp_warps_issue_stalled_long_scoreboard",
+                ]
 
             def __getitem__(self, name):
-                if name != "sm__throughput.avg.pct_of_peak_sustained_elapsed":
+                if name not in self.metric_names():
                     raise KeyError(name)
                 return Metric()
 
         supported = {"dram__throughput.avg.pct_of_peak_sustained_elapsed"}
         snapshot = profile_benchmarks.metric_snapshot(Action(), supported)
         self.assertEqual(snapshot["sm_throughput_pct"]["status"], "collected")
-        self.assertEqual(snapshot["dram_throughput_pct"]["status"], "not_collected")
+        self.assertEqual(snapshot["dram_throughput_pct"]["status"], "collected")
+        self.assertEqual(snapshot["issue_active_pct"]["status"], "collected")
+        self.assertEqual(snapshot["stall_long_scoreboard"]["status"], "collected")
         self.assertEqual(
             snapshot["registers_per_thread"]["status"], "unsupported_or_unknown"
         )
         self.assertIsNone(snapshot["registers_per_thread"]["value"])
+
+    def test_nsys_stats_force_export_for_every_report(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            report = root / "system.nsys-rep"
+            report.write_bytes(b"report")
+            analysis = root / "analysis"
+            analysis.mkdir()
+            result = mock.Mock(
+                returncode=0,
+                stdout='"Time (%)","Total Time (ns)","Name"\n100.0,1,"kernel"\n',
+                stderr="",
+            )
+            with mock.patch.object(
+                profile_benchmarks, "run_command", return_value=result
+            ) as run:
+                stats = profile_benchmarks.export_nsys_stats(
+                    "nsys", report, analysis
+                )
+
+            self.assertEqual(run.call_count, 3)
+            for call in run.call_args_list:
+                command = call.args[0]
+                self.assertEqual(command[:3], ["nsys", "stats", "--force-export=true"])
+            self.assertEqual(set(stats), set(profile_benchmarks.NSYS_STATS_REPORTS))
+            self.assertTrue(
+                all(item["status"] == "collected" for item in stats.values())
+            )
+            for report_name in profile_benchmarks.NSYS_STATS_REPORTS:
+                self.assertTrue(
+                    (analysis / f"nsys_{report_name}.csv").is_file()
+                )
 
     def test_freeze_bundle_excludes_profiler_binaries_and_refuses_overwrite(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -217,7 +256,7 @@ class SuiteTests(unittest.TestCase):
             (profile / "reports").mkdir()
             benchmark.mkdir()
             (profile / "analysis" / "ncu_metrics.json").write_text("[]\n", encoding="utf-8")
-            (profile / "analysis" / "REPORT.md").write_text("# report\n", encoding="utf-8")
+            (profile / "analysis" / "REPORT.md").write_bytes(b"# report\r\n")
             (profile / "reports" / "dense.basic.ncu-rep").write_bytes(b"report")
             (profile / "manifest.json").write_text("{}\n", encoding="utf-8")
             (benchmark / "naive.jsonl").write_text("{}\n", encoding="utf-8")
@@ -227,6 +266,18 @@ class SuiteTests(unittest.TestCase):
             )
             self.assertTrue((destination / "SHA256SUMS").is_file())
             self.assertFalse(list(destination.rglob("*.ncu-rep")))
+            self.assertNotIn(b"\r", (destination / "profile" / "REPORT.md").read_bytes())
+            checksums = {
+                relative: digest
+                for line in (destination / "SHA256SUMS")
+                .read_text(encoding="utf-8")
+                .splitlines()
+                for digest, relative in (line.split("  ", 1),)
+            }
+            for relative, expected in checksums.items():
+                self.assertEqual(
+                    freeze_results.sha256_file(destination / relative), expected
+                )
             manifest = json.loads((destination / "manifest.json").read_text(encoding="utf-8"))
             self.assertFalse(manifest["raw_profiler_reports"][0]["committed"])
             with self.assertRaises(FileExistsError):

@@ -8,7 +8,6 @@ import datetime as dt
 import hashlib
 import json
 import pathlib
-import shutil
 import sys
 from typing import Any
 
@@ -25,6 +24,11 @@ def sha256_file(path: pathlib.Path) -> str:
     return digest.hexdigest()
 
 
+def write_lf_text(path: pathlib.Path, text: str) -> None:
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    path.write_bytes(normalized.encode("utf-8"))
+
+
 def copy_text_tree(source: pathlib.Path, destination: pathlib.Path) -> list[pathlib.Path]:
     copied: list[pathlib.Path] = []
     if not source.is_dir():
@@ -35,7 +39,7 @@ def copy_text_tree(source: pathlib.Path, destination: pathlib.Path) -> list[path
         relative = path.relative_to(source)
         target = destination / relative
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(path, target)
+        write_lf_text(target, path.read_text(encoding="utf-8"))
         copied.append(target)
     return copied
 
@@ -76,7 +80,7 @@ def freeze_bundle(
         source = profile_dir / name
         if source.is_file():
             target = destination / "profile" / name
-            shutil.copy2(source, target)
+            write_lf_text(target, source.read_text(encoding="utf-8"))
             copied.append(target)
 
     bundle_manifest = {
@@ -92,8 +96,9 @@ def freeze_bundle(
         },
     }
     manifest_path = destination / "manifest.json"
-    manifest_path.write_text(
-        json.dumps(bundle_manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    write_lf_text(
+        manifest_path,
+        json.dumps(bundle_manifest, ensure_ascii=False, indent=2) + "\n",
     )
     copied.append(manifest_path)
 
@@ -101,7 +106,7 @@ def freeze_bundle(
     for path in sorted(set(copied)):
         relative = path.relative_to(destination).as_posix()
         checksum_lines.append(f"{sha256_file(path)}  {relative}")
-    (destination / "SHA256SUMS").write_text("\n".join(checksum_lines) + "\n", encoding="utf-8")
+    write_lf_text(destination / "SHA256SUMS", "\n".join(checksum_lines) + "\n")
     return destination
 
 

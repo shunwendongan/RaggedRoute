@@ -32,6 +32,8 @@
 - correctness、benchmark smoke、release benchmark、Nsight profile 四个独立入口；
 - RTX 3080（CUDA 13.3 / MSVC 19.50 / CMake 4.3.1）SM86 Debug/Release 均已在当前工具链迁移后重新构建，CTest 与 CUDA smoke 均已通过；CUTLASS v4.6.1 也在独立 Fetch Debug build 中编译并通过完整 CTest 和 grouped GEMM correctness；
 - commit `e37c132` 的 RTX 3080 正式 baseline suite 已完成：3 个独立进程、78 条 raw records、26 个聚合组、全部后置验证通过；结果与噪声限制见 [baseline report](reports/rtx3080-naive-baseline-e37c132.md)；
+- commit `a9489ab` 的 clean-Git RTX 3080 Release evidence 已完成：naive 78 条 raw/26 组、library reference 45 条 raw/15 组/9 个严格 pair，全部 validation 通过；完整 7 算子 NSYS、7 条 basic NCU、3 条 detailed hotspot NCU、normalized JSON/CSV 与 SHA256 bundle 见 [当前报告](reports/rtx3080-naive-profile-a9489ab.md)；
+- profile v2 固定一个完整 7 算子 system case 与每算子一个 compute case；metric alias 对当前 NCU 实际名字解析，缺失值保留 `not_collected`/`unsupported_or_unknown`，原始 Nsight 二进制不进入 Git；
 - H100 SM90 与 SM90a Debug/Release 均已完成本机交叉编译，分别检查为 `sm_90` 与 `sm_90a` cubin。
 
 ## 尚未实现，禁止据此宣称
@@ -39,11 +41,11 @@
 - 通用的 failure artifact 自动重放、失败用例最小化与随机 GPU fuzz；当前 artifact 只保存和校验诊断信息；
 - FP16/Tensor Core、`cp.async`、persistent grouped scheduler 等优化版本；
 - 与 Top-K tie/NaN/selected-softmax 合同相同的外部库基线；
-- clean-Git Release 条件下的 library/optimized shape sweep、真实 trace 及性能结论；当前 comparison 可计算严格配对结果，但 Debug smoke 不是性能证据；
+- optimized-candidate shape sweep、真实 route trace、working-set rotation 与 promotion 结论；当前 clean Release library evidence 只是固定代表 case 的 reference，不是完整部署分布；
 - shape-aware default dispatch、promotion evaluator；`configs/benchmark_promotion_policy.json` 仍不会自动产生晋升结论；
 - H100/Blackwell 实卡支持、正确性或性能；本机 SM90/SM90a 交叉编译不等同于 H100 验证；
 - 完整 MoE FFN、训练、多 GPU 或 All-to-All。
 
 因此当前提交是 benchmark 基础设施、naive baseline 和 benchmark-only library/prod-reference milestone，不是“七个算子已经优化完成”。任何正式 speedup 必须等候选 optimized variant 与 clean-Git、同机同语义的 Release performance baseline 完成后再生成。
 
-候选 variant 评估闭环、trace/working-set workload、profile metrics、图表与 release bundle 的后续实施顺序见 [development-roadmap.md](development-roadmap.md)。该文档全部是计划，不属于上方“已实现”事实。
+候选 variant 评估闭环、trace/working-set workload 与图表的后续实施顺序见 [development-roadmap.md](development-roadmap.md)。未勾选项不属于上方“已实现”事实。

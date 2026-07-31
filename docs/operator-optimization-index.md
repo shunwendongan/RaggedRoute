@@ -2,6 +2,8 @@
 
 本目录按 RaggedRoute 的七个算子分别保存优化方案、实验决策和实际性能记录。七个算子与项目当前 API、benchmark adapter 和 `src/` 目录一一对应：
 
+当前统一实测报告：[RTX 3080 七算子 naive benchmark 与 Nsight 分析（a9489ab）](reports/rtx3080-naive-profile-a9489ab.md)。
+
 | 算子 | 定位 | 优化文档 | 性能记录 |
 |---|---|---|---|
 | Dense GEMM | 主算子：路由投影/通用矩阵乘 | [optimization-plan](dense_gemm/optimization-plan.md) | [performance-record](dense_gemm/performance-record.md) |

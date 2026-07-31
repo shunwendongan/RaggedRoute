@@ -1,31 +1,16 @@
 # Top-K Gate 实际性能记录
 
-## 测量环境
+## 2026-07-31 / RTX 3080 strict-FP32 baseline
 
-| 字段 | 值 |
-|---|---|
-| GPU / SM | `[待填写]` |
-| CUDA / Driver / Compiler | `[待填写]` |
-| Git revision | `[待填写]` |
-| Benchmark config / seed | `[待填写]` |
-| 测量层级 / Cache | `[L1/L2/L3/L4]` / `[warm/cold/rotating]` |
+- Git：`a9489abce704`；case `T=2048,E=64,top_k=2`；selected-softmax、lower-id tie 与 NaN 合同全部通过。
 
-## 结果表
+| Level / variant | p50 (us) | p95 (us) | CV |
+|---|---:|---:|---:|
+| L1 `cuda_naive` | 14.029 | 15.624 | 0.072 |
+| L2 `cuda_naive` | 13.875 | 15.137 | 0.034 |
 
-| Case | `(T,E,top_k)` | Route distribution | Variant | p50 (us) | p95 (us) | CV | Speedup | Artifact |
-|---|---|---|---|---:|---:|---:|---:|---|
-| `[待填写]` | `[待填写]` | `[uniform/Zipf/hotspot]` | `[待填写]` | `[待实测]` | `[待实测]` | `[待实测]` | `[待实测]` | `[path]` |
+没有同语义外部 reference，因此不报告伪 speedup。NSYS 中该 kernel 占完整链 GPU kernel time 的 10.4%。NCU：仅 8 blocks、0.020 waves/SM、15.8% achieved occupancy、SM 2.6%、Memory 9.3%；detailed 的 long-scoreboard/wait samples 为 45/11，无 local-memory spill。
 
-## 正确性与 profile 摘要
+结论：主要限制是一个 thread 串行扫描一行导致的 underfill。下一候选是 warp-per-token Top-2 + selected-softmax，必须保持 ids 精确、tie/NaN 行为不变。
 
-- ids 精确校验：`[通过/失败]`
-- weights / selected-softmax 校验：`[通过/失败]`
-- tie-break / NaN policy：`[通过/失败]`
-- NCU 主要指标和 stall：`[待实测]`
-- NSYS launch/dispatch 观察：`[待实测]`
-
-## 结论与限制
-
-- 保留/回退决定：`[待填写]`
-- 受益与退化分布：`[待填写]`
-- 下一步实验：`[待填写]`
+完整证据：[中央报告](../reports/rtx3080-naive-profile-a9489ab.md)；[artifact bundle](../reports/artifacts/20260731T115243Z-a9489abce704-rtx3080-naive-profile-v1/)。

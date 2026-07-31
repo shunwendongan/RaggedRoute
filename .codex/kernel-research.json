@@ -1,0 +1,52 @@
+{
+  "schema_version": "codex.kernel-research.v1",
+  "commands": {
+    "build": [
+      "$env:RAGGEDROUTE_FETCH_REFERENCES='ON'; cmd /c scripts\\configure_windows.bat rtx3080-sm86-release",
+      "$env:RAGGEDROUTE_FETCH_REFERENCES='ON'; cmd /c scripts\\build_windows.bat rtx3080-sm86-release"
+    ],
+    "correctness": [
+      "ctest --preset test-rtx3080-sm86-release --output-on-failure",
+      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\rtx3080-naive-profile"
+    ],
+    "smoke": [
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_smoke.json --output out\\benchmark\\smoke.jsonl"
+    ],
+    "release": [
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_rtx3080_release.json --output out\\benchmark\\naive.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_rtx3080_library_release.json --output out\\benchmark\\library.jsonl"
+    ]
+  },
+  "benchmark": {
+    "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
+    "profile_cases": [
+      {"name": "dense.square", "arguments": ["--case", "dense.square"], "kernel_regex": "dense_gemm_naive_kernel"},
+      {"name": "topk.short_rows", "arguments": ["--case", "topk.short_rows"], "kernel_regex": "topk_gate_naive_kernel"},
+      {"name": "histogram.skew", "arguments": ["--case", "histogram.skew"], "kernel_regex": "histogram_naive_kernel"},
+      {"name": "scan.e64", "arguments": ["--case", "scan.e64"], "kernel_regex": "exclusive_scan_naive_kernel"},
+      {"name": "permute.skew", "arguments": ["--case", "permute.skew"], "kernel_regex": "token_permute_naive_kernel"},
+      {"name": "grouped.skew", "arguments": ["--case", "grouped.skew"], "kernel_regex": "grouped_gemm_naive_kernel"},
+      {"name": "unpermute.uniform", "arguments": ["--case", "unpermute.uniform"], "kernel_regex": "unpermute_naive_kernel"}
+    ],
+    "kernel_regex": "dense_gemm_naive_kernel|topk_gate_naive_kernel|histogram_naive_kernel|exclusive_scan_naive_kernel|token_permute_naive_kernel|grouped_gemm_naive_kernel|unpermute_naive_kernel"
+  },
+  "variants": {
+    "baseline": "contract_matched_library_reference",
+    "candidate": "cuda_naive"
+  },
+  "output": {
+    "root": "out\\profile",
+    "retention": {
+      "keep_raw_for": ["baseline", "final"],
+      "rejected_candidate": "metrics-and-reason"
+    }
+  },
+  "promotion_policy": {
+    "version": "evidence-only-v1",
+    "min_processes": 3,
+    "median_speedup": 1.05,
+    "p95_regression_tolerance": 0.03,
+    "max_shape_regression": 0.05,
+    "max_workspace_growth": 0.25
+  }
+}

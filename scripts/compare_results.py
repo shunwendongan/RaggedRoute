@@ -142,6 +142,14 @@ def compare_groups(groups: list[dict[str, Any]]) -> dict[str, Any]:
                     "baseline_latency_us": baseline_latency,
                     "candidate_latency_us": candidate_latency,
                     "speedup": baseline_latency / candidate_latency,
+                    "baseline_p95_us": baseline["all_samples_p95_us"],
+                    "candidate_p95_us": candidate["all_samples_p95_us"],
+                    "p95_ratio": candidate["all_samples_p95_us"]
+                    / baseline["all_samples_p95_us"],
+                    "baseline_all_samples_cv": baseline["all_samples_cv"],
+                    "candidate_all_samples_cv": candidate["all_samples_cv"],
+                    "baseline_process_runs": baseline["process_runs"],
+                    "candidate_process_runs": candidate["process_runs"],
                     "baseline_workspace_bytes": baseline["workspace_bytes"],
                     "candidate_workspace_bytes": candidate["workspace_bytes"],
                     "workspace_growth_bytes": candidate["workspace_bytes"]

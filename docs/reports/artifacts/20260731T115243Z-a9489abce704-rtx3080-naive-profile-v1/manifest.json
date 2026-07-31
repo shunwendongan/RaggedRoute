@@ -1,0 +1,85 @@
+{
+  "schema_version": "raggedroute.evidence_bundle.v1",
+  "run_id": "20260731T115243Z-a9489abce704-rtx3080-naive-profile-v1",
+  "created_utc": "2026-07-31T12:20:39.387045+00:00",
+  "benchmark_source": "C:\\Users\\Administrator\\Desktop\\RaggedRoute\\out\\evidence\\20260731T115243Z-a9489abce704-rtx3080-naive-profile-v1",
+  "profile_source": "C:\\Users\\Administrator\\Desktop\\RaggedRoute\\out\\profile\\20260731T115243Z-a9489abce704-rtx3080-naive-profile-v1",
+  "raw_profiler_reports": [
+    {
+      "name": "dense.square.basic.ncu-rep",
+      "bytes": 100030,
+      "sha256": "a7ddc8575598bb67e4eadb9444e5ed24963bb8c4d823f8877d01e26ec31ec0af",
+      "committed": false
+    },
+    {
+      "name": "dense.square.detailed.ncu-rep",
+      "bytes": 302758,
+      "sha256": "9cb31a28abf1090979f25817b173c55ae4f88624f063e31dece5c944effed7be",
+      "committed": false
+    },
+    {
+      "name": "grouped.skew.basic.ncu-rep",
+      "bytes": 101287,
+      "sha256": "10948f8061bf062329a0d4476a05e692e3929a80ad75761fd7b33e55b15d56c9",
+      "committed": false
+    },
+    {
+      "name": "grouped.skew.detailed.ncu-rep",
+      "bytes": 310125,
+      "sha256": "90b823dfffa47ba0380cc9104bc4be05b171d1469553de6a325c00b1bb81de8d",
+      "committed": false
+    },
+    {
+      "name": "histogram.skew.basic.ncu-rep",
+      "bytes": 90012,
+      "sha256": "d35659b3f2d3c93ea9be533e0d2191e3e224d7670d9c93145ce034765326c683",
+      "committed": false
+    },
+    {
+      "name": "permute.skew.basic.ncu-rep",
+      "bytes": 97483,
+      "sha256": "d82d55e4b174ce6178ec16082f949631ecb80fce6c95e6b5eacf2dc29a5325e3",
+      "committed": false
+    },
+    {
+      "name": "scan.e64.basic.ncu-rep",
+      "bytes": 93432,
+      "sha256": "23b08c566121561e026eb11de9ee41e129ae567aeaee5bcfb34debf313e24bd0",
+      "committed": false
+    },
+    {
+      "name": "system.full7.nsys-rep",
+      "bytes": 66320,
+      "sha256": "5ea038102fb620a50a4c230636abca9d066d90352e7790b0c3e9a4f8b88c1936",
+      "committed": false
+    },
+    {
+      "name": "system.full7.sqlite",
+      "bytes": 290816,
+      "sha256": "2c36e693b38d44ba9235d2f006111f120c0578d58b746ace777169d8916c06b1",
+      "committed": false
+    },
+    {
+      "name": "topk.short_rows.basic.ncu-rep",
+      "bytes": 107088,
+      "sha256": "c1327c4c6439db8a5b1482d4c09b2d8e5d6e0f02ff405334e8374cf7cca204d2",
+      "committed": false
+    },
+    {
+      "name": "topk.short_rows.detailed.ncu-rep",
+      "bytes": 248649,
+      "sha256": "4b8b8be21f3bc01b8c01f27dbc77b553e21017a6e2265c9500041d08e71a350e",
+      "committed": false
+    },
+    {
+      "name": "unpermute.uniform.basic.ncu-rep",
+      "bytes": 95563,
+      "sha256": "1dd5d3efe916d9d6a0043f17764e3511e3229e1681f2a453dc92fd53d40b4c1c",
+      "committed": false
+    }
+  ],
+  "policy": {
+    "profiler_duration_is_release_latency": false,
+    "raw_profiler_binaries_committed": false
+  }
+}

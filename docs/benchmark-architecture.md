@@ -133,9 +133,12 @@ raw JSONL → run manifest → aggregate.v2 → comparison.v1；该 Debug/tiny c
 
 ### Profile
 
-- `scripts/profile_benchmarks.py` 使用 `--profile-once`，不调用正式计时 runner；
+- `configs/profile_representative.json` 的 v2 schema 固定一个 7 算子 NSYS system case，以及每个公开算子各一个 NCU compute case；v1 compute-only 配置继续可读；
+- `scripts/profile_benchmarks.py doctor/system/compute/analyze` 使用 `--profile-once`，不调用正式计时 runner；profile harness 先执行配置的 warmup，再由 NCU `launch-skip + launch-count=1` 捕获一条 steady-state launch；
+- NSYS 固定 `CUDA/NVTX trace + sample=none + cpuctxsw=none`；NCU 首轮固定 `basic + clock-control none`，只有系统热点需要更多 scheduler/memory 证据时才追加 `detailed`；
+- parser 将 metric alias 归一到 launch、occupancy、throughput、cache/traffic 和 stall 概念；缺失值必须写为 `not_collected` 或 `unsupported_or_unknown`，不能写数值 0；
 - Nsight Compute 的 cache flush、clock control、replay 和序列化会改变 duration，因此 `.ncu-rep` 只解释瓶颈，绝不成为正式 latency；
-- profile suite 只选 3–5 个代表 shape。
+- `scripts/freeze_results.py` 只冻结可审计的 JSONL/JSON/CSV/Markdown/日志与 SHA256；`.ncu-rep/.nsys-rep` 保留在本地 ignored run directory，并把大小和哈希写入 bundle manifest。
 
 ## 5. 批量计时与统计语义
 
@@ -195,6 +198,18 @@ python scripts\aggregate_results.py reports\runs\paired.jsonl `
   --csv reports\runs\paired.aggregate.csv
 python scripts\compare_results.py reports\runs\paired.aggregate.json `
   --output reports\runs\paired.comparison.json
+
+python scripts\profile_benchmarks.py doctor `
+  --output out\profile\<run-id>\environment.json
+python scripts\profile_benchmarks.py system `
+  --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
+  --config configs\profile_representative.json `
+  --run-dir out\profile\<run-id>
+python scripts\profile_benchmarks.py compute `
+  --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
+  --config configs\profile_representative.json `
+  --run-dir out\profile\<run-id>
+python scripts\profile_benchmarks.py analyze --run-dir out\profile\<run-id>
 ```
 
 正式评测只能在代码提交、重新配置 Release build、worktree clean 且 correctness/sanitizer 通过后运行。

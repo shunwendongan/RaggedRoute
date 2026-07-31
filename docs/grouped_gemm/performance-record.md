@@ -1,31 +1,18 @@
 # Grouped GEMM 实际性能记录
 
-## 测量环境
+## 2026-07-31 / RTX 3080 strict-FP32 ragged baseline
 
-| 字段 | 值 |
-|---|---|
-| GPU / SM | `[待填写]` |
-| CUDA / Driver / Compiler | `[待填写]` |
-| Git revision | `[待填写]` |
-| Benchmark config / seed | `[待填写]` |
-| 测量层级 / Cache | `[L1/L2/L3/L4]` / `[warm/cold/rotating]` |
+- Git：`a9489abce704`；case `T=512,E=64,K=N=128,top_k=2,Zipf s=1.4`；逐 expert CPU GEMM 与空 expert 合同通过。
 
-## 结果表
+| Level / variant | p50 (us) | p95 (us) | CV |
+|---|---:|---:|---:|
+| L1 `cuda_naive` | 47.718 | 48.538 | 0.017 |
+| L2 `cuda_naive` | 48.128 | 48.538 | 0.051 |
+| L2 CUTLASS Grouped reference | 23.757 | 26.726 | 0.091 |
+| L2 cuBLAS per-active-expert | 588.390 | 630.610 | 0.044 |
 
-| Case | `(T,E,K,N)` | Distribution | `M_e` stats | Variant | p50 (us) | p95 (us) | TFLOP/s | Speedup | Artifact |
-|---|---|---|---|---|---:|---:|---:|---:|---|
-| `[待填写]` | `[待填写]` | `[待填写]` | `[min/mean/max]` | `[待填写]` | `[待实测]` | `[待实测]` | `[待实测]` | `[待实测]` | `[path]` |
+CUTLASS p50 比 naive 快 2.02×；逐 expert host loop 因大量 launch 极慢。NSYS 中 naive 占完整链 GPU kernel time 71.9%。NCU detailed：26.353 waves/SM、59.1% achieved occupancy（理论 100%）、SM/Memory 45.4%、DRAM 13.9%、L1/L2 hit 86.6%/56.9%、issue active 19.3%；long-scoreboard samples 2264，且无 local-memory spill。
 
-## NCU/NSYS 摘要
+结论：这是最高优先级。下一候选应改善 Zipf 下的 grouped tile 调度/尾部负载均衡，而不是先追 occupancy 数字；以 CUTLASS strict-FP32 为强 reference。
 
-- Tensor Core / SM throughput：`[待实测]`
-- waves/SM、tail effect、active-cycle variance：`[待实测]`
-- register/shared-memory/occupancy 限制：`[待实测]`
-- launch/metadata/chain contribution：`[待实测]`
-
-## 结论与限制
-
-- 保留/回退决定：`[待填写]`
-- 受益 `M_e` 分布：`[待填写]`
-- 退化或不适用分布：`[待填写]`
-- 下一步实验：`[待填写]`
+完整证据：[中央报告](../reports/rtx3080-naive-profile-a9489ab.md)；[artifact bundle](../reports/artifacts/20260731T115243Z-a9489abce704-rtx3080-naive-profile-v1/)。

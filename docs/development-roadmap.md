@@ -1,6 +1,6 @@
 # RaggedRoute 后续开发路线
 
-> **状态：部分实现。** 里程碑 A1/A2 的 suite v2、多 variant registry、aggregate v2 和严格配对 comparison 已实现；A3 promotion evaluator 与里程碑 B 仍是计划。当前可执行范围及证据边界以 `implementation-status.md` 为准。
+> **状态：部分实现。** 里程碑 A1/A2 与 B4 的 profiler/text bundle 子集已实现；A3 promotion evaluator、真实 trace、working-set/plot 仍是计划。当前可执行范围及证据边界以 `implementation-status.md` 为准。
 
 ## 1. 依赖顺序
 
@@ -66,10 +66,11 @@
 
 ### B4. Profiler、图表与发布制品
 
-- [ ] 为 NCU 报告增加 sidecar 与 metrics 抽取；不可用指标写 `null` 并附 `reason`，不能用 0 代替缺失值。
-- [ ] profiler duration 只用于瓶颈诊断，永不进入正式 latency、speedup 或 promotion 计算。
+- [x] 为 NCU/NSYS 报告增加 text sidecar 与 metrics 抽取；不可用指标保存明确状态，不能用 0 代替缺失值。
+- [x] profiler duration 只用于瓶颈诊断，永不进入正式 latency、speedup 或 promotion 计算。
 - [ ] 增加 shape heatmap、working-set sweep、distribution/trace，以及 L1/L2/L3 breakdown 图表脚本；所有图表可追溯到 comparison/aggregate 输入。
-- [ ] 实现 release bundle freeze，将 raw JSONL、manifest、aggregate、comparison、promotion decision、profiler metrics、图表与 `SHA256SUMS` 固化到 `docs/reports/artifacts/<run_id>/`，禁止覆盖既有 run。
+- [x] 实现非覆盖 text bundle freeze，将 raw JSONL、manifest、aggregate、comparison、profiler metrics、验证日志与 `SHA256SUMS` 固化到 `docs/reports/artifacts/<run_id>/`；raw Nsight 二进制只记录哈希。
+- [ ] promotion decision、图表与真实 trace 到位后，再扩展为完整候选发布 bundle。
 
 ## 4. 验收测试
 
@@ -79,8 +80,9 @@
 - [ ] promotion 覆盖三种状态、高 CV、缺 trace、门禁缺失、coverage、最大退化，以及 workspace 的 64 MiB/25% 两条边界。
 - [ ] route trace 覆盖损坏 hash、长度错误、越界 id、token 内重复 expert 与非法权重；`synthetic_from_ids` 标签不可省略。
 - [ ] working-set rotation 验证 requested/resolved bytes、副本轮转、L2 元数据和 cold-scrub repeats 约束。
-- [ ] profiler metric alias、缺失指标 `null + reason`、plot smoke 与 freeze bundle 完整性校验通过。
-- [ ] 完整 release 链从 suite 到 `SHA256SUMS` 可由 clean Release build 重现，且已有 artifact 不会被覆盖。
+- [x] profiler metric alias 与缺失指标状态、NSYS/NCU 文本 sidecar、freeze bundle 非覆盖和 `SHA256SUMS` 完整性校验已实现。
+- [ ] shape/working-set/distribution 图表与 plot smoke 尚未实现。
+- [x] 首次 clean Release naive/library/NSYS/NCU text evidence bundle 已在 RTX 3080 采集并提交。
 
 ## 5. 基线口径提醒
 

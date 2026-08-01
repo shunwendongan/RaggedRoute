@@ -42,7 +42,7 @@ python scripts\profile_benchmarks.py analyze --run-dir profile\dense-gemm-bfe449
 | 3 | `cuda_tiled_vector` | ID 1 加 aligned `float4` staging；仅 A/B/C 16-byte 对齐且 M/N/K 是 16 倍数时使用，否则回退 ID 1 | variance-limited research variant |
 | 4 | `cuda_combined` | `(16,16)` 二维 grid/block + scalar shared tile reuse | 显式 research variant |
 
-四个 body 和 launcher 位于 `src/dense_gemm/optimized.cu`，ID 定义与有效性检查在 `src/dense_gemm/optimized_internal.h`。adapter/registry 暴露了四个 variant，L2 经 public `DenseGemmArgs.kernel={kCudaOptimized,id}` 调用。`select_kernel` 只允许 dense GEMM 的 ID 1–4；未知 ID、ID 0 与其他算子的 optimized family 都明确拒绝。非整除形状、`K=0`、null A/B（仅 `K=0`）、以及仅 4-byte 对齐的 vector fallback 都在 correctness tests 中覆盖。
+四个 body 和 launcher 位于 `src/dense_gemm/cuda_candidate/optimized.cu`，ID 定义与有效性检查在 `src/dense_gemm/cuda_candidate/optimized_internal.h`。adapter/registry 暴露了四个 variant，L2 经 public `DenseGemmArgs.kernel={kCudaOptimized,id}` 调用。`select_kernel` 只允许 dense GEMM 的 ID 1–4；未知 ID、ID 0 与其他算子的 optimized family 都明确拒绝。非整除形状、`K=0`、null A/B（仅 `K=0`）、以及仅 4-byte 对齐的 vector fallback 都在 correctness tests 中覆盖。
 
 ## 3. 四轮实验与重排
 

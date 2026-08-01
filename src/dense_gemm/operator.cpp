@@ -1,5 +1,5 @@
 #include "../runtime/operator_internal.h"
-#include "optimized_internal.h"
+#include "cuda_candidate/optimized_internal.h"
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/operators.h"
 

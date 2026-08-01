@@ -13,29 +13,22 @@
       "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_smoke.json --output out\\benchmark\\smoke.jsonl"
     ],
     "release": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_rtx3080_release.json --output out\\benchmark\\naive.jsonl",
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_rtx3080_library_release.json --output out\\benchmark\\library.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_dense_gemm_optimization_exp4_release.json --output out\\benchmark\\dense-gemm-optimization.jsonl"
     ]
   },
   "benchmark": {
     "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
     "profile_cases": [
-      {"name": "dense.square", "arguments": ["--case", "dense.square"], "kernel_regex": "dense_gemm_naive_kernel"},
-      {"name": "topk.short_rows", "arguments": ["--case", "topk.short_rows"], "kernel_regex": "topk_gate_naive_kernel"},
-      {"name": "histogram.skew", "arguments": ["--case", "histogram.skew"], "kernel_regex": "histogram_naive_kernel"},
-      {"name": "scan.e64", "arguments": ["--case", "scan.e64"], "kernel_regex": "exclusive_scan_naive_kernel"},
-      {"name": "permute.skew", "arguments": ["--case", "permute.skew"], "kernel_regex": "token_permute_naive_kernel"},
-      {"name": "grouped.skew", "arguments": ["--case", "grouped.skew"], "kernel_regex": "grouped_gemm_naive_kernel"},
-      {"name": "unpermute.uniform", "arguments": ["--case", "unpermute.uniform"], "kernel_regex": "unpermute_naive_kernel"}
+      {"name": "dense.combined", "arguments": ["--operator", "dense_gemm", "--variant", "cuda_combined", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "M=256", "--param", "N=256", "--param", "K=256"], "kernel_regex": "dense_gemm_combined_scalar_kernel"}
     ],
-    "kernel_regex": "dense_gemm_naive_kernel|topk_gate_naive_kernel|histogram_naive_kernel|exclusive_scan_naive_kernel|token_permute_naive_kernel|grouped_gemm_naive_kernel|unpermute_naive_kernel"
+    "kernel_regex": "dense_gemm_combined_scalar_kernel"
   },
   "variants": {
-    "baseline": "contract_matched_library_reference",
-    "candidate": "cuda_naive"
+    "baseline": "cuda_naive",
+    "candidate": "cuda_tiled_vector"
   },
   "output": {
-    "root": "out\\profile",
+    "root": "profile",
     "retention": {
       "keep_raw_for": ["baseline", "final"],
       "rejected_candidate": "metrics-and-reason"

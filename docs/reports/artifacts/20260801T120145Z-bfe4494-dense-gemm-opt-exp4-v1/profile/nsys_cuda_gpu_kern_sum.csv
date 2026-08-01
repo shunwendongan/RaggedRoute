@@ -1,0 +1,2 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+100.0,489207,21,23295.6,23264.0,23135,23936,169.5,"raggedroute::ops::<unnamed>::dense_gemm_combined_scalar_kernel(const float *, const float *, float *, int, int, int)"

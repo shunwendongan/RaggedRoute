@@ -1,0 +1,36 @@
+Command: 'D:\DevTools\CUDA\v13.3\bin\compute-sanitizer.BAT' --tool racecheck --error-exitcode 99 'out\build\rtx3080-sm86-release\raggedroute_correctness_tests.exe'
+
+========= COMPUTE-SANITIZER
+PASS dense_gemm/cuda_naive - matched reference
+PASS topk_gate/cuda_naive - matched reference
+PASS topk_gate/cuda_naive - matched reference
+PASS topk_gate/cuda_naive - matched reference
+PASS topk_gate/cuda_naive - matched reference
+PASS histogram/cuda_naive - counts match CPU bincount
+PASS exclusive_scan/cuda_naive - offsets match CPU reference
+PASS token_permute/cuda_naive - mapping is bijective and rows match input
+PASS token_permute/cuda_naive - mapping is bijective and rows match input
+PASS grouped_gemm/cuda_naive - matched reference
+PASS unpermute/cuda_naive - matched reference
+PASS dense_gemm/cublaslt - matched reference
+PASS dense_gemm/cublas - matched reference
+PASS dense_gemm/cuda_tiled_scalar - matched reference
+PASS histogram/cub_device_histogram - counts match CPU bincount
+PASS exclusive_scan/cub_device_scan - offsets match CPU reference
+PASS exclusive_scan/cub_block_scan - offsets match CPU reference
+PASS exclusive_scan/cub_warp_scan - offsets match CPU reference
+PASS token_permute/cuda_naive_from_ids - mapping is bijective and rows match input
+PASS token_permute/vllm_moe_permute - mapping is bijective and rows match input
+PASS token_permute/vllm_expand_rows - mapping is bijective and rows match input
+PASS grouped_gemm/cublas_per_expert - matched reference
+SKIP grouped_gemm/cutlass_grouped - optional dependency unavailable
+PASS unpermute/vllm_finalize_routing - matched reference
+PASS unpermute/vllm_finalize_routing - matched reference
+PASS dense_gemm/cuda_tiled_scalar - matched reference
+PASS dense_gemm/cuda_tiled_scalar - matched reference
+PASS dense_gemm/cuda_tiled_scalar - matched reference
+PASS dense_gemm/cuda_tiled_scalar - matched reference
+PASS chain_from_tokens - matched reference
+PASS chain_from_logits - matched reference
+All correctness tests passed
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)

@@ -64,6 +64,8 @@ def freeze_bundle(
     profile_dir: pathlib.Path,
     benchmark_dir: pathlib.Path,
     output_root: pathlib.Path,
+    sanitizer_dir: pathlib.Path | None = None,
+    extra_benchmark_dirs: list[pathlib.Path] | None = None,
 ) -> pathlib.Path:
     destination = output_root / run_id
     if destination.exists():
@@ -75,6 +77,13 @@ def freeze_bundle(
 
     destination.mkdir(parents=True)
     copied = copy_text_tree(benchmark_dir, destination / "benchmark")
+    extra_benchmark_dirs = extra_benchmark_dirs or []
+    for index, extra_benchmark_dir in enumerate(extra_benchmark_dirs, start=1):
+        copied.extend(
+            copy_text_tree(extra_benchmark_dir, destination / f"benchmark_extra_{index}")
+        )
+    if sanitizer_dir is not None:
+        copied.extend(copy_text_tree(sanitizer_dir, destination / "sanitizer"))
     copied.extend(copy_text_tree(profile_dir / "analysis", destination / "profile"))
     for name in ("manifest.json", "environment.json"):
         source = profile_dir / name
@@ -88,7 +97,9 @@ def freeze_bundle(
         "run_id": run_id,
         "created_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
         "benchmark_source": str(benchmark_dir.resolve()),
+        "extra_benchmark_sources": [str(path.resolve()) for path in extra_benchmark_dirs],
         "profile_source": str(profile_dir.resolve()),
+        "sanitizer_source": str(sanitizer_dir.resolve()) if sanitizer_dir is not None else None,
         "raw_profiler_reports": raw_profile_inventory(profile_dir),
         "policy": {
             "profiler_duration_is_release_latency": False,
@@ -116,12 +127,17 @@ def main() -> int:
     parser.add_argument("--profile-dir", required=True, type=pathlib.Path)
     parser.add_argument("--benchmark-dir", required=True, type=pathlib.Path)
     parser.add_argument("--output-root", required=True, type=pathlib.Path)
+    parser.add_argument("--sanitizer-dir", type=pathlib.Path)
+    parser.add_argument("--extra-benchmark-dir", action="append", type=pathlib.Path,
+                        dest="extra_benchmark_dirs")
     args = parser.parse_args()
     destination = freeze_bundle(
         args.run_id,
         args.profile_dir.resolve(),
         args.benchmark_dir.resolve(),
         args.output_root.resolve(),
+        args.sanitizer_dir.resolve() if args.sanitizer_dir else None,
+        [path.resolve() for path in args.extra_benchmark_dirs or []],
     )
     print(destination)
     return 0

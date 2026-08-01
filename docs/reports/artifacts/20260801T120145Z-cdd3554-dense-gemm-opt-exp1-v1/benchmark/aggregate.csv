@@ -1,0 +1,5 @@
+run_id,case_id,operator,variant,measurement_level,cache_mode,process_runs,records,raw_samples,median_of_process_medians_us,all_samples_p50_us,all_samples_p95_us,all_samples_mean_us,all_samples_stddev_us,all_samples_cv,promotion_baseline
+dense-gemm-cdd3554-exp1-release,dense_gemm.fp32.m256_n256_k256.exp1,dense_gemm,cublas,L2_operator_steady,warm,3,3,90,11.8272002786,12.8512002528,16.394240334615,13.035519984034444,2.464580387663657,0.18906651907113864,False
+dense-gemm-cdd3554-exp1-release,dense_gemm.fp32.m256_n256_k256.exp1,dense_gemm,cublaslt,L2_operator_steady,warm,3,3,90,15.3600007296,15.3600007296,17.008640542614998,14.33372449543778,3.907692228979487,0.27262225042927607,False
+dense-gemm-cdd3554-exp1-release,dense_gemm.fp32.m256_n256_k256.exp1,dense_gemm,cuda_naive,L2_operator_steady,warm,3,3,90,27.4432003498,27.3407995701,29.941761195669997,27.760639852964445,1.0898159978525035,0.0392575964972265,True
+dense-gemm-cdd3554-exp1-release,dense_gemm.fp32.m256_n256_k256.exp1,dense_gemm,cuda_tiled_scalar,L2_operator_steady,warm,3,3,90,26.1119991541,26.1119991541,26.885119080535,26.322488784786668,0.805627737339004,0.0306060625165742,False

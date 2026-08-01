@@ -252,6 +252,7 @@ int main() {
           {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cuda_tiled_scalar"},
           {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cuda_2d_mapping"},
           {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cuda_tiled_vector"},
+          {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cuda_combined"},
           {"histogram", {{"T", "11"}, {"E", "8"}, {"top_k", "2"}},
            "cub_device_histogram"},
           {"exclusive_scan", {{"E", "7"}, {"R", "23"}}, "cub_device_scan"},
@@ -294,7 +295,7 @@ int main() {
           {{"M", "256"}, {"N", "256"}, {"K", "256"}},
       };
       for (const std::string& variant :
-           {"cuda_tiled_scalar", "cuda_2d_mapping", "cuda_tiled_vector"}) {
+           {"cuda_tiled_scalar", "cuda_2d_mapping", "cuda_tiled_vector", "cuda_combined"}) {
         if (!has_variant("dense_gemm", variant)) continue;
         for (const auto& shape : dense_tiled_edge_shapes) {
           run_adapter_case({"dense_gemm", shape, variant}, stream, seed++);

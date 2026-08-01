@@ -109,6 +109,37 @@ __global__ void dense_gemm_tiled_vector_kernel(const float* a, const float* b, f
   c[static_cast<std::size_t>(row) * n + column] = accumulator;
 }
 
+__global__ void dense_gemm_combined_scalar_kernel(const float* a, const float* b, float* c, int m,
+                                                   int n, int k) {
+  __shared__ float a_tile[kTileExtent][kTileExtent];
+  __shared__ float b_tile[kTileExtent][kTileExtent];
+
+  const int local_row = static_cast<int>(threadIdx.y);
+  const int local_column = static_cast<int>(threadIdx.x);
+  const int row = static_cast<int>(blockIdx.y) * kTileExtent + local_row;
+  const int column = static_cast<int>(blockIdx.x) * kTileExtent + local_column;
+
+  float accumulator = 0.0F;
+  for (int k_base = 0; k_base < k; k_base += kTileExtent) {
+    const int a_column = k_base + local_column;
+    const int b_row = k_base + local_row;
+    a_tile[local_row][local_column] =
+        row < m && a_column < k ? a[static_cast<std::size_t>(row) * k + a_column] : 0.0F;
+    b_tile[local_row][local_column] =
+        b_row < k && column < n ? b[static_cast<std::size_t>(b_row) * n + column] : 0.0F;
+    __syncthreads();
+
+    const int tile_k = k - k_base < kTileExtent ? k - k_base : kTileExtent;
+    for (int inner = 0; inner < tile_k; ++inner) {
+      accumulator += a_tile[local_row][inner] * b_tile[inner][local_column];
+    }
+    __syncthreads();
+  }
+  if (row < m && column < n) {
+    c[static_cast<std::size_t>(row) * n + column] = accumulator;
+  }
+}
+
 cudaError_t validate_launch_arguments(const float* a, const float* b, float* c, int m, int n,
                                       int k) {
   if (m < 0 || n < 0 || k < 0) return cudaErrorInvalidValue;
@@ -165,6 +196,21 @@ cudaError_t launch_tiled_vector(const float* a, const float* b, float* c, int m,
   return cudaGetLastError();
 }
 
+cudaError_t launch_combined_scalar(const float* a, const float* b, float* c, int m, int n, int k,
+                                   cudaStream_t caller_stream) {
+  const std::size_t grid_x = (static_cast<std::size_t>(n) + kTileExtent - 1) / kTileExtent;
+  const std::size_t grid_y = (static_cast<std::size_t>(m) + kTileExtent - 1) / kTileExtent;
+  if (grid_x > std::numeric_limits<unsigned int>::max() ||
+      grid_y > std::numeric_limits<unsigned int>::max()) {
+    return cudaErrorInvalidConfiguration;
+  }
+  dense_gemm_combined_scalar_kernel<<<dim3(static_cast<unsigned int>(grid_x),
+                                            static_cast<unsigned int>(grid_y)),
+                                     dim3(kTileExtent, kTileExtent), 0, caller_stream>>>(a, b, c,
+                                                                                           m, n, k);
+  return cudaGetLastError();
+}
+
 }  // namespace
 
 cudaError_t launch_dense_gemm_optimized(const float* a, const float* b, float* c, int m, int n,
@@ -182,6 +228,9 @@ cudaError_t launch_dense_gemm_optimized(const float* a, const float* b, float* c
     return can_use_tiled_vector(a, b, c, m, n, k)
                ? launch_tiled_vector(a, b, c, m, n, k, caller_stream)
                : launch_tiled_scalar(a, b, c, m, n, k, caller_stream);
+  }
+  if (implementation_id == kDenseGemmCombinedImplementation) {
+    return launch_combined_scalar(a, b, c, m, n, k, caller_stream);
   }
   return cudaErrorInvalidValue;
 }

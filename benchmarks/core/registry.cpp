@@ -134,6 +134,8 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
                                                   "direct_2d_row_column_scalar"));
     variants.push_back(optimized_dense_descriptor("cuda_tiled_vector",
                                                   "shared_tile16_linear_cta_float4"));
+    variants.push_back(optimized_dense_descriptor("cuda_combined",
+                                                  "shared_tile16_direct_2d_scalar"));
 #if RAGGEDROUTE_HAS_CUBLAS
     variants.push_back(descriptor("cublaslt", "nvidia_cuda_library", "cublasLtMatmul.v1",
                                   cuda_library_revision(), "cublaslt_heuristic_0"));

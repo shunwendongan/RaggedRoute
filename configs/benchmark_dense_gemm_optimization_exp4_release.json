@@ -1,0 +1,30 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_dense_gemm_optimization_exp4_v1",
+  "protocol": "release",
+  "process_runs": 3,
+  "common": {
+    "warmup": 20,
+    "samples": 30,
+    "kernel_repeats": 10,
+    "seed": 20260729,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "dense_gemm.fp32.m256_n256_k256.exp4",
+      "operator": "dense_gemm",
+      "levels": ["l2"],
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cublaslt", "promotion_baseline": false},
+        {"name": "cublas", "promotion_baseline": false},
+        {"name": "cuda_tiled_scalar", "promotion_baseline": false},
+        {"name": "cuda_2d_mapping", "promotion_baseline": false},
+        {"name": "cuda_tiled_vector", "promotion_baseline": false},
+        {"name": "cuda_combined", "promotion_baseline": false}
+      ],
+      "params": {"M": 256, "N": 256, "K": 256}
+    }
+  ]
+}

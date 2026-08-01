@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "optimized_internal.h"
+#include "cuda_candidate/optimized_internal.h"
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/benchmark/adapter_utils.h"
 #include "raggedroute/benchmark/library_baselines.h"

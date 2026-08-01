@@ -67,8 +67,8 @@ if(RAGGEDROUTE_ENABLE_CUDA)
 
   add_library(raggedroute_baseline_ops STATIC
     src/benchmark/cache_scrub.cu
-    src/dense_gemm/baseline.cu
-    src/dense_gemm/optimized.cu
+    src/dense_gemm/cuda_naive/baseline.cu
+    src/dense_gemm/cuda_candidate/optimized.cu
     src/topk_gate/baseline.cu
     src/histogram/baseline.cu
     src/scan/baseline.cu

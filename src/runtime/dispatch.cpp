@@ -2,7 +2,7 @@
 
 #include <cuda_runtime_api.h>
 
-#include "../dense_gemm/optimized_internal.h"
+#include "../dense_gemm/cuda_candidate/optimized_internal.h"
 #include "operator_internal.h"
 
 namespace raggedroute {

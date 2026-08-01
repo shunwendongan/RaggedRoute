@@ -13,6 +13,16 @@
 namespace raggedroute::benchmark {
 namespace {
 
+bool is_optimized_dense_variant(const std::string& variant_name) {
+  return variant_name == "cuda_tiled_scalar" || variant_name == "cuda_2d_mapping";
+}
+
+std::uint32_t optimized_dense_implementation(const std::string& variant_name) {
+  if (variant_name == "cuda_tiled_scalar") return ops::kDenseGemmTiledScalarImplementation;
+  if (variant_name == "cuda_2d_mapping") return ops::kDenseGemm2dMappingImplementation;
+  throw std::invalid_argument("unsupported optimized dense_gemm variant: " + variant_name);
+}
+
 class DenseGemmAdapter final : public BenchmarkAdapter {
  public:
   explicit DenseGemmAdapter(const std::string& variant_name) : variant_name_(variant_name) {}
@@ -25,9 +35,9 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
   std::string operator_name() const override { return "dense_gemm"; }
   std::string variant_name() const override { return variant_name_; }
   std::string description() const override {
-    return variant_name_ == "cuda_tiled_scalar"
-               ? "16x16 shared-memory tiled strict-FP32 CUDA GEMM"
-               : "One CUDA thread per FP32 output element";
+    if (variant_name_ == "cuda_tiled_scalar") return "16x16 shared-memory tiled strict-FP32 CUDA GEMM";
+    if (variant_name_ == "cuda_2d_mapping") return "2D-mapped strict-FP32 CUDA GEMM";
+    return "One CUDA thread per FP32 output element";
   }
   bool supports(MeasurementLevel level) const override {
     return level == MeasurementLevel::kKernelBody || level == MeasurementLevel::kOperatorSteady;
@@ -84,8 +94,8 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
       return;
     }
 #endif
-    if (variant_name_ == "cuda_tiled_scalar") {
-      const std::uint32_t implementation = ops::kDenseGemmTiledScalarImplementation;
+    if (is_optimized_dense_variant(variant_name_)) {
+      const std::uint32_t implementation = optimized_dense_implementation(variant_name_);
       if (level == MeasurementLevel::kKernelBody) {
         cuda_check(ops::launch_dense_gemm_optimized(a_.data(), b_.data(), c_.data(), m_, n_, k_,
                                                      implementation, stream),
@@ -153,6 +163,13 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
               {"tile_k", static_cast<std::int64_t>(16)},
               {"staging", std::string("scalar_shared_memory")},
               {"index_mapping", std::string("linear_cta_tile")},
+              {"math_path", std::string("cuda_core_strict_fp32")}};
+    }
+    if (variant_name_ == "cuda_2d_mapping") {
+      return {{"block_x", static_cast<std::int64_t>(32)},
+              {"block_y", static_cast<std::int64_t>(8)},
+              {"staging", std::string("none")},
+              {"index_mapping", std::string("direct_2d_row_column")},
               {"math_path", std::string("cuda_core_strict_fp32")}};
     }
     return {{"threads_per_block", static_cast<std::int64_t>(256)},

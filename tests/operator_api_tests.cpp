@@ -125,6 +125,11 @@ void test_pure_dispatch() {
               decision.kernel.implementation_id == 1,
           "dense GEMM tiled experiment must preserve its explicit implementation id");
   request.requested_kernel = {KernelFamily::kCudaOptimized, 2};
+  require_status(select_kernel(request, &decision), "explicit 2D dense GEMM dispatch");
+  require(decision.kernel.family == KernelFamily::kCudaOptimized &&
+              decision.kernel.implementation_id == 2,
+          "dense GEMM 2D experiment must preserve its explicit implementation id");
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 3};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "unimplemented optimized dense GEMM ids must be rejected");
   request.requested_kernel = {KernelFamily::kCudaNaive, 1};
@@ -220,6 +225,11 @@ void test_dense_gemm(const raggedroute::RuntimeContext& context) {
   require_status(raggedroute::dense_gemm(args, context), "explicit tiled public dense_gemm");
   require(c.copy_to_host(context.stream) == std::vector<float>({19.0F, 22.0F, 43.0F, 50.0F}),
           "explicit tiled public dense_gemm result is wrong");
+  args.kernel = {raggedroute::KernelFamily::kCudaOptimized, 2};
+  require_status(raggedroute::dense_gemm(args, context), "explicit 2D public dense_gemm");
+  require(c.copy_to_host(context.stream) == std::vector<float>({19.0F, 22.0F, 43.0F, 50.0F}),
+          "explicit 2D public dense_gemm result is wrong");
+  args.kernel = {raggedroute::KernelFamily::kCudaOptimized, 1};
   args.a.data = nullptr;
   args.b.data = nullptr;
   args.k = 0;

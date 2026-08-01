@@ -11,6 +11,8 @@ namespace {
 
 constexpr int kTileExtent = 16;
 constexpr int kThreadsPerTiledBlock = kTileExtent * kTileExtent;
+constexpr int kMappingBlockColumns = 32;
+constexpr int kMappingBlockRows = 8;
 
 __global__ void dense_gemm_tiled_scalar_kernel(const float* a, const float* b, float* c, int m,
                                                 int n, int k) {
@@ -50,6 +52,20 @@ __global__ void dense_gemm_tiled_scalar_kernel(const float* a, const float* b, f
   }
 }
 
+__global__ void dense_gemm_2d_mapping_kernel(const float* a, const float* b, float* c, int m,
+                                              int n, int k) {
+  const int row = static_cast<int>(blockIdx.y) * kMappingBlockRows + threadIdx.y;
+  const int column = static_cast<int>(blockIdx.x) * kMappingBlockColumns + threadIdx.x;
+  if (row >= m || column >= n) return;
+
+  float accumulator = 0.0F;
+  for (int inner = 0; inner < k; ++inner) {
+    accumulator += a[static_cast<std::size_t>(row) * k + inner] *
+                   b[static_cast<std::size_t>(inner) * n + column];
+  }
+  c[static_cast<std::size_t>(row) * n + column] = accumulator;
+}
+
 cudaError_t validate_launch_arguments(const float* a, const float* b, float* c, int m, int n,
                                       int k) {
   if (m < 0 || n < 0 || k < 0) return cudaErrorInvalidValue;
@@ -69,6 +85,23 @@ cudaError_t launch_tiled_scalar(const float* a, const float* b, float* c, int m,
   return cudaGetLastError();
 }
 
+cudaError_t launch_2d_mapping(const float* a, const float* b, float* c, int m, int n, int k,
+                              cudaStream_t caller_stream) {
+  const std::size_t grid_x =
+      (static_cast<std::size_t>(n) + kMappingBlockColumns - 1) / kMappingBlockColumns;
+  const std::size_t grid_y =
+      (static_cast<std::size_t>(m) + kMappingBlockRows - 1) / kMappingBlockRows;
+  if (grid_x > std::numeric_limits<unsigned int>::max() ||
+      grid_y > std::numeric_limits<unsigned int>::max()) {
+    return cudaErrorInvalidConfiguration;
+  }
+  dense_gemm_2d_mapping_kernel<<<dim3(static_cast<unsigned int>(grid_x),
+                                      static_cast<unsigned int>(grid_y)),
+                               dim3(kMappingBlockColumns, kMappingBlockRows), 0, caller_stream>>>(
+      a, b, c, m, n, k);
+  return cudaGetLastError();
+}
+
 }  // namespace
 
 cudaError_t launch_dense_gemm_optimized(const float* a, const float* b, float* c, int m, int n,
@@ -76,8 +109,13 @@ cudaError_t launch_dense_gemm_optimized(const float* a, const float* b, float* c
                                         cudaStream_t caller_stream) {
   const cudaError_t validation = validate_launch_arguments(a, b, c, m, n, k);
   if (validation != cudaSuccess || m == 0 || n == 0) return validation;
-  if (implementation_id != kDenseGemmTiledScalarImplementation) return cudaErrorInvalidValue;
-  return launch_tiled_scalar(a, b, c, m, n, k, caller_stream);
+  if (implementation_id == kDenseGemmTiledScalarImplementation) {
+    return launch_tiled_scalar(a, b, c, m, n, k, caller_stream);
+  }
+  if (implementation_id == kDenseGemm2dMappingImplementation) {
+    return launch_2d_mapping(a, b, c, m, n, k, caller_stream);
+  }
+  return cudaErrorInvalidValue;
 }
 
 }  // namespace raggedroute::ops

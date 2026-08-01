@@ -250,6 +250,7 @@ int main() {
           {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cublaslt"},
           {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cublas"},
           {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cuda_tiled_scalar"},
+          {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cuda_2d_mapping"},
           {"histogram", {{"T", "11"}, {"E", "8"}, {"top_k", "2"}},
            "cub_device_histogram"},
           {"exclusive_scan", {{"E", "7"}, {"R", "23"}}, "cub_device_scan"},
@@ -285,15 +286,16 @@ int main() {
                     << " - optional dependency unavailable\n";
         }
       }
-      const std::vector<Case> dense_tiled_edge_cases = {
-          {"dense_gemm", {{"M", "1"}, {"N", "1"}, {"K", "1"}}, "cuda_tiled_scalar"},
-          {"dense_gemm", {{"M", "17"}, {"N", "19"}, {"K", "13"}}, "cuda_tiled_scalar"},
-          {"dense_gemm", {{"M", "31"}, {"N", "33"}, {"K", "65"}}, "cuda_tiled_scalar"},
-          {"dense_gemm", {{"M", "256"}, {"N", "256"}, {"K", "256"}}, "cuda_tiled_scalar"},
+      const std::vector<rr::OptionMap> dense_tiled_edge_shapes = {
+          {{"M", "1"}, {"N", "1"}, {"K", "1"}},
+          {{"M", "17"}, {"N", "19"}, {"K", "13"}},
+          {{"M", "31"}, {"N", "33"}, {"K", "65"}},
+          {{"M", "256"}, {"N", "256"}, {"K", "256"}},
       };
-      for (const auto& test_case : dense_tiled_edge_cases) {
-        if (has_variant(test_case.name, test_case.variant)) {
-          run_adapter_case(test_case, stream, seed++);
+      for (const std::string& variant : {"cuda_tiled_scalar", "cuda_2d_mapping"}) {
+        if (!has_variant("dense_gemm", variant)) continue;
+        for (const auto& shape : dense_tiled_edge_shapes) {
+          run_adapter_case({"dense_gemm", shape, variant}, stream, seed++);
         }
       }
       run_library_alignment_fallbacks(stream);

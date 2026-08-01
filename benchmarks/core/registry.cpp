@@ -130,6 +130,8 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     std::vector<VariantDescriptor> variants = {naive_descriptor("thread_per_output")};
     variants.push_back(optimized_dense_descriptor("cuda_tiled_scalar",
                                                   "shared_tile16_linear_cta_scalar"));
+    variants.push_back(optimized_dense_descriptor("cuda_2d_mapping",
+                                                  "direct_2d_row_column_scalar"));
 #if RAGGEDROUTE_HAS_CUBLAS
     variants.push_back(descriptor("cublaslt", "nvidia_cuda_library", "cublasLtMatmul.v1",
                                   cuda_library_revision(), "cublaslt_heuristic_0"));

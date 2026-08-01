@@ -1,0 +1,39 @@
+{
+  "schema_version": "raggedroute.evidence_bundle.v1",
+  "run_id": "20260801T120145Z-cdd3554-dense-gemm-opt-exp1-v1",
+  "created_utc": "2026-08-01T12:03:43.375790+00:00",
+  "benchmark_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute\\profile\\dense-gemm-cdd3554-exp1\\benchmark",
+  "extra_benchmark_sources": [],
+  "profile_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute\\profile\\dense-gemm-cdd3554-exp1\\profile",
+  "sanitizer_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute\\profile\\dense-gemm-cdd3554-exp1\\sanitizer",
+  "raw_profiler_reports": [
+    {
+      "name": "dense.tiled_scalar.basic.ncu-rep",
+      "bytes": 98543,
+      "sha256": "4873d4c64c60dbdd924dcdf8dcce78b9dbd2bd3ba512b1c7de9d1ddc6df6faf0",
+      "committed": false
+    },
+    {
+      "name": "dense.tiled_scalar.detailed.ncu-rep",
+      "bytes": 267064,
+      "sha256": "ce448cc4c8adfa9cee6420965e9ce85aa37b446bdd061fca003cfe3123b76bf3",
+      "committed": false
+    },
+    {
+      "name": "system.exp1.nsys-rep",
+      "bytes": 62212,
+      "sha256": "8b0f4bfd2831276398e435aa2a995a019a2d955a49b58612ebea9253cf6baca0",
+      "committed": false
+    },
+    {
+      "name": "system.exp1.sqlite",
+      "bytes": 270336,
+      "sha256": "2584a8e47a0835a03b21bf74ad0660bfdf031f9517fa860f268a85321221ed09",
+      "committed": false
+    }
+  ],
+  "policy": {
+    "profiler_duration_is_release_latency": false,
+    "raw_profiler_binaries_committed": false
+  }
+}

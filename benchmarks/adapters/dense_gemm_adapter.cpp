@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "optimized_internal.h"
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/benchmark/adapter_utils.h"
 #include "raggedroute/benchmark/library_baselines.h"
@@ -11,6 +12,19 @@
 
 namespace raggedroute::benchmark {
 namespace {
+
+bool is_optimized_dense_variant(const std::string& variant_name) {
+  return variant_name == "cuda_tiled_scalar" || variant_name == "cuda_2d_mapping" ||
+         variant_name == "cuda_tiled_vector" || variant_name == "cuda_combined";
+}
+
+std::uint32_t optimized_dense_implementation(const std::string& variant_name) {
+  if (variant_name == "cuda_tiled_scalar") return ops::kDenseGemmTiledScalarImplementation;
+  if (variant_name == "cuda_2d_mapping") return ops::kDenseGemm2dMappingImplementation;
+  if (variant_name == "cuda_tiled_vector") return ops::kDenseGemmTiledVectorImplementation;
+  if (variant_name == "cuda_combined") return ops::kDenseGemmCombinedImplementation;
+  throw std::invalid_argument("unsupported optimized dense_gemm variant: " + variant_name);
+}
 
 class DenseGemmAdapter final : public BenchmarkAdapter {
  public:
@@ -23,7 +37,13 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
   }
   std::string operator_name() const override { return "dense_gemm"; }
   std::string variant_name() const override { return variant_name_; }
-  std::string description() const override { return "One CUDA thread per FP32 output element"; }
+  std::string description() const override {
+    if (variant_name_ == "cuda_tiled_scalar") return "16x16 shared-memory tiled strict-FP32 CUDA GEMM";
+    if (variant_name_ == "cuda_2d_mapping") return "2D-mapped strict-FP32 CUDA GEMM";
+    if (variant_name_ == "cuda_tiled_vector") return "16x16 float4-staged strict-FP32 CUDA GEMM";
+    if (variant_name_ == "cuda_combined") return "2D 16x16 tiled strict-FP32 CUDA GEMM";
+    return "One CUDA thread per FP32 output element";
+  }
   bool supports(MeasurementLevel level) const override {
     return level == MeasurementLevel::kKernelBody || level == MeasurementLevel::kOperatorSteady;
   }
@@ -79,6 +99,26 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
       return;
     }
 #endif
+    if (is_optimized_dense_variant(variant_name_)) {
+      const std::uint32_t implementation = optimized_dense_implementation(variant_name_);
+      if (level == MeasurementLevel::kKernelBody) {
+        cuda_check(ops::launch_dense_gemm_optimized(a_.data(), b_.data(), c_.data(), m_, n_, k_,
+                                                     implementation, stream),
+                   "launch_dense_gemm_optimized");
+        return;
+      }
+      DenseGemmArgs args;
+      args.a.data = a_.data();
+      args.b.data = b_.data();
+      args.c.data = c_.data();
+      args.m = m_;
+      args.n = n_;
+      args.k = k_;
+      args.kernel = {KernelFamily::kCudaOptimized, implementation};
+      operator_check(dense_gemm(args, make_runtime_context(stream, architecture_)),
+                     "dense_gemm optimized operator");
+      return;
+    }
     if (level == MeasurementLevel::kKernelBody) {
       cuda_check(ops::launch_dense_gemm_naive(a_.data(), b_.data(), c_.data(), m_, n_, k_, stream),
                  "launch_dense_gemm_naive");
@@ -120,6 +160,44 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
       return {{"api", std::string("cublasSgemm")},
               {"math_mode", std::string("strict_fp32")},
               {"layout_adapter", std::string("row_major_as_transposed_column_major")}};
+    }
+    if (variant_name_ == "cuda_tiled_scalar") {
+      return {{"threads_per_block", static_cast<std::int64_t>(256)},
+              {"tile_m", static_cast<std::int64_t>(16)},
+              {"tile_n", static_cast<std::int64_t>(16)},
+              {"tile_k", static_cast<std::int64_t>(16)},
+              {"staging", std::string("scalar_shared_memory")},
+              {"index_mapping", std::string("linear_cta_tile")},
+              {"math_path", std::string("cuda_core_strict_fp32")}};
+    }
+    if (variant_name_ == "cuda_2d_mapping") {
+      return {{"block_x", static_cast<std::int64_t>(32)},
+              {"block_y", static_cast<std::int64_t>(8)},
+              {"staging", std::string("none")},
+              {"index_mapping", std::string("direct_2d_row_column")},
+              {"math_path", std::string("cuda_core_strict_fp32")}};
+    }
+    if (variant_name_ == "cuda_tiled_vector") {
+      return {{"threads_per_block", static_cast<std::int64_t>(256)},
+              {"tile_m", static_cast<std::int64_t>(16)},
+              {"tile_n", static_cast<std::int64_t>(16)},
+              {"tile_k", static_cast<std::int64_t>(16)},
+              {"staging", std::string("aligned_float4_shared_memory")},
+              {"fallback", std::string("cuda_tiled_scalar")},
+              {"index_mapping", std::string("linear_cta_tile")},
+              {"math_path", std::string("cuda_core_strict_fp32")}};
+    }
+    if (variant_name_ == "cuda_combined") {
+      return {{"block_x", static_cast<std::int64_t>(16)},
+              {"block_y", static_cast<std::int64_t>(16)},
+              {"tile_m", static_cast<std::int64_t>(16)},
+              {"tile_n", static_cast<std::int64_t>(16)},
+              {"tile_k", static_cast<std::int64_t>(16)},
+              {"staging", std::string("scalar_shared_memory")},
+              {"index_mapping", std::string("direct_2d_row_column")},
+              {"vector_staging_included", false},
+              {"vector_gate_reason", std::string("exp3_variance_limited")},
+              {"math_path", std::string("cuda_core_strict_fp32")}};
     }
     return {{"threads_per_block", static_cast<std::int64_t>(256)},
             {"outputs_per_thread", static_cast<std::int64_t>(1)},

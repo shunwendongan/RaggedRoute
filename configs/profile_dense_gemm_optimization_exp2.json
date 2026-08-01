@@ -1,0 +1,18 @@
+{
+  "schema_version": "raggedroute.profile_suite.v1",
+  "suite_id": "rtx3080_dense_gemm_optimization_exp2_profile_v1",
+  "cases": [
+    {
+      "id": "dense.2d_mapping",
+      "operator": "dense_gemm",
+      "variant": "cuda_2d_mapping",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260729,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "dense_gemm_2d_mapping_kernel",
+      "params": {"M": 256, "N": 256, "K": 256}
+    }
+  ]
+}

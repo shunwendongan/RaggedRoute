@@ -10,4 +10,5 @@ __pycache__/
 /reports/runs/
 /reports/profiles/
 /reports/sanitizer/
+/profile/
 .DS_Store

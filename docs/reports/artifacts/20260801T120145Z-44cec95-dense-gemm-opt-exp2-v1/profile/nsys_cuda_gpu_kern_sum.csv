@@ -1,0 +1,2 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+100.0,495960,21,23617.1,23615.0,23519,23776,55.1,"raggedroute::ops::<unnamed>::dense_gemm_2d_mapping_kernel(const float *, const float *, float *, int, int, int)"

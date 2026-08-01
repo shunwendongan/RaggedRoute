@@ -1,0 +1,18 @@
+[
+  {
+    "name": "raggedroute::ops::<unnamed>::dense_gemm_tiled_vector_kernel(const float *, const float *, float *, int, int, int)",
+    "total_time": 407894.0,
+    "time_pct": 100.0,
+    "raw": {
+      "Time (%)": "100.0",
+      "Total Time (ns)": "407894",
+      "Instances": "21",
+      "Avg (ns)": "19423.5",
+      "Med (ns)": "19392.0",
+      "Min (ns)": "19295",
+      "Max (ns)": "19935",
+      "StdDev (ns)": "140.4",
+      "Name": "raggedroute::ops::<unnamed>::dense_gemm_tiled_vector_kernel(const float *, const float *, float *, int, int, int)"
+    }
+  }
+]

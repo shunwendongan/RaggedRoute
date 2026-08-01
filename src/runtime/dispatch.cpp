@@ -2,6 +2,7 @@
 
 #include <cuda_runtime_api.h>
 
+#include "../dense_gemm/optimized_internal.h"
 #include "operator_internal.h"
 
 namespace raggedroute {
@@ -168,6 +169,17 @@ Status select_kernel(const DispatchRequest& request, DispatchDecision* decision)
   if (requested.family == KernelFamily::kCudaNaive && requested.implementation_id != 0) {
     return detail::make_status(StatusCode::kUnsupportedKernelVariant,
                                "the naive family has no non-default implementation");
+  }
+  if (requested.family == KernelFamily::kCudaOptimized) {
+    if (request.operator_kind != OperatorKind::kDenseGemm ||
+        !ops::is_dense_gemm_optimized_implementation(requested.implementation_id)) {
+      return detail::make_status(StatusCode::kUnsupportedKernelVariant,
+                                 "requested optimized kernel is not implemented");
+    }
+    decision->operator_kind = request.operator_kind;
+    decision->architecture = DeviceArchitecture::kSm86;
+    decision->kernel = requested;
+    return success_status();
   }
   if (requested.family != KernelFamily::kAuto && requested.family != KernelFamily::kCudaNaive) {
     return detail::make_status(StatusCode::kUnsupportedKernelVariant,

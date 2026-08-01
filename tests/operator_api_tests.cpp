@@ -118,7 +118,15 @@ void test_pure_dispatch() {
   request.signature = fp32_signature(request.operator_kind);
   request.requested_kernel = {KernelFamily::kCudaOptimized, 0};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
-          "unimplemented optimized kernels must not be selected");
+          "the provisional optimized default must remain unavailable before promotion");
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 1};
+  require_status(select_kernel(request, &decision), "explicit tiled dense GEMM dispatch");
+  require(decision.kernel.family == KernelFamily::kCudaOptimized &&
+              decision.kernel.implementation_id == 1,
+          "dense GEMM tiled experiment must preserve its explicit implementation id");
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 2};
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+          "unimplemented optimized dense GEMM ids must be rejected");
   request.requested_kernel = {KernelFamily::kCudaNaive, 1};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "the naive family must reject unknown implementation ids");
@@ -208,6 +216,16 @@ void test_dense_gemm(const raggedroute::RuntimeContext& context) {
   require_status(raggedroute::dense_gemm(args, context), "public dense_gemm");
   require(c.copy_to_host(context.stream) == std::vector<float>({19.0F, 22.0F, 43.0F, 50.0F}),
           "public dense_gemm result is wrong");
+  args.kernel = {raggedroute::KernelFamily::kCudaOptimized, 1};
+  require_status(raggedroute::dense_gemm(args, context), "explicit tiled public dense_gemm");
+  require(c.copy_to_host(context.stream) == std::vector<float>({19.0F, 22.0F, 43.0F, 50.0F}),
+          "explicit tiled public dense_gemm result is wrong");
+  args.a.data = nullptr;
+  args.b.data = nullptr;
+  args.k = 0;
+  require_status(raggedroute::dense_gemm(args, context), "explicit tiled K=0 dense_gemm");
+  require(c.copy_to_host(context.stream) == std::vector<float>({0.0F, 0.0F, 0.0F, 0.0F}),
+          "explicit tiled K=0 dense_gemm must write zero outputs");
   require(a.canaries_intact(context.stream) && b.canaries_intact(context.stream) &&
               c.canaries_intact(context.stream),
           "dense_gemm changed a redzone");

@@ -1,4 +1,5 @@
 #include "../runtime/operator_internal.h"
+#include "optimized_internal.h"
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/operators.h"
 
@@ -22,8 +23,6 @@ Status dense_gemm(const DenseGemmArgs& args, const RuntimeContext& context) noex
       detail::make_compute_signature(args.a, args.b, args.accumulator_dtype, args.c), args.kernel,
       context.architecture, &decision);
   if (!status.ok()) return status;
-  status = detail::require_naive_implementation(decision);
-  if (!status.ok()) return status;
   if (args.m == 0 || args.n == 0) return success_status();
   if (args.c.data == nullptr ||
       (args.k != 0 && (args.a.data == nullptr || args.b.data == nullptr))) {
@@ -35,11 +34,22 @@ Status dense_gemm(const DenseGemmArgs& args, const RuntimeContext& context) noex
     return detail::invalid_argument("dense_gemm FP32 buffers must be 4-byte aligned");
   }
 
-  return detail::cuda_status(ops::launch_dense_gemm_naive(static_cast<const float*>(args.a.data),
-                                                          static_cast<const float*>(args.b.data),
-                                                          static_cast<float*>(args.c.data), args.m,
-                                                          args.n, args.k, context.stream),
-                             "dense_gemm kernel launch failed");
+  const float* a = static_cast<const float*>(args.a.data);
+  const float* b = static_cast<const float*>(args.b.data);
+  float* c = static_cast<float*>(args.c.data);
+  if (decision.kernel.family == KernelFamily::kCudaNaive) {
+    return detail::cuda_status(ops::launch_dense_gemm_naive(a, b, c, args.m, args.n, args.k,
+                                                            context.stream),
+                               "dense_gemm naive kernel launch failed");
+  }
+  if (decision.kernel.family == KernelFamily::kCudaOptimized) {
+    return detail::cuda_status(
+        ops::launch_dense_gemm_optimized(a, b, c, args.m, args.n, args.k,
+                                         decision.kernel.implementation_id, context.stream),
+        "dense_gemm optimized kernel launch failed");
+  }
+  return detail::make_status(StatusCode::kUnsupportedKernelVariant,
+                             "dense_gemm dispatch selected an unknown kernel family");
 }
 
 }  // namespace raggedroute

@@ -68,6 +68,7 @@ if(RAGGEDROUTE_ENABLE_CUDA)
   add_library(raggedroute_baseline_ops STATIC
     src/benchmark/cache_scrub.cu
     src/dense_gemm/baseline.cu
+    src/dense_gemm/optimized.cu
     src/topk_gate/baseline.cu
     src/histogram/baseline.cu
     src/scan/baseline.cu
@@ -199,6 +200,8 @@ if(RAGGEDROUTE_ENABLE_CUDA)
       benchmarks/adapters/chain_adapter.cpp)
     target_include_directories(raggedroute_benchmark_core PUBLIC
       "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>")
+    target_include_directories(raggedroute_benchmark_core PRIVATE
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/dense_gemm")
     target_link_libraries(raggedroute_benchmark_core PUBLIC
       raggedroute_runtime
       raggedroute_correctness_framework

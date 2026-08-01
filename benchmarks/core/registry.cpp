@@ -65,6 +65,11 @@ VariantDescriptor naive_descriptor(const std::string& algorithm_id) {
           "not_applicable", algorithm_id,   "strict_fp32"};
 }
 
+VariantDescriptor optimized_dense_descriptor(std::string name, std::string algorithm_id) {
+  return {std::move(name), "in_tree_cuda", "raggedroute.cuda_optimized.v1", "not_applicable",
+          std::move(algorithm_id), "strict_fp32"};
+}
+
 VariantDescriptor descriptor(std::string name, std::string category, std::string version,
                              std::string dependency, std::string algorithm_id) {
   return {std::move(name),       std::move(category),     std::move(version),
@@ -123,6 +128,8 @@ std::vector<std::string> available_operators() {
 std::vector<VariantDescriptor> available_variant_descriptors(const std::string& operator_name) {
   if (operator_name == "dense_gemm") {
     std::vector<VariantDescriptor> variants = {naive_descriptor("thread_per_output")};
+    variants.push_back(optimized_dense_descriptor("cuda_tiled_scalar",
+                                                  "shared_tile16_linear_cta_scalar"));
 #if RAGGEDROUTE_HAS_CUBLAS
     variants.push_back(descriptor("cublaslt", "nvidia_cuda_library", "cublasLtMatmul.v1",
                                   cuda_library_revision(), "cublaslt_heuristic_0"));

@@ -7,25 +7,26 @@
     ],
     "correctness": [
       "ctest --preset test-rtx3080-sm86-release --output-on-failure",
-      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\rtx3080-naive-profile"
+      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\rtx3080-dense-gemm-v2"
     ],
     "smoke": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_smoke.json --output out\\benchmark\\smoke.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_dense_gemm_candidate_v2_smoke.json --output out\\benchmark\\dense-gemm-v2-smoke.jsonl"
     ],
     "release": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_dense_gemm_optimization_exp4_release.json --output out\\benchmark\\dense-gemm-optimization.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_dense_gemm_candidate_v2_release.json --output out\\benchmark\\dense-gemm-v2-release.jsonl"
     ]
   },
   "benchmark": {
     "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
     "profile_cases": [
-      {"name": "dense.combined", "arguments": ["--operator", "dense_gemm", "--variant", "cuda_combined", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "M=256", "--param", "N=256", "--param", "K=256"], "kernel_regex": "dense_gemm_combined_scalar_kernel"}
+      {"name": "dense.v2_sync", "arguments": ["--operator", "dense_gemm", "--variant", "cuda_register_tiled_v2_sync", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "M=1024", "--param", "N=1024", "--param", "K=1024"], "kernel_regex": "dense_gemm_register_tiled_v2_sync_kernel"},
+      {"name": "dense.v2_async", "arguments": ["--operator", "dense_gemm", "--variant", "cuda_register_tiled_v2_async", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "M=1024", "--param", "N=1024", "--param", "K=1024"], "kernel_regex": "dense_gemm_register_tiled_v2_async_kernel"}
     ],
-    "kernel_regex": "dense_gemm_combined_scalar_kernel"
+    "kernel_regex": "dense_gemm_register_tiled_v2_sync_kernel"
   },
   "variants": {
-    "baseline": "cuda_naive",
-    "candidate": "cuda_tiled_vector"
+    "baseline": "cuda_tiled_vector",
+    "candidate": "cuda_register_tiled_v2_sync"
   },
   "output": {
     "root": "profile",

@@ -1,6 +1,7 @@
 #include <cuda_runtime_api.h>
 
 #include <cstdint>
+#include <cmath>
 #include <exception>
 #include <iostream>
 #include <stdexcept>
@@ -130,6 +131,11 @@ void test_pure_dispatch() {
               decision.kernel.implementation_id == 2,
           "dense GEMM 2D experiment must preserve its explicit implementation id");
   request.requested_kernel = {KernelFamily::kCudaOptimized, 3};
+  require_status(select_kernel(request, &decision), "explicit vector tiled dense GEMM dispatch");
+  require(decision.kernel.family == KernelFamily::kCudaOptimized &&
+              decision.kernel.implementation_id == 3,
+          "dense GEMM vector experiment must preserve its explicit implementation id");
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 4};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "unimplemented optimized dense GEMM ids must be rejected");
   request.requested_kernel = {KernelFamily::kCudaNaive, 1};
@@ -229,6 +235,10 @@ void test_dense_gemm(const raggedroute::RuntimeContext& context) {
   require_status(raggedroute::dense_gemm(args, context), "explicit 2D public dense_gemm");
   require(c.copy_to_host(context.stream) == std::vector<float>({19.0F, 22.0F, 43.0F, 50.0F}),
           "explicit 2D public dense_gemm result is wrong");
+  args.kernel = {raggedroute::KernelFamily::kCudaOptimized, 3};
+  require_status(raggedroute::dense_gemm(args, context), "explicit vector tiled public dense_gemm");
+  require(c.copy_to_host(context.stream) == std::vector<float>({19.0F, 22.0F, 43.0F, 50.0F}),
+          "explicit vector tiled public dense_gemm result is wrong");
   args.kernel = {raggedroute::KernelFamily::kCudaOptimized, 1};
   args.a.data = nullptr;
   args.b.data = nullptr;
@@ -239,6 +249,54 @@ void test_dense_gemm(const raggedroute::RuntimeContext& context) {
   require(a.canaries_intact(context.stream) && b.canaries_intact(context.stream) &&
               c.canaries_intact(context.stream),
           "dense_gemm changed a redzone");
+}
+
+void test_dense_gemm_vector_alignment_fallback(const raggedroute::RuntimeContext& context) {
+  constexpr int kM = 17;
+  constexpr int kN = 19;
+  constexpr int kK = 13;
+  rc::GuardedDeviceBuffer<float> a(static_cast<std::size_t>(kM) * kK + 1, context.stream);
+  rc::GuardedDeviceBuffer<float> b(static_cast<std::size_t>(kK) * kN + 1, context.stream);
+  rc::GuardedDeviceBuffer<float> c(static_cast<std::size_t>(kM) * kN + 1, context.stream);
+  std::vector<float> a_host(a.size(), -1.0F);
+  std::vector<float> b_host(b.size(), -1.0F);
+  for (int index = 0; index < kM * kK; ++index) {
+    a_host[static_cast<std::size_t>(index + 1)] = static_cast<float>((index % 11) - 5) * 0.25F;
+  }
+  for (int index = 0; index < kK * kN; ++index) {
+    b_host[static_cast<std::size_t>(index + 1)] = static_cast<float>((index % 13) - 6) * 0.125F;
+  }
+  a.copy_from_host(a_host, context.stream);
+  b.copy_from_host(b_host, context.stream);
+  require(reinterpret_cast<std::uintptr_t>(a.data() + 1) % alignof(float) == 0 &&
+              reinterpret_cast<std::uintptr_t>(a.data() + 1) % alignof(float4) != 0,
+          "vector fallback input must be only 4-byte aligned");
+
+  raggedroute::DenseGemmArgs args;
+  args.a.data = a.data() + 1;
+  args.b.data = b.data() + 1;
+  args.c.data = c.data() + 1;
+  args.m = kM;
+  args.n = kN;
+  args.k = kK;
+  args.kernel = {raggedroute::KernelFamily::kCudaOptimized, 3};
+  require_status(raggedroute::dense_gemm(args, context), "unaligned vector dense_gemm fallback");
+  const auto output = c.copy_to_host(context.stream);
+  for (int row = 0; row < kM; ++row) {
+    for (int column = 0; column < kN; ++column) {
+      float expected = 0.0F;
+      for (int inner = 0; inner < kK; ++inner) {
+        expected += a_host[static_cast<std::size_t>(1 + row * kK + inner)] *
+                    b_host[static_cast<std::size_t>(1 + inner * kN + column)];
+      }
+      require(std::fabs(output[static_cast<std::size_t>(1 + row * kN + column)] - expected) <=
+                  2.0e-5F * kK,
+              "unaligned vector dense_gemm fallback produced the wrong output");
+    }
+  }
+  require(a.canaries_intact(context.stream) && b.canaries_intact(context.stream) &&
+              c.canaries_intact(context.stream),
+          "unaligned vector dense_gemm fallback changed a redzone");
 }
 
 void test_histogram_reset(const raggedroute::RuntimeContext& context) {
@@ -350,6 +408,7 @@ int main() {
       context.architecture = architecture;
       test_argument_and_workspace_contracts(context);
       test_dense_gemm(context);
+      test_dense_gemm_vector_alignment_fallback(context);
       test_histogram_reset(context);
       test_permute_workspace_reset(context);
     } catch (...) {

@@ -2,7 +2,7 @@
 
 ## 1. 当前范围
 
-- 代码入口：`src/dense_gemm/baseline.cu`、`src/dense_gemm/operator.cpp`。
+- 代码入口：`src/dense_gemm/cuda_naive/baseline.cu`、`src/dense_gemm/cuda_candidate/optimized.cu`、`src/dense_gemm/operator.cpp`。candidate 的私有 launcher/ID 声明位于 `src/dense_gemm/cuda_candidate/optimized_internal.h`。
 - API：`DenseGemmArgs`，当前文档主线覆盖 row-major、FP32 语义；FP16/FP32 accumulate 作为后续优化版本单独记录。
 - 对照基线：naive CUDA、cuBLAS/cuBLASLt；所有对比固定 `M/N/K`、dtype、layout、`alpha/beta` 和测量层级。
 

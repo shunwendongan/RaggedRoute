@@ -196,6 +196,24 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
   }
   if (operator_name == "grouped_gemm") {
     std::vector<VariantDescriptor> variants = {naive_descriptor("grid_z_per_expert")};
+    variants.push_back(descriptor("cuda_grouped_tiled16_sync_v0", "in_tree_cuda",
+                                  "raggedroute.grouped.cuda_candidate.v0", "not_applicable",
+                                  "shared_tile16_grid_z"));
+    variants.push_back(descriptor("cuda_grouped_persistent16_v1", "in_tree_cuda",
+                                  "raggedroute.grouped.cuda_candidate.v1", "not_applicable",
+                                  "shared_tile16_device_prefix_persistent"));
+    variants.push_back(descriptor("cuda_grouped_register16x32_sync_v2", "in_tree_cuda",
+                                  "raggedroute.grouped.cuda_candidate.v2", "not_applicable",
+                                  "register16x32_sync_persistent"));
+    variants.push_back(descriptor("cuda_grouped_register16x32_async_v3", "in_tree_cuda",
+                                  "raggedroute.grouped.cuda_candidate.v3", "not_applicable",
+                                  "register16x32_cp_async_persistent"));
+    variants.push_back(descriptor("cuda_grouped_register16x32_async_full_v4", "in_tree_cuda",
+                                  "raggedroute.grouped.cuda_candidate.v4", "not_applicable",
+                                  "register16x32_cp_async_full_residency"));
+    variants.push_back(descriptor("cuda_grouped_sm86_fp32_v1", "in_tree_cuda",
+                                  "raggedroute.grouped.cuda_optimized.v1", "not_applicable",
+                                  "explicit_sm86_direct_or_persistent"));
 #if RAGGEDROUTE_HAS_CUBLAS
     variants.push_back(descriptor("cublas_per_expert", "nvidia_cuda_library",
                                   "cublasSgemm.per_active_expert.v1", cuda_library_revision(),

@@ -39,6 +39,12 @@ The L3 replacement experiment produced `1.0016x`, p95 ratio `0.9466`, and
 baseline/candidate CV `0.4348/0.3052`: no statistically credible regression and no credible
 speedup.
 
+For every formal pair, `throughput-comparison.csv` records p50/p95 latency, CV, logical bytes,
+effective GB/s, tokens/s, and output elements/s. Throughput is derived from the fixed case work
+and the same unprofiled p50 (`work / p50`), so its ratio is exactly the latency speedup and is not
+treated as independent evidence. Both formal-run tables contain 72 candidate-vLLM pairs across
+warm and selected cold-scrub L1/L2 cases.
+
 ## Profiler diagnosis
 
 Profiler durations are diagnostic only.
@@ -72,6 +78,6 @@ Profiler durations are diagnostic only.
 
 The normalized bundle is at
 [20260802T193000Z-eba8f025c718-unpermute-sm86-research-v1](artifacts/20260802T193000Z-eba8f025c718-unpermute-sm86-research-v1/).
-It contains raw JSONL, aggregate/comparison data, manifests, sanitizer logs, NSYS/NCU CSV/JSON,
-SASS evidence, and SHA256 checksums. Binary `.ncu-rep`, `.nsys-rep`, SQLite, and build products
-are intentionally excluded.
+It contains raw JSONL, aggregate/comparison data, normalized latency/throughput tables, manifests,
+sanitizer logs, NSYS/NCU CSV/JSON, SASS evidence, and SHA256 checksums. Binary `.ncu-rep`,
+`.nsys-rep`, SQLite, and build products are intentionally excluded.

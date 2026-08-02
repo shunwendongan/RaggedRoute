@@ -1,0 +1,3 @@
+﻿========= COMPUTE-SANITIZER
+{"mode":"profile_once","operator":"dense_gemm","variant":"cuda_register_tiled_v3_64x32_async","warmup":20,"validation_ok":true}
+========= ERROR SUMMARY: 0 errors

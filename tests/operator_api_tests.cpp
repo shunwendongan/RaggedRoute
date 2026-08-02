@@ -151,6 +151,11 @@ void test_pure_dispatch() {
               decision.kernel.implementation_id == 6,
           "v2 async dense GEMM experiment must preserve its explicit implementation id");
   request.requested_kernel = {KernelFamily::kCudaOptimized, 7};
+  require_status(select_kernel(request, &decision), "explicit v3 async dense GEMM dispatch");
+  require(decision.kernel.family == KernelFamily::kCudaOptimized &&
+              decision.kernel.implementation_id == 7,
+          "v3 async dense GEMM experiment must preserve its explicit implementation id");
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 8};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "unimplemented optimized dense GEMM ids must be rejected");
   request.requested_kernel = {KernelFamily::kCudaNaive, 1};
@@ -266,10 +271,14 @@ void test_dense_gemm(const raggedroute::RuntimeContext& context) {
   require_status(raggedroute::dense_gemm(args, context), "explicit v2 async public dense_gemm");
   require(c.copy_to_host(context.stream) == std::vector<float>({19.0F, 22.0F, 43.0F, 50.0F}),
           "explicit v2 async public dense_gemm result is wrong");
+  args.kernel = {raggedroute::KernelFamily::kCudaOptimized, 7};
+  require_status(raggedroute::dense_gemm(args, context), "explicit v3 async public dense_gemm");
+  require(c.copy_to_host(context.stream) == std::vector<float>({19.0F, 22.0F, 43.0F, 50.0F}),
+          "explicit v3 async public dense_gemm result is wrong");
   args.a.data = nullptr;
   args.b.data = nullptr;
   args.k = 0;
-  for (const std::uint32_t implementation : {1U, 5U, 6U}) {
+  for (const std::uint32_t implementation : {1U, 5U, 6U, 7U}) {
     args.kernel = {raggedroute::KernelFamily::kCudaOptimized, implementation};
     require_status(raggedroute::dense_gemm(args, context), "explicit optimized K=0 dense_gemm");
     require(c.copy_to_host(context.stream) == std::vector<float>({0.0F, 0.0F, 0.0F, 0.0F}),
@@ -308,7 +317,7 @@ void test_dense_gemm_vector_alignment_fallback(const raggedroute::RuntimeContext
   args.m = kM;
   args.n = kN;
   args.k = kK;
-  for (const std::uint32_t implementation : {3U, 5U, 6U}) {
+  for (const std::uint32_t implementation : {3U, 5U, 6U, 7U}) {
     args.kernel = {raggedroute::KernelFamily::kCudaOptimized, implementation};
     require_status(raggedroute::dense_gemm(args, context),
                    "unaligned vectorized dense_gemm fallback");

@@ -193,6 +193,15 @@ bool can_use_register_tiled_v2(const float* a, const float* b, const float* c, i
          is_aligned_16(a) && is_aligned_16(b) && is_aligned_16(c);
 }
 
+bool can_use_register_tiled_v3_64x32(const float* a, const float* b, const float* c, int m,
+                                     int n, int k) {
+  constexpr int kV3Rows = 64;
+  constexpr int kV3Columns = 32;
+  constexpr int kV3Depth = 16;
+  return k > 0 && m % kV3Rows == 0 && n % kV3Columns == 0 && k % kV3Depth == 0 &&
+         is_aligned_16(a) && is_aligned_16(b) && is_aligned_16(c);
+}
+
 cudaError_t launch_tiled_vector(const float* a, const float* b, float* c, int m, int n, int k,
                                 cudaStream_t caller_stream) {
   const std::size_t tile_rows = static_cast<std::size_t>(m) / kTileExtent;
@@ -250,6 +259,14 @@ cudaError_t launch_dense_gemm_optimized(const float* a, const float* b, float* c
     return implementation_id == kDenseGemmRegisterTiledV2SyncImplementation
                ? launch_dense_gemm_register_tiled_v2_sync(a, b, c, m, n, k, caller_stream)
                : launch_dense_gemm_register_tiled_v2_async(a, b, c, m, n, k, caller_stream);
+  }
+  if (implementation_id == kDenseGemmRegisterTiledV3_64x32AsyncImplementation) {
+    if (!can_use_register_tiled_v3_64x32(a, b, c, m, n, k)) {
+      return k > 0 && can_use_tiled_vector(a, b, c, m, n, k)
+                 ? launch_tiled_vector(a, b, c, m, n, k, caller_stream)
+                 : launch_tiled_scalar(a, b, c, m, n, k, caller_stream);
+    }
+    return launch_dense_gemm_register_tiled_v3_64x32_async(a, b, c, m, n, k, caller_stream);
   }
   return cudaErrorInvalidValue;
 }

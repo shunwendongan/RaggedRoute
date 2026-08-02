@@ -70,6 +70,7 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     src/dense_gemm/cuda_naive/baseline.cu
     src/dense_gemm/cuda_candidate/optimized.cu
     src/dense_gemm/cuda_candidate/optimized_v2.cu
+    src/dense_gemm/cuda_candidate/optimized_v3.cu
     src/topk_gate/baseline.cu
     src/histogram/baseline.cu
     src/scan/baseline.cu

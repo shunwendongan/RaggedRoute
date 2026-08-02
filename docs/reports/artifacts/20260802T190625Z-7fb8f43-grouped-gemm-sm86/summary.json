@@ -1,0 +1,48 @@
+{
+  "schema_version": "raggedroute.grouped_gemm_evidence.v1",
+  "decision": "benchmark_only_not_promoted",
+  "release_run_id": "20260802T190625Z-7fb8f43034a4-rtx3080_grouped_gemm_candidate_release_v1",
+  "release_git_sha": "7fb8f43034a4",
+  "context_run_id": "20260802T191127Z-a5df6eb9fcd4-rtx3080_grouped_gemm_candidate_context_v1",
+  "context_git_sha": "a5df6eb9fcd4",
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 3080",
+    "uuid": "7c5e95c0e5a415d824a0c8c8b58d6f39",
+    "compute_capability": "8.6",
+    "sm_count": 68
+  },
+  "contract": {
+    "dtype": "fp32",
+    "accumulator_dtype": "fp32",
+    "math_mode": "strict_fp32",
+    "workspace_bytes": 0,
+    "seed": 20260729,
+    "cache_mode": "warm"
+  },
+  "release_protocol": {"processes": 3, "warmup": 20, "samples": 30, "kernel_repeats": 5},
+  "candidate_vs_cutlass": {
+    "paired_cases": 10,
+    "shape_balanced_geometric_mean_speedup": 0.9073305770,
+    "ratio_of_sums_speedup": 0.8049645127,
+    "non_regressing_shapes": 4,
+    "worst_speedup": 0.4669260456,
+    "worst_case": "grouped_gemm.uniform.t2048_e64_k128_n128"
+  },
+  "context": {
+    "cold_scrub_zipf_speedup_vs_cutlass": 0.8387096793,
+    "l3_uniform_speedup_vs_naive": 1.5683452929,
+    "l3_zipf14_speedup_vs_naive": 1.7045454671,
+    "l3_uniform_candidate_cv": 0.7938720606,
+    "l3_zipf14_candidate_cv": 0.3729460159
+  },
+  "profiler": {
+    "c3_zipf": {"grid_blocks": 136, "waves_per_sm": 0.5, "achieved_occupancy_pct": 15.0697485164},
+    "v4_zipf": {"grid_blocks": 272, "waves_per_sm": 1.0, "achieved_occupancy_pct": 28.4133835512, "registers_per_thread": 106, "shared_bytes_per_block": 7952},
+    "v4_uniform": {"grid_blocks": 272, "waves_per_sm": 1.0, "achieved_occupancy_pct": 26.8152732159, "registers_per_thread": 106, "shared_bytes_per_block": 7952}
+  },
+  "validation": {
+    "ctest": "8/8 passed",
+    "compute_sanitizer": ["memcheck", "initcheck", "racecheck", "synccheck"],
+    "all_passed": true
+  }
+}

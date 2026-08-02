@@ -51,13 +51,13 @@ Profiler duration 只用于原因分析，不参与上方 speedup：
 |---|---:|---:|---:|---:|---:|---:|---:|
 | naive / Zipf | — | — | 56.256 us | 45.41% | 58.94% | 40 | 1,024 B |
 | C3 cap=2 / Zipf | 136 | 0.50 | 46.848 us | 22.00% | 15.07% | 106 | 7,952 B |
-| V4 full residency / Zipf | 272 | 1.00 | 24.512 us | 32.90% | 28.52% | 106 | 7,952 B |
-| V4 full residency / uniform | 272 | 1.00 | 30.976 us | 22.48% | 27.14% | 106 | 7,952 B |
+| V4 full residency / Zipf | 272 | 1.00 | 25.248 us | 31.41% / 34.14% | 28.41% | 106 | 7,952 B |
+| V4 full residency / uniform | 272 | 1.00 | 30.176 us | 22.65% / 30.84% | 26.82% | 106 | 7,952 B |
 
 理论 occupancy 为 33.33%，由 106 registers/thread 限制。V4 修复 C3 的 underfill，
-但 NCU 仍报告 Zipf 约 `+14.6%/-7.8%` 的 SM active-cycle 不均，uniform 约
-`+33.0%/-34.5%`；basic 已足以区分机制，因此没有升级 full/source。
-候选 NSYS 的 21 次（20 warmup + 1 capture）kernel median 为 20.384 us；旧 naive 完整链
+但 NCU 仍报告 Zipf 约 `+13.1%/-6.2%` 的 SM active-cycle 不均，uniform 约
+`+31.8%/-38.1%`；basic 已足以区分机制，因此没有升级 full/source。
+候选 NSYS 的 21 次（20 warmup + 1 capture）kernel median 为 21.088 us；旧 naive 完整链
 NSYS 中 Grouped GEMM 占 78.1% GPU kernel time。两者 workload 边界不同，只用于各自诊断。
 
 ### 决定
@@ -65,3 +65,15 @@ NSYS 中 Grouped GEMM 占 78.1% GPU kernel time。两者 workload 边界不同�
 候选保留为 benchmark-only 失败实验，`cuda_grouped_sm86_fp32_v1` 不进入 public runtime；
 Grouped GEMM 的 `kAuto` 与 L3 chain 继续使用 naive。正式三进程 clean-Git evidence 会在首个
 实现提交后生成，并以新小节和 artifact bundle 补充。
+
+## 2026-08-03 / clean-Git 三进程最终记录
+
+- Main suite：`7fb8f43034a4`，candidate/CUTLASS shape-geomean `0.907x`、
+  ratio-of-sums `0.805x`，4/10 shapes 不慢于 CUTLASS。
+- 最大回退：`T2048/E64/K=N=128/uniform` 为 `0.467x`；Zipf 同规模为 `0.672x`。
+- cold-scrub Zipf 为 `0.839x`；L3 p50 虽相对 naive 为 uniform `1.568x`、Zipf `1.705x`，
+  但 CV `0.794/0.373`，不能形成发布证据。
+- fresh build、CTest 8/8 和四项 Compute Sanitizer 全通过，workspace 保持 0。
+
+最终报告：[RTX 3080 Grouped GEMM SM86 strict-FP32](../reports/rtx3080-grouped-gemm-sm86-a5df6eb.md)；
+[可提交 artifact 摘要](../reports/artifacts/20260802T190625Z-7fb8f43-grouped-gemm-sm86/)。

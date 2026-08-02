@@ -15,6 +15,10 @@
     "release": [
       "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_candidate_l1_release.json --output out\\benchmark\\histogram-candidate-l1-release.jsonl",
       "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_candidate_l2_release.json --output out\\benchmark\\histogram-candidate-l2-release.jsonl"
+    ],
+    "profile": [
+      "python scripts\\profile_benchmarks.py compute --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\profile_histogram_candidate.json --run-dir out\\profile\\histogram-candidate-final --set basic",
+      "python scripts\\profile_benchmarks.py analyze --run-dir out\\profile\\histogram-candidate-final"
     ]
   },
   "benchmark": {

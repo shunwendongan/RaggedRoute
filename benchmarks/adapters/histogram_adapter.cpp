@@ -53,6 +53,10 @@ class HistogramAdapter final : public BenchmarkAdapter {
     ids_host_ = make_route_ids(tokens_, top_k_, experts_, distribution_, zipf_s_, seed);
     expected_ = counts_from_ids(ids_host_, experts_);
     max_count_ = *std::max_element(expected_.begin(), expected_.end());
+    active_experts_ = static_cast<int>(
+        std::count_if(expected_.begin(), expected_.end(), [](std::int32_t count) {
+          return count != 0;
+        }));
     ids_.resize(ids_host_.size());
     counts_.resize(expected_.size());
     ids_.copy_from_host(ids_host_, stream);
@@ -109,6 +113,7 @@ class HistogramAdapter final : public BenchmarkAdapter {
             {"count_dtype", std::string("int32")},
             {"distribution", distribution_},
             {"zipf_s", zipf_s_},
+            {"active_experts", static_cast<std::int64_t>(active_experts_)},
             {"max_count", static_cast<std::int64_t>(max_count_)}};
   }
   FieldMap variant_config() const override {
@@ -120,6 +125,7 @@ class HistogramAdapter final : public BenchmarkAdapter {
     }
     return {{"atomic_scope", std::string("device")},
             {"privatization", false},
+            {"output_mode", std::string("accumulate_l1_reset_then_accumulate_l2")},
             {"threads_per_block", static_cast<std::int64_t>(256)}};
   }
   std::size_t workspace_bytes() const override { return library_workspace_bytes_; }
@@ -127,11 +133,11 @@ class HistogramAdapter final : public BenchmarkAdapter {
     WorkEstimate work;
     work.logical_bytes =
         sizeof(std::int32_t) * static_cast<double>(ids_host_.size() + expected_.size());
-    if (variant_name_ == "cub_device_histogram") {
-      work.operator_metrics["histogram_input_items"] =
-          static_cast<std::int64_t>(ids_host_.size());
-      work.operator_metrics["histogram_bins"] = static_cast<std::int64_t>(experts_);
-    } else {
+    work.operator_metrics["histogram_input_items"] =
+        static_cast<std::int64_t>(ids_host_.size());
+    work.operator_metrics["histogram_bins"] = static_cast<std::int64_t>(experts_);
+    work.operator_metrics["active_experts"] = static_cast<std::int64_t>(active_experts_);
+    if (variant_name_ != "cub_device_histogram") {
       work.operator_metrics["global_atomic_operations"] =
           static_cast<std::int64_t>(ids_host_.size());
     }
@@ -159,7 +165,7 @@ class HistogramAdapter final : public BenchmarkAdapter {
     cuda_check(cudaMemsetAsync(counts_.data(), 0, counts_.bytes(), stream),
                "reset histogram counts");
   }
-  int tokens_ = 0, experts_ = 0, top_k_ = 0, max_count_ = 0;
+  int tokens_ = 0, experts_ = 0, top_k_ = 0, max_count_ = 0, active_experts_ = 0;
   std::string variant_name_;
   std::size_t library_workspace_bytes_ = 0;
   DeviceArchitecture architecture_ = DeviceArchitecture::kOther;

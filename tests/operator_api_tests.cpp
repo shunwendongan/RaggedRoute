@@ -354,6 +354,13 @@ void test_histogram_reset(const raggedroute::RuntimeContext& context) {
   require_status(raggedroute::histogram(args, context), "public histogram");
   require(counts.copy_to_host(context.stream) == std::vector<std::int32_t>({1, 3}),
           "histogram wrapper did not reset counts before atomic accumulation");
+
+  counts.copy_from_host({77, 88}, context.stream);
+  args.expert_ids = nullptr;
+  args.route_pairs = 0;
+  require_status(raggedroute::histogram(args, context), "zero-route public histogram");
+  require(counts.copy_to_host(context.stream) == std::vector<std::int32_t>({0, 0}),
+          "zero-route histogram did not clear all counts");
   require(ids.canaries_intact(context.stream) && counts.canaries_intact(context.stream),
           "histogram changed a redzone");
 }

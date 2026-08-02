@@ -16,12 +16,19 @@ namespace raggedroute::benchmark {
 namespace {
 
 bool is_optimized_histogram_variant(const std::string& variant_name) {
-  return variant_name == "cuda_warp_aggregated";
+  return variant_name == "cuda_warp_aggregated" || variant_name == "cuda_single_cta_shared";
+}
+
+bool histogram_variant_overwrites_output(const std::string& variant_name) {
+  return variant_name == "cuda_single_cta_shared";
 }
 
 std::uint32_t optimized_histogram_implementation(const std::string& variant_name) {
   if (variant_name == "cuda_warp_aggregated") {
     return ops::kHistogramWarpAggregatedImplementation;
+  }
+  if (variant_name == "cuda_single_cta_shared") {
+    return ops::kHistogramSingleCtaSharedImplementation;
   }
   throw std::invalid_argument("unsupported optimized histogram variant: " + variant_name);
 }
@@ -38,6 +45,9 @@ class HistogramAdapter final : public BenchmarkAdapter {
     if (variant_name_ == "cuda_warp_aggregated") {
       return "Warp same-key aggregation before global atomicAdd";
     }
+    if (variant_name_ == "cuda_single_cta_shared") {
+      return "Single-CTA shared-memory histogram with overwrite output";
+    }
     return "One global atomicAdd per route pair";
   }
   bool supports(MeasurementLevel level) const override {
@@ -48,6 +58,7 @@ class HistogramAdapter final : public BenchmarkAdapter {
   }
   RepeatPolicy repeat_policy(MeasurementLevel level) const override {
     if (variant_name_ == "cub_device_histogram") return {};
+    if (histogram_variant_overwrites_output(variant_name_)) return {};
     if (level != MeasurementLevel::kKernelBody || max_count_ == 0) return {};
     const int cap = std::numeric_limits<std::int32_t>::max() / max_count_;
     return {cap, "L1 histogram accumulates counts across batched launches"};
@@ -87,6 +98,7 @@ class HistogramAdapter final : public BenchmarkAdapter {
   }
   void prepare_sample(MeasurementLevel level, cudaStream_t stream) override {
     if (variant_name_ == "cub_device_histogram") return;
+    if (histogram_variant_overwrites_output(variant_name_)) return;
     if (level == MeasurementLevel::kKernelBody) reset_counts(stream);
   }
   void enqueue(MeasurementLevel level, cudaStream_t stream) override {
@@ -164,6 +176,14 @@ class HistogramAdapter final : public BenchmarkAdapter {
               {"output_mode", std::string("accumulate_l1_reset_then_accumulate_l2")},
               {"threads_per_block", static_cast<std::int64_t>(256)}};
     }
+    if (variant_name_ == "cuda_single_cta_shared") {
+      return {{"atomic_scope", std::string("block")},
+              {"privatization", std::string("single_cta_shared")},
+              {"output_mode", std::string("overwrite_l1_and_l2")},
+              {"external_reset", false},
+              {"threads_per_block", static_cast<std::int64_t>(256)},
+              {"shared_bytes_per_cta", static_cast<std::int64_t>(64 * sizeof(std::int32_t))}};
+    }
     return {{"atomic_scope", std::string("device")},
             {"privatization", false},
             {"output_mode", std::string("accumulate_l1_reset_then_accumulate_l2")},
@@ -178,11 +198,17 @@ class HistogramAdapter final : public BenchmarkAdapter {
         static_cast<std::int64_t>(ids_host_.size());
     work.operator_metrics["histogram_bins"] = static_cast<std::int64_t>(experts_);
     work.operator_metrics["active_experts"] = static_cast<std::int64_t>(active_experts_);
-    if (variant_name_ != "cub_device_histogram") {
+    if (variant_name_ == "cuda_naive" || variant_name_ == "cuda_warp_aggregated") {
       work.operator_metrics["global_atomic_operations"] =
           static_cast<std::int64_t>(ids_host_.size());
     }
-    if (level == MeasurementLevel::kOperatorSteady) {
+    if (variant_name_ == "cuda_single_cta_shared") {
+      work.operator_metrics["shared_atomic_operations_upper_bound"] =
+          static_cast<std::int64_t>(ids_host_.size());
+      work.operator_metrics["kernel_launches"] = static_cast<std::int64_t>(1);
+    }
+    if (level == MeasurementLevel::kOperatorSteady &&
+        !histogram_variant_overwrites_output(variant_name_)) {
       work.logical_bytes += static_cast<double>(counts_.bytes());
       work.operator_metrics["counts_reset_bytes"] = static_cast<std::int64_t>(counts_.bytes());
     }
@@ -190,7 +216,10 @@ class HistogramAdapter final : public BenchmarkAdapter {
   }
   std::vector<std::string> excluded_steps(MeasurementLevel level) const override {
     std::vector<std::string> excluded = {"route_generation", "h2d_copy", "workspace_allocation"};
-    if (level == MeasurementLevel::kKernelBody) excluded.push_back("counts_reset");
+    if (level == MeasurementLevel::kKernelBody &&
+        !histogram_variant_overwrites_output(variant_name_)) {
+      excluded.push_back("counts_reset");
+    }
     return excluded;
   }
 

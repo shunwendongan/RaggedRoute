@@ -267,6 +267,8 @@ int main() {
            "cub_device_histogram"},
           {"histogram", {{"T", "11"}, {"E", "8"}, {"top_k", "2"}, {"distribution", "zipf"}, {"zipf_s", "1.4"}},
            "cuda_warp_aggregated"},
+          {"histogram", {{"T", "257"}, {"E", "64"}, {"top_k", "1"}, {"distribution", "single_hot"}},
+           "cuda_single_cta_shared"},
           {"exclusive_scan", {{"E", "7"}, {"R", "23"}}, "cub_device_scan"},
           {"exclusive_scan", {{"E", "33"}, {"R", "67"}}, "cub_block_scan"},
           {"exclusive_scan", {{"E", "31"}, {"R", "67"}}, "cub_warp_scan"},

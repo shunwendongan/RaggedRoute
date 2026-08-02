@@ -161,6 +161,9 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     variants.push_back(descriptor("cuda_warp_aggregated", "in_tree_cuda",
                                   "raggedroute.histogram.warp_aggregated.v1",
                                   "not_applicable", "warp_match_global_atomic"));
+    variants.push_back(descriptor("cuda_single_cta_shared", "in_tree_cuda",
+                                  "raggedroute.histogram.single_cta_shared.v1",
+                                  "not_applicable", "single_cta_shared_overwrite"));
 #if RAGGEDROUTE_HAS_CCCL
     variants.push_back(descriptor("cub_device_histogram", "nvidia_cccl",
                                   "cub::DeviceHistogram::HistogramEven", cccl_revision(),

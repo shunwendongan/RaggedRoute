@@ -388,6 +388,20 @@ void test_histogram_reset(const raggedroute::RuntimeContext& context) {
           "warp-aggregated histogram produced incorrect counts");
   require(ids.canaries_intact(context.stream) && counts.canaries_intact(context.stream),
           "warp-aggregated histogram changed a redzone");
+
+  counts.copy_from_host({44, 33}, context.stream);
+  args.kernel = {raggedroute::KernelFamily::kCudaOptimized, 102};
+  require_status(raggedroute::histogram(args, context), "single-CTA public histogram");
+  require(counts.copy_to_host(context.stream) == std::vector<std::int32_t>({1, 3}),
+          "single-CTA histogram did not overwrite old counts correctly");
+  args.expert_ids = nullptr;
+  args.route_pairs = 0;
+  counts.copy_from_host({22, 11}, context.stream);
+  require_status(raggedroute::histogram(args, context), "zero-route single-CTA histogram");
+  require(counts.copy_to_host(context.stream) == std::vector<std::int32_t>({0, 0}),
+          "zero-route single-CTA histogram did not clear counts");
+  require(ids.canaries_intact(context.stream) && counts.canaries_intact(context.stream),
+          "single-CTA histogram changed a redzone");
 }
 
 void test_permute_workspace_reset(const raggedroute::RuntimeContext& context) {

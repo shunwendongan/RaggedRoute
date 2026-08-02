@@ -31,6 +31,31 @@ __global__ void histogram_warp_aggregated_kernel(const std::int32_t* expert_ids,
   }
 }
 
+__global__ void histogram_single_cta_shared_kernel(const std::int32_t* expert_ids,
+                                                    std::int32_t* counts, int route_pairs,
+                                                    int experts) {
+  __shared__ std::int32_t shared_counts[64];
+  for (int expert = static_cast<int>(threadIdx.x); expert < experts;
+       expert += static_cast<int>(blockDim.x)) {
+    shared_counts[expert] = 0;
+  }
+  __syncthreads();
+
+  for (std::size_t route = threadIdx.x; route < static_cast<std::size_t>(route_pairs);
+       route += blockDim.x) {
+    const std::int32_t expert = expert_ids[route];
+    if (expert >= 0 && expert < experts) {
+      atomicAdd(shared_counts + expert, std::int32_t{1});
+    }
+  }
+  __syncthreads();
+
+  for (int expert = static_cast<int>(threadIdx.x); expert < experts;
+       expert += static_cast<int>(blockDim.x)) {
+    counts[expert] = shared_counts[expert];
+  }
+}
+
 unsigned int block_count_for(std::size_t elements) {
   const std::size_t blocks =
       elements / kThreadsPerBlock + (elements % kThreadsPerBlock != 0 ? 1 : 0);
@@ -53,14 +78,20 @@ cudaError_t launch_histogram_optimized(const std::int32_t* expert_ids, std::int3
                                        std::uint32_t implementation_id,
                                        cudaStream_t caller_stream) {
   const cudaError_t validation = validate_arguments(expert_ids, counts, route_pairs, experts);
-  if (validation != cudaSuccess || route_pairs == 0) return validation;
-  if (implementation_id != kHistogramWarpAggregatedImplementation) {
-    return cudaErrorInvalidValue;
+  if (validation != cudaSuccess) return validation;
+  if (implementation_id == kHistogramWarpAggregatedImplementation) {
+    if (route_pairs == 0) return cudaSuccess;
+    histogram_warp_aggregated_kernel<<<
+        block_count_for(static_cast<std::size_t>(route_pairs)), kThreadsPerBlock, 0,
+        caller_stream>>>(expert_ids, counts, route_pairs, experts);
+    return cudaGetLastError();
   }
-  histogram_warp_aggregated_kernel<<<
-      block_count_for(static_cast<std::size_t>(route_pairs)), kThreadsPerBlock, 0,
-      caller_stream>>>(expert_ids, counts, route_pairs, experts);
-  return cudaGetLastError();
+  if (implementation_id == kHistogramSingleCtaSharedImplementation) {
+    histogram_single_cta_shared_kernel<<<1, kThreadsPerBlock, 0, caller_stream>>>(
+        expert_ids, counts, route_pairs, experts);
+    return cudaGetLastError();
+  }
+  return cudaErrorInvalidValue;
 }
 
 }  // namespace raggedroute::ops

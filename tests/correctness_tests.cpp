@@ -31,7 +31,8 @@ void require(bool condition, const std::string& message) {
   if (!condition) throw std::runtime_error(message);
 }
 
-void run_adapter_case(const Case& test_case, cudaStream_t stream, std::uint64_t seed) {
+void run_adapter_case(const Case& test_case, cudaStream_t stream, std::uint64_t seed,
+                      bool verbose = true) {
   auto adapter = rr::make_adapter(test_case.name, test_case.variant);
   require(adapter->supports(test_case.level),
           test_case.name + "/" + test_case.variant + " does not support the requested level");
@@ -50,8 +51,10 @@ void run_adapter_case(const Case& test_case, cudaStream_t stream, std::uint64_t 
     require(variant_config.count(field) == 1,
             test_case.name + " variant config is missing " + field);
   }
-  std::cout << "PASS " << test_case.name << "/" << test_case.variant << " - " << result.message
-            << '\n';
+  if (verbose) {
+    std::cout << "PASS " << test_case.name << "/" << test_case.variant << " - " << result.message
+              << '\n';
+  }
 }
 
 bool has_variant(const std::string& operator_name, const std::string& variant) {
@@ -80,8 +83,8 @@ void run_library_alignment_fallbacks(cudaStream_t stream) {
                    "initialize unaligned vLLM permute output storage");
     expert_ids.copy_from_host({1, 0}, stream);
     std::size_t workspace_bytes = 0;
-    rr::cuda_check(rr::library_baseline::query_vllm_permute_workspace(
-                       kTokens, kExperts, kTopK, &workspace_bytes),
+    rr::cuda_check(rr::library_baseline::query_vllm_permute_workspace(kTokens, kExperts, kTopK,
+                                                                      &workspace_bytes),
                    "query unaligned vLLM permute workspace");
     rr::DeviceBuffer<std::uint8_t> workspace(workspace_bytes);
     rr::cuda_check(rr::library_baseline::initialize_vllm_permute_workspace(
@@ -103,7 +106,7 @@ void run_library_alignment_fallbacks(cudaStream_t stream) {
             "unaligned vLLM permute mapping is incorrect");
     for (int column = 0; column < kHidden; ++column) {
       require(output_host[static_cast<std::size_t>(1 + column)] ==
-                  static_cast<float>(kHidden + column) &&
+                      static_cast<float>(kHidden + column) &&
                   output_host[static_cast<std::size_t>(1 + kHidden + column)] ==
                       static_cast<float>(column),
               "unaligned vLLM permute scalar fallback copied the wrong row");
@@ -255,9 +258,10 @@ int main() {
           {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cuda_combined"},
           {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cuda_register_tiled_v2_sync"},
           {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cuda_register_tiled_v2_async"},
-          {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cuda_register_tiled_v3_64x32_async"},
-          {"histogram", {{"T", "11"}, {"E", "8"}, {"top_k", "2"}},
-           "cub_device_histogram"},
+          {"dense_gemm",
+           {{"M", "5"}, {"N", "7"}, {"K", "3"}},
+           "cuda_register_tiled_v3_64x32_async"},
+          {"histogram", {{"T", "11"}, {"E", "8"}, {"top_k", "2"}}, "cub_device_histogram"},
           {"exclusive_scan", {{"E", "7"}, {"R", "23"}}, "cub_device_scan"},
           {"exclusive_scan", {{"E", "33"}, {"R", "67"}}, "cub_block_scan"},
           {"exclusive_scan", {{"E", "31"}, {"R", "67"}}, "cub_warp_scan"},
@@ -269,19 +273,23 @@ int main() {
            "vllm_moe_permute"},
           {"token_permute",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "8"}},
-           "vllm_expand_rows", rr::MeasurementLevel::kKernelBody},
+           "vllm_expand_rows",
+           rr::MeasurementLevel::kKernelBody},
           {"grouped_gemm",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
            "cublas_per_expert"},
           {"grouped_gemm",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
-           "cutlass_grouped", rr::MeasurementLevel::kKernelBody},
+           "cutlass_grouped",
+           rr::MeasurementLevel::kKernelBody},
           {"unpermute",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"N", "7"}},
-           "vllm_finalize_routing", rr::MeasurementLevel::kKernelBody},
+           "vllm_finalize_routing",
+           rr::MeasurementLevel::kKernelBody},
           {"unpermute",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"N", "8"}},
-           "vllm_finalize_routing", rr::MeasurementLevel::kOperatorSteady},
+           "vllm_finalize_routing",
+           rr::MeasurementLevel::kOperatorSteady},
       };
       for (const auto& test_case : library_cases) {
         if (has_variant(test_case.name, test_case.variant)) {
@@ -291,6 +299,54 @@ int main() {
                     << " - optional dependency unavailable\n";
         }
       }
+
+      const std::vector<std::string> topk_candidates = {
+          "cuda_warp_pair_top2_v1", "cuda_subwarp_pair_top2_v2", "cuda_vector_pair_top2_v3",
+          "cub_block_radix_top2"};
+      const std::vector<int> topk_tokens = {1, 7, 65};
+      const std::vector<std::uint64_t> topk_seeds = {101, 202, 303};
+      for (int experts = 2; experts <= 64; ++experts) {
+        for (std::size_t shape = 0; shape < topk_tokens.size(); ++shape) {
+          for (const std::string& variant : topk_candidates) {
+            if (!has_variant("topk_gate", variant)) continue;
+            run_adapter_case({"topk_gate",
+                              {{"T", std::to_string(topk_tokens[shape])},
+                               {"E", std::to_string(experts)},
+                               {"input_mode", "random"},
+                               {"input_alignment", shape == 1 ? "4" : "16"}},
+                              variant,
+                              rr::MeasurementLevel::kKernelBody},
+                             stream, topk_seeds[shape], false);
+          }
+        }
+      }
+      for (const std::string& mode :
+           {"duplicate_max", "ties", "all_nan", "signed_zero", "mixed_nan_neg_inf",
+            "single_infinity", "multiple_infinity", "extreme"}) {
+        for (const std::string& variant : topk_candidates) {
+          if (has_variant("topk_gate", variant)) {
+            run_adapter_case(
+                {"topk_gate",
+                 {{"T", "33"}, {"E", "63"}, {"input_mode", mode}, {"input_alignment", "16"}},
+                 variant,
+                 rr::MeasurementLevel::kKernelBody},
+                stream, seed++, false);
+          }
+        }
+      }
+      if (has_variant("topk_gate", "vllm_row_packed_top2")) {
+        for (int experts : {2, 4, 8, 16, 32, 64}) {
+          run_adapter_case({"topk_gate",
+                            {{"T", "65"},
+                             {"E", std::to_string(experts)},
+                             {"input_mode", "duplicate_max"},
+                             {"input_alignment", "16"}},
+                            "vllm_row_packed_top2",
+                            rr::MeasurementLevel::kKernelBody},
+                           stream, seed++, false);
+        }
+      }
+      std::cout << "PASS exhaustive topk_gate E=2..64 candidate matrix\n";
       const std::vector<rr::OptionMap> dense_tiled_edge_shapes = {
           {{"M", "1"}, {"N", "1"}, {"K", "1"}},
           {{"M", "17"}, {"N", "19"}, {"K", "13"}},
@@ -346,14 +402,12 @@ int main() {
       if (has_variant("token_permute", "vllm_moe_permute")) {
         auto from_ids = rr::make_adapter("token_permute", "cuda_naive_from_ids");
         auto vllm_full = rr::make_adapter("token_permute", "vllm_moe_permute");
-        const rr::OptionMap options = {
-            {"T", "4"}, {"E", "8"}, {"top_k", "2"}, {"K", "7"}};
+        const rr::OptionMap options = {{"T", "4"}, {"E", "8"}, {"top_k", "2"}, {"K", "7"}};
         from_ids->setup(options, seed, stream);
         vllm_full->setup(options, seed, stream);
         require(from_ids->case_config() == vllm_full->case_config(),
                 "full permute baselines must have an identical logical boundary");
-        const auto from_ids_work =
-            from_ids->work_estimate(rr::MeasurementLevel::kOperatorSteady);
+        const auto from_ids_work = from_ids->work_estimate(rr::MeasurementLevel::kOperatorSteady);
         const auto vllm_work = vllm_full->work_estimate(rr::MeasurementLevel::kOperatorSteady);
         require(from_ids_work.operator_metrics.count("cursor_reset_bytes") == 1 &&
                     from_ids_work.operator_metrics.count("counts_reset_bytes") == 1,
@@ -381,8 +435,7 @@ int main() {
       if (has_variant("histogram", "cub_device_histogram")) {
         auto cub_histogram = rr::make_adapter("histogram", "cub_device_histogram");
         cub_histogram->setup({{"T", "4"}, {"E", "8"}, {"top_k", "2"}}, seed, stream);
-        const auto cub_work =
-            cub_histogram->work_estimate(rr::MeasurementLevel::kOperatorSteady);
+        const auto cub_work = cub_histogram->work_estimate(rr::MeasurementLevel::kOperatorSteady);
         require(cub_work.operator_metrics.count("global_atomic_operations") == 0 &&
                     cub_work.operator_metrics.count("histogram_input_items") == 1,
                 "CUB histogram metrics must not invent its internal atomic strategy");

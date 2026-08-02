@@ -1,0 +1,32 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_topk_gate_preflight_v1",
+  "protocol": "smoke",
+  "process_runs": 1,
+  "common": {
+    "warmup": 5,
+    "samples": 5,
+    "kernel_repeats": 20,
+    "seed": 20260803,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "topk_gate.preflight",
+      "operator": "topk_gate",
+      "levels": ["l1"],
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cuda_warp_pair_top2_v1", "promotion_baseline": false},
+        {"name": "cuda_subwarp_pair_top2_v2", "promotion_baseline": false},
+        {"name": "cuda_vector_pair_top2_v3", "promotion_baseline": false},
+        {"name": "cub_block_radix_top2", "promotion_baseline": false}
+      ],
+      "matrix": {
+        "T": [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
+        "E": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64]
+      },
+      "params": {"input_mode": "random", "input_alignment": 16}
+    }
+  ]
+}

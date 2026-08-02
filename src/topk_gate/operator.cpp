@@ -1,4 +1,5 @@
 #include "../runtime/operator_internal.h"
+#include "cuda_candidate/optimized_internal.h"
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/operators.h"
 
@@ -27,8 +28,6 @@ Status topk_gate(const TopKGateArgs& args, const RuntimeContext& context) noexce
   Status status = detail::dispatch_operator(OperatorKind::kTopKGate, signature, args.kernel,
                                             context.architecture, &decision);
   if (!status.ok()) return status;
-  status = detail::require_naive_implementation(decision);
-  if (!status.ok()) return status;
   if (args.tokens == 0) return success_status();
   if (args.logits.data == nullptr || args.expert_ids == nullptr || args.weights.data == nullptr) {
     return detail::invalid_argument("topk_gate received a null device pointer");
@@ -38,11 +37,21 @@ Status topk_gate(const TopKGateArgs& args, const RuntimeContext& context) noexce
     return detail::invalid_argument("topk_gate FP32 buffers must be 4-byte aligned");
   }
 
-  return detail::cuda_status(
-      ops::launch_topk_gate_naive(static_cast<const float*>(args.logits.data), args.expert_ids,
-                                  static_cast<float*>(args.weights.data), args.tokens, args.experts,
-                                  context.stream),
-      "topk_gate kernel launch failed");
+  cudaError_t error = cudaErrorInvalidValue;
+  if (decision.kernel.family == KernelFamily::kCudaNaive) {
+    error = ops::launch_topk_gate_naive(static_cast<const float*>(args.logits.data),
+                                        args.expert_ids, static_cast<float*>(args.weights.data),
+                                        args.tokens, args.experts, context.stream);
+  } else if (decision.kernel.family == KernelFamily::kCudaOptimized) {
+    error = ops::launch_topk_gate_optimized(static_cast<const float*>(args.logits.data),
+                                            args.expert_ids, static_cast<float*>(args.weights.data),
+                                            args.tokens, args.experts,
+                                            decision.kernel.implementation_id, context.stream);
+  } else {
+    return detail::make_status(StatusCode::kUnsupportedKernelVariant,
+                               "topk_gate dispatch selected an unsupported kernel");
+  }
+  return detail::cuda_status(error, "topk_gate kernel launch failed");
 }
 
 }  // namespace raggedroute

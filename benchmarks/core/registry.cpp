@@ -6,6 +6,7 @@
 
 #if RAGGEDROUTE_HAS_CCCL
 #include <cub/version.cuh>
+#include <cuda/std/__cccl/version.h>
 #endif
 #if RAGGEDROUTE_HAS_CUTLASS
 #include <cutlass/version.h>
@@ -88,7 +89,9 @@ std::string cuda_library_revision() {
 std::string cccl_revision() {
 #if RAGGEDROUTE_HAS_CCCL
   return "CUB_VERSION=" + std::to_string(CUB_VERSION) +
-         "; configured=" + RAGGEDROUTE_CCCL_CONFIG_REVISION;
+         "; CCCL_VERSION=" + std::to_string(CCCL_VERSION) +
+         "; provider=" + RAGGEDROUTE_CCCL_PROVIDER +
+         "; requested_fetch_tag=" + RAGGEDROUTE_CCCL_REQUESTED_FETCH_TAG;
 #else
   return "unavailable";
 #endif
@@ -155,7 +158,28 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
 #endif
     return variants;
   }
-  if (operator_name == "topk_gate") return {naive_descriptor("serial_row_top2")};
+  if (operator_name == "topk_gate") {
+    std::vector<VariantDescriptor> variants = {naive_descriptor("serial_row_top2")};
+    variants.push_back(descriptor("cuda_warp_pair_top2_v1", "in_tree_cuda",
+                                  "raggedroute.cuda_optimized.v1", "not_applicable",
+                                  "warp32_register_pair_merge"));
+    variants.push_back(descriptor("cuda_subwarp_pair_top2_v2", "in_tree_cuda",
+                                  "raggedroute.cuda_optimized.v2", "not_applicable",
+                                  "shape_specialized_subwarp_pair_merge"));
+    variants.push_back(descriptor("cuda_vector_pair_top2_v3", "in_tree_cuda",
+                                  "raggedroute.cuda_optimized.v3", "not_applicable",
+                                  "aligned_float4_subwarp_pair_merge"));
+    variants.push_back(descriptor(
+        "vllm_row_packed_top2", "adapted_production_cuda", "vllm.topk_softmax.adapted.fp32.v1",
+        "vllm@55c98e370aa058f567a9e682dc0652bdfba6b0bb; Apache-2.0",
+        "row_packed_vector_iterative_argmax"));
+#if RAGGEDROUTE_HAS_CCCL
+    variants.push_back(descriptor("cub_block_radix_top2", "nvidia_cccl",
+                                  "cub::BlockRadixSort<uint64_t,32,2>", cccl_revision(),
+                                  "composite_key_descending_block_sort"));
+#endif
+    return variants;
+  }
   if (operator_name == "histogram") {
     std::vector<VariantDescriptor> variants = {naive_descriptor("global_atomic")};
 #if RAGGEDROUTE_HAS_CCCL

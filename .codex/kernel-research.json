@@ -2,32 +2,32 @@
   "schema_version": "codex.kernel-research.v1",
   "commands": {
     "build": [
-      "$env:RAGGEDROUTE_FETCH_REFERENCES='ON'; cmd /c scripts\\configure_windows.bat rtx3080-sm86-release",
-      "$env:RAGGEDROUTE_FETCH_REFERENCES='ON'; cmd /c scripts\\build_windows.bat rtx3080-sm86-release"
+      "cmd /c scripts\\configure_windows.bat rtx3080-sm86-release",
+      "cmake --build --preset build-rtx3080-sm86-release --parallel"
     ],
     "correctness": [
       "ctest --preset test-rtx3080-sm86-release --output-on-failure",
-      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\rtx3080-dense-gemm-v2"
+      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\rtx3080-topk-gate"
     ],
     "smoke": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_dense_gemm_candidate_v3_smoke.json --output out\\benchmark\\dense-gemm-v3-smoke.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_topk_gate_smoke.json --output out\\benchmark\\topk-gate-smoke.jsonl"
     ],
     "release": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_dense_gemm_candidate_v3_release.json --output out\\benchmark\\dense-gemm-v3-release.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_topk_gate_release.json --output out\\benchmark\\topk-gate-release.jsonl"
     ]
   },
   "benchmark": {
     "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
     "profile_cases": [
-      {"name": "dense.v2_sync", "arguments": ["--operator", "dense_gemm", "--variant", "cuda_register_tiled_v2_sync", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "M=1024", "--param", "N=1024", "--param", "K=1024"], "kernel_regex": "dense_gemm_register_tiled_v2_sync_kernel"},
-      {"name": "dense.v2_async", "arguments": ["--operator", "dense_gemm", "--variant", "cuda_register_tiled_v2_async", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "M=1024", "--param", "N=1024", "--param", "K=1024"], "kernel_regex": "dense_gemm_register_tiled_v2_async_kernel"},
-      {"name": "dense.v3_64x32_async", "arguments": ["--operator", "dense_gemm", "--variant", "cuda_register_tiled_v3_64x32_async", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "M=1024", "--param", "N=1024", "--param", "K=1024"], "kernel_regex": "dense_gemm_register_tiled_v3_64x32_async_kernel"}
+      {"name":"topk.naive.t2048_e64","arguments":["--operator","topk_gate","--variant","cuda_naive","--level","l1","--profile-once","--warmup","20","--seed","20260803","--param","T=2048","--param","E=64"],"kernel_regex":"topk_gate_naive_kernel"},
+      {"name":"topk.v2.t2048_e64","arguments":["--operator","topk_gate","--variant","cuda_subwarp_pair_top2_v2","--level","l1","--profile-once","--warmup","20","--seed","20260803","--param","T=2048","--param","E=64"],"kernel_regex":"topk_gate_scalar_pair_kernel"},
+      {"name":"topk.v3.t2048_e64","arguments":["--operator","topk_gate","--variant","cuda_vector_pair_top2_v3","--level","l1","--profile-once","--warmup","20","--seed","20260803","--param","T=2048","--param","E=64"],"kernel_regex":"topk_gate_vector_pair_kernel"}
     ],
-    "kernel_regex": "dense_gemm_register_tiled_v2_sync_kernel"
+    "kernel_regex": "topk_gate_scalar_pair_kernel"
   },
   "variants": {
-    "baseline": "cuda_tiled_vector",
-    "candidate": "cuda_register_tiled_v3_64x32_async"
+    "baseline": "cuda_naive",
+    "candidate": "cuda_subwarp_pair_top2_v2"
   },
   "output": {
     "root": "profile",
@@ -37,11 +37,13 @@
     }
   },
   "promotion_policy": {
-    "version": "evidence-only-v1",
-    "min_processes": 3,
+    "version": "topk-evidence-only-v1",
+    "min_processes": 5,
     "median_speedup": 1.05,
-    "p95_regression_tolerance": 0.03,
-    "max_shape_regression": 0.05,
-    "max_workspace_growth": 0.25
+    "p50_regression_tolerance": 0.03,
+    "p95_regression_tolerance": 0.05,
+    "max_shape_regression": 0.03,
+    "max_all_samples_cv": 0.10,
+    "max_workspace_growth": 0.0
   }
 }

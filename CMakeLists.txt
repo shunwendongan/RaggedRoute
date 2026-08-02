@@ -72,6 +72,7 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     src/dense_gemm/cuda_candidate/optimized_v2.cu
     src/dense_gemm/cuda_candidate/optimized_v3.cu
     src/topk_gate/baseline.cu
+    src/topk_gate/cuda_candidate/optimized.cu
     src/histogram/baseline.cu
     src/scan/baseline.cu
     src/permute/baseline.cu
@@ -92,7 +93,8 @@ if(RAGGEDROUTE_ENABLE_CUDA)
   # Benchmark-only production/library baselines. These never participate in
   # the public runtime dispatch or install/export surface.
   set(_raggedroute_library_baseline_sources
-    src/unpermute/library_baseline/vllm_unpermute.cu)
+    src/unpermute/library_baseline/vllm_unpermute.cu
+    src/topk_gate/library_baseline/vllm_row_packed_top2.cu)
   set(_raggedroute_library_baseline_libraries CUDA::cudart)
   set(_raggedroute_has_cublas 0)
   set(_raggedroute_has_cccl 0)
@@ -108,7 +110,8 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     list(APPEND _raggedroute_library_baseline_sources
       src/histogram/library_baseline/cub_histogram.cu
       src/scan/library_baseline/cub_scan.cu
-      src/permute/library_baseline/vllm_permute.cu)
+      src/permute/library_baseline/vllm_permute.cu
+      src/topk_gate/library_baseline/cub_block_radix_top2.cu)
     list(APPEND _raggedroute_library_baseline_libraries RaggedRoute::cccl)
     set(_raggedroute_has_cccl 1)
   endif()
@@ -124,7 +127,8 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     RAGGEDROUTE_HAS_CCCL=${_raggedroute_has_cccl}
     RAGGEDROUTE_HAS_CUTLASS=${_raggedroute_has_cutlass}
     RAGGEDROUTE_CUDATOOLKIT_VERSION="${CMAKE_CUDA_COMPILER_VERSION}"
-    RAGGEDROUTE_CCCL_CONFIG_REVISION="${RAGGEDROUTE_CCCL_GIT_TAG}"
+    RAGGEDROUTE_CCCL_REQUESTED_FETCH_TAG="${RAGGEDROUTE_CCCL_GIT_TAG}"
+    RAGGEDROUTE_CCCL_PROVIDER="${RAGGEDROUTE_CCCL_PROVIDER}"
     RAGGEDROUTE_CUTLASS_CONFIG_REVISION="${RAGGEDROUTE_CUTLASS_GIT_TAG}")
   add_library(raggedroute_library_baselines STATIC ${_raggedroute_library_baseline_sources})
   target_include_directories(raggedroute_library_baselines PUBLIC
@@ -203,7 +207,9 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     target_include_directories(raggedroute_benchmark_core PUBLIC
       "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>")
     target_include_directories(raggedroute_benchmark_core PRIVATE
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/dense_gemm")
+      "${CMAKE_CURRENT_SOURCE_DIR}/src"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/dense_gemm"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/topk_gate")
     target_link_libraries(raggedroute_benchmark_core PUBLIC
       raggedroute_runtime
       raggedroute_correctness_framework

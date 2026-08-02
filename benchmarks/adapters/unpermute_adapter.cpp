@@ -88,6 +88,8 @@ class UnpermuteAdapter final : public BenchmarkAdapter {
     y_permuted_.copy_from_host(y_permuted_storage_host_, stream);
     route_pos_.copy_from_host(route_pos_host_, stream);
     route_weights_.copy_from_host(route_weights_host_, stream);
+    cuda_check(cudaMemsetAsync(y_.data(), 0, y_.bytes(), stream),
+               "initialize unpermute output storage");
   }
 
   void prepare_sample(MeasurementLevel, cudaStream_t) override {}

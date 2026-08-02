@@ -1,7 +1,6 @@
 #include <limits>
 
 #include "../runtime/operator_internal.h"
-#include "cuda_candidate/optimized_internal.h"
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/operators.h"
 
@@ -31,6 +30,8 @@ Status unpermute(const UnpermuteArgs& args, const RuntimeContext& context) noexc
                                                                args.accumulator_dtype, args.y),
                                 args.kernel, context.architecture, &decision);
   if (!status.ok()) return status;
+  status = detail::require_naive_implementation(decision);
+  if (!status.ok()) return status;
   if (args.tokens == 0 || args.output == 0) return success_status();
   if (args.y_permuted.data == nullptr || args.route_pos == nullptr ||
       args.route_weights.data == nullptr || args.y.data == nullptr) {
@@ -42,25 +43,12 @@ Status unpermute(const UnpermuteArgs& args, const RuntimeContext& context) noexc
     return detail::invalid_argument("unpermute FP32 buffers must be 4-byte aligned");
   }
 
-  cudaError_t launch_status = cudaErrorInvalidValue;
-  if (decision.kernel.family == KernelFamily::kCudaNaive &&
-      decision.kernel.implementation_id == 0) {
-    launch_status = ops::launch_unpermute_naive(
-        static_cast<const float*>(args.y_permuted.data), args.route_pos,
-        static_cast<const float*>(args.route_weights.data), static_cast<float*>(args.y.data),
-        args.tokens, args.top_k, args.output, context.stream);
-  } else if (decision.kernel.family == KernelFamily::kCudaOptimized &&
-             decision.kernel.implementation_id ==
-                 ops::kUnpermuteWarpTokenVec4Implementation) {
-    launch_status = ops::launch_unpermute_optimized(
-        static_cast<const float*>(args.y_permuted.data), args.route_pos,
-        static_cast<const float*>(args.route_weights.data), static_cast<float*>(args.y.data),
-        args.tokens, args.top_k, args.output, context.stream);
-  } else {
-    return detail::make_status(StatusCode::kUnsupportedKernelVariant,
-                               "unpermute wrapper does not implement the selected kernel");
-  }
-  return detail::cuda_status(launch_status, "unpermute kernel launch failed");
+  return detail::cuda_status(
+      ops::launch_unpermute_naive(static_cast<const float*>(args.y_permuted.data), args.route_pos,
+                                  static_cast<const float*>(args.route_weights.data),
+                                  static_cast<float*>(args.y.data), args.tokens, args.top_k,
+                                  args.output, context.stream),
+      "unpermute kernel launch failed");
 }
 
 }  // namespace raggedroute

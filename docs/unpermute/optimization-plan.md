@@ -30,7 +30,8 @@
 - `top_k=2`、输入/输出 16-byte 对齐且 `N%4==0` 时使用 128-bit fast path；其余合法 `top_k`、tail 或非对齐地址回退已验证的 naive kernel。
 - `N<512`：一个 warp 负责一个 token，4 warps/CTA；lane 0 读取两个 `route_pos`/weight 并用 shuffle 广播。
 - `N>=512`：一个 256-thread CTA 负责一个 token；thread 0 读取 metadata 到 shared memory，增加 grid 和行内并行度，避免 large-N 下单 warp/grid underfill。
-- 显式公开研究入口为 `KernelFamily::kCudaOptimized, implementation_id=1`；`Auto` 继续选择 naive。
+- candidate 仅由 benchmark/research adapter 直接调用；由于正式 gate 未通过，公开
+  `select_kernel`/`unpermute` 不接受该 optimized ID，`Auto` 和显式默认路径均保持 naive。
 
 ## 5. 单变量实验账本
 
@@ -62,3 +63,11 @@
 | 日期 | 版本/假设 | 证据 | 结论 |
 |---|---|---|---|
 | 2026-08-03 | V1–V4 single-variable candidates | dirty screening + NSYS/NCU basic | 保留 Hybrid 进入正式 gate；其余拒绝 |
+| 2026-08-03 | Hybrid formal gate | 两轮 5-process Release、L3、最终 NSYS/NCU/SASS、四类 sanitizer | **拒绝晋升**：平均收益信号存在，但 55/64 与 63/64 warm candidate groups 的 CV 超过 0.10，且逐 shape p50/p95 gate 均失败；保留 benchmark-only 研究实现和证据 |
+
+正式首轮相对 vLLM 的 warm L1/L2 几何平均为 `1.008x/1.066x`，自动复测为
+`1.088x/1.056x`。两轮方向和单 shape 结果不稳定，最差 p50 speedup 分别低至
+`0.264x/0.542x` 与 `0.446x/0.492x`，p95 ratio 也远超 `1.03` 上限，因此不能用
+几何平均掩盖回退。L3 为 `1.0016x`，baseline/candidate CV 为 `0.435/0.305`，只能判定
+“无可信回退、也无可信加速”。完整报告见
+[SM86 candidate evidence report](../reports/unpermute-sm86-candidate-eba8f02.md)。

@@ -1,0 +1,46 @@
+{
+  "schema_version": "raggedroute.comparison.v1",
+  "source_schema": "raggedroute.aggregate.v2",
+  "suite_id": "rtx3080_unpermute_candidate_chain_release_v1",
+  "comparisons": [
+    {
+      "run_id": "20260802T191405Z-eba8f025c718-rtx3080_unpermute_candidate_chain_release_v1",
+      "case_id": "chain_from_logits.unpermute_candidate.t512_e64_k128_n256",
+      "operator": "chain_from_logits",
+      "measurement_level": "L3_chain_steady",
+      "cache_mode": "warm",
+      "baseline_variant": "cuda_naive",
+      "candidate_variant": "cuda_unpermute_candidate",
+      "baseline_latency_us": 324.505591393,
+      "candidate_latency_us": 323.993611336,
+      "speedup": 1.0015802165199763,
+      "baseline_p95_us": 462.5203299519997,
+      "candidate_p95_us": 437.8112125400496,
+      "p95_ratio": 0.9465772295576403,
+      "baseline_all_samples_cv": 0.43481275395801916,
+      "candidate_all_samples_cv": 0.3051779245801431,
+      "baseline_process_runs": 5,
+      "candidate_process_runs": 5,
+      "baseline_workspace_bytes": 256,
+      "candidate_workspace_bytes": 256,
+      "workspace_growth_bytes": 0,
+      "trace_weight": null,
+      "pairing_verified": true
+    }
+  ],
+  "summary": {
+    "paired_candidates": 1,
+    "candidate_variants": [
+      {
+        "operator": "chain_from_logits",
+        "candidate_variant": "cuda_unpermute_candidate",
+        "measurement_level": "L3_chain_steady",
+        "cache_mode": "warm",
+        "paired_cases": 1,
+        "shape_balanced_geometric_mean_speedup": 1.0015802165199763,
+        "trace_ratio_of_sums_speedup": null,
+        "trace_ratio_unavailable_reason": "one or more paired workload_config objects omit a non-negative trace_weight"
+      }
+    ]
+  }
+}

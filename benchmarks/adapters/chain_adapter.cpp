@@ -8,6 +8,7 @@
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/benchmark/adapter_utils.h"
 #include "raggedroute/benchmark/registry.h"
+#include "../../src/unpermute/cuda_candidate/optimized_internal.h"
 
 namespace raggedroute::benchmark {
 namespace {
@@ -166,7 +167,14 @@ class ChainAdapter final : public BenchmarkAdapter {
     unpermute_args.top_k = 2;
     unpermute_args.output = output_;
     if (variant_name_ == "cuda_unpermute_candidate") {
-      unpermute_args.kernel = {KernelFamily::kCudaOptimized, 1};
+      cuda_check(ops::launch_unpermute_optimized(
+                     static_cast<const float*>(unpermute_args.y_permuted.data),
+                     unpermute_args.route_pos,
+                     static_cast<const float*>(unpermute_args.route_weights.data),
+                     static_cast<float*>(unpermute_args.y.data), unpermute_args.tokens,
+                     unpermute_args.top_k, unpermute_args.output, stream),
+                 "chain research unpermute candidate");
+      return;
     }
     operator_check(unpermute(unpermute_args, context), "chain unpermute operator");
   }

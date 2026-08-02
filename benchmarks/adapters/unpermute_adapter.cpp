@@ -94,7 +94,7 @@ class UnpermuteAdapter final : public BenchmarkAdapter {
 
   void prepare_sample(MeasurementLevel, cudaStream_t) override {}
   void enqueue(MeasurementLevel level, cudaStream_t stream) override {
-    if (is_candidate() && level == MeasurementLevel::kKernelBody) {
+    if (is_candidate()) {
       cuda_check(ops::launch_unpermute_optimized(
                      y_permuted_data(), route_pos_.data(), route_weights_.data(), y_data(),
                      tokens_, top_k_, output_, stream),
@@ -125,10 +125,6 @@ class UnpermuteAdapter final : public BenchmarkAdapter {
     args.tokens = tokens_;
     args.top_k = top_k_;
     args.output = output_;
-    if (is_candidate()) {
-      args.kernel = {KernelFamily::kCudaOptimized,
-                     ops::kUnpermuteWarpTokenVec4Implementation};
-    }
     operator_check(unpermute(args, make_runtime_context(stream, architecture_)),
                    "unpermute operator");
   }

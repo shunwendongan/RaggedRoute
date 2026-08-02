@@ -127,6 +127,7 @@ class HistogramAdapter final : public BenchmarkAdapter {
     args.counts = counts_.data();
     args.route_pairs = static_cast<int>(ids_host_.size());
     args.experts = experts_;
+    args.kernel = {KernelFamily::kCudaNaive, 0};
     operator_check(histogram(args, make_runtime_context(stream, architecture_)),
                    "histogram operator");
   }

@@ -182,6 +182,27 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     variants.push_back(descriptor("cuda_naive_from_ids", "in_tree_cuda",
                                   "raggedroute.cuda_naive_from_ids.v1", "not_applicable",
                                   "histogram_scan_atomic_permute"));
+    variants.push_back(descriptor("cuda_atomic_vectorized_128", "in_tree_cuda_candidate",
+                                  "raggedroute.permute.atomic_vectorized_128.v1",
+                                  "not_applicable", "atomic_cursor_float4_128"));
+    variants.push_back(descriptor("cuda_atomic_vectorized_64", "in_tree_cuda_candidate",
+                                  "raggedroute.permute.atomic_vectorized_64.v1",
+                                  "not_applicable", "atomic_cursor_float4_64"));
+    variants.push_back(descriptor("cuda_atomic_vectorized_256", "in_tree_cuda_candidate",
+                                  "raggedroute.permute.atomic_vectorized_256.v1",
+                                  "not_applicable", "atomic_cursor_float4_256"));
+    variants.push_back(descriptor("cuda_token_owned_top2", "in_tree_cuda_candidate",
+                                  "raggedroute.permute.token_owned_top2.v1",
+                                  "not_applicable", "token_owned_dual_destination"));
+    variants.push_back(descriptor("cuda_block_partial", "in_tree_cuda_candidate",
+                                  "raggedroute.permute.block_partial.v1", "not_applicable",
+                                  "block_private_rank_two_kernel"));
+    variants.push_back(descriptor("cuda_candidate", "in_tree_cuda_candidate",
+                                  "raggedroute.permute.candidate.v1", "not_applicable",
+                                  "evidence_selected_candidate"));
+    variants.push_back(descriptor("cuda_candidate_from_ids", "in_tree_cuda_candidate",
+                                  "raggedroute.permute.candidate_from_ids.v1",
+                                  "not_applicable", "histogram_scan_candidate"));
 #if RAGGEDROUTE_HAS_CCCL
     const std::string vllm_dependency =
         "vllm@837eae64580c885101ee95b073aafb27a485e7ce; " + cccl_revision();
@@ -244,7 +265,10 @@ std::vector<std::string> available_suites() { return {"chain_from_tokens", "chai
 
 std::vector<VariantDescriptor> available_suite_variant_descriptors(const std::string& suite_name) {
   if (suite_name == "chain_from_tokens" || suite_name == "chain_from_logits") {
-    return {naive_descriptor("sequential_cuda_naive_chain")};
+    return {naive_descriptor("sequential_cuda_naive_chain"),
+            descriptor("cuda_permute_candidate", "in_tree_cuda_candidate",
+                       "raggedroute.chain.permute_candidate.v1", "not_applicable",
+                       "sequential_chain_with_optimized_permute")};
   }
   return {};
 }

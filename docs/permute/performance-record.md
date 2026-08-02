@@ -16,3 +16,11 @@
 结论：保留 naive 基线；后续优先比较预计算位置与向量化 copy，但必须把 mapping preparation 在 L2/L3 中公平计入。
 
 完整证据：[中央报告](../reports/rtx3080-naive-profile-a9489ab.md)；[artifact bundle](../reports/artifacts/20260731T115243Z-a9489abce704-rtx3080-naive-profile-v1/)。
+
+## 2026-08-03 / SM86 candidate campaign（执行中）
+
+- 分支基线：`927c585e031b`；目标 RTX 3080 / SM86 / strict FP32。
+- 已实现并注册五个独立候选：atomic vectorized 128/64/256、token-owned Top-2、block-partial。
+- API、caller stream、`4*E` workspace 与默认 naive dispatch 均保持不变；`cuda_candidate` 当前只是 provisional research alias。
+- CTest 与手工 oracle preflight 已通过；smoke suite 全部记录 `validation.ok=true`。smoke 为 dirty-build、3 samples 的功能检查，不用于候选晋升或性能声明。
+- 正式 Release、Compute Sanitizer、NSYS/NCU 和 candidate promotion 结果将在干净提交重建后补充。

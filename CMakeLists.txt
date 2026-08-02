@@ -75,6 +75,7 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     src/histogram/baseline.cu
     src/scan/baseline.cu
     src/permute/baseline.cu
+    src/permute/cuda_candidate/optimized.cu
     src/grouped_gemm/baseline.cu
     src/unpermute/baseline.cu)
   add_library(RaggedRoute::baseline_ops ALIAS raggedroute_baseline_ops)
@@ -203,7 +204,9 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     target_include_directories(raggedroute_benchmark_core PUBLIC
       "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>")
     target_include_directories(raggedroute_benchmark_core PRIVATE
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/dense_gemm")
+      "${CMAKE_CURRENT_SOURCE_DIR}/src"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/dense_gemm"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/permute")
     target_link_libraries(raggedroute_benchmark_core PUBLIC
       raggedroute_runtime
       raggedroute_correctness_framework

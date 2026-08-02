@@ -8,6 +8,7 @@
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/benchmark/adapter_utils.h"
 #include "raggedroute/benchmark/registry.h"
+#include "permute/cuda_candidate/optimized_internal.h"
 
 namespace raggedroute::benchmark {
 namespace {
@@ -22,8 +23,11 @@ class ChainAdapter final : public BenchmarkAdapter {
   }
   std::string variant_name() const override { return variant_name_; }
   std::string description() const override {
-    return include_router_projection_ ? "Seven-operator token-to-output baseline chain"
-                                      : "Six-operator logits-to-output baseline chain";
+    const std::string suffix = variant_name_ == "cuda_permute_candidate"
+                                   ? " with the selected optimized permute"
+                                   : " baseline";
+    return include_router_projection_ ? "Seven-operator token-to-output" + suffix + " chain"
+                                      : "Six-operator logits-to-output" + suffix + " chain";
   }
   bool supports(MeasurementLevel level) const override {
     return level == MeasurementLevel::kChainSteady;
@@ -135,6 +139,10 @@ class ChainAdapter final : public BenchmarkAdapter {
     permute_args.experts = experts_;
     permute_args.top_k = 2;
     permute_args.hidden = hidden_;
+    if (variant_name_ == "cuda_permute_candidate") {
+      permute_args.kernel = {KernelFamily::kCudaOptimized,
+                             ops::kTokenPermuteCandidateImplementation};
+    }
     operator_check(
         token_permute(permute_args, make_runtime_context(stream, architecture_, cursors_.data(),
                                                          cursors_.bytes())),
@@ -208,7 +216,10 @@ class ChainAdapter final : public BenchmarkAdapter {
                                "grouped_gemm,unpermute")
                  : std::string(
                        "topk_gate,histogram,exclusive_scan,token_permute,grouped_gemm,unpermute")},
-            {"component_variant", std::string("cuda_naive")},
+            {"component_variant",
+             variant_name_ == "cuda_permute_candidate"
+                 ? std::string("cuda_naive_except_token_permute_candidate")
+                 : std::string("cuda_naive")},
             {"grouped_max_m_policy", std::string("worst_case_R")},
             {"materialize_sorted_route", false}};
   }

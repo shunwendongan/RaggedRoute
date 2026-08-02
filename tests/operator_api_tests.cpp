@@ -158,6 +158,19 @@ void test_pure_dispatch() {
   request.requested_kernel = {KernelFamily::kCudaOptimized, 8};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "unimplemented optimized dense GEMM ids must be rejected");
+
+  request.operator_kind = OperatorKind::kTokenPermute;
+  request.signature = fp32_signature(request.operator_kind);
+  for (std::uint32_t implementation = 1; implementation <= 5; ++implementation) {
+    request.requested_kernel = {KernelFamily::kCudaOptimized, implementation};
+    require_status(select_kernel(request, &decision), "explicit optimized token permute dispatch");
+    require(decision.kernel.family == KernelFamily::kCudaOptimized &&
+                decision.kernel.implementation_id == implementation,
+            "token permute must preserve its explicit implementation id");
+  }
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 6};
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+          "unimplemented optimized token permute ids must be rejected");
   request.requested_kernel = {KernelFamily::kCudaNaive, 1};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "the naive family must reject unknown implementation ids");
@@ -385,33 +398,41 @@ void test_permute_workspace_reset(const raggedroute::RuntimeContext& context) {
   auto permute_context = context;
   permute_context.workspace = cursors.data();
   permute_context.workspace_bytes = cursors.bytes();
-  require_status(raggedroute::token_permute(args, permute_context), "public token_permute");
-
-  const auto positions = route_pos.copy_to_host(context.stream);
-  const auto output = x_permuted.copy_to_host(context.stream);
-  const auto inverse = sorted_route.copy_to_host(context.stream);
-  const auto final_cursors = cursors.copy_to_host(context.stream);
-  require(final_cursors == std::vector<std::int32_t>({2, 2}),
-          "permute wrapper did not reset cursor workspace");
-  std::vector<bool> seen(4, false);
   const std::vector<std::int32_t> host_ids = {0, 1, 0, 1};
   const std::vector<std::int32_t> host_offsets = {0, 2, 4};
   const std::vector<float> host_x = {1.0F, 2.0F, 3.0F, 4.0F};
-  for (int route = 0; route < 4; ++route) {
-    const int position = positions[static_cast<std::size_t>(route)];
-    const int expert = host_ids[static_cast<std::size_t>(route)];
-    require(position >= host_offsets[static_cast<std::size_t>(expert)] &&
-                position < host_offsets[static_cast<std::size_t>(expert + 1)],
-            "route_pos escaped its expert segment");
-    require(!seen[static_cast<std::size_t>(position)], "route_pos must be bijective");
-    seen[static_cast<std::size_t>(position)] = true;
-    require(inverse[static_cast<std::size_t>(position)] == route,
-            "sorted_route is not the inverse of route_pos");
-    const int token = route / 2;
-    for (int column = 0; column < 2; ++column) {
-      require(output[static_cast<std::size_t>(position) * 2 + column] ==
-                  host_x[static_cast<std::size_t>(token) * 2 + column],
-              "permuted row does not equal its source token row");
+
+  for (std::uint32_t implementation = 0; implementation <= 5; ++implementation) {
+    cursors.copy_from_host({99, 99}, context.stream);
+    args.kernel = implementation == 0
+                      ? raggedroute::KernelSelection{}
+                      : raggedroute::KernelSelection{
+                            raggedroute::KernelFamily::kCudaOptimized, implementation};
+    require_status(raggedroute::token_permute(args, permute_context), "public token_permute");
+
+    const auto positions = route_pos.copy_to_host(context.stream);
+    const auto output = x_permuted.copy_to_host(context.stream);
+    const auto inverse = sorted_route.copy_to_host(context.stream);
+    const auto final_cursors = cursors.copy_to_host(context.stream);
+    require(final_cursors == std::vector<std::int32_t>({2, 2}),
+            "permute wrapper did not reset cursor workspace");
+    std::vector<bool> seen(4, false);
+    for (int route = 0; route < 4; ++route) {
+      const int position = positions[static_cast<std::size_t>(route)];
+      const int expert = host_ids[static_cast<std::size_t>(route)];
+      require(position >= host_offsets[static_cast<std::size_t>(expert)] &&
+                  position < host_offsets[static_cast<std::size_t>(expert + 1)],
+              "route_pos escaped its expert segment");
+      require(!seen[static_cast<std::size_t>(position)], "route_pos must be bijective");
+      seen[static_cast<std::size_t>(position)] = true;
+      require(inverse[static_cast<std::size_t>(position)] == route,
+              "sorted_route is not the inverse of route_pos");
+      const int token = route / 2;
+      for (int column = 0; column < 2; ++column) {
+        require(output[static_cast<std::size_t>(position) * 2 + column] ==
+                    host_x[static_cast<std::size_t>(token) * 2 + column],
+                "permuted row does not equal its source token row");
+      }
     }
   }
   require(
@@ -420,6 +441,73 @@ void test_permute_workspace_reset(const raggedroute::RuntimeContext& context) {
           route_pos.canaries_intact(context.stream) &&
           sorted_route.canaries_intact(context.stream) && cursors.canaries_intact(context.stream),
       "permute changed a redzone");
+}
+
+void test_permute_optimized_unaligned_duplicate_top2(
+    const raggedroute::RuntimeContext& context) {
+  constexpr int kTokens = 2;
+  constexpr int kTopK = 2;
+  constexpr int kHidden = 4;
+  rc::GuardedDeviceBuffer<float> x(kTokens * kHidden + 1, context.stream);
+  rc::GuardedDeviceBuffer<std::int32_t> ids(kTokens * kTopK, context.stream);
+  rc::GuardedDeviceBuffer<std::int32_t> offsets(3, context.stream);
+  rc::GuardedDeviceBuffer<float> output(kTokens * kTopK * kHidden + 1, context.stream);
+  rc::GuardedDeviceBuffer<std::int32_t> route_pos(kTokens * kTopK, context.stream);
+  rc::GuardedDeviceBuffer<std::int32_t> sorted_route(kTokens * kTopK, context.stream);
+  rc::GuardedDeviceBuffer<std::int32_t> cursors(2, context.stream);
+  x.copy_from_host({-1.0F, 1.0F, 2.0F, 3.0F, 4.0F, 5.0F, 6.0F, 7.0F, 8.0F},
+                   context.stream);
+  ids.copy_from_host({0, 0, 1, 1}, context.stream);
+  offsets.copy_from_host({0, 2, 4}, context.stream);
+  require(reinterpret_cast<std::uintptr_t>(x.data() + 1) % alignof(float4) != 0 &&
+              reinterpret_cast<std::uintptr_t>(output.data() + 1) % alignof(float4) != 0,
+          "permute scalar fallback buffers must be intentionally unaligned");
+
+  raggedroute::TokenPermuteArgs args;
+  args.x.data = x.data() + 1;
+  args.expert_ids = ids.data();
+  args.offsets = offsets.data();
+  args.x_permuted.data = output.data() + 1;
+  args.route_pos = route_pos.data();
+  args.sorted_route = sorted_route.data();
+  args.tokens = kTokens;
+  args.experts = 2;
+  args.top_k = kTopK;
+  args.hidden = kHidden;
+  auto permute_context = context;
+  permute_context.workspace = cursors.data();
+  permute_context.workspace_bytes = cursors.bytes();
+
+  for (std::uint32_t implementation = 1; implementation <= 5; ++implementation) {
+    args.kernel = {raggedroute::KernelFamily::kCudaOptimized, implementation};
+    require_status(raggedroute::token_permute(args, permute_context),
+                   "unaligned duplicate-id optimized token_permute");
+    const auto positions = route_pos.copy_to_host(context.stream);
+    const auto inverse = sorted_route.copy_to_host(context.stream);
+    const auto values = output.copy_to_host(context.stream);
+    std::vector<bool> seen(4, false);
+    for (int route = 0; route < 4; ++route) {
+      const int position = positions[static_cast<std::size_t>(route)];
+      require(position >= 0 && position < 4 && !seen[static_cast<std::size_t>(position)],
+              "duplicate expert ids must still produce distinct destinations");
+      seen[static_cast<std::size_t>(position)] = true;
+      require(inverse[static_cast<std::size_t>(position)] == route,
+              "duplicate-id inverse mapping is incorrect");
+      const int token = route / kTopK;
+      for (int column = 0; column < kHidden; ++column) {
+        require(values[static_cast<std::size_t>(1 + position * kHidden + column)] ==
+                    static_cast<float>(1 + token * kHidden + column),
+                "unaligned optimized permute copied the wrong row");
+      }
+    }
+  }
+  require(x.canaries_intact(context.stream) && ids.canaries_intact(context.stream) &&
+              offsets.canaries_intact(context.stream) &&
+              output.canaries_intact(context.stream) &&
+              route_pos.canaries_intact(context.stream) &&
+              sorted_route.canaries_intact(context.stream) &&
+              cursors.canaries_intact(context.stream),
+          "optimized permute fallback changed a redzone");
 }
 
 }  // namespace
@@ -452,6 +540,7 @@ int main() {
       test_dense_gemm_vector_alignment_fallback(context);
       test_histogram_reset(context);
       test_permute_workspace_reset(context);
+      test_permute_optimized_unaligned_duplicate_top2(context);
     } catch (...) {
       cudaStreamDestroy(stream);
       throw;

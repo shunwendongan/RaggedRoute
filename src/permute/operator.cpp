@@ -4,6 +4,7 @@
 #include <limits>
 
 #include "../runtime/operator_internal.h"
+#include "cuda_candidate/optimized_internal.h"
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/operators.h"
 
@@ -28,8 +29,6 @@ Status token_permute(const TokenPermuteArgs& args, const RuntimeContext& context
   DispatchDecision decision;
   Status status = detail::dispatch_operator(OperatorKind::kTokenPermute, signature, args.kernel,
                                             context.architecture, &decision);
-  if (!status.ok()) return status;
-  status = detail::require_naive_implementation(decision);
   if (!status.ok()) return status;
   if (args.tokens == 0) return success_status();
   if (args.expert_ids == nullptr || args.offsets == nullptr || args.route_pos == nullptr ||
@@ -56,12 +55,26 @@ Status token_permute(const TokenPermuteArgs& args, const RuntimeContext& context
       detail::cuda_status(cudaMemsetAsync(context.workspace, 0, workspace_bytes, context.stream),
                           "token_permute cursor reset failed");
   if (!status.ok()) return status;
-  return detail::cuda_status(
-      ops::launch_token_permute_naive(
-          static_cast<const float*>(args.x.data), args.expert_ids, args.offsets,
-          static_cast<std::int32_t*>(context.workspace), static_cast<float*>(args.x_permuted.data),
-          args.route_pos, args.sorted_route, args.tokens, args.top_k, args.hidden, context.stream),
-      "token_permute kernel launch failed");
+  const float* x = static_cast<const float*>(args.x.data);
+  float* x_permuted = static_cast<float*>(args.x_permuted.data);
+  auto* cursors = static_cast<std::int32_t*>(context.workspace);
+  if (decision.kernel.family == KernelFamily::kCudaNaive) {
+    return detail::cuda_status(
+        ops::launch_token_permute_naive(x, args.expert_ids, args.offsets, cursors, x_permuted,
+                                        args.route_pos, args.sorted_route, args.tokens, args.top_k,
+                                        args.hidden, context.stream),
+        "token_permute naive kernel launch failed");
+  }
+  if (decision.kernel.family == KernelFamily::kCudaOptimized) {
+    return detail::cuda_status(
+        ops::launch_token_permute_optimized(
+            x, args.expert_ids, args.offsets, cursors, x_permuted, args.route_pos,
+            args.sorted_route, args.tokens, args.experts, args.top_k, args.hidden,
+            decision.kernel.implementation_id, context.stream),
+        "token_permute optimized kernel launch failed");
+  }
+  return detail::make_status(StatusCode::kUnsupportedKernelVariant,
+                             "token_permute dispatch selected an unknown kernel family");
 }
 
 }  // namespace raggedroute

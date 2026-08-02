@@ -1,0 +1,78 @@
+{
+  "schema_version": "raggedroute.profile_suite.v1",
+  "suite_id": "rtx3080_dense_gemm_candidate_v2_profile_v1",
+  "cases": [
+    {
+      "id": "dense.register_tiled_v2_sync.m256",
+      "operator": "dense_gemm",
+      "variant": "cuda_register_tiled_v2_sync",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260729,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "dense_gemm_register_tiled_v2_sync_kernel",
+      "params": {"M": 256, "N": 256, "K": 256}
+    },
+    {
+      "id": "dense.register_tiled_v2_async.m256",
+      "operator": "dense_gemm",
+      "variant": "cuda_register_tiled_v2_async",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260729,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "dense_gemm_register_tiled_v2_async_kernel",
+      "params": {"M": 256, "N": 256, "K": 256}
+    },
+    {
+      "id": "dense.register_tiled_v2_sync.m1024",
+      "operator": "dense_gemm",
+      "variant": "cuda_register_tiled_v2_sync",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260729,
+      "set": "detailed",
+      "cache_control": "none",
+      "kernel_pattern": "dense_gemm_register_tiled_v2_sync_kernel",
+      "params": {"M": 1024, "N": 1024, "K": 1024}
+    },
+    {
+      "id": "dense.register_tiled_v2_async.m1024",
+      "operator": "dense_gemm",
+      "variant": "cuda_register_tiled_v2_async",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260729,
+      "set": "detailed",
+      "cache_control": "none",
+      "kernel_pattern": "dense_gemm_register_tiled_v2_async_kernel",
+      "params": {"M": 1024, "N": 1024, "K": 1024}
+    },
+    {
+      "id": "dense.tiled_vector.m1024",
+      "operator": "dense_gemm",
+      "variant": "cuda_tiled_vector",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260729,
+      "set": "detailed",
+      "cache_control": "none",
+      "kernel_pattern": "dense_gemm_tiled_vector_kernel",
+      "params": {"M": 1024, "N": 1024, "K": 1024}
+    },
+    {
+      "id": "dense.cublas.m1024",
+      "operator": "dense_gemm",
+      "variant": "cublas",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260729,
+      "set": "detailed",
+      "cache_control": "none",
+      "kernel_pattern": "ampere_sgemm_64x64_nn",
+      "params": {"M": 1024, "N": 1024, "K": 1024}
+    }
+  ]
+}

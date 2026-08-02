@@ -70,6 +70,11 @@ VariantDescriptor optimized_dense_descriptor(std::string name, std::string algor
           std::move(algorithm_id), "strict_fp32"};
 }
 
+VariantDescriptor optimized_dense_v2_descriptor(std::string name, std::string algorithm_id) {
+  return {std::move(name), "in_tree_cuda", "raggedroute.cuda_optimized.v2", "not_applicable",
+          std::move(algorithm_id), "strict_fp32"};
+}
+
 VariantDescriptor descriptor(std::string name, std::string category, std::string version,
                              std::string dependency, std::string algorithm_id) {
   return {std::move(name),       std::move(category),     std::move(version),
@@ -136,6 +141,12 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
                                                   "shared_tile16_linear_cta_float4"));
     variants.push_back(optimized_dense_descriptor("cuda_combined",
                                                   "shared_tile16_direct_2d_scalar"));
+    variants.push_back(optimized_dense_v2_descriptor("cuda_register_tiled_v2_sync",
+                                                     "shared_tile32_register_4x2_sync"));
+    variants.push_back(optimized_dense_v2_descriptor("cuda_register_tiled_v2_async",
+                                                     "shared_tile32_register_4x2_cp_async_2stage"));
+    variants.push_back(optimized_dense_v2_descriptor("cuda_register_tiled_v3_64x32_async",
+                                                     "shared_tile64x32_register_8x2_cp_async_2stage"));
 #if RAGGEDROUTE_HAS_CUBLAS
     variants.push_back(descriptor("cublaslt", "nvidia_cuda_library", "cublasLtMatmul.v1",
                                   cuda_library_revision(), "cublaslt_heuristic_0"));

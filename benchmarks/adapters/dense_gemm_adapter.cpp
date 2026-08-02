@@ -15,7 +15,10 @@ namespace {
 
 bool is_optimized_dense_variant(const std::string& variant_name) {
   return variant_name == "cuda_tiled_scalar" || variant_name == "cuda_2d_mapping" ||
-         variant_name == "cuda_tiled_vector" || variant_name == "cuda_combined";
+         variant_name == "cuda_tiled_vector" || variant_name == "cuda_combined" ||
+         variant_name == "cuda_register_tiled_v2_sync" ||
+         variant_name == "cuda_register_tiled_v2_async" ||
+         variant_name == "cuda_register_tiled_v3_64x32_async";
 }
 
 std::uint32_t optimized_dense_implementation(const std::string& variant_name) {
@@ -23,6 +26,15 @@ std::uint32_t optimized_dense_implementation(const std::string& variant_name) {
   if (variant_name == "cuda_2d_mapping") return ops::kDenseGemm2dMappingImplementation;
   if (variant_name == "cuda_tiled_vector") return ops::kDenseGemmTiledVectorImplementation;
   if (variant_name == "cuda_combined") return ops::kDenseGemmCombinedImplementation;
+  if (variant_name == "cuda_register_tiled_v2_sync") {
+    return ops::kDenseGemmRegisterTiledV2SyncImplementation;
+  }
+  if (variant_name == "cuda_register_tiled_v2_async") {
+    return ops::kDenseGemmRegisterTiledV2AsyncImplementation;
+  }
+  if (variant_name == "cuda_register_tiled_v3_64x32_async") {
+    return ops::kDenseGemmRegisterTiledV3_64x32AsyncImplementation;
+  }
   throw std::invalid_argument("unsupported optimized dense_gemm variant: " + variant_name);
 }
 
@@ -42,6 +54,15 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
     if (variant_name_ == "cuda_2d_mapping") return "2D-mapped strict-FP32 CUDA GEMM";
     if (variant_name_ == "cuda_tiled_vector") return "16x16 float4-staged strict-FP32 CUDA GEMM";
     if (variant_name_ == "cuda_combined") return "2D 16x16 tiled strict-FP32 CUDA GEMM";
+    if (variant_name_ == "cuda_register_tiled_v2_sync") {
+      return "32x32 register-tiled synchronous strict-FP32 CUDA GEMM";
+    }
+    if (variant_name_ == "cuda_register_tiled_v2_async") {
+      return "32x32 register-tiled cp.async strict-FP32 CUDA GEMM";
+    }
+    if (variant_name_ == "cuda_register_tiled_v3_64x32_async") {
+      return "64x32 CTA / 32x16 warp-tiled cp.async strict-FP32 CUDA GEMM";
+    }
     return "One CUDA thread per FP32 output element";
   }
   bool supports(MeasurementLevel level) const override {
@@ -197,6 +218,45 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
               {"index_mapping", std::string("direct_2d_row_column")},
               {"vector_staging_included", false},
               {"vector_gate_reason", std::string("exp3_variance_limited")},
+              {"math_path", std::string("cuda_core_strict_fp32")}};
+    }
+    if (variant_name_ == "cuda_register_tiled_v2_sync" ||
+        variant_name_ == "cuda_register_tiled_v2_async") {
+      const bool asynchronous = variant_name_ == "cuda_register_tiled_v2_async";
+      return {{"threads_per_block", static_cast<std::int64_t>(128)},
+              {"warps_per_block", static_cast<std::int64_t>(4)},
+              {"tile_m", static_cast<std::int64_t>(32)},
+              {"tile_n", static_cast<std::int64_t>(32)},
+              {"tile_k", static_cast<std::int64_t>(16)},
+              {"warp_tile_m", static_cast<std::int64_t>(16)},
+              {"warp_tile_n", static_cast<std::int64_t>(16)},
+              {"thread_tile_m", static_cast<std::int64_t>(4)},
+              {"thread_tile_n", static_cast<std::int64_t>(2)},
+              {"outputs_per_thread", static_cast<std::int64_t>(8)},
+              {"staging", std::string(asynchronous ? "sm86_cp_async_double_buffered"
+                                                   : "aligned_float4_shared_memory_sync")},
+              {"pipeline_stages", static_cast<std::int64_t>(asynchronous ? 2 : 1)},
+              {"shared_a_stride", static_cast<std::int64_t>(20)},
+              {"fallback", std::string("cuda_tiled_vector_then_scalar")},
+              {"index_mapping", std::string("direct_2d_cta_warp_thread_microtile")},
+              {"math_path", std::string("cuda_core_strict_fp32")}};
+    }
+    if (variant_name_ == "cuda_register_tiled_v3_64x32_async") {
+      return {{"threads_per_block", static_cast<std::int64_t>(128)},
+              {"warps_per_block", static_cast<std::int64_t>(4)},
+              {"tile_m", static_cast<std::int64_t>(64)},
+              {"tile_n", static_cast<std::int64_t>(32)},
+              {"tile_k", static_cast<std::int64_t>(16)},
+              {"warp_tile_m", static_cast<std::int64_t>(32)},
+              {"warp_tile_n", static_cast<std::int64_t>(16)},
+              {"thread_tile_m", static_cast<std::int64_t>(8)},
+              {"thread_tile_n", static_cast<std::int64_t>(2)},
+              {"outputs_per_thread", static_cast<std::int64_t>(16)},
+              {"staging", std::string("sm86_cp_async_double_buffered_float4")},
+              {"pipeline_stages", static_cast<std::int64_t>(2)},
+              {"shared_a_stride", static_cast<std::int64_t>(20)},
+              {"fallback", std::string("cuda_tiled_vector_then_scalar")},
+              {"index_mapping", std::string("direct_2d_cta_2x2_warp_8x2_microtile")},
               {"math_path", std::string("cuda_core_strict_fp32")}};
     }
     return {{"threads_per_block", static_cast<std::int64_t>(256)},

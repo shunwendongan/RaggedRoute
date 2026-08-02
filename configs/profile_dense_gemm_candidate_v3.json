@@ -1,0 +1,18 @@
+{
+  "schema_version": "raggedroute.profile_suite.v1",
+  "suite_id": "rtx3080_dense_gemm_candidate_v3_profile_v1",
+  "cases": [
+    {
+      "id": "dense.register_tiled_v3_64x32_async.m1024",
+      "operator": "dense_gemm",
+      "variant": "cuda_register_tiled_v3_64x32_async",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260729,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "dense_gemm_register_tiled_v3_64x32_async_kernel",
+      "params": {"M": 1024, "N": 1024, "K": 1024}
+    }
+  ]
+}

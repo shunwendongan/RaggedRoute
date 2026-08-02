@@ -69,8 +69,8 @@
 
 | 日期 | 版本/唯一变化 | 当前状态 | 保留/淘汰依据 |
 |---|---|---|---|
-| 2026-08-03 | atomic vectorized 128 | 待正式 Release | provisional alias；不等于已晋升 |
-| 2026-08-03 | atomic vectorized 64 | 待正式 Release | 单变量 block-size 实验 |
-| 2026-08-03 | atomic vectorized 256 | 待正式 Release | 单变量 block-size 实验 |
-| 2026-08-03 | token-owned Top-2 | 待正式 Release | top-k 复用输入实验；generic fallback 已覆盖 |
-| 2026-08-03 | block partial | 待正式 Release | atomic 降低与第二次 launch 的取舍 |
+| 2026-08-03 | atomic vectorized 128 | reject；保留 explicit research ID | 两轮未满足 CV/coverage/worst-regression；仅作 provisional diagnostic alias |
+| 2026-08-03 | atomic vectorized 64 | reject；保留 explicit research ID | anchor occupancy 40.5%，两轮 gate 失败 |
+| 2026-08-03 | atomic vectorized 256 | reject；保留 explicit research ID | Run 1 ratio 1.0373x，但 coverage 75%、worst 0.6300x，Run 2 也失败 |
+| 2026-08-03 | token-owned Top-2 | reject；保留 explicit research ID | 输入复用未转化为稳定全矩阵收益；generic fallback 正确 |
+| 2026-08-03 | block partial | reject；保留负面实验 | 第二个 launch 和低-wave placement 成本超过 atomic reduction 收益 |

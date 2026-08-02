@@ -17,10 +17,13 @@
 
 完整证据：[中央报告](../reports/rtx3080-naive-profile-a9489ab.md)；[artifact bundle](../reports/artifacts/20260731T115243Z-a9489abce704-rtx3080-naive-profile-v1/)。
 
-## 2026-08-03 / SM86 candidate campaign（执行中）
+## 2026-08-03 / SM86 candidate campaign
 
 - 分支基线：`927c585e031b`；目标 RTX 3080 / SM86 / strict FP32。
 - 已实现并注册五个独立候选：atomic vectorized 128/64/256、token-owned Top-2、block-partial。
 - API、caller stream、`4*E` workspace 与默认 naive dispatch 均保持不变；`cuda_candidate` 当前只是 provisional research alias。
-- CTest 与手工 oracle preflight 已通过；smoke suite 全部记录 `validation.ok=true`。smoke 为 dirty-build、3 samples 的功能检查，不用于候选晋升或性能声明。
-- 正式 Release、Compute Sanitizer、NSYS/NCU 和 candidate promotion 结果将在干净提交重建后补充。
+- CTest 8/8 与 Compute Sanitizer memcheck/initcheck/racecheck/synccheck 全通过；两轮 candidate Release 和 library/chain Release 全部 `validation.ok=true`。
+- 两轮 Release 均未满足稳定性与 promotion gate。Run 1 最好 ratio-of-sums 为 atomic-256 的 1.0373x，但只有 75% shapes 加速且 worst speedup 0.6300x；Run 2 没有候选同时满足 gate。所有候选 reject，默认 dispatch 保持 `cuda_naive`。
+- `cuda_candidate` 仅保留 atomic-128 研究别名；vLLM full-from-ids、prepared mapping、L3、NSYS 与 NCU 结果不用于推翻 promotion 结论。
+
+完整数据、能力矩阵和 profiler 摘要：[中央报告](../reports/rtx3080-permute-sm86-5cb9bd4.md)；[artifact bundle](../reports/artifacts/20260802T185236Z-5cb9bd4-permute-sm86-candidates-v1/)。

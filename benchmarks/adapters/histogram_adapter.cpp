@@ -185,6 +185,8 @@ class HistogramAdapter final : public BenchmarkAdapter {
     WorkEstimate work;
     work.logical_bytes =
         sizeof(std::int32_t) * static_cast<double>(ids_host_.size() + expected_.size());
+    work.operator_metrics["common_useful_bytes"] =
+        static_cast<std::int64_t>(sizeof(std::int32_t) * (ids_host_.size() + expected_.size()));
     work.operator_metrics["histogram_input_items"] = static_cast<std::int64_t>(ids_host_.size());
     work.operator_metrics["histogram_bins"] = static_cast<std::int64_t>(experts_);
     work.operator_metrics["active_experts"] = static_cast<std::int64_t>(active_experts_);
@@ -192,6 +194,7 @@ class HistogramAdapter final : public BenchmarkAdapter {
         (variant_name_ == "cuda_candidate" && !uses_single_cta() && !uses_block_private())) {
       work.operator_metrics["global_atomic_operations"] =
           static_cast<std::int64_t>(ids_host_.size());
+      work.operator_metrics["kernel_launches"] = static_cast<std::int64_t>(1);
     }
     if (variant_name_ == "cuda_candidate" && uses_single_cta()) {
       work.operator_metrics["shared_atomic_operations_upper_bound"] =
@@ -209,10 +212,14 @@ class HistogramAdapter final : public BenchmarkAdapter {
       work.operator_metrics["global_atomic_operations_upper_bound"] =
           blocks * static_cast<std::int64_t>(experts_);
       work.operator_metrics["histogram_ctas"] = blocks;
+      work.operator_metrics["kernel_launches"] = static_cast<std::int64_t>(1);
     }
     if (level == MeasurementLevel::kOperatorSteady && !overwrites_output()) {
       work.logical_bytes += static_cast<double>(counts_.bytes());
       work.operator_metrics["counts_reset_bytes"] = static_cast<std::int64_t>(counts_.bytes());
+      if (variant_name_ != "cub_device_histogram") {
+        work.operator_metrics["memset_operations"] = static_cast<std::int64_t>(1);
+      }
     }
     return work;
   }

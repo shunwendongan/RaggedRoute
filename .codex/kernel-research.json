@@ -7,28 +7,28 @@
     ],
     "correctness": [
       "ctest --preset test-rtx3080-sm86-release --output-on-failure",
-      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\rtx3080-histogram-baseline-full"
+      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\rtx3080-histogram-candidate-full"
     ],
     "smoke": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_baseline_smoke.json --output out\\benchmark\\histogram-baseline-smoke.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_candidate_smoke.json --output out\\benchmark\\histogram-candidate-smoke.jsonl"
     ],
     "release": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_baseline_l1_release.json --output out\\benchmark\\histogram-baseline-l1-release.jsonl",
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_baseline_l2_release.json --output out\\benchmark\\histogram-baseline-l2-release.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_candidate_l1_release.json --output out\\benchmark\\histogram-candidate-l1-release.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_candidate_l2_release.json --output out\\benchmark\\histogram-candidate-l2-release.jsonl"
     ]
   },
   "benchmark": {
     "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
     "profile_cases": [
-      {"name": "histogram.zipf.r4096_e64", "arguments": ["--operator", "histogram", "--variant", "cuda_naive", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=2048", "--param", "E=64", "--param", "top_k=2", "--param", "distribution=zipf", "--param", "zipf_s=1.4"], "kernel_regex": "histogram_naive_kernel"},
-      {"name": "histogram.uniform.r1m_e64", "arguments": ["--operator", "histogram", "--variant", "cuda_naive", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=524288", "--param", "E=64", "--param", "top_k=2", "--param", "distribution=uniform"], "kernel_regex": "histogram_naive_kernel"},
-      {"name": "histogram.hot.r1m_e1", "arguments": ["--operator", "histogram", "--variant", "cuda_naive", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=1048576", "--param", "E=1", "--param", "top_k=1", "--param", "distribution=single_hot"], "kernel_regex": "histogram_naive_kernel"}
+      {"name": "histogram.zipf.r4096_e64", "arguments": ["--operator", "histogram", "--variant", "cuda_candidate", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=2048", "--param", "E=64", "--param", "top_k=2", "--param", "distribution=zipf", "--param", "zipf_s=1.4"], "kernel_regex": "histogram_single_cta_shared_kernel"},
+      {"name": "histogram.uniform.r1m_e64", "arguments": ["--operator", "histogram", "--variant", "cuda_candidate", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=524288", "--param", "E=64", "--param", "top_k=2", "--param", "distribution=uniform"], "kernel_regex": "histogram_block_private_kernel"},
+      {"name": "histogram.hot.r1m_e1", "arguments": ["--operator", "histogram", "--variant", "cuda_candidate", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=1048576", "--param", "E=1", "--param", "top_k=1", "--param", "distribution=single_hot"], "kernel_regex": "histogram_block_private_kernel"}
     ],
-    "kernel_regex": "histogram_naive_kernel"
+    "kernel_regex": "histogram_(single_cta_shared|block_private)_kernel"
   },
   "variants": {
-    "baseline": "cub_device_histogram",
-    "candidate": "cuda_naive"
+    "baseline": "min(cuda_naive,cub_device_histogram)",
+    "candidate": "cuda_candidate"
   },
   "output": {
     "root": "profile",
@@ -44,5 +44,11 @@
     "p95_regression_tolerance": 0.03,
     "max_shape_regression": 0.05,
     "max_workspace_growth": 0.0
+  },
+  "dispatch": {
+    "single_cta_max_route_pairs": 4096,
+    "block_private_min_route_pairs": 32768,
+    "unstable_interval": "4097..32767",
+    "unstable_interval_action": "cuda_naive_fallback"
   }
 }

@@ -28,14 +28,13 @@ Status histogram(const HistogramArgs& args, const RuntimeContext& context) noexc
   // L2/L3 include this reset. The low-level launcher intentionally assumes
   // zeroed counts so that L1 can isolate the atomic kernel body.
   const bool optimized = decision.kernel.family == KernelFamily::kCudaOptimized;
-  if (!optimized &&
-      (decision.kernel.family != KernelFamily::kCudaNaive ||
-       decision.kernel.implementation_id != 0)) {
+  if (!optimized && (decision.kernel.family != KernelFamily::kCudaNaive ||
+                     decision.kernel.implementation_id != 0)) {
     return detail::make_status(StatusCode::kUnsupportedKernelVariant,
                                "histogram dispatch selected an unknown kernel");
   }
   if (!optimized || ops::histogram_optimized_requires_external_reset(
-                        decision.kernel.implementation_id)) {
+                        decision.kernel.implementation_id, args.route_pairs)) {
     status = detail::cuda_status(
         cudaMemsetAsync(args.counts, 0,
                         static_cast<std::size_t>(args.experts) * sizeof(*args.counts),
@@ -44,9 +43,9 @@ Status histogram(const HistogramArgs& args, const RuntimeContext& context) noexc
     if (!status.ok()) return status;
   }
   const cudaError_t launch =
-      optimized ? ops::launch_histogram_optimized(
-                      args.expert_ids, args.counts, args.route_pairs, args.experts,
-                      decision.kernel.implementation_id, context.stream)
+      optimized ? ops::launch_histogram_optimized(args.expert_ids, args.counts, args.route_pairs,
+                                                  args.experts, decision.kernel.implementation_id,
+                                                  context.stream)
                 : ops::launch_histogram_naive(args.expert_ids, args.counts, args.route_pairs,
                                               args.experts, context.stream);
   return detail::cuda_status(launch, "histogram kernel launch failed");

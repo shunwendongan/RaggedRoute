@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "grouped_gemm/cuda_candidate/grouped_optimized_internal.h"
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/benchmark/adapter_utils.h"
 #include "raggedroute/benchmark/registry.h"
@@ -22,6 +23,11 @@ class ChainAdapter final : public BenchmarkAdapter {
   }
   std::string variant_name() const override { return variant_name_; }
   std::string description() const override {
+    if (variant_name_ == "cuda_grouped_sm86_fp32_v1") {
+      return include_router_projection_
+                 ? "Seven-operator chain with benchmark-only SM86 grouped GEMM candidate"
+                 : "Six-operator chain with benchmark-only SM86 grouped GEMM candidate";
+    }
     return include_router_projection_ ? "Seven-operator token-to-output baseline chain"
                                       : "Six-operator logits-to-output baseline chain";
   }
@@ -151,7 +157,18 @@ class ChainAdapter final : public BenchmarkAdapter {
     grouped_args.hidden = hidden_;
     grouped_args.output = output_;
     grouped_args.max_expert_tokens = route_pairs_;
-    operator_check(grouped_gemm(grouped_args, context), "chain grouped_gemm operator");
+    if (variant_name_ == "cuda_grouped_sm86_fp32_v1") {
+      cuda_check(ops::launch_grouped_gemm_optimized(
+                     static_cast<const float*>(grouped_args.x_permuted.data),
+                     static_cast<const float*>(grouped_args.expert_weights.data),
+                     grouped_args.offsets, static_cast<float*>(grouped_args.y_permuted.data),
+                     grouped_args.experts, grouped_args.hidden, grouped_args.output,
+                     grouped_args.max_expert_tokens, ops::kGroupedGemmSm86Fp32V1Implementation,
+                     stream),
+                 "chain benchmark-only grouped_gemm candidate");
+    } else {
+      operator_check(grouped_gemm(grouped_args, context), "chain grouped_gemm operator");
+    }
 
     UnpermuteArgs unpermute_args;
     unpermute_args.y_permuted.data = y_permuted_.data();
@@ -208,7 +225,14 @@ class ChainAdapter final : public BenchmarkAdapter {
                                "grouped_gemm,unpermute")
                  : std::string(
                        "topk_gate,histogram,exclusive_scan,token_permute,grouped_gemm,unpermute")},
-            {"component_variant", std::string("cuda_naive")},
+            {"component_variant",
+             variant_name_ == "cuda_grouped_sm86_fp32_v1"
+                 ? std::string("cuda_naive_except_benchmark_only_grouped_sm86_fp32_v1")
+                 : std::string("cuda_naive")},
+            {"runtime_status",
+             variant_name_ == "cuda_grouped_sm86_fp32_v1"
+                 ? std::string("benchmark_only_not_promoted")
+                 : std::string("public_runtime")},
             {"grouped_max_m_policy", std::string("worst_case_R")},
             {"materialize_sorted_route", false}};
   }

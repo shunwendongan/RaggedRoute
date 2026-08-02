@@ -262,7 +262,10 @@ std::vector<std::string> available_suites() { return {"chain_from_tokens", "chai
 
 std::vector<VariantDescriptor> available_suite_variant_descriptors(const std::string& suite_name) {
   if (suite_name == "chain_from_tokens" || suite_name == "chain_from_logits") {
-    return {naive_descriptor("sequential_cuda_naive_chain")};
+    return {naive_descriptor("sequential_cuda_naive_chain"),
+            descriptor("cuda_grouped_sm86_fp32_v1", "in_tree_cuda",
+                       "raggedroute.chain.grouped_benchmark_candidate.v1", "not_applicable",
+                       "naive_chain_with_benchmark_only_grouped_sm86_fp32_v1")};
   }
   return {};
 }

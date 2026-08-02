@@ -7,41 +7,97 @@
     ],
     "correctness": [
       "ctest --preset test-rtx3080-sm86-release --output-on-failure",
-      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\rtx3080-dense-gemm-v2"
+      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\rtx3080-unpermute-candidate"
     ],
     "smoke": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_dense_gemm_candidate_v3_smoke.json --output out\\benchmark\\dense-gemm-v3-smoke.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_unpermute_candidate_smoke.json --output out\\benchmark\\unpermute-candidate-smoke.jsonl"
     ],
     "release": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_dense_gemm_candidate_v3_release.json --output out\\benchmark\\dense-gemm-v3-release.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_unpermute_candidate_release.json --output out\\benchmark\\unpermute-candidate-release.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_unpermute_candidate_chain_release.json --output out\\benchmark\\unpermute-candidate-chain-release.jsonl"
     ]
   },
   "benchmark": {
     "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
     "profile_cases": [
-      {"name": "dense.v2_sync", "arguments": ["--operator", "dense_gemm", "--variant", "cuda_register_tiled_v2_sync", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "M=1024", "--param", "N=1024", "--param", "K=1024"], "kernel_regex": "dense_gemm_register_tiled_v2_sync_kernel"},
-      {"name": "dense.v2_async", "arguments": ["--operator", "dense_gemm", "--variant", "cuda_register_tiled_v2_async", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "M=1024", "--param", "N=1024", "--param", "K=1024"], "kernel_regex": "dense_gemm_register_tiled_v2_async_kernel"},
-      {"name": "dense.v3_64x32_async", "arguments": ["--operator", "dense_gemm", "--variant", "cuda_register_tiled_v3_64x32_async", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "M=1024", "--param", "N=1024", "--param", "K=1024"], "kernel_regex": "dense_gemm_register_tiled_v3_64x32_async_kernel"}
+      {
+        "name": "unpermute.warp.t1024_n256",
+        "arguments": [
+          "--operator",
+          "unpermute",
+          "--variant",
+          "cuda_warp_token_vec4",
+          "--level",
+          "l2",
+          "--profile-once",
+          "--warmup",
+          "20",
+          "--seed",
+          "20260729",
+          "--param",
+          "T=1024",
+          "--param",
+          "E=64",
+          "--param",
+          "top_k=2",
+          "--param",
+          "N=256",
+          "--param",
+          "distribution=uniform"
+        ],
+        "kernel_regex": "unpermute_warp_token_vec4_kernel"
+      },
+      {
+        "name": "unpermute.cta.t64_n1024",
+        "arguments": [
+          "--operator",
+          "unpermute",
+          "--variant",
+          "cuda_warp_token_vec4",
+          "--level",
+          "l2",
+          "--profile-once",
+          "--warmup",
+          "20",
+          "--seed",
+          "20260729",
+          "--param",
+          "T=64",
+          "--param",
+          "E=64",
+          "--param",
+          "top_k=2",
+          "--param",
+          "N=1024",
+          "--param",
+          "distribution=uniform"
+        ],
+        "kernel_regex": "unpermute_cta_token_vec4_kernel"
+      }
     ],
-    "kernel_regex": "dense_gemm_register_tiled_v2_sync_kernel"
+    "kernel_regex": "unpermute_(warp|cta)_token_vec4_kernel"
   },
   "variants": {
-    "baseline": "cuda_tiled_vector",
-    "candidate": "cuda_register_tiled_v3_64x32_async"
+    "baseline": "vllm_finalize_routing",
+    "candidate": "cuda_warp_token_vec4"
   },
   "output": {
-    "root": "profile",
+    "root": "out\\profile",
     "retention": {
-      "keep_raw_for": ["baseline", "final"],
+      "keep_raw_for": [
+        "baseline",
+        "promoted",
+        "final"
+      ],
       "rejected_candidate": "metrics-and-reason"
     }
   },
   "promotion_policy": {
-    "version": "evidence-only-v1",
-    "min_processes": 3,
+    "version": "unpermute-strict-v1",
+    "min_processes": 5,
     "median_speedup": 1.05,
     "p95_regression_tolerance": 0.03,
     "max_shape_regression": 0.05,
-    "max_workspace_growth": 0.25
+    "max_workspace_growth": 0
   }
 }

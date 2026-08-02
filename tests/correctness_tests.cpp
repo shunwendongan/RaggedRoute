@@ -291,6 +291,35 @@ int main() {
                     << " - optional dependency unavailable\n";
         }
       }
+      const std::vector<rr::OptionMap> unpermute_candidate_shapes = {
+          {{"T", "1"}, {"E", "64"}, {"top_k", "1"}, {"N", "1"},
+           {"distribution", "round_robin"}},
+          {{"T", "17"}, {"E", "64"}, {"top_k", "2"}, {"N", "3"},
+           {"distribution", "uniform"}},
+          {{"T", "64"}, {"E", "64"}, {"top_k", "4"}, {"N", "4"},
+           {"distribution", "round_robin"}},
+          {{"T", "512"}, {"E", "64"}, {"top_k", "64"}, {"N", "7"},
+           {"distribution", "single_hot"}},
+          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"N", "63"},
+           {"distribution", "zipf"}, {"zipf_s", "1.4"}},
+          {{"T", "4096"}, {"E", "64"}, {"top_k", "2"}, {"N", "64"},
+           {"distribution", "uniform"}},
+          {{"T", "17"}, {"E", "64"}, {"top_k", "2"}, {"N", "65"},
+           {"distribution", "zipf"}, {"zipf_s", "1.4"}},
+          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"N", "255"},
+           {"distribution", "uniform"}},
+          {{"T", "1024"}, {"E", "64"}, {"top_k", "2"}, {"N", "256"},
+           {"distribution", "zipf"}, {"zipf_s", "1.4"}},
+          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"N", "257"},
+           {"distribution", "uniform"}},
+          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"N", "1024"},
+           {"distribution", "round_robin"}},
+          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"N", "256"},
+           {"distribution", "uniform"}, {"pointer_offset_elements", "1"}},
+      };
+      for (const auto& shape : unpermute_candidate_shapes) {
+        run_adapter_case({"unpermute", shape, "cuda_warp_token_vec4"}, stream, seed++);
+      }
       const std::vector<rr::OptionMap> dense_tiled_edge_shapes = {
           {{"M", "1"}, {"N", "1"}, {"K", "1"}},
           {{"M", "17"}, {"N", "19"}, {"K", "13"}},
@@ -309,16 +338,22 @@ int main() {
       run_library_alignment_fallbacks(stream);
 
       for (const auto& suite_name : rr::available_suites()) {
-        auto chain = rr::make_suite_adapter(suite_name, "cuda_naive");
-        rr::OptionMap options = {
-            {"T", "5"}, {"E", "4"}, {"K", "7"}, {"N", "5"}, {"distribution", "uniform"}};
-        chain->setup(options, seed++, stream);
-        chain->prepare_sample(rr::MeasurementLevel::kChainSteady, stream);
-        chain->enqueue(rr::MeasurementLevel::kChainSteady, stream);
-        rr::cuda_check(cudaStreamSynchronize(stream), "chain correctness sync");
-        const auto validation = chain->validate(stream);
-        require(validation.ok, suite_name + ": " + validation.message);
-        std::cout << "PASS " << suite_name << " - " << validation.message << '\n';
+        for (const auto& variant : rr::available_suite_variants(suite_name)) {
+          auto chain = rr::make_suite_adapter(suite_name, variant);
+          rr::OptionMap options = {{"T", "5"},
+                                   {"E", "4"},
+                                   {"K", "7"},
+                                   {"N", "5"},
+                                   {"distribution", "uniform"}};
+          chain->setup(options, seed++, stream);
+          chain->prepare_sample(rr::MeasurementLevel::kChainSteady, stream);
+          chain->enqueue(rr::MeasurementLevel::kChainSteady, stream);
+          rr::cuda_check(cudaStreamSynchronize(stream), "chain correctness sync");
+          const auto validation = chain->validate(stream);
+          require(validation.ok, suite_name + "/" + variant + ": " + validation.message);
+          std::cout << "PASS " << suite_name << "/" << variant << " - "
+                    << validation.message << '\n';
+        }
       }
 
       auto permute = rr::make_adapter("token_permute", "cuda_naive");

@@ -158,6 +158,19 @@ void test_pure_dispatch() {
   request.requested_kernel = {KernelFamily::kCudaOptimized, 8};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "unimplemented optimized dense GEMM ids must be rejected");
+  request.operator_kind = OperatorKind::kUnpermute;
+  request.signature = fp32_signature(request.operator_kind);
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 1};
+  require_status(select_kernel(request, &decision), "explicit optimized unpermute dispatch");
+  require(decision.kernel.family == KernelFamily::kCudaOptimized &&
+              decision.kernel.implementation_id == 1,
+          "unpermute optimized dispatch must preserve implementation id one");
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 0};
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+          "unpermute optimized default must remain unavailable");
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 2};
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+          "unknown optimized unpermute ids must be rejected");
   request.requested_kernel = {KernelFamily::kCudaNaive, 1};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "the naive family must reject unknown implementation ids");
@@ -358,6 +371,49 @@ void test_histogram_reset(const raggedroute::RuntimeContext& context) {
           "histogram changed a redzone");
 }
 
+void test_unpermute_optimized(const raggedroute::RuntimeContext& context) {
+  constexpr int kTokens = 2;
+  constexpr int kTopK = 2;
+  constexpr int kOutput = 8;
+  rc::GuardedDeviceBuffer<float> y_permuted(kTokens * kTopK * kOutput + 1, context.stream);
+  rc::GuardedDeviceBuffer<std::int32_t> route_pos(kTokens * kTopK, context.stream);
+  rc::GuardedDeviceBuffer<float> route_weights(kTokens * kTopK, context.stream);
+  rc::GuardedDeviceBuffer<float> y(kTokens * kOutput + 1, context.stream);
+  std::vector<float> source(static_cast<std::size_t>(kTokens * kTopK * kOutput + 1), -1.0F);
+  for (int row = 0; row < kTokens * kTopK; ++row) {
+    for (int column = 0; column < kOutput; ++column) {
+      source[static_cast<std::size_t>(1 + row * kOutput + column)] =
+          static_cast<float>(row + 1);
+    }
+  }
+  y_permuted.copy_from_host(source, context.stream);
+  route_pos.copy_from_host({2, 0, 3, 1}, context.stream);
+  route_weights.copy_from_host({0.25F, 0.75F, 0.4F, 0.6F}, context.stream);
+
+  raggedroute::UnpermuteArgs args;
+  args.y_permuted.data = y_permuted.data() + 1;
+  args.route_pos = route_pos.data();
+  args.route_weights.data = route_weights.data();
+  args.y.data = y.data() + 1;
+  args.tokens = kTokens;
+  args.top_k = kTopK;
+  args.output = kOutput;
+  args.kernel = {raggedroute::KernelFamily::kCudaOptimized, 1};
+  require_status(raggedroute::unpermute(args, context),
+                 "public optimized unpermute unaligned fallback");
+  const auto output = y.copy_to_host(context.stream);
+  for (int column = 0; column < kOutput; ++column) {
+    require(std::fabs(output[static_cast<std::size_t>(1 + column)] - 1.5F) <= 1.0e-6F &&
+                std::fabs(output[static_cast<std::size_t>(1 + kOutput + column)] - 2.8F) <=
+                    1.0e-6F,
+            "optimized unpermute fallback produced the wrong reduction");
+  }
+  require(y_permuted.canaries_intact(context.stream) &&
+              route_pos.canaries_intact(context.stream) &&
+              route_weights.canaries_intact(context.stream) && y.canaries_intact(context.stream),
+          "optimized unpermute changed a redzone");
+}
+
 void test_permute_workspace_reset(const raggedroute::RuntimeContext& context) {
   rc::GuardedDeviceBuffer<float> x(4, context.stream);
   rc::GuardedDeviceBuffer<std::int32_t> ids(4, context.stream);
@@ -450,6 +506,7 @@ int main() {
       test_argument_and_workspace_contracts(context);
       test_dense_gemm(context);
       test_dense_gemm_vector_alignment_fallback(context);
+      test_unpermute_optimized(context);
       test_histogram_reset(context);
       test_permute_workspace_reset(context);
     } catch (...) {

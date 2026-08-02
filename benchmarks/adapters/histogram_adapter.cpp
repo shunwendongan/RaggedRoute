@@ -10,9 +10,21 @@
 #include "raggedroute/benchmark/adapter_utils.h"
 #include "raggedroute/benchmark/library_baselines.h"
 #include "raggedroute/benchmark/registry.h"
+#include "histogram/cuda_candidate/optimized_internal.h"
 
 namespace raggedroute::benchmark {
 namespace {
+
+bool is_optimized_histogram_variant(const std::string& variant_name) {
+  return variant_name == "cuda_warp_aggregated";
+}
+
+std::uint32_t optimized_histogram_implementation(const std::string& variant_name) {
+  if (variant_name == "cuda_warp_aggregated") {
+    return ops::kHistogramWarpAggregatedImplementation;
+  }
+  throw std::invalid_argument("unsupported optimized histogram variant: " + variant_name);
+}
 
 class HistogramAdapter final : public BenchmarkAdapter {
  public:
@@ -22,6 +34,9 @@ class HistogramAdapter final : public BenchmarkAdapter {
   std::string description() const override {
     if (variant_name_ == "cub_device_histogram") {
       return "CUB device-wide even histogram over discrete int32 expert ids";
+    }
+    if (variant_name_ == "cuda_warp_aggregated") {
+      return "Warp same-key aggregation before global atomicAdd";
     }
     return "One global atomicAdd per route pair";
   }
@@ -84,6 +99,25 @@ class HistogramAdapter final : public BenchmarkAdapter {
       return;
     }
 #endif
+    if (is_optimized_histogram_variant(variant_name_)) {
+      const std::uint32_t implementation = optimized_histogram_implementation(variant_name_);
+      if (level == MeasurementLevel::kKernelBody) {
+        cuda_check(ops::launch_histogram_optimized(
+                       ids_.data(), counts_.data(), static_cast<int>(ids_host_.size()), experts_,
+                       implementation, stream),
+                   "launch_histogram_optimized");
+        return;
+      }
+      HistogramArgs args;
+      args.expert_ids = ids_.data();
+      args.counts = counts_.data();
+      args.route_pairs = static_cast<int>(ids_host_.size());
+      args.experts = experts_;
+      args.kernel = {KernelFamily::kCudaOptimized, implementation};
+      operator_check(histogram(args, make_runtime_context(stream, architecture_)),
+                     "optimized histogram operator");
+      return;
+    }
     if (level == MeasurementLevel::kKernelBody) {
       cuda_check(ops::launch_histogram_naive(ids_.data(), counts_.data(),
                                              static_cast<int>(ids_host_.size()), experts_, stream),
@@ -122,6 +156,13 @@ class HistogramAdapter final : public BenchmarkAdapter {
               {"lower_level", static_cast<std::int64_t>(0)},
               {"upper_level", static_cast<std::int64_t>(experts_)},
               {"output_reset", std::string("inside_library_call")}};
+    }
+    if (variant_name_ == "cuda_warp_aggregated") {
+      return {{"atomic_scope", std::string("device")},
+              {"warp_same_key_aggregation", true},
+              {"privatization", false},
+              {"output_mode", std::string("accumulate_l1_reset_then_accumulate_l2")},
+              {"threads_per_block", static_cast<std::int64_t>(256)}};
     }
     return {{"atomic_scope", std::string("device")},
             {"privatization", false},

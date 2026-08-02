@@ -265,6 +265,8 @@ int main() {
           {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cuda_register_tiled_v3_64x32_async"},
           {"histogram", {{"T", "11"}, {"E", "8"}, {"top_k", "2"}},
            "cub_device_histogram"},
+          {"histogram", {{"T", "11"}, {"E", "8"}, {"top_k", "2"}, {"distribution", "zipf"}, {"zipf_s", "1.4"}},
+           "cuda_warp_aggregated"},
           {"exclusive_scan", {{"E", "7"}, {"R", "23"}}, "cub_device_scan"},
           {"exclusive_scan", {{"E", "33"}, {"R", "67"}}, "cub_block_scan"},
           {"exclusive_scan", {{"E", "31"}, {"R", "67"}}, "cub_warp_scan"},

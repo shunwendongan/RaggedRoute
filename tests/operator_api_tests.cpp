@@ -158,6 +158,20 @@ void test_pure_dispatch() {
   request.requested_kernel = {KernelFamily::kCudaOptimized, 8};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "unimplemented optimized dense GEMM ids must be rejected");
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 101};
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+          "Histogram implementation ids must be rejected for dense GEMM");
+
+  request.operator_kind = OperatorKind::kHistogram;
+  request.signature = fp32_signature(request.operator_kind);
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 101};
+  require_status(select_kernel(request, &decision), "explicit warp-aggregated histogram dispatch");
+  require(decision.kernel.family == KernelFamily::kCudaOptimized &&
+              decision.kernel.implementation_id == 101,
+          "Histogram dispatch must preserve its operator-local implementation id");
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 1};
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+          "dense GEMM implementation ids must be rejected for Histogram");
   request.requested_kernel = {KernelFamily::kCudaNaive, 1};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "the naive family must reject unknown implementation ids");
@@ -363,6 +377,17 @@ void test_histogram_reset(const raggedroute::RuntimeContext& context) {
           "zero-route histogram did not clear all counts");
   require(ids.canaries_intact(context.stream) && counts.canaries_intact(context.stream),
           "histogram changed a redzone");
+
+  ids.copy_from_host({0, 1, 1, 1}, context.stream);
+  counts.copy_from_host({55, 66}, context.stream);
+  args.expert_ids = ids.data();
+  args.route_pairs = 4;
+  args.kernel = {raggedroute::KernelFamily::kCudaOptimized, 101};
+  require_status(raggedroute::histogram(args, context), "warp-aggregated public histogram");
+  require(counts.copy_to_host(context.stream) == std::vector<std::int32_t>({1, 3}),
+          "warp-aggregated histogram produced incorrect counts");
+  require(ids.canaries_intact(context.stream) && counts.canaries_intact(context.stream),
+          "warp-aggregated histogram changed a redzone");
 }
 
 void test_permute_workspace_reset(const raggedroute::RuntimeContext& context) {

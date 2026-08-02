@@ -8,15 +8,18 @@ namespace raggedroute::ops {
 
 constexpr std::uint32_t kHistogramWarpAggregatedImplementation = 101;
 constexpr std::uint32_t kHistogramSingleCtaSharedImplementation = 102;
+constexpr std::uint32_t kHistogramBlockPrivateImplementation = 103;
 
 inline bool is_histogram_optimized_implementation(std::uint32_t implementation_id) noexcept {
   return implementation_id == kHistogramWarpAggregatedImplementation ||
-         implementation_id == kHistogramSingleCtaSharedImplementation;
+         implementation_id == kHistogramSingleCtaSharedImplementation ||
+         implementation_id == kHistogramBlockPrivateImplementation;
 }
 
 inline bool histogram_optimized_requires_external_reset(
     std::uint32_t implementation_id) noexcept {
-  return implementation_id == kHistogramWarpAggregatedImplementation;
+  return implementation_id == kHistogramWarpAggregatedImplementation ||
+         implementation_id == kHistogramBlockPrivateImplementation;
 }
 
 cudaError_t launch_histogram_optimized(const std::int32_t* expert_ids, std::int32_t* counts,

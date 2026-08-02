@@ -10,6 +10,7 @@ namespace {
 
 constexpr unsigned int kThreadsPerBlock = 256;
 constexpr unsigned int kMaxBlocks = 65535;
+constexpr unsigned int kItemsPerThread = 8;
 
 __global__ void histogram_warp_aggregated_kernel(const std::int32_t* expert_ids,
                                                   std::int32_t* counts, int route_pairs,
@@ -56,6 +57,40 @@ __global__ void histogram_single_cta_shared_kernel(const std::int32_t* expert_id
   }
 }
 
+__global__ void histogram_block_private_kernel(const std::int32_t* expert_ids,
+                                                std::int32_t* counts, int route_pairs,
+                                                int experts) {
+  __shared__ std::int32_t shared_counts[64];
+  for (int expert = static_cast<int>(threadIdx.x); expert < experts;
+       expert += static_cast<int>(blockDim.x)) {
+    shared_counts[expert] = 0;
+  }
+  __syncthreads();
+
+  constexpr std::size_t kItemsPerBlock = kThreadsPerBlock * kItemsPerThread;
+  const std::size_t tile_stride = static_cast<std::size_t>(gridDim.x) * kItemsPerBlock;
+  for (std::size_t block_base = static_cast<std::size_t>(blockIdx.x) * kItemsPerBlock;
+       block_base < static_cast<std::size_t>(route_pairs); block_base += tile_stride) {
+#pragma unroll
+    for (unsigned int item = 0; item < kItemsPerThread; ++item) {
+      const std::size_t route = block_base + threadIdx.x + item * blockDim.x;
+      if (route < static_cast<std::size_t>(route_pairs)) {
+        const std::int32_t expert = expert_ids[route];
+        if (expert >= 0 && expert < experts) {
+          atomicAdd(shared_counts + expert, std::int32_t{1});
+        }
+      }
+    }
+  }
+  __syncthreads();
+
+  for (int expert = static_cast<int>(threadIdx.x); expert < experts;
+       expert += static_cast<int>(blockDim.x)) {
+    const std::int32_t partial = shared_counts[expert];
+    if (partial != 0) atomicAdd(counts + expert, partial);
+  }
+}
+
 unsigned int block_count_for(std::size_t elements) {
   const std::size_t blocks =
       elements / kThreadsPerBlock + (elements % kThreadsPerBlock != 0 ? 1 : 0);
@@ -89,6 +124,17 @@ cudaError_t launch_histogram_optimized(const std::int32_t* expert_ids, std::int3
   if (implementation_id == kHistogramSingleCtaSharedImplementation) {
     histogram_single_cta_shared_kernel<<<1, kThreadsPerBlock, 0, caller_stream>>>(
         expert_ids, counts, route_pairs, experts);
+    return cudaGetLastError();
+  }
+  if (implementation_id == kHistogramBlockPrivateImplementation) {
+    if (route_pairs == 0) return cudaSuccess;
+    constexpr std::size_t kItemsPerBlock = kThreadsPerBlock * kItemsPerThread;
+    const std::size_t blocks = (static_cast<std::size_t>(route_pairs) + kItemsPerBlock - 1) /
+                               kItemsPerBlock;
+    const unsigned int launch_blocks =
+        static_cast<unsigned int>(blocks < kMaxBlocks ? blocks : kMaxBlocks);
+    histogram_block_private_kernel<<<launch_blocks, kThreadsPerBlock, 0,
+                                     caller_stream>>>(expert_ids, counts, route_pairs, experts);
     return cudaGetLastError();
   }
   return cudaErrorInvalidValue;

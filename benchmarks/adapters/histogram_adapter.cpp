@@ -16,7 +16,8 @@ namespace raggedroute::benchmark {
 namespace {
 
 bool is_optimized_histogram_variant(const std::string& variant_name) {
-  return variant_name == "cuda_warp_aggregated" || variant_name == "cuda_single_cta_shared";
+  return variant_name == "cuda_warp_aggregated" || variant_name == "cuda_single_cta_shared" ||
+         variant_name == "cuda_block_private";
 }
 
 bool histogram_variant_overwrites_output(const std::string& variant_name) {
@@ -29,6 +30,9 @@ std::uint32_t optimized_histogram_implementation(const std::string& variant_name
   }
   if (variant_name == "cuda_single_cta_shared") {
     return ops::kHistogramSingleCtaSharedImplementation;
+  }
+  if (variant_name == "cuda_block_private") {
+    return ops::kHistogramBlockPrivateImplementation;
   }
   throw std::invalid_argument("unsupported optimized histogram variant: " + variant_name);
 }
@@ -47,6 +51,9 @@ class HistogramAdapter final : public BenchmarkAdapter {
     }
     if (variant_name_ == "cuda_single_cta_shared") {
       return "Single-CTA shared-memory histogram with overwrite output";
+    }
+    if (variant_name_ == "cuda_block_private") {
+      return "Multi-CTA block-private shared histogram with global merge";
     }
     return "One global atomicAdd per route pair";
   }
@@ -184,6 +191,15 @@ class HistogramAdapter final : public BenchmarkAdapter {
               {"threads_per_block", static_cast<std::int64_t>(256)},
               {"shared_bytes_per_cta", static_cast<std::int64_t>(64 * sizeof(std::int32_t))}};
     }
+    if (variant_name_ == "cuda_block_private") {
+      return {{"atomic_scope", std::string("block_then_device")},
+              {"privatization", std::string("per_cta_shared")},
+              {"items_per_thread", static_cast<std::int64_t>(8)},
+              {"output_mode", std::string("accumulate_l1_reset_then_accumulate_l2")},
+              {"external_reset", true},
+              {"threads_per_block", static_cast<std::int64_t>(256)},
+              {"shared_bytes_per_cta", static_cast<std::int64_t>(64 * sizeof(std::int32_t))}};
+    }
     return {{"atomic_scope", std::string("device")},
             {"privatization", false},
             {"output_mode", std::string("accumulate_l1_reset_then_accumulate_l2")},
@@ -206,6 +222,16 @@ class HistogramAdapter final : public BenchmarkAdapter {
       work.operator_metrics["shared_atomic_operations_upper_bound"] =
           static_cast<std::int64_t>(ids_host_.size());
       work.operator_metrics["kernel_launches"] = static_cast<std::int64_t>(1);
+    }
+    if (variant_name_ == "cuda_block_private") {
+      constexpr std::int64_t kItemsPerBlock = 256 * 8;
+      const std::int64_t blocks =
+          (static_cast<std::int64_t>(ids_host_.size()) + kItemsPerBlock - 1) / kItemsPerBlock;
+      work.operator_metrics["shared_atomic_operations_upper_bound"] =
+          static_cast<std::int64_t>(ids_host_.size());
+      work.operator_metrics["global_atomic_operations_upper_bound"] =
+          blocks * static_cast<std::int64_t>(experts_);
+      work.operator_metrics["histogram_ctas"] = blocks;
     }
     if (level == MeasurementLevel::kOperatorSteady &&
         !histogram_variant_overwrites_output(variant_name_)) {

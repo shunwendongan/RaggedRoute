@@ -402,6 +402,16 @@ void test_histogram_reset(const raggedroute::RuntimeContext& context) {
           "zero-route single-CTA histogram did not clear counts");
   require(ids.canaries_intact(context.stream) && counts.canaries_intact(context.stream),
           "single-CTA histogram changed a redzone");
+
+  args.expert_ids = ids.data();
+  args.route_pairs = 4;
+  args.kernel = {raggedroute::KernelFamily::kCudaOptimized, 103};
+  counts.copy_from_host({9, 9}, context.stream);
+  require_status(raggedroute::histogram(args, context), "block-private public histogram");
+  require(counts.copy_to_host(context.stream) == std::vector<std::int32_t>({1, 3}),
+          "block-private histogram produced incorrect counts");
+  require(ids.canaries_intact(context.stream) && counts.canaries_intact(context.stream),
+          "block-private histogram changed a redzone");
 }
 
 void test_permute_workspace_reset(const raggedroute::RuntimeContext& context) {

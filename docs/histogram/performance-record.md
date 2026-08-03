@@ -44,25 +44,27 @@
 
 ## 2026-08-03 / `cuda_candidate` promotion
 
-- 测量 SHA：`88b670b6f0a5`，clean Release `sm_86`，5 processes，20 warmup，30 samples/process，seed `20260729`。
+- shipping 测量 SHA：`cb02617af060`，clean Release `sm_86`，5 processes，20 warmup，30 samples/process，seed `20260729`。
 - Workspace 始终为 0；candidate p95 在全部 12 个 case 均低于 strongest baseline；所有 case 相对 naive 的 p50 均无回退。
-- 预声明的中大型 winner `R=1M,E=64,uniform` 在 5/5 processes 中方向一致，p50 提升 23.9%。`R=65536,E=16` 有 1/5 process 出现 1.28% 噪声级反向，其余 case 为 5/5；聚合 p50/p95 仍分别改善 3.3%/14.8%。
+- 预声明的中大型 winner `R=1M,E=64,uniform` 在 5/5 processes 中方向一致，p50 提升 22.7%。晋升前独立重复也得到 23.9%，机制与方向一致。
 
 | L2 case | strongest baseline | baseline p50 (us) | candidate p50 / p95 (us) | speedup | candidate Gitems/s |
 |---|---|---:|---:|---:|---:|
-| `R=128,E=8,uniform` | naive | 14.095 | 8.202 / 8.972 | 1.718× | 0.016 |
-| `R=4096,E=1,single-hot` | naive | 15.094 | 10.220 / 11.255 | 1.477× | 0.401 |
-| `R=4096,E=64,uniform` | naive | 16.159 | 10.097 / 11.337 | 1.600× | 0.406 |
-| `R=4096,E=64,round-robin` | naive | 15.165 | 9.820 / 11.480 | 1.544× | 0.417 |
-| `R=4096,E=64,Zipf-1.4` | naive | 16.046 | 9.943 / 11.356 | 1.614× | 0.412 |
-| `R=65536,E=16,uniform` | CUB | 16.742 | 16.205 / 18.819 | 1.033× | 4.044 |
-| `R=65536,E=64,uniform` | CUB | 16.179 | 15.718 / 17.459 | 1.029× | 4.169 |
-| `R=65536,E=64,Zipf-1.4` | CUB | 16.742 | 15.923 / 17.861 | 1.051× | 4.116 |
-| `R=65536,E=64,single-hot` | CUB | 16.282 | 15.718 / 18.022 | 1.036× | 4.169 |
-| `R=1M,E=64,uniform` | CUB | 21.248 | 17.152 / 18.181 | 1.239× | 61.134 |
-| `R=1M,E=64,Zipf-1.4` | CUB | 18.330 | 17.818 / 21.151 | 1.029× | 58.851 |
-| `R=1M,E=64,single-hot` | CUB | 18.125 | 17.357 / 22.175 | 1.044× | 60.413 |
+| `R=128,E=8,uniform` | naive | 14.198 | 8.289 / 9.048 | 1.713× | 0.015 |
+| `R=4096,E=1,single-hot` | naive | 15.923 | 10.117 / 11.780 | 1.574× | 0.405 |
+| `R=4096,E=64,uniform` | naive | 16.036 | 10.424 / 12.556 | 1.538× | 0.393 |
+| `R=4096,E=64,round-robin` | naive | 16.445 | 10.179 / 11.489 | 1.616× | 0.402 |
+| `R=4096,E=64,Zipf-1.4` | naive | 16.087 | 10.260 / 11.489 | 1.568× | 0.399 |
+| `R=65536,E=16,uniform` | CUB | 16.640 | 15.898 / 18.637 | 1.047× | 4.122 |
+| `R=65536,E=64,uniform` | CUB | 16.794 | 15.590 / 18.842 | 1.077× | 4.204 |
+| `R=65536,E=64,Zipf-1.4` | CUB | 16.589 | 15.744 / 17.874 | 1.054× | 4.163 |
+| `R=65536,E=64,single-hot` | CUB | 17.946 | 15.488 / 17.157 | 1.159× | 4.231 |
+| `R=1M,E=64,uniform` | CUB | 20.787 | 16.947 / 22.426 | 1.227× | 61.873 |
+| `R=1M,E=64,Zipf-1.4` | CUB | 18.534 | 17.818 / 21.294 | 1.040× | 58.851 |
+| `R=1M,E=64,single-hot` | CUB | 18.278 | 17.715 / 19.430 | 1.032× | 59.191 |
 
 NSYS：small trace 中 21 次 single-CTA kernel、无逐次 L2 reset；large trace 中 21 次 block-private kernel 对应 21 次 L2 reset，无额外 merge kernel。NCU basic/detailed：small grid=1、`0.00245 waves/SM`，明确 launch/underfill；large grid=128、`0.3137 waves/SM`、21 registers/thread、0 local load/store、约 66% achieved occupancy、约 49% DRAM、long-scoreboard 为主要采样 stall。Profiler duration 仅作诊断，不参与上表 speedup。
 
 结论：H2/H3 shape dispatcher 晋升为 SM86 Histogram `kAuto`；H1/H4 和不稳定交叉区间候选不进入 shipping path。
+
+完整证据：[中央报告](../reports/rtx3080-histogram-candidate-cb02617.md)；[artifact bundle](../reports/artifacts/20260803T0708Z-cb02617-histogram-candidate-v1/)。

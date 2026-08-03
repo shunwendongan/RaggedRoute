@@ -1,0 +1,57 @@
+{
+  "schema_version": "raggedroute.evidence_bundle.v1",
+  "run_id": "20260803T0708Z-cb02617-histogram-candidate-v1",
+  "created_utc": "2026-08-03T07:31:20.796373+00:00",
+  "benchmark_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-histogram-candidate\\out\\evidence\\histogram-candidate-cb02617\\benchmark",
+  "extra_benchmark_sources": [],
+  "profile_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-histogram-candidate\\out\\profile\\histogram-candidate-88b670b-ncu",
+  "sanitizer_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-histogram-candidate\\out\\sanitizer\\rtx3080-histogram-candidate-promotion",
+  "raw_profiler_reports": [
+    {
+      "name": "histogram.hot.r1m_e1.basic.ncu-rep",
+      "bytes": 111698,
+      "sha256": "8ab0675c4f6c5a2c75be1add7354a69d44402d566ee3981bbee5c5fd2bd1ab7d",
+      "committed": false
+    },
+    {
+      "name": "histogram.hot.r1m_e1.detailed.ncu-rep",
+      "bytes": 251895,
+      "sha256": "341524ec3b7e9300350f8f64698b63407fc4ea6718f42869b210965965ac5662",
+      "committed": false
+    },
+    {
+      "name": "histogram.large.timeline.nsys-rep",
+      "bytes": 63671,
+      "sha256": "e712af6dc9f879945ad5bb1a144f4f2822f8009d6450e80fb0328a018d300341",
+      "committed": false
+    },
+    {
+      "name": "histogram.small.timeline.nsys-rep",
+      "bytes": 62746,
+      "sha256": "684901299938288d44179725ef1c574b6b1608926f0938fd464007a546eb3bad",
+      "committed": false
+    },
+    {
+      "name": "histogram.uniform.r1m_e64.basic.ncu-rep",
+      "bytes": 111589,
+      "sha256": "3564ed6f53090e6f0dc88f53f23a5c69089dbf9002f0f092d6f89172964b9d06",
+      "committed": false
+    },
+    {
+      "name": "histogram.uniform.r1m_e64.detailed.ncu-rep",
+      "bytes": 255192,
+      "sha256": "57bb7c53313dddea24af579f75fd34e45fab8a8a1778b9326863bc120fa840d7",
+      "committed": false
+    },
+    {
+      "name": "histogram.zipf.r4096_e64.basic.ncu-rep",
+      "bytes": 111911,
+      "sha256": "1ccffca30e19dfdb4ed048a4b601bfa9df966976da77c24fe476e4baa43eee50",
+      "committed": false
+    }
+  ],
+  "policy": {
+    "profiler_duration_is_release_latency": false,
+    "raw_profiler_binaries_committed": false
+  }
+}

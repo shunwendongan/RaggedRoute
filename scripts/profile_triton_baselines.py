@@ -161,13 +161,17 @@ def save_event(run_dir: pathlib.Path, config: pathlib.Path, event: dict[str, Any
 
 
 def parse_nsys_json(output: str) -> list[dict[str, Any]]:
-    start = output.find("[")
-    if start < 0:
-        raise ValueError("NSYS stats did not emit JSON")
-    value = json.loads(output[start:])
-    if not isinstance(value, list):
-        raise ValueError("NSYS kernel summary must be a list")
-    return value
+    decoder = json.JSONDecoder()
+    for start, character in enumerate(output):
+        if character != "[":
+            continue
+        try:
+            value, _ = decoder.raw_decode(output[start:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, list) and all(isinstance(item, dict) for item in value):
+            return value
+    raise ValueError("NSYS stats did not emit a JSON kernel summary")
 
 
 def command_system(args: argparse.Namespace) -> int:
@@ -202,7 +206,7 @@ def command_system(args: argparse.Namespace) -> int:
             continue
         run(command)
         stats_command = [
-            nsys, "stats", "--report", "cuda_gpu_kern_sum", "--format", "json",
+            nsys, "stats", "--force-export=true", "--report", "cuda_gpu_kern_sum", "--format", "json",
             "--output", "-", str(report),
         ]
         completed = run(stats_command, capture=True)

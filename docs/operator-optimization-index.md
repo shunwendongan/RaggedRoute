@@ -8,7 +8,7 @@
 |---|---|---|---|
 | Dense GEMM | 主算子：路由投影/通用矩阵乘 | [optimization-plan](dense_gemm/optimization-plan.md) | [performance-record](dense_gemm/performance-record.md) |
 | Top-K Gate | 主算子：Top-2 选择与权重归一化 | [optimization-plan](topk_gate/optimization-plan.md) | [performance-record](topk_gate/performance-record.md) |
-| Grouped GEMM | 主算子：ragged expert GEMM | [optimization-plan](grouped_gemm/optimization-plan.md) | [performance-record](grouped_gemm/performance-record.md) |
+| Grouped GEMM | 主算子：ragged expert GEMM | [optimization-plan](grouped_gemm/optimization-plan.md) / [research-notes](grouped_gemm/research-notes.md) | [performance-record](grouped_gemm/performance-record.md) |
 | Histogram | 配套算子：expert route 计数 | [optimization-plan](histogram/optimization-plan.md) | [performance-record](histogram/performance-record.md) |
 | Exclusive Scan | 配套算子：计数到 expert offsets | [optimization-plan](scan/optimization-plan.md) | [performance-record](scan/performance-record.md) |
 | Token Permute | 配套算子：按 expert 重排 token | [optimization-plan](permute/optimization-plan.md) | [performance-record](permute/performance-record.md) |

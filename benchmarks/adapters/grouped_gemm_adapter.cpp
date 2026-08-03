@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "grouped_gemm/cuda_candidate/grouped_optimized_internal.h"
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/benchmark/adapter_utils.h"
 #include "raggedroute/benchmark/library_baselines.h"
@@ -12,6 +13,37 @@
 
 namespace raggedroute::benchmark {
 namespace {
+
+bool is_optimized_grouped_variant(const std::string& variant) {
+  return variant == "cuda_grouped_tiled16_sync_v0" ||
+         variant == "cuda_grouped_persistent16_v1" ||
+         variant == "cuda_grouped_register16x32_sync_v2" ||
+         variant == "cuda_grouped_register16x32_async_v3" ||
+         variant == "cuda_grouped_register16x32_async_full_v4" ||
+         variant == "cuda_grouped_sm86_fp32_v1";
+}
+
+std::uint32_t optimized_grouped_implementation(const std::string& variant) {
+  if (variant == "cuda_grouped_tiled16_sync_v0") {
+    return ops::kGroupedGemmTiled16SyncV0Implementation;
+  }
+  if (variant == "cuda_grouped_persistent16_v1") {
+    return ops::kGroupedGemmPersistent16V1Implementation;
+  }
+  if (variant == "cuda_grouped_register16x32_sync_v2") {
+    return ops::kGroupedGemmRegister16x32SyncV2Implementation;
+  }
+  if (variant == "cuda_grouped_register16x32_async_v3") {
+    return ops::kGroupedGemmRegister16x32AsyncV3Implementation;
+  }
+  if (variant == "cuda_grouped_register16x32_async_full_v4") {
+    return ops::kGroupedGemmRegister16x32AsyncFullV4Implementation;
+  }
+  if (variant == "cuda_grouped_sm86_fp32_v1") {
+    return ops::kGroupedGemmSm86Fp32V1Implementation;
+  }
+  throw std::invalid_argument("unsupported optimized grouped_gemm variant: " + variant);
+}
 
 class GroupedGemmAdapter final : public BenchmarkAdapter {
  public:
@@ -27,6 +59,24 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
   std::string operator_name() const override { return "grouped_gemm"; }
   std::string variant_name() const override { return variant_name_; }
   std::string description() const override {
+    if (variant_name_ == "cuda_grouped_tiled16_sync_v0") {
+      return "16x16 synchronous shared-memory strict-FP32 grouped GEMM";
+    }
+    if (variant_name_ == "cuda_grouped_persistent16_v1") {
+      return "Persistent-CTA 16x16 strict-FP32 grouped GEMM";
+    }
+    if (variant_name_ == "cuda_grouped_register16x32_sync_v2") {
+      return "Persistent 16x32 register-tiled synchronous strict-FP32 grouped GEMM";
+    }
+    if (variant_name_ == "cuda_grouped_register16x32_async_v3") {
+      return "Persistent 16x32 register-tiled cp.async strict-FP32 grouped GEMM";
+    }
+    if (variant_name_ == "cuda_grouped_register16x32_async_full_v4") {
+      return "Full-residency persistent 16x32 cp.async strict-FP32 grouped GEMM";
+    }
+    if (variant_name_ == "cuda_grouped_sm86_fp32_v1") {
+      return "Explicit SM86 strict-FP32 grouped GEMM with direct/persistent selection";
+    }
     return "Single-launch FP32 grouped GEMM with one grid-z slice per expert";
   }
   bool supports(MeasurementLevel level) const override {
@@ -119,6 +169,14 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
       return;
     }
 #endif
+    if (is_optimized_grouped_variant(variant_name_)) {
+      const std::uint32_t implementation = optimized_grouped_implementation(variant_name_);
+      cuda_check(ops::launch_grouped_gemm_optimized(
+                     x_.data(), weights_.data(), offsets_.data(), output_buffer_.data(), experts_,
+                     hidden_, output_, max_expert_tokens_, implementation, stream),
+                 "launch_grouped_gemm_optimized benchmark-only candidate");
+      return;
+    }
     if (level == MeasurementLevel::kKernelBody) {
       cuda_check(ops::launch_grouped_gemm_naive(x_.data(), weights_.data(), offsets_.data(),
                                                 output_buffer_.data(), experts_, hidden_, output_,
@@ -167,6 +225,49 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
               {"scheduler", std::string("device_only")},
               {"operator_class", std::string("simt_fp32")},
               {"threadblock_shape", std::string("128x128x8")}};
+    }
+    if (variant_name_ == "cuda_grouped_tiled16_sync_v0") {
+      return {{"tile_m", static_cast<std::int64_t>(16)},
+              {"tile_n", static_cast<std::int64_t>(16)},
+              {"tile_k", static_cast<std::int64_t>(16)},
+              {"threads_per_block", static_cast<std::int64_t>(256)},
+              {"scheduler", std::string("grid_z_per_expert")},
+              {"staging", std::string("synchronous_shared_memory")}};
+    }
+    if (variant_name_ == "cuda_grouped_persistent16_v1") {
+      return {{"tile_m", static_cast<std::int64_t>(16)},
+              {"tile_n", static_cast<std::int64_t>(16)},
+              {"tile_k", static_cast<std::int64_t>(16)},
+              {"threads_per_block", static_cast<std::int64_t>(256)},
+              {"scheduler", std::string("device_prefix_persistent_round_robin")},
+              {"staging", std::string("synchronous_shared_memory")}};
+    }
+    if (variant_name_ == "cuda_grouped_register16x32_sync_v2" ||
+        variant_name_ == "cuda_grouped_register16x32_async_v3" ||
+        variant_name_ == "cuda_grouped_register16x32_async_full_v4") {
+      const bool asynchronous = variant_name_ != "cuda_grouped_register16x32_sync_v2";
+      const bool full_residency =
+          variant_name_ == "cuda_grouped_register16x32_async_full_v4";
+      return {{"tile_m", static_cast<std::int64_t>(16)},
+              {"tile_n", static_cast<std::int64_t>(32)},
+              {"tile_k", static_cast<std::int64_t>(16)},
+              {"threads_per_block", static_cast<std::int64_t>(128)},
+              {"outputs_per_thread", static_cast<std::int64_t>(4)},
+              {"scheduler", std::string("device_prefix_persistent_round_robin")},
+              {"resident_blocks", std::string(full_residency ? "occupancy_api_full"
+                                                             : "capped_at_2_per_sm")},
+              {"staging", std::string(asynchronous ? "sm86_cp_async_double_buffered"
+                                                    : "synchronous_shared_memory")},
+              {"fallback", std::string(asynchronous ? "register16x32_sync_for_tail"
+                                                     : "none")}};
+    }
+    if (variant_name_ == "cuda_grouped_sm86_fp32_v1") {
+      return {{"scheduler", std::string("explicit_direct_or_persistent")},
+              {"direct_path", std::string("tiled16_sync_v0")},
+              {"persistent_path", std::string("register16x32_async_full_v4")},
+              {"selection", std::string("device_attributes_occupancy_and_upper_tiles")},
+              {"math_path", std::string("cuda_core_strict_fp32")},
+              {"runtime_status", std::string("benchmark_only_not_promoted")}};
     }
     return {{"tile_m", static_cast<std::int64_t>(16)},
             {"tile_n", static_cast<std::int64_t>(16)},

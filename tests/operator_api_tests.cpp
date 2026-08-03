@@ -165,6 +165,13 @@ void test_pure_dispatch() {
   request.requested_kernel = {KernelFamily::kCudaOptimized, 8};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "unimplemented optimized dense GEMM ids must be rejected");
+  request.operator_kind = OperatorKind::kGroupedGemm;
+  request.signature = fp32_signature(request.operator_kind);
+  for (const std::uint32_t implementation : {1U, 2U, 3U, 4U, 5U, 6U}) {
+    request.requested_kernel = {KernelFamily::kCudaOptimized, implementation};
+    require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+            "benchmark-only grouped GEMM candidates must not be runtime-dispatchable");
+  }
   request.requested_kernel = {KernelFamily::kCudaOptimized, 101};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "Histogram implementation ids must be rejected for dense GEMM");

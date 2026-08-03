@@ -29,7 +29,7 @@
 - 每次实验先在对应的 `optimization-plan.md` 中登记假设、版本、输入 shape 和验收指标，再运行 benchmark/profile。
 - 实际数字只写入对应的 `performance-record.md`；必须同时记录 baseline、candidate、测量层级、cache 模式、seed、GPU、软件版本和 Git revision。
 - L1/L2/L3/L4 的含义遵循 [benchmark-architecture.md](benchmark-architecture.md)，不要把 Kernel Body 结果和完整 operator 或 chain 结果混在一起。
-- Nsight Compute/Nsight Systems 原始输出、JSONL、CSV 和图表放在 `docs/reports/artifacts/<run_id>/` 或对应算子目录下的 `artifacts/<run_id>/`，正文只保存可审计摘要和链接。
+- Git 只保留报告、紧凑 CSV/comparison、归一化 profiler 指标、v2 manifest 与 `SHA256SUMS`；raw JSONL、完整 aggregate、run manifest、NCU/NSYS/SQLite 进入 manifest 指向的不可覆盖 `<run_id>-raw.zip` Release 资产。历史缺失文件必须标记 `storage: unavailable`，不得静默省略。
 - 失败优化也要保留：写清楚假设、改动、反例 shape、指标变化和回退原因，不能只保留成功结果。
 - 未实际运行的数字统一写 `[待实测]`，不能用论文、第三方仓库或理论峰值代替本项目实测。
 

@@ -69,8 +69,8 @@
 - [x] 为 NCU/NSYS 报告增加 text sidecar 与 metrics 抽取；不可用指标保存明确状态，不能用 0 代替缺失值。
 - [x] profiler duration 只用于瓶颈诊断，永不进入正式 latency、speedup 或 promotion 计算。
 - [ ] 增加 shape heatmap、working-set sweep、distribution/trace，以及 L1/L2/L3 breakdown 图表脚本；所有图表可追溯到 comparison/aggregate 输入。
-- [x] 实现非覆盖 text bundle freeze，将 raw JSONL、manifest、aggregate、comparison、profiler metrics、验证日志与 `SHA256SUMS` 固化到 `docs/reports/artifacts/<run_id>/`；raw Nsight 二进制只记录哈希。
-- [ ] promotion decision、图表与真实 trace 到位后，再扩展为完整候选发布 bundle。
+- [x] 迁移到 `raggedroute.evidence_bundle.v2`：Git 固化 report、compact summary/comparison、normalized profiler metrics、manifest 与 `SHA256SUMS`；raw JSONL/full aggregate/run manifest/NCU/NSYS/SQLite 进入不可覆盖 Release ZIP，无法恢复的历史文件显式标记 `unavailable`。
+- [ ] 补齐真实 trace 和可追溯图表；现有 v2 bundle 已记录 promotion/拒绝决策，但不因此升级缺失证据的复现等级。
 
 ## 4. 验收测试
 

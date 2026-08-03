@@ -1,0 +1,100 @@
+name: GPU SM86 validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_nsys:
+        description: Collect the representative NSYS system timeline
+        required: true
+        default: false
+        type: boolean
+      run_ncu:
+        description: Collect filtered single-launch NCU reports
+        required: true
+        default: false
+        type: boolean
+      ncu_set:
+        description: NCU collection set (basic is the default evidence level)
+        required: true
+        default: basic
+        type: choice
+        options: [basic, detailed, full]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-sm86:
+    runs-on: [self-hosted, Windows, X64, gpu-sm86]
+    timeout-minutes: 180
+    env:
+      RAGGEDROUTE_FETCH_REFERENCES: "ON"
+      BUILD_DIR: out/build/rtx3080-sm86-release
+      BENCHMARK: out/build/rtx3080-sm86-release/raggedroute_benchmark.exe
+      PROFILE_DIR: out/profile/ci-sm86-${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: true
+      - name: Resolve CUDA toolkit and runtime DLLs
+        shell: pwsh
+        run: |
+          $candidates = @(
+            $env:CUDACXX,
+            $(if ($env:CUDA_PATH) { Join-Path $env:CUDA_PATH "bin/nvcc.exe" }),
+            $(if (Get-Command nvcc.exe -ErrorAction SilentlyContinue) { (Get-Command nvcc.exe).Source })
+          ) | Where-Object { $_ -and (Test-Path $_) }
+          if (-not $candidates) { throw "nvcc.exe is unavailable; configure CUDACXX or CUDA_PATH on the runner" }
+          $nvcc = (Resolve-Path $candidates[0]).Path
+          $toolkit = Split-Path (Split-Path $nvcc -Parent) -Parent
+          "CUDACXX=$nvcc" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "CUDA_PATH=$toolkit" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          (Join-Path $toolkit "bin") | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          (Join-Path $toolkit "bin/x64") | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Profiler and GPU doctor
+        run: python scripts/profile_benchmarks.py doctor
+      - name: Configure Release SM86
+        run: cmd /c scripts\configure_windows.bat rtx3080-sm86-release
+      - name: Build Release SM86
+        run: cmd /c scripts\build_windows.bat rtx3080-sm86-release
+      - name: CTest
+        run: ctest --preset test-rtx3080-sm86-release
+      - name: Seven-operator and chain smoke
+        run: >-
+          python scripts/run_benchmarks.py
+          --binary $env:BENCHMARK
+          --config configs/project/benchmark/smoke.json
+          --output out/runs/ci-sm86-smoke.jsonl
+      - name: Compute Sanitizer
+        run: >-
+          python scripts/run_sanitizers.py
+          --build-dir $env:BUILD_DIR
+          --output-dir out/sanitizer/ci-sm86-${{ github.run_id }}
+      - name: NSYS system timeline
+        if: ${{ inputs.run_nsys }}
+        run: >-
+          python scripts/profile_benchmarks.py system
+          --binary $env:BENCHMARK
+          --config configs/project/profile/representative.json
+          --run-dir $env:PROFILE_DIR
+      - name: NCU filtered launches
+        if: ${{ inputs.run_ncu }}
+        run: >-
+          python scripts/profile_benchmarks.py compute
+          --binary $env:BENCHMARK
+          --config configs/project/profile/representative.json
+          --run-dir $env:PROFILE_DIR
+          --set ${{ inputs.ncu_set }}
+      - name: Normalize profiler evidence
+        if: ${{ inputs.run_nsys || inputs.run_ncu }}
+        run: python scripts/profile_benchmarks.py analyze --run-dir $env:PROFILE_DIR
+      - name: Upload validation outputs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpu-sm86-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            out/runs/ci-sm86-smoke.jsonl
+            out/sanitizer/ci-sm86-${{ github.run_id }}/
+            out/profile/ci-sm86-${{ github.run_id }}/

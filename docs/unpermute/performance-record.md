@@ -16,3 +16,32 @@
 结论：保留 naive；向量化 weighted reduce 必须在更安静环境和对齐/非对齐 shape 上重新验证，3% 差距不足以晋升。
 
 完整证据：[中央报告](../reports/rtx3080-naive-profile-a9489ab.md)；[artifact bundle](../reports/artifacts/20260731T115243Z-a9489abce704-rtx3080-naive-profile-v1/)。
+
+## 2026-08-03 / SM86 candidate formal rejection
+
+- clean base：`927c585e031ba6a01e41c01d21db03cb0d1ca9d0`；开发分支 `codex/unpermute-warp-vectorized`。
+- 原始基线复现：CTest 8/8，四类 Compute Sanitizer PASS。`T=1024,E=64,N=256,top_k=2` 的 5-process median p50 为 naive `10.138 us`、vLLM `10.547 us`，平均 CV `0.151/0.123`；历史约 3% 的 vLLM 优势没有复现，当前窗口仍应视为 inconclusive。
+- dirty-screening 选择了 shape-dispatched hybrid：small N 为 4-warps/token，`N>=512` 为一 CTA/token；32-shape 筛选相对 vLLM p50 几何平均约 `1.088x`。该数字不用于晋升。
+- large-N NSYS/NCU 证明原纯 warp 版本存在 grid underfill；具体指标和 rejected-candidate 账本见 [optimization plan](optimization-plan.md)。
+- 两轮正式 5-process Release 的 warm p50 几何平均如下；profiler duration 未参与 speedup：
+
+| Run | L1 vs vLLM | L2 vs vLLM | warm candidate groups with CV>0.10 |
+|---|---:|---:|---:|
+| 首轮 | 1.008x | 1.066x | 55/64 |
+| 自动复测 | 1.088x | 1.056x | 63/64 |
+
+- 首轮最差 L1/L2 p50 speedup 为 `0.264x/0.542x`，复测为 `0.446x/0.492x`；两轮
+  p95 最大 ratio 分别达到 `7.142/6.064` 与 `3.625/5.375`。即使平均值部分超过
+  `1.05x`，逐 shape p50≤5% 回退、p95≤3% 回退和稳定性门槛仍同时失败。
+- L3 只替换 Unpermute 得到 `1.0016x`，p95 ratio `0.947`，baseline/candidate CV
+  `0.435/0.305`；结论是没有可信回退，也没有可信收益。
+- 最终 CTA 路径 NSYS（`T=64,N=1024`）median 为 `1.792 us`，仅用于机制诊断；NCU
+  basic 表明 warp/CTA case 都受短 grid/underfill 主导。SASS 生成了
+  `LDG.E.128/STG.E.128`，resource table 为 34 registers/thread、`LOCAL:0/STACK:0`。
+- CTest 8/8、memcheck/initcheck/racecheck/synccheck、aligned warp/CTA、unaligned tail 和
+  Top-4 fallback 均通过。candidate 保持 zero workspace、无 atomic，但**不接入公开
+  optimized dispatch**，registry 标为 `in_tree_cuda_research`。
+
+结论：candidate 不晋升。保留 benchmark-only 实现、完整 raw/aggregate/profile 证据和
+拒绝记录，提交 Draft evidence PR。完整报告见
+[SM86 candidate evidence report](../reports/unpermute-sm86-candidate-eba8f02.md)。

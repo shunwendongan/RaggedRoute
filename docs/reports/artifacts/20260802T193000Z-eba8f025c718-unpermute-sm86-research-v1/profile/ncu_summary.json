@@ -1,0 +1,43 @@
+{
+  "schema_version": "raggedroute.ncu-summary.v1",
+  "profiler_duration_is_release_latency": false,
+  "device": {
+    "name": "NVIDIA GeForce RTX 3080",
+    "compute_capability": "8.6",
+    "sm_count": 68
+  },
+  "cases": [
+    {
+      "name": "final_warp_t1024_n256",
+      "kernel": "unpermute_warp_token_vec4_kernel",
+      "grid_size": 256,
+      "block_size": 128,
+      "waves_per_sm": 0.31,
+      "registers_per_thread": 34,
+      "static_shared_memory_bytes": 0,
+      "duration_ns": 9184.0,
+      "sm_throughput_pct": 2.606163891374929,
+      "memory_throughput_pct": 43.30492424242424,
+      "achieved_occupancy_pct": 25.357238389564035
+    },
+    {
+      "name": "final_cta_t64_n1024",
+      "kernel": "unpermute_cta_token_vec4_kernel",
+      "grid_size": 64,
+      "block_size": 256,
+      "waves_per_sm": 0.16,
+      "registers_per_thread": 34,
+      "static_shared_memory_bytes": 16,
+      "duration_ns": 3328.0,
+      "sm_throughput_pct": 1.6227263857364405,
+      "memory_throughput_pct": 21.722944630872483,
+      "achieved_occupancy_pct": 14.936822941525287
+    }
+  ],
+  "not_collected": [
+    "stall_long_scoreboard",
+    "eligible_warps_per_scheduler",
+    "global_load_sectors_per_request",
+    "global_store_sectors_per_request"
+  ]
+}

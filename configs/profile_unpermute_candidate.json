@@ -1,0 +1,63 @@
+{
+  "schema_version": "raggedroute.profile_suite.v1",
+  "suite_id": "rtx3080_unpermute_candidate_profile_v1",
+  "cases": [
+    {
+      "id": "unpermute.candidate.warp.t1024_n256",
+      "operator": "unpermute",
+      "variant": "cuda_warp_token_vec4",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260729,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "unpermute_warp_token_vec4_kernel",
+      "params": {
+        "T": 1024,
+        "E": 64,
+        "top_k": 2,
+        "N": 256,
+        "distribution": "uniform",
+        "zipf_s": 0
+      }
+    },
+    {
+      "id": "unpermute.candidate.cta.t64_n1024",
+      "operator": "unpermute",
+      "variant": "cuda_warp_token_vec4",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260729,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "unpermute_cta_token_vec4_kernel",
+      "params": {
+        "T": 64,
+        "E": 64,
+        "top_k": 2,
+        "N": 1024,
+        "distribution": "uniform",
+        "zipf_s": 0
+      }
+    },
+    {
+      "id": "unpermute.vllm.t64_n1024",
+      "operator": "unpermute",
+      "variant": "vllm_finalize_routing",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260729,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "finalize_routing",
+      "params": {
+        "T": 64,
+        "E": 64,
+        "top_k": 2,
+        "N": 1024,
+        "distribution": "uniform",
+        "zipf_s": 0
+      }
+    }
+  ]
+}

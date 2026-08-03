@@ -183,6 +183,18 @@ void test_pure_dispatch() {
   request.requested_kernel = {KernelFamily::kCudaOptimized, 1};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "dense GEMM implementation ids must be rejected for Histogram");
+
+  request.operator_kind = OperatorKind::kUnpermute;
+  request.signature = fp32_signature(request.operator_kind);
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 1};
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+          "research-only unpermute candidate must not enter public dispatch");
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 0};
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+          "unpermute optimized default must remain unavailable");
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 2};
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+          "unknown optimized unpermute ids must be rejected");
   request.requested_kernel = {KernelFamily::kCudaNaive, 1};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "the naive family must reject unknown implementation ids");

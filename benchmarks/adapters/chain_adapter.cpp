@@ -9,6 +9,7 @@
 #include "raggedroute/benchmark/adapter_utils.h"
 #include "raggedroute/benchmark/registry.h"
 #include "permute/cuda_candidate/optimized_internal.h"
+#include "unpermute/cuda_candidate/optimized_internal.h"
 
 namespace raggedroute::benchmark {
 namespace {
@@ -23,11 +24,15 @@ class ChainAdapter final : public BenchmarkAdapter {
   }
   std::string variant_name() const override { return variant_name_; }
   std::string description() const override {
-    const std::string suffix = variant_name_ == "cuda_permute_candidate"
-                                   ? " with the selected optimized permute"
-                                   : " baseline";
-    return include_router_projection_ ? "Seven-operator token-to-output" + suffix + " chain"
-                                      : "Six-operator logits-to-output" + suffix + " chain";
+    const std::string prefix = include_router_projection_
+                                   ? "Seven-operator token-to-output chain"
+                                   : "Six-operator logits-to-output chain";
+    if (variant_name_ == "cuda_permute_candidate") {
+      return prefix + " with the selected optimized Permute";
+    }
+    return variant_name_ == "cuda_unpermute_candidate"
+               ? prefix + " with optimized Unpermute"
+               : prefix + " baseline";
   }
   bool supports(MeasurementLevel level) const override {
     return level == MeasurementLevel::kChainSteady;
@@ -169,6 +174,16 @@ class ChainAdapter final : public BenchmarkAdapter {
     unpermute_args.tokens = tokens_;
     unpermute_args.top_k = 2;
     unpermute_args.output = output_;
+    if (variant_name_ == "cuda_unpermute_candidate") {
+      cuda_check(ops::launch_unpermute_optimized(
+                     static_cast<const float*>(unpermute_args.y_permuted.data),
+                     unpermute_args.route_pos,
+                     static_cast<const float*>(unpermute_args.route_weights.data),
+                     static_cast<float*>(unpermute_args.y.data), unpermute_args.tokens,
+                     unpermute_args.top_k, unpermute_args.output, stream),
+                 "chain research unpermute candidate");
+      return;
+    }
     operator_check(unpermute(unpermute_args, context), "chain unpermute operator");
   }
 
@@ -219,6 +234,15 @@ class ChainAdapter final : public BenchmarkAdapter {
             {"component_variant",
              variant_name_ == "cuda_permute_candidate"
                  ? std::string("cuda_naive_except_token_permute_candidate")
+                 : variant_name_ == "cuda_unpermute_candidate" ? std::string("mixed")
+                                                               : std::string("cuda_naive")},
+            {"permute_variant",
+             variant_name_ == "cuda_permute_candidate"
+                 ? std::string("cuda_token_owned_top2")
+                 : std::string("cuda_naive")},
+            {"unpermute_variant",
+             variant_name_ == "cuda_unpermute_candidate"
+                 ? std::string("cuda_warp_token_vec4")
                  : std::string("cuda_naive")},
             {"grouped_max_m_policy", std::string("worst_case_R")},
             {"materialize_sorted_route", false}};

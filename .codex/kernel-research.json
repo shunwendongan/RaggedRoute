@@ -27,9 +27,13 @@
   },
   "variants": {"baseline": "cuda_naive", "candidate": "cuda_candidate"},
   "output": {
-    "root": "profile",
+    "root": "out\\profile",
     "retention": {
-      "keep_raw_for": ["baseline", "final"],
+      "keep_raw_for": [
+        "baseline",
+        "promoted",
+        "final"
+      ],
       "rejected_candidate": "metrics-and-reason"
     }
   },
@@ -39,6 +43,6 @@
     "median_speedup": 1.03,
     "p95_regression_tolerance": 0.03,
     "max_shape_regression": 0.05,
-    "max_workspace_growth": 0.25
+    "max_workspace_growth": 0
   }
 }

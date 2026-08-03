@@ -232,6 +232,9 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
   if (operator_name == "unpermute") {
     std::vector<VariantDescriptor> variants = {
         naive_descriptor("token_owned_scalar_gather_reduce")};
+    variants.push_back(descriptor("cuda_warp_token_vec4", "in_tree_cuda_research",
+                                  "raggedroute.unpermute.cuda_candidate.v1", "not_applicable",
+                                  "shape_dispatched_warp_or_cta_top2_float4"));
     variants.push_back(descriptor("vllm_finalize_routing", "adapted_production_cuda",
                                   "vllm.finalizeMoeRoutingKernelLauncher.fp32.v1",
                                   "vllm@837eae64580c885101ee95b073aafb27a485e7ce",
@@ -268,7 +271,10 @@ std::vector<VariantDescriptor> available_suite_variant_descriptors(const std::st
     return {naive_descriptor("sequential_cuda_naive_chain"),
             descriptor("cuda_permute_candidate", "in_tree_cuda_candidate",
                        "raggedroute.chain.permute_candidate.v1", "not_applicable",
-                       "sequential_chain_with_optimized_permute")};
+                       "sequential_chain_with_optimized_permute"),
+            descriptor("cuda_unpermute_candidate", "in_tree_cuda_research",
+                       "raggedroute.chain.unpermute_candidate.v1", "not_applicable",
+                       "naive_chain_with_warp_token_vec4_unpermute")};
   }
   return {};
 }

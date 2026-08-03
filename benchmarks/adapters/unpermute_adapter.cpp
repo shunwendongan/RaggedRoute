@@ -8,6 +8,7 @@
 #include "raggedroute/benchmark/adapter_utils.h"
 #include "raggedroute/benchmark/library_baselines.h"
 #include "raggedroute/benchmark/registry.h"
+#include "../../src/unpermute/cuda_candidate/optimized_internal.h"
 
 namespace raggedroute::benchmark {
 namespace {
@@ -32,6 +33,7 @@ class UnpermuteAdapter final : public BenchmarkAdapter {
     experts_ = get_int_option(options, "E", 16);
     top_k_ = get_int_option(options, "top_k", 2);
     output_ = get_int_option(options, "N", 256);
+    pointer_offset_elements_ = get_int_option(options, "pointer_offset_elements", 0, 0);
     distribution_ = get_option(options, "distribution", "uniform");
     zipf_s_ = get_double_option(options, "zipf_s", 1.0);
     if (experts_ < top_k_ || experts_ > 64) {
@@ -76,21 +78,33 @@ class UnpermuteAdapter final : public BenchmarkAdapter {
       }
     }
 
-    y_permuted_.resize(y_permuted_host_.size());
+    y_permuted_storage_host_.assign(static_cast<std::size_t>(pointer_offset_elements_), -17.0F);
+    y_permuted_storage_host_.insert(y_permuted_storage_host_.end(), y_permuted_host_.begin(),
+                                    y_permuted_host_.end());
+    y_permuted_.resize(y_permuted_storage_host_.size());
     route_pos_.resize(route_pos_host_.size());
     route_weights_.resize(route_weights_host_.size());
-    y_.resize(expected_.size());
-    y_permuted_.copy_from_host(y_permuted_host_, stream);
+    y_.resize(expected_.size() + static_cast<std::size_t>(pointer_offset_elements_));
+    y_permuted_.copy_from_host(y_permuted_storage_host_, stream);
     route_pos_.copy_from_host(route_pos_host_, stream);
     route_weights_.copy_from_host(route_weights_host_, stream);
+    cuda_check(cudaMemsetAsync(y_.data(), 0, y_.bytes(), stream),
+               "initialize unpermute output storage");
   }
 
   void prepare_sample(MeasurementLevel, cudaStream_t) override {}
   void enqueue(MeasurementLevel level, cudaStream_t stream) override {
+    if (is_candidate()) {
+      cuda_check(ops::launch_unpermute_optimized(
+                     y_permuted_data(), route_pos_.data(), route_weights_.data(), y_data(),
+                     tokens_, top_k_, output_, stream),
+                 "launch_unpermute_optimized");
+      return;
+    }
 #if RAGGEDROUTE_HAS_VLLM_UNPERMUTE
     if (variant_name_ == "vllm_finalize_routing") {
       cuda_check(library_baseline::launch_vllm_finalize_routing(
-                     y_permuted_.data(), y_.data(), route_weights_.data(), route_pos_.data(),
+                     y_permuted_data(), y_data(), route_weights_.data(), route_pos_.data(),
                      tokens_, top_k_, output_, stream),
                  "vLLM finalizeMoeRoutingKernel");
       return;
@@ -98,16 +112,16 @@ class UnpermuteAdapter final : public BenchmarkAdapter {
 #endif
     if (level == MeasurementLevel::kKernelBody) {
       cuda_check(
-          ops::launch_unpermute_naive(y_permuted_.data(), route_pos_.data(), route_weights_.data(),
-                                      y_.data(), tokens_, top_k_, output_, stream),
+          ops::launch_unpermute_naive(y_permuted_data(), route_pos_.data(), route_weights_.data(),
+                                      y_data(), tokens_, top_k_, output_, stream),
           "launch_unpermute_naive");
       return;
     }
     UnpermuteArgs args;
-    args.y_permuted.data = y_permuted_.data();
+    args.y_permuted.data = y_permuted_data();
     args.route_pos = route_pos_.data();
     args.route_weights.data = route_weights_.data();
-    args.y.data = y_.data();
+    args.y.data = y_data();
     args.tokens = tokens_;
     args.top_k = top_k_;
     args.output = output_;
@@ -115,7 +129,9 @@ class UnpermuteAdapter final : public BenchmarkAdapter {
                    "unpermute operator");
   }
   ValidationResult validate(cudaStream_t stream) override {
-    return compare_floats(y_.copy_to_host(stream), expected_, 1.0e-6, 1.0e-5);
+    const auto storage = y_.copy_to_host(stream);
+    const auto begin = storage.begin() + pointer_offset_elements_;
+    return compare_floats(std::vector<float>(begin, storage.end()), expected_, 1.0e-6, 1.0e-5);
   }
   FieldMap case_config() const override {
     return {{"T", static_cast<std::int64_t>(tokens_)},
@@ -125,10 +141,22 @@ class UnpermuteAdapter final : public BenchmarkAdapter {
             {"N", static_cast<std::int64_t>(output_)},
             {"dtype", std::string("fp32")},
             {"accumulator_dtype", std::string("fp32")},
+            {"pointer_offset_elements", static_cast<std::int64_t>(pointer_offset_elements_)},
             {"distribution", distribution_},
             {"zipf_s", zipf_s_}};
   }
   FieldMap variant_config() const override {
+    if (is_candidate()) {
+      return {{"ownership", std::string("warp_or_cta_per_token")},
+              {"warps_per_cta", static_cast<std::int64_t>(output_ >= 512 ? 8 : 4)},
+              {"items_per_lane", static_cast<std::int64_t>(1)},
+              {"metadata_policy", std::string("lane0_shuffle_broadcast")},
+              {"large_output_metadata_policy", std::string("thread0_shared_broadcast")},
+              {"large_output_threshold", static_cast<std::int64_t>(512)},
+              {"vector_width_bytes", static_cast<std::int64_t>(16)},
+              {"alignment_policy", std::string("float4_fast_naive_fallback")},
+              {"top_k_policy", std::string("top2_fast_generic_fallback")}};
+    }
     if (variant_name_ == "vllm_finalize_routing") {
       return {{"upstream_symbol", std::string("finalizeMoeRoutingKernelLauncher")},
               {"ownership", std::string("token_owned")},
@@ -155,19 +183,27 @@ class UnpermuteAdapter final : public BenchmarkAdapter {
 
  private:
   static void reject_unknown(const OptionMap& options) {
-    const std::set<std::string> allowed = {"T", "E", "top_k", "N", "distribution", "zipf_s"};
+    const std::set<std::string> allowed = {"T", "E", "top_k", "N", "distribution", "zipf_s",
+                                           "pointer_offset_elements"};
     for (const auto& [name, unused] : options) {
       (void)unused;
       if (!allowed.count(name)) throw std::invalid_argument("unknown unpermute param: " + name);
     }
   }
+  bool is_candidate() const { return variant_name_ == "cuda_warp_token_vec4"; }
+  const float* y_permuted_data() const {
+    return y_permuted_.data() + pointer_offset_elements_;
+  }
+  float* y_data() { return y_.data() + pointer_offset_elements_; }
+
   int tokens_ = 0, experts_ = 0, top_k_ = 0, output_ = 0, route_pairs_ = 0;
+  int pointer_offset_elements_ = 0;
   std::string variant_name_;
   DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   double zipf_s_ = 0.0;
   std::string distribution_;
   std::vector<std::int32_t> route_pos_host_;
-  std::vector<float> y_permuted_host_, route_weights_host_, expected_;
+  std::vector<float> y_permuted_host_, y_permuted_storage_host_, route_weights_host_, expected_;
   DeviceBuffer<std::int32_t> route_pos_;
   DeviceBuffer<float> y_permuted_, route_weights_, y_;
 };

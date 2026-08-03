@@ -1,0 +1,16 @@
+{
+  "schema_version": "raggedroute.cross_backend_suite.v1",
+  "suite_id": "rtx3080_triton_reference_smoke_v1",
+  "protocol": "smoke",
+  "process_runs": 1,
+  "common": {"warmup": 3, "samples": 5, "kernel_repeats": 2, "seed": 20260729, "cache_mode": "warm"},
+  "cases": [
+    {"id": "dense_gemm.fp32.m256_n256_k256.cross", "operator": "dense_gemm", "levels": ["l2"], "params": {"M": 256, "N": 256, "K": 256}, "variants": [{"name": "triton_reference", "backend": "triton", "reference_baseline": true}, {"name": "cuda_naive", "backend": "cpp", "reference_baseline": false}]},
+    {"id": "topk_gate.t2048_e64.cross", "operator": "topk_gate", "levels": ["l2"], "kernel_repeats_by_level": {"l2": 10}, "params": {"T": 2048, "E": 64}, "variants": [{"name": "triton_reference", "backend": "triton", "reference_baseline": true}, {"name": "cuda_naive", "backend": "cpp", "reference_baseline": false}]},
+    {"id": "histogram.zipf14.t2048_e64.cross", "operator": "histogram", "levels": ["l2"], "kernel_repeats_by_level": {"l2": 10}, "params": {"T": 2048, "E": 64, "top_k": 2, "distribution": "zipf", "zipf_s": 1.4}, "variants": [{"name": "triton_reference", "backend": "triton", "reference_baseline": true}, {"name": "cuda_naive", "backend": "cpp", "reference_baseline": false}]},
+    {"id": "exclusive_scan.e64.cross", "operator": "exclusive_scan", "levels": ["l2"], "kernel_repeats_by_level": {"l2": 20}, "params": {"E": 64, "R": 4096}, "variants": [{"name": "triton_reference", "backend": "triton", "reference_baseline": true}, {"name": "cuda_naive", "backend": "cpp", "reference_baseline": false}]},
+    {"id": "token_permute.zipf14.t512_k256.cross", "operator": "token_permute", "levels": ["l2"], "kernel_repeats_by_level": {"l2": 2}, "params": {"T": 512, "E": 64, "top_k": 2, "K": 256, "distribution": "zipf", "zipf_s": 1.4, "materialize_sorted_route": true}, "variants": [{"name": "triton_reference", "backend": "triton", "reference_baseline": true}, {"name": "cuda_naive", "backend": "cpp", "reference_baseline": false}]},
+    {"id": "grouped_gemm.zipf14.t512_k128_n128.cross", "operator": "grouped_gemm", "levels": ["l2"], "kernel_repeats_by_level": {"l2": 2}, "params": {"T": 512, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}, "variants": [{"name": "triton_reference", "backend": "triton", "reference_baseline": true}, {"name": "cuda_naive", "backend": "cpp", "reference_baseline": false}]},
+    {"id": "unpermute.uniform.t1024_n256.cross", "operator": "unpermute", "levels": ["l2"], "kernel_repeats_by_level": {"l2": 5}, "params": {"T": 1024, "E": 64, "top_k": 2, "N": 256, "distribution": "uniform", "zipf_s": 0.0}, "variants": [{"name": "triton_reference", "backend": "triton", "reference_baseline": true}, {"name": "cuda_naive", "backend": "cpp", "reference_baseline": false}]}
+  ]
+}

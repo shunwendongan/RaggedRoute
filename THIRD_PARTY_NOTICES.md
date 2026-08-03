@@ -43,6 +43,10 @@ RaggedRoute kernels.
 | NVIDIA CUTLASS | <https://github.com/NVIDIA/cutlass> | Header-only/templates, system or pinned FetchContent | BSD-3-Clause |
 | vLLM Top-K gate adaptation | <https://github.com/vllm-project/vllm/tree/55c98e370aa058f567a9e682dc0652bdfba6b0bb> | Modified FP32 benchmark-only source in `src/topk_gate/library_baseline` | Apache-2.0; retained in `third_party/licenses/vLLM-Apache-2.0.txt` |
 | vLLM permute/unpermute adaptation | <https://github.com/vllm-project/vllm/tree/837eae64580c885101ee95b073aafb27a485e7ce> | Modified FP32 benchmark-only source in `src/{permute,unpermute}/library_baseline` | Apache-2.0; retained in `third_party/licenses/vLLM-Apache-2.0.txt` |
+| Triton teaching kernels and primitives | <https://github.com/triton-lang/triton/tree/4cf21fe8f40049dd95afa2beec02aae84598f1ac> | Modified benchmark-only Python references in `src/{dense_gemm,histogram,grouped_gemm}/triton` | MIT; retained in `third_party/licenses/Triton-MIT.txt` |
+| FlagGems Top-K / scan adaptations | <https://github.com/flagos-ai/FlagGems/tree/43bf8524eb431cac4c891413566ebb1512c26099> | Modified benchmark-only Python references in `src/{topk_gate,scan}/triton` | Apache-2.0; retained in `third_party/licenses/vLLM-Apache-2.0.txt` |
+| TransformerEngine permutation adaptations | <https://github.com/NVIDIA/TransformerEngine/tree/bffde8f4a0a4eea9036dc753e28269247e5de69d> | Modified benchmark-only Python references in `src/{permute,unpermute}/triton` | Apache-2.0; retained in `third_party/licenses/vLLM-Apache-2.0.txt` |
+| vLLM weighted-reduction adaptation | <https://github.com/vllm-project/vllm/tree/c8602c79062440074a018c1d5f875a5571eb6881> | Modified benchmark-only Python reference in `src/unpermute/triton` | Apache-2.0; retained in `third_party/licenses/vLLM-Apache-2.0.txt` |
 
 This file records provenance; it does not replace the license distributed by each dependency.
 When a source snapshot or adaptation is added, its applicable license text is retained alongside

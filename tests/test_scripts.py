@@ -35,6 +35,12 @@ profile_benchmarks = load_module(
 freeze_results = load_module(
     "freeze_results", ROOT / "scripts" / "freeze_results.py"
 )
+run_cross_backend = load_module(
+    "run_cross_backend", ROOT / "scripts" / "run_cross_backend_benchmarks.py"
+)
+compare_cross_backend = load_module(
+    "compare_cross_backend", ROOT / "scripts" / "compare_cross_backend.py"
+)
 
 
 def make_suite_v2() -> dict:
@@ -605,6 +611,66 @@ class SuiteTests(unittest.TestCase):
             group["promotion_baseline"] = True
         with self.assertRaisesRegex(ValueError, "exactly one"):
             compare_results.compare_groups(duplicate)
+
+    def test_triton_source_provenance_and_windows_setup_are_present(self) -> None:
+        operators = (
+            "dense_gemm", "topk_gate", "histogram", "scan", "permute", "grouped_gemm", "unpermute"
+        )
+        for operator in operators:
+            directory = ROOT / "src" / operator / "triton"
+            self.assertTrue((directory / "baseline.py").is_file())
+            provenance = (directory / "UPSTREAM.md").read_text(encoding="utf-8")
+            self.assertIn("Revision:", provenance)
+            self.assertIn("benchmark-only", provenance)
+        setup = (ROOT / "scripts" / "setup_triton_windows.ps1").read_text(encoding="utf-8")
+        self.assertIn("torch==2.12.1+cu130", setup)
+        self.assertIn("triton-windows==3.7.1.post27", setup)
+        self.assertTrue((ROOT / "third_party" / "licenses" / "Triton-MIT.txt").is_file())
+
+    def test_cross_backend_suite_and_pairing_remain_reference_only(self) -> None:
+        suite = run_cross_backend.load_suite(
+            ROOT / "configs" / "benchmark_rtx3080_cross_backend_smoke.json"
+        )
+        self.assertEqual(suite["schema_version"], "raggedroute.cross_backend_suite.v1")
+        self.assertEqual({case["operator"] for case in suite["cases"]}, {
+            "dense_gemm", "topk_gate", "histogram", "exclusive_scan", "token_permute", "grouped_gemm", "unpermute"
+        })
+        for case in suite["cases"]:
+            reference = next(item for item in case["variants"] if item.get("reference_baseline"))
+            self.assertEqual(reference["backend"], "triton")
+
+        reference = self.make_benchmark_record(1)
+        reference["variant"] = "triton_reference"
+        reference["variant_config"].update({
+            "implementation_category": "in_tree_triton_reference",
+            "implementation_version": "raggedroute.triton_reference.v1",
+            "compiler_stack": "Triton 3.7.1",
+        })
+        reference["environment"]["cuda_compiler"] = "Triton 3.7.1"
+        reference["environment"]["cuda_runtime"] = 13000
+        candidate = copy.deepcopy(self.make_benchmark_record(1))
+        reference["excluded_steps"] = ["input_generation", "cpu_reference", "h2d_copy", "workspace_allocation"]
+        candidate["excluded_steps"] = list(reference["excluded_steps"])
+        case = {
+            "id": "case", "operator": "histogram", "levels": ["l2"],
+            "params": {"T": 4, "E": 8, "top_k": 2},
+        }
+        reference["case_config"].update(case["params"])
+        candidate["case_config"].update(case["params"])
+        toolchains = compare_cross_backend.verify_pair(
+            compare_cross_backend.summarize([reference]),
+            compare_cross_backend.summarize([candidate]),
+            case,
+        )
+        self.assertIn("reference_toolchain", toolchains)
+        self.assertNotEqual(
+            toolchains["reference_toolchain"]["cuda_runtime"],
+            toolchains["candidate_toolchain"]["cuda_runtime"],
+        )
+
+    def test_cross_backend_comparison_rejects_missing_records_clearly(self) -> None:
+        with self.assertRaisesRegex(ValueError, "missing benchmark records"):
+            compare_cross_backend.summarize([])
 
 
 if __name__ == "__main__":

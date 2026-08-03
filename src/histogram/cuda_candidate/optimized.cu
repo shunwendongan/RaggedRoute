@@ -94,7 +94,7 @@ cudaError_t launch_histogram_optimized(const std::int32_t* expert_ids, std::int3
   if (!is_histogram_optimized_implementation(implementation_id)) {
     return cudaErrorInvalidValue;
   }
-  if (implementation_id == kHistogramH5SingleBinImplementation && experts == 1) {
+  if (implementation_id == kHistogramCandidateV2Implementation && experts == 1) {
     histogram_single_bin_write_kernel<<<1, 1, 0, caller_stream>>>(counts, route_pairs);
     return cudaGetLastError();
   }
@@ -107,9 +107,8 @@ cudaError_t launch_histogram_optimized(const std::int32_t* expert_ids, std::int3
     constexpr std::size_t kItemsPerBlock = kThreadsPerBlock * kItemsPerThread;
     const std::size_t blocks =
         (static_cast<std::size_t>(route_pairs) + kItemsPerBlock - 1) / kItemsPerBlock;
-    const std::uint32_t max_blocks = histogram_block_private_max_blocks(implementation_id);
-    const unsigned int launch_blocks =
-        static_cast<unsigned int>(blocks < max_blocks ? blocks : max_blocks);
+    const unsigned int launch_blocks = static_cast<unsigned int>(
+        blocks < kHistogramBlockPrivateMaxBlocks ? blocks : kHistogramBlockPrivateMaxBlocks);
     histogram_block_private_kernel<<<launch_blocks, kThreadsPerBlock, 0, caller_stream>>>(
         expert_ids, counts, route_pairs, experts);
     return cudaGetLastError();

@@ -183,23 +183,14 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
   if (operator_name == "histogram") {
     std::vector<VariantDescriptor> variants = {naive_descriptor("global_atomic")};
     variants.push_back(descriptor("cuda_candidate", "in_tree_cuda",
-                                  "raggedroute.histogram.cuda_candidate.v1",
-                                  "not_applicable", "shape_dispatched_shared_histogram"));
+                                  "raggedroute.histogram.cuda_candidate.v2", "not_applicable",
+                                  "single_bin_direct_write_else_v1"));
     variants.push_back(descriptor("cuda_candidate_v1", "in_tree_cuda",
                                   "raggedroute.histogram.cuda_candidate.v1",
                                   "not_applicable", "shape_dispatched_shared_histogram"));
-    variants.push_back(descriptor("cuda_candidate_h5_single_bin", "in_tree_cuda_candidate",
-                                  "raggedroute.histogram.h5.v1", "not_applicable",
+    variants.push_back(descriptor("cuda_candidate_v2", "in_tree_cuda_candidate",
+                                  "raggedroute.histogram.cuda_candidate.v2", "not_applicable",
                                   "single_bin_direct_write_else_v1"));
-    variants.push_back(descriptor("cuda_candidate_h6_cap256", "in_tree_cuda_candidate",
-                                  "raggedroute.histogram.h6.cap256.v1", "not_applicable",
-                                  "block_private_grid_cap_256"));
-    variants.push_back(descriptor("cuda_candidate_h6_cap384", "in_tree_cuda_candidate",
-                                  "raggedroute.histogram.h6.cap384.v1", "not_applicable",
-                                  "block_private_grid_cap_384"));
-    variants.push_back(descriptor("cuda_candidate_h6_cap512", "in_tree_cuda_candidate",
-                                  "raggedroute.histogram.h6.cap512.v1", "not_applicable",
-                                  "block_private_grid_cap_512"));
 #if RAGGEDROUTE_HAS_CCCL
     variants.push_back(descriptor("cub_device_histogram", "nvidia_cccl",
                                   "cub::DeviceHistogram::HistogramEven", cccl_revision(),

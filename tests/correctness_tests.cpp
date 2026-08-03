@@ -92,9 +92,7 @@ void run_histogram_candidate_matrix(cudaStream_t stream, std::uint64_t* seed) {
                       "cuda_candidate"},
                      stream, (*seed)++);
   }
-  for (const std::string& variant : {"cuda_candidate_v1", "cuda_candidate_h5_single_bin",
-                                     "cuda_candidate_h6_cap256", "cuda_candidate_h6_cap384",
-                                     "cuda_candidate_h6_cap512"}) {
+  for (const std::string& variant : {"cuda_candidate_v1", "cuda_candidate_v2"}) {
     for (const int route_count : {1, 4096, 8192, 32768, 65536, 1048576}) {
       run_adapter_case({"histogram",
                         {{"T", std::to_string(route_count)},

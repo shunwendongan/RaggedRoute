@@ -80,7 +80,7 @@ void test_pure_dispatch() {
     require_status(select_kernel(request, &decision), "SM86 FP32 auto dispatch");
     if (kind == OperatorKind::kHistogram) {
       require(decision.kernel.family == KernelFamily::kCudaOptimized &&
-                  decision.kernel.implementation_id == 101,
+                  decision.kernel.implementation_id == 102,
               "SM86 Histogram auto dispatch must select the promoted candidate");
     } else {
       require(decision.kernel.family == KernelFamily::kCudaNaive &&
@@ -187,7 +187,7 @@ void test_pure_dispatch() {
     require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
             "benchmark-only grouped GEMM candidates must not be runtime-dispatchable");
   }
-  for (const std::uint32_t implementation : {101U, 102U, 103U, 104U, 105U}) {
+  for (const std::uint32_t implementation : {101U, 102U}) {
     request.requested_kernel = {KernelFamily::kCudaOptimized, implementation};
     require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
             "Histogram implementation ids must be rejected for dense GEMM");
@@ -195,14 +195,14 @@ void test_pure_dispatch() {
 
   request.operator_kind = OperatorKind::kHistogram;
   request.signature = fp32_signature(request.operator_kind);
-  for (const std::uint32_t implementation : {101U, 102U, 103U, 104U, 105U}) {
+  for (const std::uint32_t implementation : {101U, 102U}) {
     request.requested_kernel = {KernelFamily::kCudaOptimized, implementation};
     require_status(select_kernel(request, &decision), "explicit histogram candidate dispatch");
     require(decision.kernel.family == KernelFamily::kCudaOptimized &&
                 decision.kernel.implementation_id == implementation,
             "Histogram dispatch must preserve its operator-local implementation id");
   }
-  request.requested_kernel = {KernelFamily::kCudaOptimized, 106};
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 103};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "unknown Histogram experiment ids must be rejected");
   request.requested_kernel = {KernelFamily::kCudaNaive, 0};

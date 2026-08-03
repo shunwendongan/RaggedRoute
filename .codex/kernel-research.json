@@ -10,12 +10,11 @@
       "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\histogram-v2"
     ],
     "smoke": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\histogram\\benchmark\\candidate_v2_experiments_l1.json --output out\\benchmark\\histogram-v2-experiments-l1.jsonl",
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\histogram\\benchmark\\candidate_v2_experiments_l2.json --output out\\benchmark\\histogram-v2-experiments-l2.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\histogram\\benchmark\\candidate_smoke.json --output out\\benchmark\\histogram-v2-smoke.jsonl"
     ],
     "release": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\histogram\\benchmark\\candidate_l1_release.json --output out\\benchmark\\histogram-v2-final-l1.jsonl",
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\histogram\\benchmark\\candidate_l2_release.json --output out\\benchmark\\histogram-v2-final-l2.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\histogram\\benchmark\\candidate_v2_final_l1.json --output out\\benchmark\\histogram-v2-final-l1.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\histogram\\benchmark\\candidate_v2_final_l2.json --output out\\benchmark\\histogram-v2-final-l2.jsonl"
     ]
   },
   "benchmark": {
@@ -23,12 +22,12 @@
     "profile_cases": [
       {
         "name": "histogram.single-hot.r4096_e1",
-        "arguments": ["--operator", "histogram", "--variant", "cuda_candidate_h5_single_bin", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=4096", "--param", "E=1", "--param", "top_k=1", "--param", "distribution=single_hot"],
+        "arguments": ["--operator", "histogram", "--variant", "cuda_candidate", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=4096", "--param", "E=1", "--param", "top_k=1", "--param", "distribution=single_hot"],
         "kernel_regex": "histogram_single_bin_write_kernel"
       },
       {
         "name": "histogram.uniform.r1m_e64",
-        "arguments": ["--operator", "histogram", "--variant", "cuda_candidate_h6_cap256", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=524288", "--param", "E=64", "--param", "top_k=2", "--param", "distribution=uniform"],
+        "arguments": ["--operator", "histogram", "--variant", "cuda_candidate", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=524288", "--param", "E=64", "--param", "top_k=2", "--param", "distribution=uniform"],
         "kernel_regex": "histogram_block_private_kernel"
       }
     ],
@@ -36,7 +35,7 @@
   },
   "variants": {
     "baseline": "min(cuda_candidate_v1,cub_device_histogram)",
-    "candidate": "cuda_candidate_h5_single_bin|cuda_candidate_h6_cap256|cuda_candidate_h6_cap384|cuda_candidate_h6_cap512"
+    "candidate": "cuda_candidate"
   },
   "output": {
     "root": "out\\profile\\histogram-v2",

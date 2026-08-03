@@ -1,0 +1,152 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_topk_gate_controlled_l2_stability_v2",
+  "protocol": "release",
+  "process_runs": 5,
+  "common": {
+    "warmup": 20,
+    "samples": 20,
+    "kernel_repeats": 100,
+    "seed": 20260803,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "topk_gate.controlled_v2.main_explicit",
+      "operator": "topk_gate",
+      "levels": ["l1", "l2"],
+      "kernel_repeats_by_level": {"l1": 1000, "l2": 1000},
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cuda_warp_pair_top2_v1", "promotion_baseline": false},
+        {"name": "cuda_subwarp_pair_top2_v2", "promotion_baseline": false},
+        {"name": "cuda_vector_pair_top2_v3", "promotion_baseline": false}
+      ],
+      "matrix": {
+        "T": [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
+        "E": [2, 3, 4, 7, 8, 9, 15, 16, 17, 31, 32, 33, 48, 63, 64]
+      },
+      "params": {"input_mode": "random", "input_alignment": 16}
+    },
+    {
+      "id": "topk_gate.controlled_v2.main_auto",
+      "operator": "topk_gate",
+      "levels": ["l2"],
+      "kernel_repeats_by_level": {"l2": 1000},
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cuda_auto", "promotion_baseline": false}
+      ],
+      "matrix": {
+        "T": [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
+        "E": [2, 3, 4, 7, 8, 9, 15, 16, 17, 31, 32, 33, 48, 63, 64]
+      },
+      "params": {"input_mode": "random", "input_alignment": 16}
+    },
+    {
+      "id": "topk_gate.controlled_v2.cub_pair",
+      "operator": "topk_gate",
+      "levels": ["l1"],
+      "kernel_repeats_by_level": {"l1": 1000},
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cuda_subwarp_pair_top2_v2", "promotion_baseline": false},
+        {"name": "cuda_vector_pair_top2_v3", "promotion_baseline": false},
+        {"name": "cub_block_radix_top2", "promotion_baseline": false}
+      ],
+      "matrix": {
+        "T": [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
+        "E": [2, 3, 4, 7, 8, 9, 15, 16, 17, 31, 32, 33, 48, 63, 64]
+      },
+      "params": {"input_mode": "random", "input_alignment": 16}
+    },
+    {
+      "id": "topk_gate.controlled_v2.vllm_pair",
+      "operator": "topk_gate",
+      "levels": ["l1"],
+      "kernel_repeats_by_level": {"l1": 1000},
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cuda_subwarp_pair_top2_v2", "promotion_baseline": false},
+        {"name": "cuda_vector_pair_top2_v3", "promotion_baseline": false},
+        {"name": "vllm_row_packed_top2", "promotion_baseline": false}
+      ],
+      "matrix": {
+        "T": [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
+        "E": [2, 4, 8, 16, 32, 64]
+      },
+      "params": {"input_mode": "random", "input_alignment": 16}
+    },
+    {
+      "id": "topk_gate.controlled_v2.cold_t2048_e64",
+      "operator": "topk_gate",
+      "levels": ["l1", "l2"],
+      "cache_mode": "cold_scrub",
+      "cache_scrub_bytes": 67108864,
+      "kernel_repeats_by_level": {"l1": 1, "l2": 1},
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cuda_warp_pair_top2_v1", "promotion_baseline": false},
+        {"name": "cuda_subwarp_pair_top2_v2", "promotion_baseline": false},
+        {"name": "cuda_vector_pair_top2_v3", "promotion_baseline": false}
+      ],
+      "params": {"T": 2048, "E": 64, "input_mode": "random", "input_alignment": 16}
+    },
+    {
+      "id": "topk_gate.controlled_v2.cold_t2048_e64.auto",
+      "operator": "topk_gate",
+      "levels": ["l2"],
+      "cache_mode": "cold_scrub",
+      "cache_scrub_bytes": 67108864,
+      "kernel_repeats_by_level": {"l2": 1},
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cuda_auto", "promotion_baseline": false}
+      ],
+      "params": {"T": 2048, "E": 64, "input_mode": "random", "input_alignment": 16}
+    },
+    {
+      "id": "topk_gate.controlled_v2.cold_t2048_e64.library_pair",
+      "operator": "topk_gate",
+      "levels": ["l1"],
+      "cache_mode": "cold_scrub",
+      "cache_scrub_bytes": 67108864,
+      "kernel_repeats_by_level": {"l1": 1},
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cub_block_radix_top2", "promotion_baseline": false},
+        {"name": "vllm_row_packed_top2", "promotion_baseline": false}
+      ],
+      "params": {"T": 2048, "E": 64, "input_mode": "random", "input_alignment": 16}
+    },
+    {
+      "id": "topk_gate.controlled_v2.ties_t2048_e64",
+      "operator": "topk_gate",
+      "levels": ["l1"],
+      "kernel_repeats_by_level": {"l1": 1000},
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cuda_warp_pair_top2_v1", "promotion_baseline": false},
+        {"name": "cuda_subwarp_pair_top2_v2", "promotion_baseline": false},
+        {"name": "cuda_vector_pair_top2_v3", "promotion_baseline": false},
+        {"name": "cub_block_radix_top2", "promotion_baseline": false},
+        {"name": "vllm_row_packed_top2", "promotion_baseline": false}
+      ],
+      "params": {"T": 2048, "E": 64, "input_mode": "duplicate_max", "input_alignment": 16}
+    },
+    {
+      "id": "topk_gate.controlled_v2.align4_t2048_e64",
+      "operator": "topk_gate",
+      "levels": ["l1"],
+      "kernel_repeats_by_level": {"l1": 1000},
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cuda_warp_pair_top2_v1", "promotion_baseline": false},
+        {"name": "cuda_subwarp_pair_top2_v2", "promotion_baseline": false},
+        {"name": "cuda_vector_pair_top2_v3", "promotion_baseline": false},
+        {"name": "cub_block_radix_top2", "promotion_baseline": false}
+      ],
+      "params": {"T": 2048, "E": 64, "input_mode": "random", "input_alignment": 4}
+    }
+  ]
+}

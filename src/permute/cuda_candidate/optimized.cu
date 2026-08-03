@@ -11,8 +11,6 @@ namespace {
 
 constexpr int kMaxExperts = 64;
 constexpr int kBlockPartialThreads = 256;
-constexpr int kTokenTileTokens = 4;
-constexpr int kTokenTileThreads = 128;
 
 bool is_aligned_16(const void* pointer) {
   return reinterpret_cast<std::uintptr_t>(pointer) % alignof(float4) == 0;
@@ -97,110 +95,6 @@ __global__ void token_permute_token_owned_top2_kernel(
       x_permuted[static_cast<std::size_t>(destinations[0]) * hidden + column] = value;
       x_permuted[static_cast<std::size_t>(destinations[1]) * hidden + column] = value;
     }
-  }
-}
-
-__device__ __forceinline__ unsigned int lanes_before(int lane) {
-  return lane == 0 ? 0u : ((1u << lane) - 1u);
-}
-
-template <bool Aggregate, bool Vectorized>
-__global__ void token_permute_token_tile4_top2_kernel(
-    const float* x, const std::int32_t* expert_ids, const std::int32_t* offsets,
-    std::int32_t* cursors, float* x_permuted, std::int32_t* route_pos,
-    std::int32_t* sorted_route, int tokens, int hidden) {
-  __shared__ int destinations[kTokenTileTokens * 2];
-  const int warp = static_cast<int>(threadIdx.x) / warpSize;
-  const int lane = static_cast<int>(threadIdx.x) % warpSize;
-  const int first_token = static_cast<int>(blockIdx.x) * kTokenTileTokens;
-  const int valid_tokens = min(kTokenTileTokens, tokens - first_token);
-
-  if (warp == 0) {
-    const int valid_routes = valid_tokens * 2;
-    const bool valid = lane < valid_routes;
-    const unsigned int active = __ballot_sync(0xffffffffu, valid);
-    if (valid) {
-      const int route = first_token * 2 + lane;
-      const int expert = expert_ids[route];
-      int local_rank = 0;
-      int base = 0;
-      if constexpr (Aggregate) {
-        const unsigned int peers = __match_any_sync(active, expert);
-        const int leader = __ffs(static_cast<int>(peers)) - 1;
-        local_rank = __popc(peers & lanes_before(lane));
-        if (lane == leader) base = atomicAdd(cursors + expert, __popc(peers));
-        base = __shfl_sync(peers, base, leader);
-      } else {
-        base = atomicAdd(cursors + expert, 1);
-      }
-      const int destination = offsets[expert] + base + local_rank;
-      destinations[lane] = destination;
-      route_pos[route] = destination;
-      if (sorted_route != nullptr) sorted_route[destination] = route;
-    }
-  }
-  __syncthreads();
-
-  if (warp >= valid_tokens) return;
-  const int token = first_token + warp;
-  const int destination0 = destinations[warp * 2];
-  const int destination1 = destinations[warp * 2 + 1];
-  if constexpr (Vectorized) {
-    const int vectors = hidden / 4;
-    const auto* source =
-        reinterpret_cast<const float4*>(x + static_cast<std::size_t>(token) * hidden);
-    auto* target0 = reinterpret_cast<float4*>(
-        x_permuted + static_cast<std::size_t>(destination0) * hidden);
-    auto* target1 = reinterpret_cast<float4*>(
-        x_permuted + static_cast<std::size_t>(destination1) * hidden);
-    for (int vector = lane; vector < vectors; vector += warpSize) {
-      const float4 value = source[vector];
-      target0[vector] = value;
-      target1[vector] = value;
-    }
-  } else {
-    for (int column = lane; column < hidden; column += warpSize) {
-      const float value = x[static_cast<std::size_t>(token) * hidden + column];
-      x_permuted[static_cast<std::size_t>(destination0) * hidden + column] = value;
-      x_permuted[static_cast<std::size_t>(destination1) * hidden + column] = value;
-    }
-  }
-}
-
-__global__ void token_permute_prepare_offsets_fused_kernel(
-    const std::int32_t* expert_ids, std::int32_t* counts, std::int32_t* offsets,
-    std::int32_t* cursors, int route_pairs, int experts) {
-  __shared__ int shared_counts[kMaxExperts];
-  const int thread = static_cast<int>(threadIdx.x);
-  const int lane = thread % warpSize;
-  if (thread < experts) shared_counts[thread] = 0;
-  __syncthreads();
-
-  const int iterations = (route_pairs + static_cast<int>(blockDim.x) - 1) /
-                         static_cast<int>(blockDim.x);
-  for (int iteration = 0; iteration < iterations; ++iteration) {
-    const int route = iteration * static_cast<int>(blockDim.x) + thread;
-    const bool valid = route < route_pairs;
-    const unsigned int active = __ballot_sync(0xffffffffu, valid);
-    if (valid) {
-      const int expert = expert_ids[route];
-      const unsigned int peers = __match_any_sync(active, expert);
-      const int leader = __ffs(static_cast<int>(peers)) - 1;
-      if (lane == leader) atomicAdd(shared_counts + expert, __popc(peers));
-    }
-  }
-  __syncthreads();
-
-  if (thread == 0) {
-    int running = 0;
-    for (int expert = 0; expert < experts; ++expert) {
-      const int count = shared_counts[expert];
-      counts[expert] = count;
-      offsets[expert] = running;
-      cursors[expert] = 0;
-      running += count;
-    }
-    offsets[experts] = running;
   }
 }
 
@@ -327,30 +221,6 @@ cudaError_t launch_token_owned_top2(
   return cudaGetLastError();
 }
 
-template <bool Aggregate>
-cudaError_t launch_token_tile4_top2(
-    const float* x, const std::int32_t* expert_ids, const std::int32_t* offsets,
-    std::int32_t* cursors, float* x_permuted, std::int32_t* route_pos,
-    std::int32_t* sorted_route, int tokens, int top_k, int hidden, cudaStream_t stream) {
-  if (top_k != 2) {
-    return launch_token_owned_top2(x, expert_ids, offsets, cursors, x_permuted, route_pos,
-                                   sorted_route, tokens, top_k, hidden, stream);
-  }
-  const int blocks = (tokens + kTokenTileTokens - 1) / kTokenTileTokens;
-  const bool vectorized =
-      hidden % 4 == 0 && is_aligned_16(x) && is_aligned_16(x_permuted);
-  if (vectorized) {
-    token_permute_token_tile4_top2_kernel<Aggregate, true>
-        <<<blocks, kTokenTileThreads, 0, stream>>>(x, expert_ids, offsets, cursors, x_permuted,
-                                                   route_pos, sorted_route, tokens, hidden);
-  } else {
-    token_permute_token_tile4_top2_kernel<Aggregate, false>
-        <<<blocks, kTokenTileThreads, 0, stream>>>(x, expert_ids, offsets, cursors, x_permuted,
-                                                   route_pos, sorted_route, tokens, hidden);
-  }
-  return cudaGetLastError();
-}
-
 cudaError_t launch_block_partial(
     const float* x, const std::int32_t* expert_ids, const std::int32_t* offsets,
     std::int32_t* cursors, float* x_permuted, std::int32_t* route_pos,
@@ -375,23 +245,6 @@ cudaError_t launch_block_partial(
 }
 
 }  // namespace
-
-cudaError_t launch_token_permute_prepare_offsets_fused(
-    const std::int32_t* expert_ids, std::int32_t* counts, std::int32_t* offsets,
-    std::int32_t* cursors, int tokens, int experts, int top_k,
-    cudaStream_t caller_stream) {
-  if (tokens < 0 || experts <= 0 || experts > kMaxExperts || top_k <= 0 ||
-      top_k > experts || tokens > std::numeric_limits<int>::max() / top_k) {
-    return cudaErrorInvalidValue;
-  }
-  if (tokens == 0) return cudaSuccess;
-  if (expert_ids == nullptr || counts == nullptr || offsets == nullptr || cursors == nullptr) {
-    return cudaErrorInvalidValue;
-  }
-  token_permute_prepare_offsets_fused_kernel<<<1, kBlockPartialThreads, 0, caller_stream>>>(
-      expert_ids, counts, offsets, cursors, tokens * top_k, experts);
-  return cudaGetLastError();
-}
 
 cudaError_t launch_token_permute_optimized(
     const float* x, const std::int32_t* expert_ids, const std::int32_t* offsets,
@@ -424,14 +277,6 @@ cudaError_t launch_token_permute_optimized(
       return launch_block_partial(x, expert_ids, offsets, cursors, x_permuted, route_pos,
                                   sorted_route, route_pairs, experts, top_k, hidden,
                                   caller_stream);
-    case kTokenPermuteTokenTile4DirectImplementation:
-      return launch_token_tile4_top2<false>(x, expert_ids, offsets, cursors, x_permuted,
-                                            route_pos, sorted_route, tokens, top_k, hidden,
-                                            caller_stream);
-    case kTokenPermuteTokenTile4WarpAggregatedImplementation:
-      return launch_token_tile4_top2<true>(x, expert_ids, offsets, cursors, x_permuted,
-                                           route_pos, sorted_route, tokens, top_k, hidden,
-                                           caller_stream);
     default:
       return cudaErrorInvalidValue;
   }

@@ -17,22 +17,12 @@ namespace {
 bool is_optimized_variant(const std::string& name) {
   return name == "cuda_atomic_vectorized_128" || name == "cuda_atomic_vectorized_64" ||
          name == "cuda_atomic_vectorized_256" || name == "cuda_token_owned_top2" ||
-         name == "cuda_block_partial" || name == "cuda_token_tile4_direct" ||
-         name == "cuda_token_tile4_warp_aggregated" || name == "cuda_candidate" ||
-         name == "cuda_candidate_from_ids" ||
-         name == "cuda_fused_prepare_token_owned_from_ids" ||
-         name == "cuda_fused_prepare_warp_aggregated_from_ids";
+         name == "cuda_block_partial" || name == "cuda_candidate" ||
+         name == "cuda_candidate_from_ids";
 }
 
 bool is_from_ids_variant(const std::string& name) {
-  return name == "cuda_naive_from_ids" || name == "cuda_candidate_from_ids" ||
-         name == "cuda_fused_prepare_token_owned_from_ids" ||
-         name == "cuda_fused_prepare_warp_aggregated_from_ids";
-}
-
-bool is_fused_prepare_variant(const std::string& name) {
-  return name == "cuda_fused_prepare_token_owned_from_ids" ||
-         name == "cuda_fused_prepare_warp_aggregated_from_ids";
+  return name == "cuda_naive_from_ids" || name == "cuda_candidate_from_ids";
 }
 
 std::uint32_t optimized_implementation(const std::string& name) {
@@ -45,14 +35,6 @@ std::uint32_t optimized_implementation(const std::string& name) {
   if (name == "cuda_token_owned_top2")
     return ops::kTokenPermuteTokenOwnedTop2Implementation;
   if (name == "cuda_block_partial") return ops::kTokenPermuteBlockPartialImplementation;
-  if (name == "cuda_token_tile4_direct")
-    return ops::kTokenPermuteTokenTile4DirectImplementation;
-  if (name == "cuda_token_tile4_warp_aggregated" ||
-      name == "cuda_fused_prepare_warp_aggregated_from_ids") {
-    return ops::kTokenPermuteTokenTile4WarpAggregatedImplementation;
-  }
-  if (name == "cuda_fused_prepare_token_owned_from_ids")
-    return ops::kTokenPermuteTokenOwnedTop2Implementation;
   if (name == "cuda_candidate" || name == "cuda_candidate_from_ids")
     return ops::kTokenPermuteCandidateImplementation;
   return 0;
@@ -84,18 +66,6 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
     }
     if (variant_name_ == "cuda_block_partial") {
       return "Block-private placement ranks followed by vectorized row copy";
-    }
-    if (variant_name_ == "cuda_token_tile4_direct") {
-      return "Four Top-2 tokens per CTA with direct global cursor atomics";
-    }
-    if (variant_name_ == "cuda_token_tile4_warp_aggregated") {
-      return "Four Top-2 tokens per CTA with expert-keyed warp-aggregated cursor atomics";
-    }
-    if (variant_name_ == "cuda_fused_prepare_token_owned_from_ids") {
-      return "Fused single-CTA counts/scan/reset followed by token-owned Top-2 permute";
-    }
-    if (variant_name_ == "cuda_fused_prepare_warp_aggregated_from_ids") {
-      return "Fused single-CTA counts/scan/reset followed by warp-aggregated tile4 permute";
     }
     if (variant_name_ == "cuda_candidate") {
       return "Evidence-selected CUDA token permute candidate";
@@ -209,19 +179,6 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
     }
 #endif
     if (is_from_ids_variant(variant_name_)) {
-      if (is_fused_prepare_variant(variant_name_)) {
-        cuda_check(ops::launch_token_permute_prepare_offsets_fused(
-                       ids_.data(), counts_.data(), offsets_.data(), cursors_.data(), tokens_,
-                       experts_, top_k_, stream),
-                   "fused counts/scan/reset in permute-from-ids candidate");
-        cuda_check(ops::launch_token_permute_optimized(
-                       x_.data(), ids_.data(), offsets_.data(), cursors_.data(),
-                       x_permuted_.data(), route_pos_.data(),
-                       materialize_sorted_route_ ? sorted_route_.data() : nullptr, tokens_,
-                       experts_, top_k_, hidden_, optimized_implementation(variant_name_), stream),
-                   "optimized permute after fused preparation");
-        return;
-      }
       HistogramArgs histogram_args;
       histogram_args.expert_ids = ids_.data();
       histogram_args.counts = counts_.data();
@@ -346,16 +303,6 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
               {"implementation_id",
                static_cast<std::int64_t>(ops::kTokenPermuteCandidateImplementation)}};
     }
-    if (is_fused_prepare_variant(variant_name_)) {
-      return {{"components", std::string("fused_counts_scan_reset,cuda_candidate")},
-              {"placement", variant_name_ == "cuda_fused_prepare_warp_aggregated_from_ids"
-                                    ? std::string("warp_aggregated_tile4")
-                                    : std::string("token_owned_top2_atomic")},
-              {"copy", std::string("float4_fast_scalar_fallback")},
-              {"kernel_launches", static_cast<std::int64_t>(2)},
-              {"implementation_id",
-               static_cast<std::int64_t>(optimized_implementation(variant_name_))}};
-    }
     if (variant_name_ == "vllm_moe_permute") {
       return {{"upstream_symbol", std::string("moe_permute_with_scratch")},
               {"mapping", std::string("cub_radix_sort_and_expert_scan")},
@@ -382,12 +329,6 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
         placement = "block_private_rank_global_reserve";
         threads = 256;
         launches = hidden_ == 0 ? 1 : 2;
-      }
-      if (implementation == ops::kTokenPermuteTokenTile4DirectImplementation) {
-        placement = "token_tile4_direct_atomic";
-      }
-      if (implementation == ops::kTokenPermuteTokenTile4WarpAggregatedImplementation) {
-        placement = "token_tile4_warp_aggregated_atomic";
       }
       return {{"implementation_id", static_cast<std::int64_t>(implementation)},
               {"threads", threads},

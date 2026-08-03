@@ -227,12 +227,27 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     variants.push_back(descriptor("cuda_block_partial", "in_tree_cuda_candidate",
                                   "raggedroute.permute.block_partial.v1", "not_applicable",
                                   "block_private_rank_two_kernel"));
+    variants.push_back(descriptor("cuda_token_tile4_direct", "in_tree_cuda_candidate",
+                                  "raggedroute.permute.token_tile4_direct.v2", "not_applicable",
+                                  "token_tile4_direct_atomic"));
+    variants.push_back(descriptor("cuda_token_tile4_warp_aggregated",
+                                  "in_tree_cuda_candidate",
+                                  "raggedroute.permute.token_tile4_warp_aggregated.v2",
+                                  "not_applicable", "token_tile4_keyed_warp_atomic"));
     variants.push_back(descriptor("cuda_candidate", "in_tree_cuda_candidate",
                                   "raggedroute.permute.candidate.v1", "not_applicable",
                                   "evidence_selected_candidate"));
     variants.push_back(descriptor("cuda_candidate_from_ids", "in_tree_cuda_candidate",
                                   "raggedroute.permute.candidate_from_ids.v1",
                                   "not_applicable", "histogram_scan_candidate"));
+    variants.push_back(descriptor("cuda_fused_prepare_token_owned_from_ids",
+                                  "in_tree_cuda_candidate",
+                                  "raggedroute.permute.fused_prepare_token_owned.v2",
+                                  "not_applicable", "fused_prepare_token_owned"));
+    variants.push_back(descriptor("cuda_fused_prepare_warp_aggregated_from_ids",
+                                  "in_tree_cuda_candidate",
+                                  "raggedroute.permute.fused_prepare_warp_aggregated.v2",
+                                  "not_applicable", "fused_prepare_warp_aggregated_tile4"));
 #if RAGGEDROUTE_HAS_CCCL
     const std::string vllm_dependency =
         "vllm@837eae64580c885101ee95b073aafb27a485e7ce; " + cccl_revision();

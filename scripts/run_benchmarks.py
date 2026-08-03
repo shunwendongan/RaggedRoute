@@ -218,6 +218,11 @@ def main() -> int:
     parser.add_argument("--config", required=True, type=pathlib.Path)
     parser.add_argument("--output", required=True, type=pathlib.Path)
     parser.add_argument("--run-id")
+    parser.add_argument(
+        "--process-run",
+        type=int,
+        help="execute one declared independent process run; use shard merging for a complete release",
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -285,8 +290,18 @@ def main() -> int:
     }
 
     process_runs = int(suite.get("process_runs", 1))
+    if args.process_run is not None and not 1 <= args.process_run <= process_runs:
+        raise ValueError(
+            f"--process-run must be in [1,{process_runs}], got {args.process_run}"
+        )
+    selected_process_runs = (
+        [args.process_run]
+        if args.process_run is not None
+        else list(range(1, process_runs + 1))
+    )
+    manifest["executed_process_runs"] = selected_process_runs
     seed = int(suite.get("common", {}).get("seed", 20260729))
-    for process_run in range(1, process_runs + 1):
+    for process_run in selected_process_runs:
         work = [
             (case, variant, level)
             for case in suite["cases"]

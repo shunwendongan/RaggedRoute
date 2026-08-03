@@ -34,6 +34,8 @@ def main() -> int:
     parser.add_argument("--config", required=True, type=pathlib.Path)
     parser.add_argument("--output", required=True, type=pathlib.Path)
     parser.add_argument("--graphics-clock-mhz", type=int, default=1710)
+    parser.add_argument("--run-id")
+    parser.add_argument("--process-run", type=int)
     args = parser.parse_args()
 
     nvidia_smi = shutil.which("nvidia-smi") or shutil.which("nvidia-smi.exe")
@@ -64,6 +66,10 @@ def main() -> int:
         "locked": False,
         "restored": False,
     }
+    if args.run_id:
+        manifest["release_command"].extend(["--run-id", args.run_id])
+    if args.process_run is not None:
+        manifest["release_command"].extend(["--process-run", str(args.process_run)])
     failure: BaseException | None = None
     try:
         run(manifest["lock_command"])

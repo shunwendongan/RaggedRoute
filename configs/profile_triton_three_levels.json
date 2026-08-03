@@ -1,0 +1,27 @@
+{
+  "schema_version": "raggedroute.triton_profile_suite.v1",
+  "warmup": 20,
+  "seed": 20260729,
+  "operators": [
+    {"operator": "dense_gemm", "params": {"M": 256, "N": 256, "K": 256}, "kernels": {"l1": "_dense_gemm_kernel", "l2": "_dense_gemm_kernel"}},
+    {"operator": "topk_gate", "params": {"T": 2048, "E": 64}, "kernels": {"l1": "_top2_selected_softmax_kernel", "l2": "_top2_selected_softmax_kernel"}},
+    {"operator": "histogram", "params": {"T": 2048, "E": 64, "top_k": 2, "distribution": "zipf", "zipf_s": 1.4}, "kernels": {"l1": "_histogram_kernel", "l2": "_histogram_kernel"}},
+    {"operator": "exclusive_scan", "params": {"E": 64, "R": 4096}, "kernels": {"l1": "_exclusive_scan_kernel", "l2": "_exclusive_scan_kernel"}},
+    {"operator": "token_permute", "params": {"T": 512, "E": 64, "top_k": 2, "K": 256, "distribution": "zipf", "zipf_s": 1.4, "materialize_sorted_route": true}, "kernels": {"l1": "_permute_rows_kernel", "l2": "_route_map_kernel"}},
+    {"operator": "grouped_gemm", "params": {"T": 512, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}, "kernels": {"l1": "_grouped_gemm_kernel", "l2": "_grouped_gemm_kernel"}},
+    {"operator": "unpermute", "params": {"T": 1024, "E": 64, "top_k": 2, "N": 256, "distribution": "uniform", "zipf_s": 0.0}, "kernels": {"l1": "_unpermute_kernel", "l2": "_unpermute_kernel"}}
+  ],
+  "l3": {
+    "suite": "chain_from_tokens",
+    "params": {"T": 512, "E": 64, "K": 128, "N": 128},
+    "kernels": [
+      {"operator": "dense_gemm", "regex": "_dense_gemm_kernel"},
+      {"operator": "topk_gate", "regex": "_top2_selected_softmax_kernel"},
+      {"operator": "histogram", "regex": "_histogram_kernel"},
+      {"operator": "exclusive_scan", "regex": "_exclusive_scan_kernel"},
+      {"operator": "token_permute", "regex": "_route_map_kernel"},
+      {"operator": "grouped_gemm", "regex": "_grouped_gemm_kernel"},
+      {"operator": "unpermute", "regex": "_unpermute_kernel"}
+    ]
+  }
+}

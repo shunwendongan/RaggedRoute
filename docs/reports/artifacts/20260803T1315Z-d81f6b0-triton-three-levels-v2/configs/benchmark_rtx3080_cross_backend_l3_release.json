@@ -1,0 +1,19 @@
+{
+  "schema_version": "raggedroute.cross_backend_suite.v1",
+  "suite_id": "rtx3080_triton_reference_chain_from_tokens_release_v1",
+  "protocol": "release",
+  "process_runs": 3,
+  "common": {"warmup": 20, "samples": 30, "kernel_repeats": 5, "seed": 20260729, "cache_mode": "warm"},
+  "cases": [
+    {
+      "id": "chain_from_tokens.uniform.t512_e64_k128_n128.cross",
+      "suite": "chain_from_tokens",
+      "levels": ["l3"],
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128},
+      "variants": [
+        {"name": "triton_reference", "backend": "triton", "reference_baseline": true},
+        {"name": "cuda_naive", "backend": "cpp", "reference_baseline": false}
+      ]
+    }
+  ]
+}

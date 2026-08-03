@@ -35,6 +35,15 @@ profile_benchmarks = load_module(
 freeze_results = load_module(
     "freeze_results", ROOT / "scripts" / "freeze_results.py"
 )
+run_cross_backend = load_module(
+    "run_cross_backend", ROOT / "scripts" / "run_cross_backend_benchmarks.py"
+)
+compare_cross_backend = load_module(
+    "compare_cross_backend", ROOT / "scripts" / "compare_cross_backend.py"
+)
+package_triton_evidence = load_module(
+    "package_triton_evidence", ROOT / "scripts" / "package_triton_evidence.py"
+)
 
 
 def make_suite_v2() -> dict:
@@ -605,6 +614,137 @@ class SuiteTests(unittest.TestCase):
             group["promotion_baseline"] = True
         with self.assertRaisesRegex(ValueError, "exactly one"):
             compare_results.compare_groups(duplicate)
+
+    def test_triton_source_provenance_and_windows_setup_are_present(self) -> None:
+        operators = (
+            "dense_gemm", "topk_gate", "histogram", "scan", "permute", "grouped_gemm", "unpermute"
+        )
+        for operator in operators:
+            directory = ROOT / "src" / operator / "triton"
+            self.assertTrue((directory / "baseline.py").is_file())
+            provenance = (directory / "UPSTREAM.md").read_text(encoding="utf-8")
+            self.assertIn("Revision:", provenance)
+            self.assertIn("benchmark-only", provenance)
+        setup = (ROOT / "scripts" / "setup_triton_windows.ps1").read_text(encoding="utf-8")
+        self.assertIn("torch==2.12.1+cu130", setup)
+        self.assertIn("triton-windows==3.7.1.post27", setup)
+        self.assertTrue((ROOT / "third_party" / "licenses" / "Triton-MIT.txt").is_file())
+
+    def test_cross_backend_suite_and_pairing_remain_reference_only(self) -> None:
+        suite = run_cross_backend.load_suite(
+            ROOT / "configs" / "benchmark_rtx3080_cross_backend_smoke.json"
+        )
+        self.assertEqual(suite["schema_version"], "raggedroute.cross_backend_suite.v1")
+        self.assertEqual({case["operator"] for case in suite["cases"]}, {
+            "dense_gemm", "topk_gate", "histogram", "exclusive_scan", "token_permute", "grouped_gemm", "unpermute"
+        })
+        for case in suite["cases"]:
+            reference = next(item for item in case["variants"] if item.get("reference_baseline"))
+            self.assertEqual(reference["backend"], "triton")
+
+        reference = self.make_benchmark_record(1)
+        reference["variant"] = "triton_reference"
+        reference["variant_config"].update({
+            "implementation_category": "in_tree_triton_reference",
+            "implementation_version": "raggedroute.triton_reference.v1",
+            "compiler_stack": "Triton 3.7.1",
+        })
+        reference["environment"]["cuda_compiler"] = "Triton 3.7.1"
+        reference["environment"]["cuda_runtime"] = 13000
+        candidate = copy.deepcopy(self.make_benchmark_record(1))
+        reference["excluded_steps"] = ["input_generation", "cpu_reference", "h2d_copy", "workspace_allocation"]
+        candidate["excluded_steps"] = list(reference["excluded_steps"])
+        case = {
+            "id": "case", "operator": "histogram", "levels": ["l2"],
+            "params": {"T": 4, "E": 8, "top_k": 2},
+        }
+        reference["case_config"].update(case["params"])
+        candidate["case_config"].update(case["params"])
+        toolchains = compare_cross_backend.verify_pair(
+            compare_cross_backend.summarize([reference]),
+            compare_cross_backend.summarize([candidate]),
+            case,
+        )
+        self.assertIn("reference_toolchain", toolchains)
+        self.assertNotEqual(
+            toolchains["reference_toolchain"]["cuda_runtime"],
+            toolchains["candidate_toolchain"]["cuda_runtime"],
+        )
+
+    def test_cross_backend_comparison_rejects_missing_records_clearly(self) -> None:
+        with self.assertRaisesRegex(ValueError, "missing benchmark records"):
+            compare_cross_backend.summarize([])
+
+    def test_cross_backend_l3_is_full_chain_only(self) -> None:
+        suite = run_cross_backend.load_suite(
+            ROOT / "configs" / "benchmark_rtx3080_cross_backend_l3_smoke.json"
+        )
+        case = suite["cases"][0]
+        self.assertEqual(case["suite"], "chain_from_tokens")
+        self.assertEqual(case["levels"], ["l3"])
+        cpp = run_cross_backend.command_for_cpp(
+            pathlib.Path("bench.exe"), suite, case, case["variants"][1],
+            "l3", 1, "run", pathlib.Path("out.jsonl"), "",
+        )
+        triton_command = run_cross_backend.command_for_triton(
+            pathlib.Path("python"), ROOT, suite, case, "l3", 1, "run",
+            pathlib.Path("out.jsonl"),
+        )
+        self.assertEqual(cpp[1:3], ["--suite", "chain_from_tokens"])
+        self.assertIn("--suite", triton_command)
+        self.assertNotIn("--operator", triton_command)
+
+    def test_cross_backend_rejects_invalid_l3_targets(self) -> None:
+        base = {
+            "schema_version": "raggedroute.cross_backend_suite.v1",
+            "protocol": "smoke",
+            "process_runs": 1,
+            "common": {"warmup": 1, "samples": 1},
+            "cases": [{
+                "id": "bad", "operator": "dense_gemm", "levels": ["l3"],
+                "variants": [
+                    {"name": "triton_reference", "backend": "triton", "reference_baseline": True},
+                    {"name": "cuda_naive", "backend": "cpp"},
+                ],
+            }],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "bad.json"
+            path.write_text(json.dumps(base), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "do not support l3"):
+                run_cross_backend.load_suite(path)
+            base["cases"][0].pop("operator")
+            base["cases"][0]["suite"] = "chain_from_tokens"
+            base["cases"][0]["levels"] = ["l2"]
+            path.write_text(json.dumps(base), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "requires exactly level l3"):
+                run_cross_backend.load_suite(path)
+
+    def test_triton_profile_config_covers_three_levels(self) -> None:
+        config = json.loads(
+            (ROOT / "configs" / "profile_triton_three_levels.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(config["schema_version"], "raggedroute.triton_profile_suite.v1")
+        self.assertEqual(len(config["operators"]), 7)
+        self.assertEqual(
+            {item["operator"] for item in config["operators"]},
+            {"dense_gemm", "topk_gate", "histogram", "exclusive_scan", "token_permute", "grouped_gemm", "unpermute"},
+        )
+        self.assertTrue(all(set(item["kernels"]) == {"l1", "l2"} for item in config["operators"]))
+        self.assertEqual(config["l3"]["suite"], "chain_from_tokens")
+        self.assertEqual(len(config["l3"]["kernels"]), 7)
+
+    def test_triton_evidence_packager_rejects_failed_records(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "raw.jsonl"
+            record = self.make_benchmark_record(1)
+            record["schema_version"] = "raggedroute.benchmark.v1"
+            record["validation"] = {"ok": False}
+            path.write_text(json.dumps(record) + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "invalid or failed"):
+                package_triton_evidence.records(path)
 
 
 if __name__ == "__main__":

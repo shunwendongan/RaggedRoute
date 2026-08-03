@@ -103,6 +103,20 @@ cmake --preset rtx3080-sm86-release `
 
 Valid provider values are `AUTO`, `SYSTEM`, `FETCH`, and `OFF`. `AUTO` discovers CUDA 13's bundled CCCL headers before falling back to an external checkout; it leaves absent optional libraries disabled with a clear configure message. The current pinned tags are CCCL `v3.4.0` and CUTLASS `v4.6.1`.
 
+## Triton reference baselines
+
+Each of the seven operator directories now has a benchmark-only Triton reference
+under `src/<operator>/triton`. These implementations preserve the strict-FP32
+and routing contracts, but remain outside the C++ runtime and promotion dispatch.
+Use `scripts\setup_triton_windows.ps1` to create the native Windows Triton
+environment, then run the cross-backend smoke/release suites in
+[Triton reference baselines](docs/triton-baselines.md). Cross-backend ratios are
+explicitly reference-only because NVCC and Triton/PyTorch use distinct toolchains.
+The Triton evidence flow covers seven individual L1/L2 cases and one complete
+seven-operator `chain_from_tokens` L3 case, with parsed NSYS/NCU evidence kept
+separate from unprofiled release latency. See the [RTX 3080 Triton L1/L2/L3
+report](docs/reports/artifacts/20260803T1315Z-d81f6b0-triton-three-levels-v2/REPORT.md).
+
 ## Install and consume
 
 CUDA-enabled builds export `RaggedRoute::runtime` (the public operator API),

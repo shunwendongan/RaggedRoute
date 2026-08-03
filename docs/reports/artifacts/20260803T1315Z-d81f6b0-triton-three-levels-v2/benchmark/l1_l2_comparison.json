@@ -1,0 +1,429 @@
+{
+  "schema_version": "raggedroute.cross_backend_comparison.v1",
+  "source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute\\out\\benchmark\\triton-three-levels-l1-l2-release-d81.jsonl",
+  "manifest": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute\\out\\benchmark\\triton-three-levels-l1-l2-release-d81.jsonl.manifest.json",
+  "suite_id": "rtx3080_triton_reference_l1_l2_release_v2",
+  "promotion_eligible": false,
+  "comparisons": [
+    {
+      "case_id": "dense_gemm.fp32.m256_n256_k256.cross",
+      "operator": "dense_gemm",
+      "measurement_level": "L1_kernel_body",
+      "reference_variant": "triton_reference",
+      "candidate_variant": "cuda_naive",
+      "reference_latency_us": 25.19039958715439,
+      "candidate_latency_us": 26.1119991541,
+      "candidate_vs_reference_speedup": 0.9647058977940834,
+      "reference_p95_us": 30.14655977487564,
+      "candidate_p95_us": 28.86143893008,
+      "reference_cv": 0.10373969547746426,
+      "candidate_cv": 0.07740966081399209,
+      "reference_process_runs": 3,
+      "candidate_process_runs": 3,
+      "toolchain_differences": {
+        "reference_toolchain": {
+          "cuda_compiler": "Triton 3.7.1",
+          "cuda_runtime": 13000,
+          "compiler_stack": "Triton 3.7.1; PyTorch CUDA 13.0"
+        },
+        "candidate_toolchain": {
+          "cuda_compiler": "13.3.73",
+          "cuda_runtime": 13010,
+          "compiler_stack": null
+        }
+      },
+      "promotion_eligible": false,
+      "promotion_ineligibility_reason": "cross-backend CUDA runtime/compiler stacks are intentionally compared as reference evidence only"
+    },
+    {
+      "case_id": "dense_gemm.fp32.m256_n256_k256.cross",
+      "operator": "dense_gemm",
+      "measurement_level": "L2_operator_steady",
+      "reference_variant": "triton_reference",
+      "candidate_variant": "cuda_naive",
+      "reference_latency_us": 24.47360008955002,
+      "candidate_latency_us": 27.2383987904,
+      "candidate_vs_reference_speedup": 0.8984962837894708,
+      "reference_p95_us": 29.05599907040596,
+      "candidate_p95_us": 27.8528004885,
+      "reference_cv": 0.09438782280293198,
+      "candidate_cv": 0.06876325434738204,
+      "reference_process_runs": 3,
+      "candidate_process_runs": 3,
+      "toolchain_differences": {
+        "reference_toolchain": {
+          "cuda_compiler": "Triton 3.7.1",
+          "cuda_runtime": 13000,
+          "compiler_stack": "Triton 3.7.1; PyTorch CUDA 13.0"
+        },
+        "candidate_toolchain": {
+          "cuda_compiler": "13.3.73",
+          "cuda_runtime": 13010,
+          "compiler_stack": null
+        }
+      },
+      "promotion_eligible": false,
+      "promotion_ineligibility_reason": "cross-backend CUDA runtime/compiler stacks are intentionally compared as reference evidence only"
+    },
+    {
+      "case_id": "topk_gate.t2048_e64.cross",
+      "operator": "topk_gate",
+      "measurement_level": "L1_kernel_body",
+      "reference_variant": "triton_reference",
+      "candidate_variant": "cuda_naive",
+      "reference_latency_us": 12.431359887123108,
+      "candidate_latency_us": 14.3360000849,
+      "candidate_vs_reference_speedup": 0.8671428441338365,
+      "reference_p95_us": 23.79263973236084,
+      "candidate_p95_us": 15.39379173519,
+      "reference_cv": 0.31534850159538136,
+      "candidate_cv": 0.08377643000294982,
+      "reference_process_runs": 3,
+      "candidate_process_runs": 3,
+      "toolchain_differences": {
+        "reference_toolchain": {
+          "cuda_compiler": "Triton 3.7.1",
+          "cuda_runtime": 13000,
+          "compiler_stack": "Triton 3.7.1; PyTorch CUDA 13.0"
+        },
+        "candidate_toolchain": {
+          "cuda_compiler": "13.3.73",
+          "cuda_runtime": 13010,
+          "compiler_stack": null
+        }
+      },
+      "promotion_eligible": false,
+      "promotion_ineligibility_reason": "cross-backend CUDA runtime/compiler stacks are intentionally compared as reference evidence only"
+    },
+    {
+      "case_id": "topk_gate.t2048_e64.cross",
+      "operator": "topk_gate",
+      "measurement_level": "L2_operator_steady",
+      "reference_variant": "triton_reference",
+      "candidate_variant": "cuda_naive",
+      "reference_latency_us": 12.14464008808136,
+      "candidate_latency_us": 15.9948801994,
+      "candidate_vs_reference_speedup": 0.7592829665918304,
+      "reference_p95_us": 14.169087946414948,
+      "candidate_p95_us": 18.112512171269998,
+      "reference_cv": 0.07445157011585318,
+      "candidate_cv": 0.07030786182913441,
+      "reference_process_runs": 3,
+      "candidate_process_runs": 3,
+      "toolchain_differences": {
+        "reference_toolchain": {
+          "cuda_compiler": "Triton 3.7.1",
+          "cuda_runtime": 13000,
+          "compiler_stack": "Triton 3.7.1; PyTorch CUDA 13.0"
+        },
+        "candidate_toolchain": {
+          "cuda_compiler": "13.3.73",
+          "cuda_runtime": 13010,
+          "compiler_stack": null
+        }
+      },
+      "promotion_eligible": false,
+      "promotion_ineligibility_reason": "cross-backend CUDA runtime/compiler stacks are intentionally compared as reference evidence only"
+    },
+    {
+      "case_id": "histogram.zipf14.t2048_e64.cross",
+      "operator": "histogram",
+      "measurement_level": "L1_kernel_body",
+      "reference_variant": "triton_reference",
+      "candidate_variant": "cuda_naive",
+      "reference_latency_us": 22.52800017595291,
+      "candidate_latency_us": 9.21600032598,
+      "candidate_vs_reference_speedup": 2.444444377073886,
+      "reference_p95_us": 64.61439952254295,
+      "candidate_p95_us": 41.62559919059999,
+      "reference_cv": 0.5386089729303429,
+      "candidate_cv": 0.7301150258696767,
+      "reference_process_runs": 3,
+      "candidate_process_runs": 3,
+      "toolchain_differences": {
+        "reference_toolchain": {
+          "cuda_compiler": "Triton 3.7.1",
+          "cuda_runtime": 13000,
+          "compiler_stack": "Triton 3.7.1; PyTorch CUDA 13.0"
+        },
+        "candidate_toolchain": {
+          "cuda_compiler": "13.3.73",
+          "cuda_runtime": 13010,
+          "compiler_stack": null
+        }
+      },
+      "promotion_eligible": false,
+      "promotion_ineligibility_reason": "cross-backend CUDA runtime/compiler stacks are intentionally compared as reference evidence only"
+    },
+    {
+      "case_id": "histogram.zipf14.t2048_e64.cross",
+      "operator": "histogram",
+      "measurement_level": "L2_operator_steady",
+      "reference_variant": "triton_reference",
+      "candidate_variant": "cuda_naive",
+      "reference_latency_us": 20.20352005958557,
+      "candidate_latency_us": 15.3190398216,
+      "candidate_vs_reference_speedup": 1.318850286628174,
+      "reference_p95_us": 21.90131187438965,
+      "candidate_p95_us": 16.847872078435,
+      "reference_cv": 0.06336855094080933,
+      "candidate_cv": 0.053227584667342905,
+      "reference_process_runs": 3,
+      "candidate_process_runs": 3,
+      "toolchain_differences": {
+        "reference_toolchain": {
+          "cuda_compiler": "Triton 3.7.1",
+          "cuda_runtime": 13000,
+          "compiler_stack": "Triton 3.7.1; PyTorch CUDA 13.0"
+        },
+        "candidate_toolchain": {
+          "cuda_compiler": "13.3.73",
+          "cuda_runtime": 13010,
+          "compiler_stack": null
+        }
+      },
+      "promotion_eligible": false,
+      "promotion_ineligibility_reason": "cross-backend CUDA runtime/compiler stacks are intentionally compared as reference evidence only"
+    },
+    {
+      "case_id": "exclusive_scan.e64.cross",
+      "operator": "exclusive_scan",
+      "measurement_level": "L1_kernel_body",
+      "reference_variant": "triton_reference",
+      "candidate_variant": "cuda_naive",
+      "reference_latency_us": 10.22976040840149,
+      "candidate_latency_us": 8.71936023235,
+      "candidate_vs_reference_speedup": 1.1732237384169197,
+      "reference_p95_us": 11.576831936836243,
+      "candidate_p95_us": 11.360256016235,
+      "reference_cv": 0.05819260414485157,
+      "candidate_cv": 0.1371506871285123,
+      "reference_process_runs": 3,
+      "candidate_process_runs": 3,
+      "toolchain_differences": {
+        "reference_toolchain": {
+          "cuda_compiler": "Triton 3.7.1",
+          "cuda_runtime": 13000,
+          "compiler_stack": "Triton 3.7.1; PyTorch CUDA 13.0"
+        },
+        "candidate_toolchain": {
+          "cuda_compiler": "13.3.73",
+          "cuda_runtime": 13010,
+          "compiler_stack": null
+        }
+      },
+      "promotion_eligible": false,
+      "promotion_ineligibility_reason": "cross-backend CUDA runtime/compiler stacks are intentionally compared as reference evidence only"
+    },
+    {
+      "case_id": "exclusive_scan.e64.cross",
+      "operator": "exclusive_scan",
+      "measurement_level": "L2_operator_steady",
+      "reference_variant": "triton_reference",
+      "candidate_variant": "cuda_naive",
+      "reference_latency_us": 10.158079862594604,
+      "candidate_latency_us": 8.43263983727,
+      "candidate_vs_reference_speedup": 1.204614457467829,
+      "reference_p95_us": 10.895872056484222,
+      "candidate_p95_us": 11.26502382756,
+      "reference_cv": 0.0418969854159085,
+      "candidate_cv": 0.13765981130232538,
+      "reference_process_runs": 3,
+      "candidate_process_runs": 3,
+      "toolchain_differences": {
+        "reference_toolchain": {
+          "cuda_compiler": "Triton 3.7.1",
+          "cuda_runtime": 13000,
+          "compiler_stack": "Triton 3.7.1; PyTorch CUDA 13.0"
+        },
+        "candidate_toolchain": {
+          "cuda_compiler": "13.3.73",
+          "cuda_runtime": 13010,
+          "compiler_stack": null
+        }
+      },
+      "promotion_eligible": false,
+      "promotion_ineligibility_reason": "cross-backend CUDA runtime/compiler stacks are intentionally compared as reference evidence only"
+    },
+    {
+      "case_id": "token_permute.zipf14.t512_k256.cross",
+      "operator": "token_permute",
+      "measurement_level": "L1_kernel_body",
+      "reference_variant": "triton_reference",
+      "candidate_variant": "cuda_naive",
+      "reference_latency_us": 19.45599913597107,
+      "candidate_latency_us": 9.21600032598,
+      "candidate_vs_reference_speedup": 2.111110942685669,
+      "reference_p95_us": 61.6448001936078,
+      "candidate_p95_us": 32.870399951915,
+      "reference_cv": 0.5151548983474661,
+      "candidate_cv": 0.6438538188882608,
+      "reference_process_runs": 3,
+      "candidate_process_runs": 3,
+      "toolchain_differences": {
+        "reference_toolchain": {
+          "cuda_compiler": "Triton 3.7.1",
+          "cuda_runtime": 13000,
+          "compiler_stack": "Triton 3.7.1; PyTorch CUDA 13.0"
+        },
+        "candidate_toolchain": {
+          "cuda_compiler": "13.3.73",
+          "cuda_runtime": 13010,
+          "compiler_stack": null
+        }
+      },
+      "promotion_eligible": false,
+      "promotion_ineligibility_reason": "cross-backend CUDA runtime/compiler stacks are intentionally compared as reference evidence only"
+    },
+    {
+      "case_id": "token_permute.zipf14.t512_k256.cross",
+      "operator": "token_permute",
+      "measurement_level": "L2_operator_steady",
+      "reference_variant": "triton_reference",
+      "candidate_variant": "cuda_naive",
+      "reference_latency_us": 28.467199206352234,
+      "candidate_latency_us": 9.42080020905,
+      "candidate_vs_reference_speedup": 3.0217389791374085,
+      "reference_p95_us": 33.90464022755623,
+      "candidate_p95_us": 27.48416036367,
+      "reference_cv": 0.12039174174765298,
+      "candidate_cv": 0.43488244615899047,
+      "reference_process_runs": 3,
+      "candidate_process_runs": 3,
+      "toolchain_differences": {
+        "reference_toolchain": {
+          "cuda_compiler": "Triton 3.7.1",
+          "cuda_runtime": 13000,
+          "compiler_stack": "Triton 3.7.1; PyTorch CUDA 13.0"
+        },
+        "candidate_toolchain": {
+          "cuda_compiler": "13.3.73",
+          "cuda_runtime": 13010,
+          "compiler_stack": null
+        }
+      },
+      "promotion_eligible": false,
+      "promotion_ineligibility_reason": "cross-backend CUDA runtime/compiler stacks are intentionally compared as reference evidence only"
+    },
+    {
+      "case_id": "grouped_gemm.zipf14.t512_k128_n128.cross",
+      "operator": "grouped_gemm",
+      "measurement_level": "L1_kernel_body",
+      "reference_variant": "triton_reference",
+      "candidate_variant": "cuda_naive",
+      "reference_latency_us": 73.52319955825806,
+      "candidate_latency_us": 53.1455993652,
+      "candidate_vs_reference_speedup": 1.3834296806595319,
+      "reference_p95_us": 87.7670407295227,
+      "candidate_p95_us": 55.951359570015,
+      "reference_cv": 0.07885713634134825,
+      "candidate_cv": 0.10296695821150946,
+      "reference_process_runs": 3,
+      "candidate_process_runs": 3,
+      "toolchain_differences": {
+        "reference_toolchain": {
+          "cuda_compiler": "Triton 3.7.1",
+          "cuda_runtime": 13000,
+          "compiler_stack": "Triton 3.7.1; PyTorch CUDA 13.0"
+        },
+        "candidate_toolchain": {
+          "cuda_compiler": "13.3.73",
+          "cuda_runtime": 13010,
+          "compiler_stack": null
+        }
+      },
+      "promotion_eligible": false,
+      "promotion_ineligibility_reason": "cross-backend CUDA runtime/compiler stacks are intentionally compared as reference evidence only"
+    },
+    {
+      "case_id": "grouped_gemm.zipf14.t512_k128_n128.cross",
+      "operator": "grouped_gemm",
+      "measurement_level": "L2_operator_steady",
+      "reference_variant": "triton_reference",
+      "candidate_variant": "cuda_naive",
+      "reference_latency_us": 79.15520071983337,
+      "candidate_latency_us": 47.7183997631,
+      "candidate_vs_reference_speedup": 1.6587983065820038,
+      "reference_p95_us": 83.69152218103409,
+      "candidate_p95_us": 49.561598897,
+      "reference_cv": 0.044689586902578404,
+      "candidate_cv": 0.015309649200691708,
+      "reference_process_runs": 3,
+      "candidate_process_runs": 3,
+      "toolchain_differences": {
+        "reference_toolchain": {
+          "cuda_compiler": "Triton 3.7.1",
+          "cuda_runtime": 13000,
+          "compiler_stack": "Triton 3.7.1; PyTorch CUDA 13.0"
+        },
+        "candidate_toolchain": {
+          "cuda_compiler": "13.3.73",
+          "cuda_runtime": 13010,
+          "compiler_stack": null
+        }
+      },
+      "promotion_eligible": false,
+      "promotion_ineligibility_reason": "cross-backend CUDA runtime/compiler stacks are intentionally compared as reference evidence only"
+    },
+    {
+      "case_id": "unpermute.uniform.t1024_n256.cross",
+      "operator": "unpermute",
+      "measurement_level": "L1_kernel_body",
+      "reference_variant": "triton_reference",
+      "candidate_variant": "cuda_naive",
+      "reference_latency_us": 14.156800508499146,
+      "candidate_latency_us": 10.035199672,
+      "candidate_vs_reference_speedup": 1.4107143824949642,
+      "reference_p95_us": 22.929920107126236,
+      "candidate_p95_us": 13.56032028794,
+      "reference_cv": 0.23187800339901096,
+      "candidate_cv": 0.18055246572651062,
+      "reference_process_runs": 3,
+      "candidate_process_runs": 3,
+      "toolchain_differences": {
+        "reference_toolchain": {
+          "cuda_compiler": "Triton 3.7.1",
+          "cuda_runtime": 13000,
+          "compiler_stack": "Triton 3.7.1; PyTorch CUDA 13.0"
+        },
+        "candidate_toolchain": {
+          "cuda_compiler": "13.3.73",
+          "cuda_runtime": 13010,
+          "compiler_stack": null
+        }
+      },
+      "promotion_eligible": false,
+      "promotion_ineligibility_reason": "cross-backend CUDA runtime/compiler stacks are intentionally compared as reference evidence only"
+    },
+    {
+      "case_id": "unpermute.uniform.t1024_n256.cross",
+      "operator": "unpermute",
+      "measurement_level": "L2_operator_steady",
+      "reference_variant": "triton_reference",
+      "candidate_variant": "cuda_naive",
+      "reference_latency_us": 13.644799590110779,
+      "candidate_latency_us": 10.0095998496,
+      "candidate_vs_reference_speedup": 1.3631713350315444,
+      "reference_p95_us": 21.506560370326042,
+      "candidate_p95_us": 11.39455992724,
+      "reference_cv": 0.2336713451988253,
+      "candidate_cv": 0.11036826310043907,
+      "reference_process_runs": 3,
+      "candidate_process_runs": 3,
+      "toolchain_differences": {
+        "reference_toolchain": {
+          "cuda_compiler": "Triton 3.7.1",
+          "cuda_runtime": 13000,
+          "compiler_stack": "Triton 3.7.1; PyTorch CUDA 13.0"
+        },
+        "candidate_toolchain": {
+          "cuda_compiler": "13.3.73",
+          "cuda_runtime": 13010,
+          "compiler_stack": null
+        }
+      },
+      "promotion_eligible": false,
+      "promotion_ineligibility_reason": "cross-backend CUDA runtime/compiler stacks are intentionally compared as reference evidence only"
+    }
+  ]
+}

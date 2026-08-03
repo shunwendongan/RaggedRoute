@@ -3,6 +3,7 @@
 /CMakeFiles/
 /CMakeCache.txt
 /.cache/
+/.venv-triton/
 __pycache__/
 *.py[cod]
 *.ncu-rep

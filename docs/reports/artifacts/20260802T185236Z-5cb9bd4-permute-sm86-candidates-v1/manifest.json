@@ -1,153 +1,574 @@
 {
-  "schema_version": "raggedroute.evidence_bundle.v1",
-  "run_id": "20260802T185236Z-5cb9bd4-permute-sm86-candidates-v1",
-  "created_utc": "2026-08-02T19:10:58.162110+00:00",
-  "benchmark_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-permute-sm86\\out\\evidence\\permute-sm86-candidates\\benchmark",
-  "extra_benchmark_sources": [],
-  "profile_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-permute-sm86\\out\\profile\\permute-sm86\\ncu",
-  "sanitizer_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-permute-sm86\\out\\sanitizer\\rtx3080-permute-candidate",
-  "raw_profiler_reports": [
+  "commands": [
     {
-      "name": "anchor-candidate.nsys-rep",
-      "bytes": 63198,
-      "sha256": "f14810f002f2fccf3c7ae4d546d2042777e2cac99e4f48b3f8da03812f10b5c7",
-      "committed": false
-    },
-    {
-      "name": "anchor-candidate.sqlite",
-      "bytes": 274432,
-      "sha256": "9d965daac2f7848f8d40bfc47f20c36718fb5de7d9e0f6f878addf086c5a0a26",
-      "committed": false
-    },
-    {
-      "name": "anchor-naive.nsys-rep",
-      "bytes": 63103,
-      "sha256": "fcabc406953364b89a002fc2db3f5c12891d482503fcd7953fc5ed3eff00dd77",
-      "committed": false
-    },
-    {
-      "name": "anchor-naive.sqlite",
-      "bytes": 274432,
-      "sha256": "523001b88086141e2ab8b35dbc157ad5107fd8c5c18a344064d2a5b623f9aed3",
-      "committed": false
-    },
-    {
-      "name": "chain-logits-candidate.nsys-rep",
-      "bytes": 66139,
-      "sha256": "02c6b61ac303823d31e99dae28a151011537149d01767645984f5dae0e7549ae",
-      "committed": false
-    },
-    {
-      "name": "chain-logits-candidate.sqlite",
-      "bytes": 290816,
-      "sha256": "c43c6ba3a0a32b4e5dc6f600d53584b94d2b863bae40e3e6afb5c2232a503518",
-      "committed": false
-    },
-    {
-      "name": "chain-logits-naive.nsys-rep",
-      "bytes": 65995,
-      "sha256": "96659cb26adc6176195c661113449129257961b4fc1d8727db55b40b601d03ec",
-      "committed": false
-    },
-    {
-      "name": "chain-logits-naive.sqlite",
-      "bytes": 290816,
-      "sha256": "78d9716b6097c4291b3598f797a7b6a4a507d6b11a479d5ff3b1bfd0f03b0c7e",
-      "committed": false
-    },
-    {
-      "name": "chain-tokens-candidate.nsys-rep",
-      "bytes": 66594,
-      "sha256": "7923f4968c209b46f960a0c2bc6418ba0f6088e49c09b01fc42186f5b8f240c3",
-      "committed": false
-    },
-    {
-      "name": "chain-tokens-candidate.sqlite",
-      "bytes": 290816,
-      "sha256": "3bfd9b908c8b70aa0d045ae1e357e33f6f35e399d7b8f856bb0454abc22e4e76",
-      "committed": false
-    },
-    {
-      "name": "chain-tokens-naive.nsys-rep",
-      "bytes": 66476,
-      "sha256": "eb64ba2eb8caa7db3f9662b101b0b2b36408e4ce9157bcc1a2720943d27e5fbc",
-      "committed": false
-    },
-    {
-      "name": "chain-tokens-naive.sqlite",
-      "bytes": 290816,
-      "sha256": "f0c11157bd42e0912c7bde9fd1bf3aa45388a9edbbce857e4e4d9cd8c2b34c91",
-      "committed": false
-    },
-    {
-      "name": "permute.atomic128.anchor.basic.ncu-rep",
-      "bytes": 225473,
-      "sha256": "5a46a9e05221549a48a078506c3a86b1c0cf2009fd63c7320f855a3177e3272e",
-      "committed": false
-    },
-    {
-      "name": "permute.atomic256.anchor.basic.ncu-rep",
-      "bytes": 224263,
-      "sha256": "1608a919a462af989021f2c6b5ba165d9edce5f4094af8dab38d9ae6ae969317",
-      "committed": false
-    },
-    {
-      "name": "permute.atomic64.anchor.basic.ncu-rep",
-      "bytes": 224635,
-      "sha256": "eaaf607c465369878788a8a5439a8b12b3a66ef8a895c4589d8589dcd1960e7e",
-      "committed": false
-    },
-    {
-      "name": "permute.block_partial.copy.anchor.basic.ncu-rep",
-      "bytes": 224262,
-      "sha256": "2878e65171108d87b66de6c6380e0c3b000752b92e11432f7f3f9db83796c4e6",
-      "committed": false
-    },
-    {
-      "name": "permute.block_partial.placement.anchor.basic.ncu-rep",
-      "bytes": 223428,
-      "sha256": "80c4c31eb7dd65b236535292a1354b8cf0a5678f3a39f4f059946846d704fa70",
-      "committed": false
-    },
-    {
-      "name": "permute.candidate.anchor.detailed.detailed.ncu-rep",
-      "bytes": 344283,
-      "sha256": "d7094aeba21664e66a6dde5e1c1988f5d7e4a058a1a2ea5487910376b92e8391",
-      "committed": false
-    },
-    {
-      "name": "permute.candidate.wide_hot.detailed.detailed.ncu-rep",
-      "bytes": 366609,
-      "sha256": "4738946fd84714c27558281a24daa8445e638d01ab9ae5434e55a7c67f1f3b31",
-      "committed": false
-    },
-    {
-      "name": "permute.naive.anchor.basic.ncu-rep",
-      "bytes": 98586,
-      "sha256": "9e48de84fc363c52159ac993d66ab955d699e3397c54fa08ad88644ef6742bad",
-      "committed": false
-    },
-    {
-      "name": "permute.naive.anchor.detailed.detailed.ncu-rep",
-      "bytes": 210479,
-      "sha256": "4019796684b9a271ea017d9af04dea124b1963ae16f9748e150e810201a66dcc",
-      "committed": false
-    },
-    {
-      "name": "permute.naive.wide_hot.detailed.detailed.ncu-rep",
-      "bytes": 236599,
-      "sha256": "3774948299f8745196906b01bc830eb6cc2b9f24d154a16fc2b3760bdab090d8",
-      "committed": false
-    },
-    {
-      "name": "permute.token_owned.anchor.basic.ncu-rep",
-      "bytes": 223027,
-      "sha256": "7d1bd8b17ec735a42b70ab6f092f43770dbd766d45df22235db3d0af1944cfdf",
-      "committed": false
+      "reason": "The legacy bundle did not preserve an exact command line.",
+      "role": "historical_collection",
+      "status": "unavailable"
     }
   ],
-  "policy": {
-    "profiler_duration_is_release_latency": false,
-    "raw_profiler_binaries_committed": false
+  "decision": {
+    "profiler_duration_used_as_speedup": false,
+    "status": "recorded",
+    "value": "research_candidates_not_promoted"
+  },
+  "files": [
+    {
+      "bytes": 54318,
+      "path": "benchmark/candidate-aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "411ced09128cf5d2a4315ad4a0ecdae2510d7e0ccfefa772d56dab9b249a86db",
+      "storage": "git"
+    },
+    {
+      "bytes": 163279,
+      "path": "benchmark/candidate-comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "2a63f4982a13646620b60c816e28f733518d3808546fa01f4c747639a16428ad",
+      "storage": "git"
+    },
+    {
+      "bytes": 54211,
+      "path": "benchmark/candidate-rerun-aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "d44431b65ea76afda5a3be30d4f0469a6357e56eee412f7b3b332f6a0a4b24b6",
+      "storage": "git"
+    },
+    {
+      "bytes": 163205,
+      "path": "benchmark/candidate-rerun-comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "075d6e1d074ff686d9b0a9290f8a11fbf84e30a1b93b091cf6d551166ff12767",
+      "storage": "git"
+    },
+    {
+      "bytes": 7427,
+      "path": "benchmark/library-aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "1f5e0235478cd5b36d45563403c6f09dc1867d5fecf858e7449cce87459a2aff",
+      "storage": "git"
+    },
+    {
+      "bytes": 1095,
+      "path": "profile/anchor-candidate_cuda_api_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "5a6bef6b53a6db43455ece89f2d3fa97b7dcfdfa7e954fe0b6ba353f107491fc",
+      "storage": "git"
+    },
+    {
+      "bytes": 312,
+      "path": "profile/anchor-candidate_cuda_gpu_kern_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "2ff950d442251905faa31978ba198b12ba56dd107c2c30ab522f04162fb72412",
+      "storage": "git"
+    },
+    {
+      "bytes": 305,
+      "path": "profile/anchor-candidate_cuda_gpu_mem_time_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "ba7ce87c9d734edd131f07c8463fbb241f5db5d8f90c48976c7bebdf32eb16f3",
+      "storage": "git"
+    },
+    {
+      "bytes": 1087,
+      "path": "profile/anchor-naive_cuda_api_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "abd3c4a00dcd3b8b7a1a3e100a0929ad68138949c46a61c31df8440ac6704e28",
+      "storage": "git"
+    },
+    {
+      "bytes": 276,
+      "path": "profile/anchor-naive_cuda_gpu_kern_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "f9d9d01e479333de3909b7a9b76296eddf3c35c8727d44de6af0316fcf352655",
+      "storage": "git"
+    },
+    {
+      "bytes": 303,
+      "path": "profile/anchor-naive_cuda_gpu_mem_time_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "641454db0cc77a92e1cabc6673c550f12dcda88bd8646b72f5c8cec05820abc2",
+      "storage": "git"
+    },
+    {
+      "bytes": 1086,
+      "path": "profile/chain-logits-candidate_cuda_api_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "9db16a5d564a8f0669bbbd0dfd99c31793597d18d45ed2f1d9d2425ae109f291",
+      "storage": "git"
+    },
+    {
+      "bytes": 1020,
+      "path": "profile/chain-logits-candidate_cuda_gpu_kern_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "c370209d82443f29400096587916598fae12cb609b0b09ac0f04bf903d4114b2",
+      "storage": "git"
+    },
+    {
+      "bytes": 301,
+      "path": "profile/chain-logits-candidate_cuda_gpu_mem_time_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "b43e3c46cff69c6532da28cd7c8ff18eb5e1bdfd52bc12f1e71bfdc2e22ef14d",
+      "storage": "git"
+    },
+    {
+      "bytes": 1085,
+      "path": "profile/chain-logits-naive_cuda_api_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "793760628101c70401eb7eca44db0fb10f339351498bc3161f52ebf0f99c5446",
+      "storage": "git"
+    },
+    {
+      "bytes": 984,
+      "path": "profile/chain-logits-naive_cuda_gpu_kern_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "ee3905397bec8c65b2290385f5713224b086bfb40a6a33ffc13bc6039faf39ce",
+      "storage": "git"
+    },
+    {
+      "bytes": 301,
+      "path": "profile/chain-logits-naive_cuda_gpu_mem_time_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "6c60d918bd2ca0d8ae8842a3b38dd94bd99f408539892bdb79bc8c97ba14d521",
+      "storage": "git"
+    },
+    {
+      "bytes": 1092,
+      "path": "profile/chain-tokens-candidate_cuda_api_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "8f049afe2ff6a6e5eead0df468c44a884beb97bcfb7873a3ebd104bfb7dd0407",
+      "storage": "git"
+    },
+    {
+      "bytes": 1169,
+      "path": "profile/chain-tokens-candidate_cuda_gpu_kern_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "1ae3bd1ff743eca594888e729562a6c2d4f41a96e98c750e100726b75146433b",
+      "storage": "git"
+    },
+    {
+      "bytes": 302,
+      "path": "profile/chain-tokens-candidate_cuda_gpu_mem_time_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "65b859ca8e550c336a15bcfc7987bbf9beb2389aaa35ec6037dede905c87ed2f",
+      "storage": "git"
+    },
+    {
+      "bytes": 1097,
+      "path": "profile/chain-tokens-naive_cuda_api_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "211943675e29e4c3dc6a93e8fdd341f5db55ebf94ffac457ac5ebe29169d14f9",
+      "storage": "git"
+    },
+    {
+      "bytes": 1133,
+      "path": "profile/chain-tokens-naive_cuda_gpu_kern_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "1aa3f06da7bbc90e7116e49092a7ff2ec1d5afc6e488d5e258e3b7250fc89da8",
+      "storage": "git"
+    },
+    {
+      "bytes": 301,
+      "path": "profile/chain-tokens-naive_cuda_gpu_mem_time_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "28da1f862505231431a80d667eed43f9f1a96f8c7113e77750e7cc74d80c8fac",
+      "storage": "git"
+    },
+    {
+      "bytes": 1373,
+      "path": "profile/environment.json",
+      "role": "supporting_evidence",
+      "sha256": "6be42e5571babe3ad102b5b3f39f578f522c6296ed5190e272640c09132cd05d",
+      "storage": "git"
+    },
+    {
+      "bytes": 53014,
+      "path": "profile/ncu_metrics.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "10e53b3e34f08fd4dd4fa5956e71bcb5b3e0743a2c0896007dc92f3d9fc487f2",
+      "storage": "git"
+    },
+    {
+      "bytes": 65411,
+      "path": "profile/ncu_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "90394c5009aa7aa5794de590e263ea0dba3cf4ef8b9558a94e5252867dd0a67f",
+      "storage": "git"
+    },
+    {
+      "bytes": 2772,
+      "path": "profile/REPORT.md",
+      "role": "report",
+      "sha256": "98a50df11d238bb6866a55c4686aa0dba22b3c59bce13a74fa7019cd5a45160d",
+      "storage": "git"
+    },
+    {
+      "bytes": 4396,
+      "path": "sanitizer/initcheck.log",
+      "role": "correctness_validation",
+      "sha256": "b0df618c6053bde0dc4c2fa7bcbe7d8b4de9cabd96d095cc42f37b152af0dee1",
+      "storage": "git"
+    },
+    {
+      "bytes": 4395,
+      "path": "sanitizer/memcheck.log",
+      "role": "correctness_validation",
+      "sha256": "a6c4c55f8cb0b18f43e0b711e1c28018a7baa087386ca5a5be49a093131d6be9",
+      "storage": "git"
+    },
+    {
+      "bytes": 4434,
+      "path": "sanitizer/racecheck.log",
+      "role": "correctness_validation",
+      "sha256": "a98144b152220604f532c604619e206ece1795ee50709cd1310efb711386b808",
+      "storage": "git"
+    },
+    {
+      "bytes": 4396,
+      "path": "sanitizer/synccheck.log",
+      "role": "correctness_validation",
+      "sha256": "4f9cd93d495cb575b344d8e5c46b1011d2ef3b1c010255ee2ea0e4b5fab60ae2",
+      "storage": "git"
+    },
+    {
+      "archive_path": "raw/benchmark/candidate-aggregate.json",
+      "bytes": 1306947,
+      "path": "benchmark/candidate-aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "435e8404aa2663858d238bd5b6dcc9104b1131db9ad7abf6ed73d7025c16afe4",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/candidate-rerun-aggregate.json",
+      "bytes": 1306861,
+      "path": "benchmark/candidate-rerun-aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "e5d481d7216c168ab6cb1db08355fca7c59cfe82bb873cc4ee8387c9d00920bb",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/library-aggregate.json",
+      "bytes": 191676,
+      "path": "benchmark/library-aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "8ff51866d8868842505666abe86a4d3d53f3828d19c33d46abaf2793af8133c2",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-candidate-release-rerun.jsonl",
+      "bytes": 2526914,
+      "path": "benchmark/permute-candidate-release-rerun.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "c3f542e1d44d1f2fa7737ee66bad2b295a2ad1fbe8c9859acd686ce07d606052",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-candidate-release-rerun.jsonl.manifest.json",
+      "bytes": 1160597,
+      "path": "benchmark/permute-candidate-release-rerun.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "d06d56860725e7e1a7b5199e68fe3882ca940874f3f64cf13a56d49804779d12",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-candidate-release.jsonl",
+      "bytes": 2526672,
+      "path": "benchmark/permute-candidate-release.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "95e1d0630f9229a0739b6952ab0607386b0d3aae15f2996a81de2015959e06ee",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-candidate-release.jsonl.manifest.json",
+      "bytes": 1154508,
+      "path": "benchmark/permute-candidate-release.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "5b3558706fcb8e939067fb2543bd6a6933dffc3f3eae25f4109678bb775877e3",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-candidate-smoke.jsonl",
+      "bytes": 64625,
+      "path": "benchmark/permute-candidate-smoke.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "5049208db5f23cabffa2fb44b424f183c6b4a147282ff8c0a9b5ac7e4193026e",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-candidate-smoke.jsonl.manifest.json",
+      "bytes": 36280,
+      "path": "benchmark/permute-candidate-smoke.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "50429f255a7e52f24e86c20d3c64e87497c740678a6e6c7023826fbe4477064b",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-library-release.jsonl",
+      "bytes": 378142,
+      "path": "benchmark/permute-library-release.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "382776954a7732b0db0cd70ec573d54243fb858da0322c78f2a2ff20a782d35b",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-library-release.jsonl.manifest.json",
+      "bytes": 169202,
+      "path": "benchmark/permute-library-release.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "612e0315a0764e11f2018471ab256719416f7e41d605d5bc5c192c080b14faa4",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/legacy/manifest.json",
+      "bytes": 5315,
+      "path": "legacy/manifest.json",
+      "role": "run_manifest",
+      "sha256": "6caa20c35d6304a61b4c36ae55aa2ad1e4d02cfe1615f61af1a8a894ef6ba0ec",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/manifest.json",
+      "bytes": 21862,
+      "path": "profile/manifest.json",
+      "role": "run_manifest",
+      "sha256": "4affc48be30cb971e83a3ec525b181eb6b42c4916effc1b8ac2098086f71f46b",
+      "storage": "release"
+    },
+    {
+      "bytes": 63198,
+      "path": "recovered/anchor-candidate.nsys-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "nsys_report",
+      "sha256": "f14810f002f2fccf3c7ae4d546d2042777e2cac99e4f48b3f8da03812f10b5c7",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 274432,
+      "path": "recovered/anchor-candidate.sqlite",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "profiler_database",
+      "sha256": "9d965daac2f7848f8d40bfc47f20c36718fb5de7d9e0f6f878addf086c5a0a26",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 63103,
+      "path": "recovered/anchor-naive.nsys-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "nsys_report",
+      "sha256": "fcabc406953364b89a002fc2db3f5c12891d482503fcd7953fc5ed3eff00dd77",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 274432,
+      "path": "recovered/anchor-naive.sqlite",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "profiler_database",
+      "sha256": "523001b88086141e2ab8b35dbc157ad5107fd8c5c18a344064d2a5b623f9aed3",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 66139,
+      "path": "recovered/chain-logits-candidate.nsys-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "nsys_report",
+      "sha256": "02c6b61ac303823d31e99dae28a151011537149d01767645984f5dae0e7549ae",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 290816,
+      "path": "recovered/chain-logits-candidate.sqlite",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "profiler_database",
+      "sha256": "c43c6ba3a0a32b4e5dc6f600d53584b94d2b863bae40e3e6afb5c2232a503518",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 65995,
+      "path": "recovered/chain-logits-naive.nsys-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "nsys_report",
+      "sha256": "96659cb26adc6176195c661113449129257961b4fc1d8727db55b40b601d03ec",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 290816,
+      "path": "recovered/chain-logits-naive.sqlite",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "profiler_database",
+      "sha256": "78d9716b6097c4291b3598f797a7b6a4a507d6b11a479d5ff3b1bfd0f03b0c7e",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 66594,
+      "path": "recovered/chain-tokens-candidate.nsys-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "nsys_report",
+      "sha256": "7923f4968c209b46f960a0c2bc6418ba0f6088e49c09b01fc42186f5b8f240c3",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 290816,
+      "path": "recovered/chain-tokens-candidate.sqlite",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "profiler_database",
+      "sha256": "3bfd9b908c8b70aa0d045ae1e357e33f6f35e399d7b8f856bb0454abc22e4e76",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 66476,
+      "path": "recovered/chain-tokens-naive.nsys-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "nsys_report",
+      "sha256": "eb64ba2eb8caa7db3f9662b101b0b2b36408e4ce9157bcc1a2720943d27e5fbc",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 290816,
+      "path": "recovered/chain-tokens-naive.sqlite",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "profiler_database",
+      "sha256": "f0c11157bd42e0912c7bde9fd1bf3aa45388a9edbbce857e4e4d9cd8c2b34c91",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 225473,
+      "path": "recovered/permute.atomic128.anchor.basic.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "5a46a9e05221549a48a078506c3a86b1c0cf2009fd63c7320f855a3177e3272e",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 224263,
+      "path": "recovered/permute.atomic256.anchor.basic.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "1608a919a462af989021f2c6b5ba165d9edce5f4094af8dab38d9ae6ae969317",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 224635,
+      "path": "recovered/permute.atomic64.anchor.basic.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "eaaf607c465369878788a8a5439a8b12b3a66ef8a895c4589d8589dcd1960e7e",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 224262,
+      "path": "recovered/permute.block_partial.copy.anchor.basic.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "2878e65171108d87b66de6c6380e0c3b000752b92e11432f7f3f9db83796c4e6",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 223428,
+      "path": "recovered/permute.block_partial.placement.anchor.basic.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "80c4c31eb7dd65b236535292a1354b8cf0a5678f3a39f4f059946846d704fa70",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 344283,
+      "path": "recovered/permute.candidate.anchor.detailed.detailed.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "d7094aeba21664e66a6dde5e1c1988f5d7e4a058a1a2ea5487910376b92e8391",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 366609,
+      "path": "recovered/permute.candidate.wide_hot.detailed.detailed.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "4738946fd84714c27558281a24daa8445e638d01ab9ae5434e55a7c67f1f3b31",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 98586,
+      "path": "recovered/permute.naive.anchor.basic.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "9e48de84fc363c52159ac993d66ab955d699e3397c54fa08ad88644ef6742bad",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 210479,
+      "path": "recovered/permute.naive.anchor.detailed.detailed.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "4019796684b9a271ea017d9af04dea124b1963ae16f9748e150e810201a66dcc",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 236599,
+      "path": "recovered/permute.naive.wide_hot.detailed.detailed.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "3774948299f8745196906b01bc830eb6cc2b9f24d154a16fc2b3760bdab090d8",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 223027,
+      "path": "recovered/permute.token_owned.anchor.basic.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "7d1bd8b17ec735a42b70ab6f092f43770dbd766d45df22235db3d0af1944cfdf",
+      "storage": "unavailable"
+    }
+  ],
+  "hardware": {
+    "compute_capability": "8.6",
+    "gpu_name": "NVIDIA GeForce RTX 3080",
+    "gpu_uuid": "7c5e95c0e5a415d824a0c8c8b58d6f39",
+    "sm_count": 68,
+    "status": "recorded"
+  },
+  "kind": "permute_performance_evidence",
+  "migration": {
+    "checksum_repairs": [],
+    "legacy_manifest_archive_path": "raw/legacy/manifest.json",
+    "legacy_schema": "raggedroute.evidence_bundle.v1"
+  },
+  "provenance": {
+    "git_clean": true,
+    "git_clean_status": "recorded",
+    "source_git_sha": "5cb9bd49afba"
+  },
+  "release_asset": {
+    "bytes": 562448,
+    "immutable": true,
+    "name": "20260802T185236Z-5cb9bd4-permute-sm86-candidates-v1-raw.zip",
+    "sha256": "c5dc0d55c1b2560fd62ce2ee3a62d0f5d3d41346e07d29584a6a5f825e9d3e85",
+    "tag": "evidence-2026-08-03-v1",
+    "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260802T185236Z-5cb9bd4-permute-sm86-candidates-v1-raw.zip"
+  },
+  "run_id": "20260802T185236Z-5cb9bd4-permute-sm86-candidates-v1",
+  "schema_version": "raggedroute.evidence_bundle.v2",
+  "semantic_contract": {
+    "accumulator_dtype": null,
+    "dtype": "fp32",
+    "math_mode": "strict_fp32",
+    "measurement_levels": [
+      "L1_kernel_body",
+      "L2_operator_steady",
+      "L3_chain_steady"
+    ],
+    "measurement_rule": "Release A/B timings and profiler durations are separate evidence classes.",
+    "operator": "permute",
+    "status": "recorded"
+  },
+  "toolchain": {
+    "build_type": "Release",
+    "cuda": "13.3.73",
+    "driver": 13010,
+    "ncu": "2026.2.1",
+    "nsys": "2026.1.3",
+    "status": "recorded"
+  },
+  "validation": {
+    "reason": "Validation outputs are inventoried as files; the legacy manifest had no normalized result object.",
+    "status": "historical"
   }
 }

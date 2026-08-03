@@ -339,9 +339,9 @@ v2 fast path 条件：
 
 实施获批后新增版本化 suite，例如：
 
-- `configs/benchmark_dense_gemm_candidate_v2_sync_release.json`；
-- `configs/benchmark_dense_gemm_candidate_v2_async_release.json`；
-- `configs/benchmark_dense_gemm_candidate_v2_final_release.json`；
+- `configs/operators/dense_gemm/benchmark/candidate_v2_sync_release.json`；
+- `configs/operators/dense_gemm/benchmark/candidate_v2_async_release.json`；
+- `configs/operators/dense_gemm/benchmark/candidate_v2_final_release.json`；
 - 对应 dense-only profile configs。
 
 每轮保存：

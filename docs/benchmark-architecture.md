@@ -111,29 +111,29 @@ flowchart TD
 
 ### Benchmark smoke
 
-- `configs/benchmark_smoke.json`；
+- `configs/project/benchmark/smoke.json`；
 - 只证明所有 target、层级、JSONL 和后置校验可运行；
 - sample 很少且 worktree 可 dirty，数字不得用于 README/简历结论。
 
-`configs/benchmark_library_smoke.json` 使用 suite v2 覆盖 Dense、Histogram、Scan、full
+`configs/project/benchmark/library_smoke.json` 使用 suite v2 覆盖 Dense、Histogram、Scan、full
 from-ids Permute、Grouped GEMM 和 Unpermute 的 library/production pair。它还会执行
 raw JSONL → run manifest → aggregate.v2 → comparison.v1；该 Debug/tiny case 只验证 pairing，
 不表示 library 或 naive 的性能排名。
 
 ### Release benchmark
 
-- `configs/benchmark_rtx3080_release.json`；
+- `configs/project/benchmark/rtx3080_release.json`；
 - Release binary、clean Git、验证开启、warmup≥10、samples≥20、至少 3 个独立进程；
 - 各独立进程复用同一个 case seed，确保 shape、路由分布和派生配置完全相同；进程内 case 顺序另行确定性打乱；
 - case 顺序按进程确定性打乱，降低热漂移/运行顺序偏差；
 - 输出路径必须不存在，脚本拒绝覆盖旧 run；
 - raw JSONL 和 manifest 保留，聚合器不会删除原始样本。
 
-`configs/benchmark_promotion_policy.json` 是候选 variant 未来进入默认 dispatch 时使用的版本化标准草案：正确性必须全过，至少三次独立进程，并检查 CV、获益 shape coverage、trace ratio-of-sums、最大单点退化和 workspace 增长。当前没有 promotion evaluator；不论 naive、library 还是 optimized variant，该文件都不会自动产生晋升结论。
+`configs/policies/default_promotion.json` 是候选 variant 未来进入默认 dispatch 时使用的版本化标准草案：正确性必须全过，至少三次独立进程，并检查 CV、获益 shape coverage、trace ratio-of-sums、最大单点退化和 workspace 增长。当前没有 promotion evaluator；不论 naive、library 还是 optimized variant，该文件都不会自动产生晋升结论。
 
 ### Profile
 
-- `configs/profile_representative.json` 的 v2 schema 固定一个 7 算子 NSYS system case，以及每个公开算子各一个 NCU compute case；v1 compute-only 配置继续可读；
+- `configs/project/profile/representative.json` 的 v2 schema 固定一个 7 算子 NSYS system case，以及每个公开算子各一个 NCU compute case；v1 compute-only 配置继续可读；
 - `scripts/profile_benchmarks.py doctor/system/compute/analyze` 使用 `--profile-once`，不调用正式计时 runner；profile harness 先执行配置的 warmup，再由 NCU `launch-skip + launch-count=1` 捕获一条 steady-state launch；
 - NSYS 固定 `CUDA/NVTX trace + sample=none + cpuctxsw=none`；NCU 首轮固定 `basic + clock-control none`，只有系统热点需要更多 scheduler/memory 证据时才追加 `detailed`；
 - parser 将 metric alias 归一到 launch、occupancy、throughput、cache/traffic 和 stall 概念；缺失值必须写为 `not_collected` 或 `unsupported_or_unknown`，不能写数值 0；
@@ -184,12 +184,12 @@ ctest --preset test-rtx3080-sm86-release
 
 python scripts\run_benchmarks.py `
   --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
-  --config configs\benchmark_smoke.json `
-  --output reports\runs\smoke.jsonl
+  --config configs\project\benchmark\smoke.json `
+  --output out\runs\smoke.jsonl
 
-python scripts\aggregate_results.py reports\runs\smoke.jsonl `
-  --json reports\runs\smoke.aggregate.json `
-  --csv reports\runs\smoke.aggregate.csv
+python scripts\aggregate_results.py out\runs\smoke.jsonl `
+  --json out\runs\smoke.aggregate.json `
+  --csv out\runs\smoke.aggregate.csv
 
 # suite v2 additionally supplies its run manifest and then performs strict pairing.
 python scripts\aggregate_results.py reports\runs\paired.jsonl `
@@ -203,11 +203,11 @@ python scripts\profile_benchmarks.py doctor `
   --output out\profile\<run-id>\environment.json
 python scripts\profile_benchmarks.py system `
   --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
-  --config configs\profile_representative.json `
+  --config configs\project\profile\representative.json `
   --run-dir out\profile\<run-id>
 python scripts\profile_benchmarks.py compute `
   --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
-  --config configs\profile_representative.json `
+  --config configs\project\profile\representative.json `
   --run-dir out\profile\<run-id>
 python scripts\profile_benchmarks.py analyze --run-dir out\profile\<run-id>
 ```

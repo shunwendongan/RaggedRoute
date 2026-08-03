@@ -1,0 +1,174 @@
+{
+  "commands": [
+    {
+      "reason": "The legacy bundle did not preserve an exact command line.",
+      "role": "historical_collection",
+      "status": "unavailable"
+    }
+  ],
+  "decision": {
+    "profiler_duration_used_as_speedup": false,
+    "status": "recorded",
+    "value": "benchmark_only_not_promoted"
+  },
+  "files": [
+    {
+      "bytes": 5538,
+      "path": "benchmark/grouped-gemm-context.comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "64a8fcc0d374ee72cba10bb8613e7713bf91354a974ac8fc5745398c8d219a2b",
+      "storage": "git"
+    },
+    {
+      "bytes": 30336,
+      "path": "benchmark/grouped-gemm-release.comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "57b93a5cc0a58993c82af8359dfe6cd2e53c9ee206e1e27d6ad817dd0fea7f2c",
+      "storage": "git"
+    },
+    {
+      "bytes": 1303,
+      "path": "candidate-vs-cutlass.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "06fd8aa6790786e8cd8a079d838f6942f7d855c932121b0842e35d638afadf92",
+      "storage": "git"
+    },
+    {
+      "bytes": 7726,
+      "path": "profile/grouped-final-a5df-uniform-basic/analysis/ncu_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "8ef593191b363bca2efb9d38bcec2ccb25f49f06cc5bf7d03ed6c741848a2465",
+      "storage": "git"
+    },
+    {
+      "bytes": 7310,
+      "path": "profile/grouped-final-a5df-zipf-basic/analysis/ncu_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "bbf1328bf8010c95af8ef6901a010ae7fa1218e027921c2f3bade05ef51019d4",
+      "storage": "git"
+    },
+    {
+      "bytes": 286,
+      "path": "profile/grouped-final-a5df-zipf-system/analysis/nsys_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "ea46621920e215a50714e6762fb20df5bdd176f2cf98262a68b8d8b4ee1ae236",
+      "storage": "git"
+    },
+    {
+      "bytes": 5491,
+      "path": "sanitizer/rtx3080-grouped-gemm-sm86-a5df6eb/initcheck.log",
+      "role": "correctness_validation",
+      "sha256": "656e92b11dc8d905a11b053b705722e981955ce4503dc3e00169c4fcf57b740c",
+      "storage": "git"
+    },
+    {
+      "bytes": 5490,
+      "path": "sanitizer/rtx3080-grouped-gemm-sm86-a5df6eb/memcheck.log",
+      "role": "correctness_validation",
+      "sha256": "ae721c25f4a5af186eb52220de38a049537b9a0dd2a6d3a8f3d805f12647030e",
+      "storage": "git"
+    },
+    {
+      "bytes": 5529,
+      "path": "sanitizer/rtx3080-grouped-gemm-sm86-a5df6eb/racecheck.log",
+      "role": "correctness_validation",
+      "sha256": "6c912dd53dad02e79795b41bdd11fd4b5ada813ea220c7f3da73daf29cfa63db",
+      "storage": "git"
+    },
+    {
+      "bytes": 5491,
+      "path": "sanitizer/rtx3080-grouped-gemm-sm86-a5df6eb/synccheck.log",
+      "role": "correctness_validation",
+      "sha256": "3fafc62c724dc99b830d7d3c96969f5fe77c65e823c92740461ee8c2b9838bcd",
+      "storage": "git"
+    },
+    {
+      "bytes": 1938,
+      "path": "summary.json",
+      "role": "comparison_or_decision",
+      "sha256": "e6a1b5852c4f97d417cafb1a41e1e8b13caeca832ff639dbeda7d27dd0365865",
+      "storage": "git"
+    },
+    {
+      "archive_path": "raw/benchmark/grouped-gemm-context.jsonl",
+      "bytes": 58323,
+      "path": "benchmark/grouped-gemm-context.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "b136df13d22775a7413eabb7afad6e1d5311de43edde1209dbe609f893a019e6",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/grouped-gemm-release.aggregate.json",
+      "bytes": 217024,
+      "path": "benchmark/grouped-gemm-release.aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "73d4610d91d74d7bbddc87355b7fb07bc6af6ee34ace986147f00965f897a345",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/grouped-gemm-release.jsonl",
+      "bytes": 325990,
+      "path": "benchmark/grouped-gemm-release.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "f9496438aeb1237abe421e31b817f4859a61e8d15b02d342df7e57a2e0af01c6",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/grouped-gemm-release.jsonl.manifest.json",
+      "bytes": 149640,
+      "path": "benchmark/grouped-gemm-release.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "3a9821df141cf9a1da8de00349b5b60707040b7b48a0534ee7ff2885b9baa057",
+      "storage": "release"
+    }
+  ],
+  "hardware": {
+    "compute_capability": "8.6",
+    "gpu_name": null,
+    "gpu_uuid": null,
+    "sm_count": 68,
+    "status": "recorded"
+  },
+  "kind": "grouped_gemm_performance_evidence",
+  "migration": {
+    "checksum_repairs": [],
+    "legacy_manifest_archive_path": null,
+    "legacy_schema": "missing"
+  },
+  "provenance": {
+    "git_clean": null,
+    "git_clean_status": "unavailable",
+    "source_git_sha": "7fb8f43034a4"
+  },
+  "release_asset": {
+    "bytes": 54761,
+    "immutable": true,
+    "name": "20260802T190625Z-7fb8f43-grouped-gemm-sm86-raw.zip",
+    "sha256": "db434f8078b1b2a5a48b7a5c4cb4420a09f25e06113cc18fa8b2792883762430",
+    "tag": "evidence-2026-08-03-v1",
+    "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260802T190625Z-7fb8f43-grouped-gemm-sm86-raw.zip"
+  },
+  "run_id": "20260802T190625Z-7fb8f43-grouped-gemm-sm86",
+  "schema_version": "raggedroute.evidence_bundle.v2",
+  "semantic_contract": {
+    "accumulator_dtype": "fp32",
+    "dtype": "fp32",
+    "math_mode": "strict_fp32",
+    "measurement_levels": [],
+    "measurement_rule": "Release A/B timings and profiler durations are separate evidence classes.",
+    "operator": "grouped_gemm",
+    "status": "recorded"
+  },
+  "toolchain": {
+    "build_type": null,
+    "cuda": null,
+    "driver": null,
+    "ncu": null,
+    "nsys": null,
+    "status": "unavailable"
+  },
+  "validation": {
+    "reason": "Validation outputs are inventoried as files; the legacy manifest had no normalized result object.",
+    "status": "historical"
+  }
+}

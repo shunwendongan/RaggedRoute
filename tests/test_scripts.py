@@ -44,6 +44,12 @@ compare_cross_backend = load_module(
 package_triton_evidence = load_module(
     "package_triton_evidence", ROOT / "scripts" / "package_triton_evidence.py"
 )
+package_evidence = load_module(
+    "package_evidence", ROOT / "scripts" / "package_evidence.py"
+)
+validate_evidence = load_module(
+    "validate_evidence", ROOT / "scripts" / "validate_evidence.py"
+)
 
 
 def make_suite_v2() -> dict:
@@ -76,6 +82,67 @@ def make_suite_v2() -> dict:
 
 
 class SuiteTests(unittest.TestCase):
+    def test_evidence_v2_schema_and_all_published_bundles_validate(self) -> None:
+        schema = json.loads(
+            (ROOT / "schemas" / "evidence-bundle-v2.schema.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            schema["properties"]["schema_version"]["const"],
+            "raggedroute.evidence_bundle.v2",
+        )
+        errors = validate_evidence.validate_root(ROOT / "docs" / "reports" / "artifacts")
+        self.assertEqual(errors, [])
+
+    def test_evidence_archive_is_deterministic_and_refuses_overwrite(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            source = root / "raw.jsonl"
+            source.write_text('{"ok": true}\n', encoding="utf-8")
+            item = package_evidence.ArchiveItem(
+                source=source,
+                logical_path="benchmark/raw.jsonl",
+                archive_path="raw/benchmark/raw.jsonl",
+                role="raw_benchmark_records",
+                bytes=source.stat().st_size,
+                sha256=package_evidence.sha256_file(source),
+            )
+            first = root / "first.zip"
+            second = root / "second.zip"
+            package_evidence.deterministic_zip(first, [item], "run")
+            package_evidence.deterministic_zip(second, [item], "run")
+            self.assertEqual(
+                package_evidence.sha256_file(first),
+                package_evidence.sha256_file(second),
+            )
+            with self.assertRaises(FileExistsError):
+                package_evidence.deterministic_zip(first, [item], "run")
+
+    def test_unavailable_evidence_requires_a_reason(self) -> None:
+        bundle = pathlib.Path("bundle")
+        manifest = {
+            "schema_version": "raggedroute.evidence_bundle.v2",
+            "run_id": "run",
+            "kind": "test",
+            "provenance": {"source_git_sha": "1234567", "git_clean": None},
+            "hardware": {"status": "unavailable"},
+            "toolchain": {"status": "unavailable"},
+            "semantic_contract": {"status": "unavailable"},
+            "commands": [{"role": "test", "status": "unavailable", "reason": "missing"}],
+            "validation": {"status": "unavailable"},
+            "decision": {"status": "historical"},
+            "release_asset": {
+                "tag": "tag", "name": "run-raw.zip",
+                "url": "https://github.com/example/repo/releases/download/tag/run-raw.zip",
+                "bytes": 1, "sha256": "0" * 64, "immutable": True,
+            },
+            "files": [{
+                "path": "missing.jsonl", "role": "raw_benchmark_records", "bytes": 1,
+                "sha256": "0" * 64, "storage": "unavailable",
+            }],
+        }
+        errors = validate_evidence.validate_manifest(manifest, bundle)
+        self.assertTrue(any("missing reason" in error for error in errors))
+
     def test_windows_entrypoints_share_dynamic_msvc_discovery(self) -> None:
         setup = (ROOT / "scripts" / "setup_msvc_env.bat").read_text(encoding="utf-8")
         configure = (ROOT / "scripts" / "configure_windows.bat").read_text(
@@ -115,13 +182,15 @@ class SuiteTests(unittest.TestCase):
         self.assertNotIn("FetchContent_Declare(raggedroute_cutlass_source", dependencies)
 
     def test_smoke_suite_is_versioned_and_unique(self) -> None:
-        suite = run_benchmarks.load_suite(ROOT / "configs" / "benchmark_smoke.json")
+        suite = run_benchmarks.load_suite(
+            ROOT / "configs" / "project" / "benchmark" / "smoke.json"
+        )
         self.assertEqual(suite["schema_version"], "raggedroute.suite.v1")
         self.assertEqual(len(suite["cases"]), 9)
 
     def test_library_smoke_suite_has_strong_promotion_baselines(self) -> None:
         suite = run_benchmarks.load_suite(
-            ROOT / "configs" / "benchmark_library_smoke.json"
+            ROOT / "configs" / "project" / "benchmark" / "library_smoke.json"
         )
         self.assertEqual(suite["schema_version"], "raggedroute.suite.v2")
         self.assertEqual(len(suite["cases"]), 6)
@@ -135,7 +204,7 @@ class SuiteTests(unittest.TestCase):
 
     def test_library_release_suite_is_strict_and_uses_strong_baselines(self) -> None:
         suite = run_benchmarks.load_suite(
-            ROOT / "configs" / "benchmark_rtx3080_library_release.json"
+            ROOT / "configs" / "project" / "benchmark" / "rtx3080_library_release.json"
         )
         self.assertEqual(suite["schema_version"], "raggedroute.suite.v2")
         self.assertEqual(suite["protocol"], "release")
@@ -149,7 +218,7 @@ class SuiteTests(unittest.TestCase):
 
     def test_profile_v2_covers_all_operators_and_skips_warmups(self) -> None:
         config = profile_benchmarks.load_config(
-            ROOT / "configs" / "profile_representative.json"
+            ROOT / "configs" / "project" / "profile" / "representative.json"
         )
         self.assertEqual(config["schema_version"], "raggedroute.profile_suite.v2")
         self.assertEqual(
@@ -372,7 +441,9 @@ class SuiteTests(unittest.TestCase):
                     run_benchmarks.load_suite(path)
 
     def test_stateful_repeat_override_is_applied(self) -> None:
-        suite = run_benchmarks.load_suite(ROOT / "configs" / "benchmark_smoke.json")
+        suite = run_benchmarks.load_suite(
+            ROOT / "configs" / "project" / "benchmark" / "smoke.json"
+        )
         case = next(case for case in suite["cases"] if case["operator"] == "token_permute")
         command = run_benchmarks.case_command(
             pathlib.Path("bench"), suite, case, "l1", 1, "run", pathlib.Path("out.jsonl")
@@ -413,7 +484,7 @@ class SuiteTests(unittest.TestCase):
 
     def test_release_gate_rejects_dirty_or_too_few_runs(self) -> None:
         suite = run_benchmarks.load_suite(
-            ROOT / "configs" / "benchmark_rtx3080_release.json"
+            ROOT / "configs" / "project" / "benchmark" / "rtx3080_release.json"
         )
         with self.assertRaises(ValueError):
             run_benchmarks.validate_release(suite, True)
@@ -632,7 +703,7 @@ class SuiteTests(unittest.TestCase):
 
     def test_cross_backend_suite_and_pairing_remain_reference_only(self) -> None:
         suite = run_cross_backend.load_suite(
-            ROOT / "configs" / "benchmark_rtx3080_cross_backend_smoke.json"
+            ROOT / "configs" / "cross_backend" / "benchmark" / "l1_l2_smoke.json"
         )
         self.assertEqual(suite["schema_version"], "raggedroute.cross_backend_suite.v1")
         self.assertEqual({case["operator"] for case in suite["cases"]}, {
@@ -677,7 +748,7 @@ class SuiteTests(unittest.TestCase):
 
     def test_cross_backend_l3_is_full_chain_only(self) -> None:
         suite = run_cross_backend.load_suite(
-            ROOT / "configs" / "benchmark_rtx3080_cross_backend_l3_smoke.json"
+            ROOT / "configs" / "cross_backend" / "benchmark" / "l3_smoke.json"
         )
         case = suite["cases"][0]
         self.assertEqual(case["suite"], "chain_from_tokens")
@@ -722,7 +793,13 @@ class SuiteTests(unittest.TestCase):
 
     def test_triton_profile_config_covers_three_levels(self) -> None:
         config = json.loads(
-            (ROOT / "configs" / "profile_triton_three_levels.json").read_text(
+            (
+                ROOT
+                / "configs"
+                / "cross_backend"
+                / "profile"
+                / "triton_three_levels.json"
+            ).read_text(
                 encoding="utf-8"
             )
         )

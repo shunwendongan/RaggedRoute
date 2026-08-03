@@ -1,81 +1,404 @@
 {
-  "schema_version": "raggedroute.evidence_bundle.v1",
-  "run_id": "20260803T071455Z-af4947f-permute-selected-token-owned-v1",
-  "created_utc": "2026-08-03T07:37:24.464822+00:00",
-  "benchmark_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-permute-sm86\\out\\evidence\\permute-selected-token-owned\\benchmark",
-  "extra_benchmark_sources": [],
-  "profile_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-permute-sm86\\out\\profile\\permute-selected\\ncu",
-  "sanitizer_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-permute-sm86\\out\\sanitizer\\rtx3080-permute-selected-token-owned",
-  "raw_profiler_reports": [
+  "commands": [
     {
-      "name": "full-candidate-from-ids.nsys-rep",
-      "bytes": 64809,
-      "sha256": "fe36900046ea40a940ad94f95a76b1d2c5b5a40c3aa3cfb31c5bce8adb46a354",
-      "committed": false
-    },
-    {
-      "name": "full-candidate-from-ids.sqlite",
-      "bytes": 274432,
-      "sha256": "eb716b3db0a9c45e23208f742a8e91f8e01650cee8c6877a98b1dbd121906834",
-      "committed": false
-    },
-    {
-      "name": "full-vllm.nsys-rep",
-      "bytes": 64800,
-      "sha256": "905d0a797ad60caa41852928590857de97fe18d8fcc8396fca8a34024c4fb715",
-      "committed": false
-    },
-    {
-      "name": "full-vllm.sqlite",
-      "bytes": 286720,
-      "sha256": "170090fd4713b002d980073d6ef3689d520ee90a5b354c301903a122db6199c8",
-      "committed": false
-    },
-    {
-      "name": "permute.candidate.anchor.detailed.detailed.ncu-rep",
-      "bytes": 366014,
-      "sha256": "d02acf6c802cde92356dca222af18f8377e82424d38e88d9d5065851a36e1b01",
-      "committed": false
-    },
-    {
-      "name": "permute.candidate.wide_hot.detailed.detailed.ncu-rep",
-      "bytes": 372701,
-      "sha256": "106748eb8ba93089a211ce09c70fbfd73e9eb64362146d2e1accbc6d2f5edb7f",
-      "committed": false
-    },
-    {
-      "name": "permute.naive.anchor.detailed.detailed.ncu-rep",
-      "bytes": 212573,
-      "sha256": "47bd518289d7431661b4ff8577e0f1568f7b29099e3ecb432c28e80cd5c1acd7",
-      "committed": false
-    },
-    {
-      "name": "permute.naive.wide_hot.detailed.detailed.ncu-rep",
-      "bytes": 234972,
-      "sha256": "bae1e4537655cbfd1afc6ffd888dd203f16920b617f158f91b7745ddf7af6c3c",
-      "committed": false
-    },
-    {
-      "name": "permute.token_owned.anchor.basic.ncu-rep",
-      "bytes": 223054,
-      "sha256": "d2741fd9ac9032648aea5653c20219b077ad7eb2ad54810e625d57d965e63f7d",
-      "committed": false
-    },
-    {
-      "name": "prepared-candidate.nsys-rep",
-      "bytes": 63449,
-      "sha256": "ef63e6f3420067027e32acd14ec19395b6f740e2394d95b7f5da7f6a16412ed6",
-      "committed": false
-    },
-    {
-      "name": "prepared-candidate.sqlite",
-      "bytes": 274432,
-      "sha256": "8ce616b617e94adde0f59c4373fde96ffe42383a38d32147b2cb5ba053cc6f71",
-      "committed": false
+      "reason": "The legacy bundle did not preserve an exact command line.",
+      "role": "historical_collection",
+      "status": "unavailable"
     }
   ],
-  "policy": {
-    "profiler_duration_is_release_latency": false,
-    "raw_profiler_binaries_committed": false
+  "decision": {
+    "profiler_duration_used_as_speedup": false,
+    "status": "recorded",
+    "value": "research_candidate_selected_not_promoted"
+  },
+  "files": [
+    {
+      "bytes": 28481,
+      "path": "benchmark/aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "8a9f739f2c6363b491af1599fa0b82ce20661875d977bff93f7ce7d719e61a8e",
+      "storage": "git"
+    },
+    {
+      "bytes": 82982,
+      "path": "benchmark/comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "ee81dfb097f3197d0d20fb627e82d40dd9dc9775c15d7e07bb87684707a0df76",
+      "storage": "git"
+    },
+    {
+      "bytes": 4419,
+      "path": "benchmark/high-repeat-library-aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "328f98b72d75a9a056e8640874c9512f326bf38c8a0ec8d4da1dbe1f43c001e0",
+      "storage": "git"
+    },
+    {
+      "bytes": 10906,
+      "path": "benchmark/high-repeat-library-comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "89c3de91c1f7f04001aa4f16444b0b597e1c89abb7b7d2d263ec0d5a4ae1c620",
+      "storage": "git"
+    },
+    {
+      "bytes": 28478,
+      "path": "benchmark/rerun-aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "db52f1d9782d23bbba1d9bf53328ae48b637f8ca29e73d8d84f67fc6947754ae",
+      "storage": "git"
+    },
+    {
+      "bytes": 82992,
+      "path": "benchmark/rerun-comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "6a5ca825c2ade205c6c0e20c1319f4d7f6794c9bb60b77186ff8ea651bded3b5",
+      "storage": "git"
+    },
+    {
+      "bytes": 1373,
+      "path": "profile/environment.json",
+      "role": "supporting_evidence",
+      "sha256": "341ec6c44c9dc5aab74f8a816ff67b436ce5befe60ccc5733f1b2a9b4a6dc04b",
+      "storage": "git"
+    },
+    {
+      "bytes": 1088,
+      "path": "profile/full-candidate-from-ids_cuda_api_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "960c5998a38dacc90cf2db0f1356312b6ffa00282645eb044f6af6eb63d9008a",
+      "storage": "git"
+    },
+    {
+      "bytes": 556,
+      "path": "profile/full-candidate-from-ids_cuda_gpu_kern_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "662a07f85512d08ed5d1f22dc82dda6b18220c7e561785f313d0ea34d385d79c",
+      "storage": "git"
+    },
+    {
+      "bytes": 306,
+      "path": "profile/full-candidate-from-ids_cuda_gpu_mem_time_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "1c222fbf21817c5d56754a472d474679ada298dc07453870c5dfbef2ed3cfb24",
+      "storage": "git"
+    },
+    {
+      "bytes": 1083,
+      "path": "profile/full-vllm_cuda_api_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "1f5b63ee67fc0688c6fe35f6abea16c5ff5e9e2b729f96b9d7b8c7d9b541a41b",
+      "storage": "git"
+    },
+    {
+      "bytes": 950,
+      "path": "profile/full-vllm_cuda_gpu_kern_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "bcd5fb9a8e6633cb8c888d67d2589c0eb48d8e37f2f8715cb77638d29a9b35a0",
+      "storage": "git"
+    },
+    {
+      "bytes": 298,
+      "path": "profile/full-vllm_cuda_gpu_mem_time_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "b5d8dd5e40d1e2900d8703f7d73e3d13c4873c17871148113750b1955f0e68d1",
+      "storage": "git"
+    },
+    {
+      "bytes": 25687,
+      "path": "profile/ncu_metrics.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "9503b4ebec6961bab2ef3dd260428a0142514ec555569a6a6ffb89679cd4eabb",
+      "storage": "git"
+    },
+    {
+      "bytes": 30924,
+      "path": "profile/ncu_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "2ad95749c80640945abce799791325f621e66e1d7e4a95db3d989ec2aba805ab",
+      "storage": "git"
+    },
+    {
+      "bytes": 1092,
+      "path": "profile/prepared-candidate_cuda_api_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "eadc007a65703b2ba39718c042b3be585b7481788362192830e243b6b2356508",
+      "storage": "git"
+    },
+    {
+      "bytes": 306,
+      "path": "profile/prepared-candidate_cuda_gpu_kern_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "d3d27cf65b329f0926b50805864fe99eea2edcd34238c5df83b4095da322d36a",
+      "storage": "git"
+    },
+    {
+      "bytes": 302,
+      "path": "profile/prepared-candidate_cuda_gpu_mem_time_sum.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "102bcb64a19525843dd96aec4781f191f0e2c2cef1453674ce9eb77d5fdceac3",
+      "storage": "git"
+    },
+    {
+      "bytes": 1625,
+      "path": "profile/REPORT.md",
+      "role": "report",
+      "sha256": "509319a9f3c4bdd7b0c685d2b00db7570918327f5a03af37005a0aa165c85865",
+      "storage": "git"
+    },
+    {
+      "bytes": 4396,
+      "path": "sanitizer/initcheck.log",
+      "role": "correctness_validation",
+      "sha256": "b0df618c6053bde0dc4c2fa7bcbe7d8b4de9cabd96d095cc42f37b152af0dee1",
+      "storage": "git"
+    },
+    {
+      "bytes": 4395,
+      "path": "sanitizer/memcheck.log",
+      "role": "correctness_validation",
+      "sha256": "a6c4c55f8cb0b18f43e0b711e1c28018a7baa087386ca5a5be49a093131d6be9",
+      "storage": "git"
+    },
+    {
+      "bytes": 4434,
+      "path": "sanitizer/racecheck.log",
+      "role": "correctness_validation",
+      "sha256": "a98144b152220604f532c604619e206ece1795ee50709cd1310efb711386b808",
+      "storage": "git"
+    },
+    {
+      "bytes": 4396,
+      "path": "sanitizer/synccheck.log",
+      "role": "correctness_validation",
+      "sha256": "4f9cd93d495cb575b344d8e5c46b1011d2ef3b1c010255ee2ea0e4b5fab60ae2",
+      "storage": "git"
+    },
+    {
+      "archive_path": "raw/benchmark/aggregate.json",
+      "bytes": 653937,
+      "path": "benchmark/aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "e915a440d613d74ef78dfbaedef1e395535a80753762bf6c94a2425eacedcdca",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/high-repeat-library-aggregate.json",
+      "bytes": 103685,
+      "path": "benchmark/high-repeat-library-aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "b8df61add152fff80106771577cc228e3addc5359ed63c44d7d7476f89fd2cc7",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-candidate-selection-release-rerun.jsonl",
+      "bytes": 1411694,
+      "path": "benchmark/permute-candidate-selection-release-rerun.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "c67130301e4cc1bdcbe4cedd3f427d4dafa9e28c452b1d40475e17c597c09e01",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-candidate-selection-release-rerun.jsonl.manifest.json",
+      "bytes": 600171,
+      "path": "benchmark/permute-candidate-selection-release-rerun.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "48005df9e49ef8b300e41ef37cecd67a37ad665378ce6570707008b83517c26d",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-candidate-selection-release.jsonl",
+      "bytes": 1411761,
+      "path": "benchmark/permute-candidate-selection-release.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "2f1d2cbbd71ef0b0a0de0afeeb0b522da44680eb19c1db1671de387512bb843d",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-candidate-selection-release.jsonl.manifest.json",
+      "bytes": 597420,
+      "path": "benchmark/permute-candidate-selection-release.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "4774cff42f16db18d95db0568d81425aae344653289d1a8f7a46eb59eb7f73db",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-selected-library-high-repeat-release.jsonl",
+      "bytes": 227919,
+      "path": "benchmark/permute-selected-library-high-repeat-release.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "45fd2373a05799f6e5817162f1ac367c1a80fa3bc67dccbece9e6eb7a50e95d3",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-selected-library-high-repeat-release.jsonl.manifest.json",
+      "bytes": 95166,
+      "path": "benchmark/permute-selected-library-high-repeat-release.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "7323c64e0484d4b0715c2d9665437a864e4b84c4827d2b74ecf6d2a378c89bd1",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/rerun-aggregate.json",
+      "bytes": 653944,
+      "path": "benchmark/rerun-aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "283ced7a8707af0228c2ab4f67ff3066204699c8edac1e5fd39ec20419f201ce",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/legacy/manifest.json",
+      "bytes": 2978,
+      "path": "legacy/manifest.json",
+      "role": "run_manifest",
+      "sha256": "54f54c4d635a41bbaf646bd23b7fce81371c3dbcf48eca7faad8eafed2b0a301",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/manifest.json",
+      "bytes": 10197,
+      "path": "profile/manifest.json",
+      "role": "run_manifest",
+      "sha256": "a09991c8aef8f37752f568883f915b10e88aaf875435a59e5a42bedc290d7213",
+      "storage": "release"
+    },
+    {
+      "bytes": 64809,
+      "path": "recovered/full-candidate-from-ids.nsys-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "nsys_report",
+      "sha256": "fe36900046ea40a940ad94f95a76b1d2c5b5a40c3aa3cfb31c5bce8adb46a354",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 274432,
+      "path": "recovered/full-candidate-from-ids.sqlite",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "profiler_database",
+      "sha256": "eb716b3db0a9c45e23208f742a8e91f8e01650cee8c6877a98b1dbd121906834",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 64800,
+      "path": "recovered/full-vllm.nsys-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "nsys_report",
+      "sha256": "905d0a797ad60caa41852928590857de97fe18d8fcc8396fca8a34024c4fb715",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 286720,
+      "path": "recovered/full-vllm.sqlite",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "profiler_database",
+      "sha256": "170090fd4713b002d980073d6ef3689d520ee90a5b354c301903a122db6199c8",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 366014,
+      "path": "recovered/permute.candidate.anchor.detailed.detailed.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "d02acf6c802cde92356dca222af18f8377e82424d38e88d9d5065851a36e1b01",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 372701,
+      "path": "recovered/permute.candidate.wide_hot.detailed.detailed.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "106748eb8ba93089a211ce09c70fbfd73e9eb64362146d2e1accbc6d2f5edb7f",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 212573,
+      "path": "recovered/permute.naive.anchor.detailed.detailed.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "47bd518289d7431661b4ff8577e0f1568f7b29099e3ecb432c28e80cd5c1acd7",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 234972,
+      "path": "recovered/permute.naive.wide_hot.detailed.detailed.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "bae1e4537655cbfd1afc6ffd888dd203f16920b617f158f91b7745ddf7af6c3c",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 223054,
+      "path": "recovered/permute.token_owned.anchor.basic.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "d2741fd9ac9032648aea5653c20219b077ad7eb2ad54810e625d57d965e63f7d",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 63449,
+      "path": "recovered/prepared-candidate.nsys-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "nsys_report",
+      "sha256": "ef63e6f3420067027e32acd14ec19395b6f740e2394d95b7f5da7f6a16412ed6",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 274432,
+      "path": "recovered/prepared-candidate.sqlite",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "profiler_database",
+      "sha256": "8ce616b617e94adde0f59c4373fde96ffe42383a38d32147b2cb5ba053cc6f71",
+      "storage": "unavailable"
+    }
+  ],
+  "hardware": {
+    "compute_capability": "8.6",
+    "gpu_name": "NVIDIA GeForce RTX 3080",
+    "gpu_uuid": "7c5e95c0e5a415d824a0c8c8b58d6f39",
+    "sm_count": 68,
+    "status": "recorded"
+  },
+  "kind": "permute_performance_evidence",
+  "migration": {
+    "checksum_repairs": [],
+    "legacy_manifest_archive_path": "raw/legacy/manifest.json",
+    "legacy_schema": "raggedroute.evidence_bundle.v1"
+  },
+  "provenance": {
+    "git_clean": true,
+    "git_clean_status": "recorded",
+    "source_git_sha": "cc559173155e"
+  },
+  "release_asset": {
+    "bytes": 456271,
+    "immutable": true,
+    "name": "20260803T071455Z-af4947f-permute-selected-token-owned-v1-raw.zip",
+    "sha256": "9f7acd59dd3500bc9943ccdf254d68c748fa365266a7fefecf967dfbf9631e51",
+    "tag": "evidence-2026-08-03-v1",
+    "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260803T071455Z-af4947f-permute-selected-token-owned-v1-raw.zip"
+  },
+  "run_id": "20260803T071455Z-af4947f-permute-selected-token-owned-v1",
+  "schema_version": "raggedroute.evidence_bundle.v2",
+  "semantic_contract": {
+    "accumulator_dtype": null,
+    "dtype": "fp32",
+    "math_mode": "strict_fp32",
+    "measurement_levels": [
+      "L2_operator_steady"
+    ],
+    "measurement_rule": "Release A/B timings and profiler durations are separate evidence classes.",
+    "operator": "permute",
+    "status": "recorded"
+  },
+  "toolchain": {
+    "build_type": "Release",
+    "cuda": "13.3.73",
+    "driver": 13010,
+    "ncu": "2026.2.1",
+    "nsys": "2026.1.3",
+    "status": "recorded"
+  },
+  "validation": {
+    "reason": "Validation outputs are inventoried as files; the legacy manifest had no normalized result object.",
+    "status": "historical"
   }
 }

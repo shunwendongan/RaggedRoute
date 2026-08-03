@@ -26,9 +26,9 @@ E4 的可复现关键命令（完整 benchmark 子进程命令在其 JSONL manif
 ```powershell
 ctest --preset test-rtx3080-sm86-release --output-on-failure
 python scripts\run_sanitizers.py --build-dir out\build\rtx3080-sm86-release --output-dir profile\dense-gemm-bfe4494-exp4\sanitizer
-python scripts\run_benchmarks.py --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\benchmark_dense_gemm_optimization_exp4_release.json --output profile\dense-gemm-bfe4494-exp4\benchmark\release.jsonl --run-id dense-gemm-bfe4494-exp4-release
-python scripts\profile_benchmarks.py compute --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\profile_dense_gemm_optimization_exp4.json --run-dir profile\dense-gemm-bfe4494-exp4\profile --set basic
-python scripts\profile_benchmarks.py compute --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\profile_dense_gemm_optimization_exp4.json --run-dir profile\dense-gemm-bfe4494-exp4\profile --set detailed
+python scripts\run_benchmarks.py --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\operators\dense_gemm\benchmark\optimization_exp4_release.json --output profile\dense-gemm-bfe4494-exp4\benchmark\release.jsonl --run-id dense-gemm-bfe4494-exp4-release
+python scripts\profile_benchmarks.py compute --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\operators\dense_gemm\profile\optimization_exp4.json --run-dir profile\dense-gemm-bfe4494-exp4\profile --set basic
+python scripts\profile_benchmarks.py compute --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\operators\dense_gemm\profile\optimization_exp4.json --run-dir profile\dense-gemm-bfe4494-exp4\profile --set detailed
 nsys profile --trace=cuda,nvtx --sample=none --cpuctxsw=none --output=profile\dense-gemm-bfe4494-exp4\profile\reports\system.exp4 out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --operator dense_gemm --variant cuda_combined --level l2 --profile-once --warmup 20 --seed 20260729 --param M=256 --param N=256 --param K=256
 python scripts\profile_benchmarks.py analyze --run-dir profile\dense-gemm-bfe4494-exp4\profile
 ```

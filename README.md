@@ -43,9 +43,9 @@ Correctness, release performance, and profiling are separate flows:
 | Flow | Purpose | Produces performance claims? |
 |---|---|---|
 | Two correctness executables / CTest | Adapter/reference plus dtype, failure-artifact roundtrip, redzone, edge, randomized, and stream-contract validation | No |
-| `benchmark_smoke.json` | Fast executable/schema smoke | No |
-| `benchmark_rtx3080_release.json` | Clean-Git, Release, 3-process raw measurement | Baseline latency only |
-| `benchmark_rtx3080_library_release.json` | Clean-Git, strict-FP32 library/reference pairing | Contract-matched comparison only |
+| `configs/project/benchmark/smoke.json` | Fast executable/schema smoke | No |
+| `configs/project/benchmark/rtx3080_release.json` | Clean-Git, Release, 3-process raw measurement | Baseline latency only |
+| `configs/project/benchmark/rtx3080_library_release.json` | Clean-Git, strict-FP32 library/reference pairing | Contract-matched comparison only |
 | `profile_benchmarks.py` | NSYS system trace plus seven filtered NCU cases | No; profiler duration is not a score |
 
 See [Benchmark architecture](docs/benchmark-architecture.md), the [correctness framework](docs/correctness-framework.md), [implementation status](docs/implementation-status.md), the [repository audit](docs/reviews/repository-audit-2026-08-03.md), the [current RTX 3080 benchmark/Nsight report](docs/reports/rtx3080-naive-profile-a9489ab.md), and the [full technical design](docs/RaggedRoute-最终产品技术文档.md).
@@ -144,12 +144,12 @@ On Windows, consume a Release installation from a Release consumer (or install b
 ```powershell
 python scripts\run_benchmarks.py `
   --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
-  --config configs\benchmark_smoke.json `
-  --output reports\runs\smoke.jsonl
+  --config configs\project\benchmark\smoke.json `
+  --output out\runs\smoke.jsonl
 
-python scripts\aggregate_results.py reports\runs\smoke.jsonl `
-  --json reports\runs\smoke.aggregate.json `
-  --csv reports\runs\smoke.aggregate.csv
+python scripts\aggregate_results.py out\runs\smoke.jsonl `
+  --json out\runs\smoke.aggregate.json `
+  --csv out\runs\smoke.aggregate.csv
 ```
 
 List targets or run one adapter directly:
@@ -166,7 +166,7 @@ out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
 
 Implemented now: caller-stream naive launchers, the v0.2 self-describing tensor API, an SM86-only executable runtime/dispatch layer, typed adapters, per-operator CPU oracle implementations behind one correctness facade, benchmark-only cuBLAS/CUB/CUTLASS/vLLM variants, raw samples, p50/p90/p95 of batch means, explicit excluded steps, L1/L2 cost boundaries, and both L3 chains. L2/L3 call the public wrappers, so histogram counts reset and permute cursor reset are included there while L1 keeps them as explicit preconditions. A clean-Git RTX 3080 Release run now provides strict representative library pairings plus a full-chain NSYS trace, seven basic NCU captures, three detailed hotspot captures, and a checksummed text evidence bundle. Third-party dependency and source provenance rules are recorded in `THIRD_PARTY_NOTICES.md`.
 
-Not implemented yet: executable failure replay, FP16/Tensor Core optimized variants, a Top-K external baseline with matching semantics, real-trace/working-set shape sweeps, automatic promotion evaluation, default shape dispatch beyond the promoted Histogram path, or H100/Blackwell validation. `configs/benchmark_promotion_policy.json` currently expresses policy only; it is not an evaluator and cannot change dispatch. Those capabilities must be implemented and measured under the same contract before reporting an optimized-kernel speedup or support.
+Not implemented yet: executable failure replay, FP16/Tensor Core optimized variants, a Top-K external baseline with matching semantics, real-trace/working-set shape sweeps, automatic promotion evaluation, default shape dispatch beyond the promoted Histogram path, or H100/Blackwell validation. `configs/policies/default_promotion.json` currently expresses policy only; it is not an evaluator and cannot change dispatch. Those capabilities must be implemented and measured under the same contract before reporting an optimized-kernel speedup or support.
 
 The remaining plan for promotion evidence, real trace/working-set workloads, plots, and optimized variants is tracked in [Development roadmap](docs/development-roadmap.md). Planned items are not current capabilities.
 

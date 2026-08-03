@@ -1,44 +1,343 @@
 {
-  "schema_version": "raggedroute.evidence_bundle.v1",
+  "commands": [
+    {
+      "reason": "The legacy bundle did not preserve an exact command line.",
+      "role": "historical_collection",
+      "status": "unavailable"
+    }
+  ],
+  "decision": {
+    "profiler_duration_used_as_speedup": false,
+    "status": "recorded",
+    "value": "benchmark_only_not_promoted"
+  },
+  "files": [
+    {
+      "bytes": 5862,
+      "path": "benchmark/aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "113c4aa1b1f4c8c36debe2c4358da2f00965c770f59cbb04b7f022273fe42ea4",
+      "storage": "git"
+    },
+    {
+      "bytes": 22899,
+      "path": "benchmark/comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "b81245fe0249ccc699751ea338c32bf5b34e425e0164b90db90b3111d1b0a88c",
+      "storage": "git"
+    },
+    {
+      "archive_path": "raw/benchmark/aggregate.json",
+      "bytes": 124017,
+      "path": "benchmark/aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "ae6c2e8914b612216ab83f58213686928941c49720f3ee088b359709c0b7e1f7",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/release.jsonl",
+      "bytes": 187924,
+      "path": "benchmark/release.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "905fe090a134a32bc29834b26e241e7a3f96cf843accc1be5928a4d3e00f5ada",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/release.jsonl.manifest.json",
+      "bytes": 71799,
+      "path": "benchmark/release.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "7065ca3d71931fc0b8985f45ffa9dfacf44824676988ab152669fad91f8f7a52",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/legacy/manifest.json",
+      "bytes": 5155,
+      "path": "legacy/manifest.json",
+      "role": "run_manifest",
+      "sha256": "ca021795b35ddc0fa9e2f6b087124def5daa546e69505d488ff9a1743395bea2",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/aggregate.csv",
+      "bytes": 5887,
+      "path": "recovered/aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "160aa36aac54fd1bb1794897684adb0b78bae583e5080e9ccccf160af4bc317c",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/aggregate.json",
+      "bytes": 124017,
+      "path": "recovered/aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "ae6c2e8914b612216ab83f58213686928941c49720f3ee088b359709c0b7e1f7",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/comparison.json",
+      "bytes": 22899,
+      "path": "recovered/comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "b81245fe0249ccc699751ea338c32bf5b34e425e0164b90db90b3111d1b0a88c",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/nsys-2d_mapping-l2/system.nsys-rep",
+      "bytes": 62700,
+      "path": "recovered/nsys-2d_mapping-l2/system.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "4dabe7741cd54707c5d3aea316fabe4071a0a4bd77ada884a5f2903782b97220",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/nsys-2d_mapping-l2/system.sqlite",
+      "bytes": 266240,
+      "path": "recovered/nsys-2d_mapping-l2/system.sqlite",
+      "role": "profiler_database",
+      "sha256": "655ed973bc2e87aea894ae8072718841f00074dd93d629162d75d95a17044a9f",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/nsys-combined-l2/system.nsys-rep",
+      "bytes": 62682,
+      "path": "recovered/nsys-combined-l2/system.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "67722408d9d1587a8f7289dade14a260c8b24d036538c8280a52dae8132e85dc",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/nsys-combined-l2/system.sqlite",
+      "bytes": 266240,
+      "path": "recovered/nsys-combined-l2/system.sqlite",
+      "role": "profiler_database",
+      "sha256": "999549cd2a13ea6c89f69bafedd42819783dc943f8766ce3eb319bcad672b4b9",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/nsys-cublas-l2/system.nsys-rep",
+      "bytes": 68210,
+      "path": "recovered/nsys-cublas-l2/system.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "78f58ca9135fcddbe1d6a69ed92d72e8875f3def329b1f4594f973626d4530e5",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/nsys-cublas-l2/system.sqlite",
+      "bytes": 294912,
+      "path": "recovered/nsys-cublas-l2/system.sqlite",
+      "role": "profiler_database",
+      "sha256": "276fa1eca7da756703eba35ee87e59c6bd5f7ed470f9444eb4b6c3133d92b74c",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/nsys-naive-l2/system.nsys-rep",
+      "bytes": 62632,
+      "path": "recovered/nsys-naive-l2/system.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "575af7c3274243693fde7254940f86cdf70ed091d1e7363e927dc2fca3797c57",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/nsys-naive-l2/system.sqlite",
+      "bytes": 266240,
+      "path": "recovered/nsys-naive-l2/system.sqlite",
+      "role": "profiler_database",
+      "sha256": "be6f2c6bb6af10a98023edbecdb736c0d126acec86a0159fc14258e3d8c03f2c",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/nsys-tiled_scalar-l2/system.nsys-rep",
+      "bytes": 62730,
+      "path": "recovered/nsys-tiled_scalar-l2/system.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "1a1bee1e3714bb5aba75fae420fbf83d84314bbeee5b4f2d1896b62ffaaa6864",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/nsys-tiled_scalar-l2/system.sqlite",
+      "bytes": 266240,
+      "path": "recovered/nsys-tiled_scalar-l2/system.sqlite",
+      "role": "profiler_database",
+      "sha256": "094942c85728b3d50542e4bbba09fba61319eb98c8eb272cf2a3df890eb39186",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/nsys-tiled_vector-l2/system.nsys-rep",
+      "bytes": 62707,
+      "path": "recovered/nsys-tiled_vector-l2/system.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "e492875e60ae6344d203c0bc88ac33d609cfdfe5462b85c8d02c458906f391f4",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/nsys-tiled_vector-l2/system.sqlite",
+      "bytes": 266240,
+      "path": "recovered/nsys-tiled_vector-l2/system.sqlite",
+      "role": "profiler_database",
+      "sha256": "2ed5cb95b50b9d1860e82287db7cff3d96f3c5c65893655f6b026f430173a685",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/release.jsonl",
+      "bytes": 187924,
+      "path": "recovered/release.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "905fe090a134a32bc29834b26e241e7a3f96cf843accc1be5928a4d3e00f5ada",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/release.jsonl.manifest.json",
+      "bytes": 71799,
+      "path": "recovered/release.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "7065ca3d71931fc0b8985f45ffa9dfacf44824676988ab152669fad91f8f7a52",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/reports/dense.2d_mapping.1024.l1.detailed.ncu-rep",
+      "bytes": 334673,
+      "path": "recovered/reports/dense.2d_mapping.1024.l1.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "1364c915981f684ff69ff4a1925f814972dfefe27b940f292228ac201b3d09a2",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/reports/dense.2d_mapping.1024.l2.detailed.ncu-rep",
+      "bytes": 333009,
+      "path": "recovered/reports/dense.2d_mapping.1024.l2.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "347ea159310df9ff1213090ec8a7b57888b2a338626bfd7f32f7599509d269c6",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/reports/dense.combined.1024.l1.detailed.ncu-rep",
+      "bytes": 314637,
+      "path": "recovered/reports/dense.combined.1024.l1.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "171cc9fa4e4b14dfefdabb45b170a5c695011e3997d6d88ebda26228321804c1",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/reports/dense.combined.1024.l2.detailed.ncu-rep",
+      "bytes": 316304,
+      "path": "recovered/reports/dense.combined.1024.l2.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "7e50dc8330af07d757ed3de8848fe918e9273eb333930ac86224039f1f35e5d1",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/reports/dense.cublas.1024.l1.detailed.ncu-rep",
+      "bytes": 3269200,
+      "path": "recovered/reports/dense.cublas.1024.l1.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "baeed61969ee1d2216759dcad99dd50c2a2e99d7d91b1191e58709705c105c13",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/reports/dense.cublas.1024.l2.detailed.ncu-rep",
+      "bytes": 3260321,
+      "path": "recovered/reports/dense.cublas.1024.l2.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "06e8807f169aafb9d61e000cfa2f207d1df80aa3456b2977b15218e652ddd9d1",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/reports/dense.naive.1024.l1.detailed.ncu-rep",
+      "bytes": 339131,
+      "path": "recovered/reports/dense.naive.1024.l1.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "ce3792ceedf9bed0f2db1cfca6ab104b28b4891d9b2b61ee0c557a5221d51a53",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/reports/dense.naive.1024.l2.detailed.ncu-rep",
+      "bytes": 342474,
+      "path": "recovered/reports/dense.naive.1024.l2.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "ce401acfe7713af8ccf71863a39b7ee9546dce9ccf44e4eee84257f0f707a99a",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/reports/dense.tiled_scalar.1024.l1.detailed.ncu-rep",
+      "bytes": 333055,
+      "path": "recovered/reports/dense.tiled_scalar.1024.l1.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "77b4e2ff858609b76d878c1683bfa3224408b3b49a81d41c8afb33aca485d4e7",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/reports/dense.tiled_scalar.1024.l2.detailed.ncu-rep",
+      "bytes": 335822,
+      "path": "recovered/reports/dense.tiled_scalar.1024.l2.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "878c65ee2008e3223b9d0cb82556776d16833fa2aa5269a1c5f33f3141ce0724",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/reports/dense.tiled_vector.1024.l1.detailed.ncu-rep",
+      "bytes": 288536,
+      "path": "recovered/reports/dense.tiled_vector.1024.l1.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "8ddcc1deccd950a58c0485d9eaee685aae5019b08a87dcf6bf7c9f460799097b",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/reports/dense.tiled_vector.1024.l2.detailed.ncu-rep",
+      "bytes": 290214,
+      "path": "recovered/reports/dense.tiled_vector.1024.l2.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "d58d81662b56e8a56707536a0f89e5563985f9aee38388b30f4a77e1f3aa8e98",
+      "storage": "release"
+    }
+  ],
+  "hardware": {
+    "compute_capability": null,
+    "gpu_name": null,
+    "gpu_uuid": null,
+    "sm_count": null,
+    "status": "unavailable"
+  },
+  "kind": "dense_gemm_performance_evidence",
+  "migration": {
+    "checksum_repairs": [],
+    "legacy_manifest_archive_path": "raw/legacy/manifest.json",
+    "legacy_schema": "raggedroute.evidence_bundle.v1"
+  },
+  "provenance": {
+    "git_clean": null,
+    "git_clean_status": "unavailable",
+    "source_git_sha": "365f273"
+  },
+  "release_asset": {
+    "bytes": 1417851,
+    "immutable": true,
+    "name": "20260801T1342Z-365f273-dense-gemm-levels-v1-raw.zip",
+    "sha256": "70b8f0c630c41d78e2fefad19dcf07afbef71799f90a16e18cd89020fe859342",
+    "tag": "evidence-2026-08-03-v1",
+    "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260801T1342Z-365f273-dense-gemm-levels-v1-raw.zip"
+  },
   "run_id": "20260801T1342Z-365f273-dense-gemm-levels-v1",
-  "created_utc": "2026-08-01T13:42:12Z",
-  "benchmark_source": "profile/dense-gemm-365f273-industrial-v1",
-  "profile_source": "profile/dense-gemm-365f273-industrial-profile-v1",
-  "release_artifacts": [
-    {"name":"aggregate.csv","bytes":5887,"sha256":"160aa36aac54fd1bb1794897684adb0b78bae583e5080e9ccccf160af4bc317c","committed":false},
-    {"name":"aggregate.json","bytes":124017,"sha256":"ae6c2e8914b612216ab83f58213686928941c49720f3ee088b359709c0b7e1f7","committed":false},
-    {"name":"comparison.json","bytes":22899,"sha256":"b81245fe0249ccc699751ea338c32bf5b34e425e0164b90db90b3111d1b0a88c","committed":false},
-    {"name":"release.jsonl","bytes":187924,"sha256":"905fe090a134a32bc29834b26e241e7a3f96cf843accc1be5928a4d3e00f5ada","committed":false},
-    {"name":"release.jsonl.manifest.json","bytes":71799,"sha256":"7065ca3d71931fc0b8985f45ffa9dfacf44824676988ab152669fad91f8f7a52","committed":false}
-  ],
-  "raw_profiler_reports": [
-    {"name":"reports/dense.2d_mapping.1024.l1.detailed.ncu-rep","bytes":334673,"sha256":"1364c915981f684ff69ff4a1925f814972dfefe27b940f292228ac201b3d09a2","committed":false},
-    {"name":"reports/dense.2d_mapping.1024.l2.detailed.ncu-rep","bytes":333009,"sha256":"347ea159310df9ff1213090ec8a7b57888b2a338626bfd7f32f7599509d269c6","committed":false},
-    {"name":"reports/dense.combined.1024.l1.detailed.ncu-rep","bytes":314637,"sha256":"171cc9fa4e4b14dfefdabb45b170a5c695011e3997d6d88ebda26228321804c1","committed":false},
-    {"name":"reports/dense.combined.1024.l2.detailed.ncu-rep","bytes":316304,"sha256":"7e50dc8330af07d757ed3de8848fe918e9273eb333930ac86224039f1f35e5d1","committed":false},
-    {"name":"reports/dense.cublas.1024.l1.detailed.ncu-rep","bytes":3269200,"sha256":"baeed61969ee1d2216759dcad99dd50c2a2e99d7d91b1191e58709705c105c13","committed":false},
-    {"name":"reports/dense.cublas.1024.l2.detailed.ncu-rep","bytes":3260321,"sha256":"06e8807f169aafb9d61e000cfa2f207d1df80aa3456b2977b15218e652ddd9d1","committed":false},
-    {"name":"reports/dense.naive.1024.l1.detailed.ncu-rep","bytes":339131,"sha256":"ce3792ceedf9bed0f2db1cfca6ab104b28b4891d9b2b61ee0c557a5221d51a53","committed":false},
-    {"name":"reports/dense.naive.1024.l2.detailed.ncu-rep","bytes":342474,"sha256":"ce401acfe7713af8ccf71863a39b7ee9546dce9ccf44e4eee84257f0f707a99a","committed":false},
-    {"name":"reports/dense.tiled_scalar.1024.l1.detailed.ncu-rep","bytes":333055,"sha256":"77b4e2ff858609b76d878c1683bfa3224408b3b49a81d41c8afb33aca485d4e7","committed":false},
-    {"name":"reports/dense.tiled_scalar.1024.l2.detailed.ncu-rep","bytes":335822,"sha256":"878c65ee2008e3223b9d0cb82556776d16833fa2aa5269a1c5f33f3141ce0724","committed":false},
-    {"name":"reports/dense.tiled_vector.1024.l1.detailed.ncu-rep","bytes":288536,"sha256":"8ddcc1deccd950a58c0485d9eaee685aae5019b08a87dcf6bf7c9f460799097b","committed":false},
-    {"name":"reports/dense.tiled_vector.1024.l2.detailed.ncu-rep","bytes":290214,"sha256":"d58d81662b56e8a56707536a0f89e5563985f9aee38388b30f4a77e1f3aa8e98","committed":false},
-    {"name":"nsys-2d_mapping-l2/system.nsys-rep","bytes":62700,"sha256":"4dabe7741cd54707c5d3aea316fabe4071a0a4bd77ada884a5f2903782b97220","committed":false},
-    {"name":"nsys-2d_mapping-l2/system.sqlite","bytes":266240,"sha256":"655ed973bc2e87aea894ae8072718841f00074dd93d629162d75d95a17044a9f","committed":false},
-    {"name":"nsys-combined-l2/system.nsys-rep","bytes":62682,"sha256":"67722408d9d1587a8f7289dade14a260c8b24d036538c8280a52dae8132e85dc","committed":false},
-    {"name":"nsys-combined-l2/system.sqlite","bytes":266240,"sha256":"999549cd2a13ea6c89f69bafedd42819783dc943f8766ce3eb319bcad672b4b9","committed":false},
-    {"name":"nsys-cublas-l2/system.nsys-rep","bytes":68210,"sha256":"78f58ca9135fcddbe1d6a69ed92d72e8875f3def329b1f4594f973626d4530e5","committed":false},
-    {"name":"nsys-cublas-l2/system.sqlite","bytes":294912,"sha256":"276fa1eca7da756703eba35ee87e59c6bd5f7ed470f9444eb4b6c3133d92b74c","committed":false},
-    {"name":"nsys-naive-l2/system.nsys-rep","bytes":62632,"sha256":"575af7c3274243693fde7254940f86cdf70ed091d1e7363e927dc2fca3797c57","committed":false},
-    {"name":"nsys-naive-l2/system.sqlite","bytes":266240,"sha256":"be6f2c6bb6af10a98023edbecdb736c0d126acec86a0159fc14258e3d8c03f2c","committed":false},
-    {"name":"nsys-tiled_scalar-l2/system.nsys-rep","bytes":62730,"sha256":"1a1bee1e3714bb5aba75fae420fbf83d84314bbeee5b4f2d1896b62ffaaa6864","committed":false},
-    {"name":"nsys-tiled_scalar-l2/system.sqlite","bytes":266240,"sha256":"094942c85728b3d50542e4bbba09fba61319eb98c8eb272cf2a3df890eb39186","committed":false},
-    {"name":"nsys-tiled_vector-l2/system.nsys-rep","bytes":62707,"sha256":"e492875e60ae6344d203c0bc88ac33d609cfdfe5462b85c8d02c458906f391f4","committed":false},
-    {"name":"nsys-tiled_vector-l2/system.sqlite","bytes":266240,"sha256":"2ed5cb95b50b9d1860e82287db7cff3d96f3c5c65893655f6b026f430173a685","committed":false}
-  ],
-  "policy": {
-    "profiler_duration_is_release_latency": false,
-    "raw_profiler_binaries_committed": false
+  "schema_version": "raggedroute.evidence_bundle.v2",
+  "semantic_contract": {
+    "accumulator_dtype": null,
+    "dtype": null,
+    "math_mode": null,
+    "measurement_levels": [],
+    "measurement_rule": "Release A/B timings and profiler durations are separate evidence classes.",
+    "operator": "dense_gemm",
+    "status": "historical"
+  },
+  "toolchain": {
+    "build_type": null,
+    "cuda": null,
+    "driver": null,
+    "ncu": null,
+    "nsys": null,
+    "status": "unavailable"
+  },
+  "validation": {
+    "reason": "Validation outputs are inventoried as files; the legacy manifest had no normalized result object.",
+    "status": "historical"
   }
 }

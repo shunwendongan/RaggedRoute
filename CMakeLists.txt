@@ -71,17 +71,17 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     src/dense_gemm/cuda_candidate/optimized.cu
     src/dense_gemm/cuda_candidate/optimized_v2.cu
     src/dense_gemm/cuda_candidate/optimized_v3.cu
-    src/topk_gate/baseline.cu
+    src/topk_gate/cuda_naive/baseline.cu
     src/topk_gate/cuda_candidate/optimized.cu
-    src/histogram/baseline.cu
+    src/histogram/cuda_naive/baseline.cu
     src/histogram/cuda_candidate/optimized.cu
-    src/scan/baseline.cu
-    src/permute/baseline.cu
+    src/scan/cuda_naive/baseline.cu
+    src/permute/cuda_naive/baseline.cu
     src/permute/cuda_candidate/optimized.cu
-    src/grouped_gemm/baseline.cu
+    src/grouped_gemm/cuda_naive/baseline.cu
     src/grouped_gemm/cuda_candidate/optimized.cu
     src/grouped_gemm/cuda_candidate/optimized_register.cu
-    src/unpermute/baseline.cu
+    src/unpermute/cuda_naive/baseline.cu
     src/unpermute/cuda_candidate/optimized.cu)
   add_library(RaggedRoute::baseline_ops ALIAS raggedroute_baseline_ops)
   target_include_directories(raggedroute_baseline_ops PUBLIC

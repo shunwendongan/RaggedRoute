@@ -1,0 +1,14 @@
+{
+  "schema_version": "raggedroute.kernel_campaign_index.v1",
+  "active": "grouped_gemm",
+  "priority": ["grouped_gemm", "topk_gate", "dense_gemm", "permute", "unpermute", "scan", "histogram"],
+  "campaigns": {
+    "dense_gemm": "dense_gemm.json",
+    "topk_gate": "topk_gate.json",
+    "histogram": "histogram.json",
+    "scan": "scan.json",
+    "permute": "permute.json",
+    "grouped_gemm": "grouped_gemm.json",
+    "unpermute": "unpermute.json"
+  }
+}

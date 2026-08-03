@@ -1,14 +1,244 @@
 {
-  "schema_version": "raggedroute.evidence_bundle.v1",
+  "commands": [
+    {
+      "reason": "The legacy bundle did not preserve an exact command line.",
+      "role": "historical_collection",
+      "status": "unavailable"
+    }
+  ],
+  "decision": {
+    "profiler_duration_used_as_speedup": false,
+    "status": "recorded",
+    "value": "rejected_not_promoted"
+  },
+  "files": [
+    {
+      "bytes": 69663,
+      "path": "benchmark/scan-candidate-decision-release.aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "fe813b93bc3f499e4fb169864fc9c4788a75a3c703146b973431a31905d8da7c",
+      "storage": "git"
+    },
+    {
+      "bytes": 184404,
+      "path": "benchmark/scan-candidate-decision-release.comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "546f622aabf4bb18e371e0e8e9ea071f8e43a3b3b317dc975fd7acfe0de95840",
+      "storage": "git"
+    },
+    {
+      "bytes": 19833,
+      "path": "benchmark/scan-scalar-stability-release.aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "a3906d7e0d5d6e8fd53785e66160844a1331f03887f2a4cdf4b0285deb6b7bf0",
+      "storage": "git"
+    },
+    {
+      "bytes": 35205,
+      "path": "benchmark/scan-scalar-stability-release.comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "4d27d1147421ff8bec5234eb5290d26ac6af65d429180ec317af070d471261df",
+      "storage": "git"
+    },
+    {
+      "bytes": 30762,
+      "path": "profile/ncu_metrics.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "69e2a045e5ea47114f75144ce4d9626d927e1b82304ca85ab4291c3727429798",
+      "storage": "git"
+    },
+    {
+      "bytes": 41747,
+      "path": "profile/ncu_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "2597b31acf21979f74c842340d1283c8c688336a818894ffc504a99244d085e9",
+      "storage": "git"
+    },
+    {
+      "bytes": 1098,
+      "path": "profile/nsys_cuda_api_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "eb10909a45628604d88731cccdbd9a8a8898da116a0e294f1789f9501da856d0",
+      "storage": "git"
+    },
+    {
+      "bytes": 1143,
+      "path": "profile/nsys_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "28056d14001c0d30478a0251963088b3f5fccce6fd841c3aed70fb067063d973",
+      "storage": "git"
+    },
+    {
+      "bytes": 310,
+      "path": "profile/nsys_cuda_gpu_mem_time_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "02cab885b5ae125a31d864a29594927b9f6318986445b14f88f2ee38fe266bd2",
+      "storage": "git"
+    },
+    {
+      "bytes": 3790,
+      "path": "profile/nsys_hotspots.json",
+      "role": "supporting_evidence",
+      "sha256": "d141aed488f4fae3ee12ff6d15ed2e7a05c1992b65298700d9b77087b9feed68",
+      "storage": "git"
+    },
+    {
+      "bytes": 1943,
+      "path": "profile/REPORT.md",
+      "role": "report",
+      "sha256": "3a5be58a0377611e2b925bb695f6f2e34ad1377ad4c8c00bce7b6f13e7795157",
+      "storage": "git"
+    },
+    {
+      "bytes": 4013,
+      "path": "sanitizer/initcheck.log",
+      "role": "correctness_validation",
+      "sha256": "7e1fc8bc9aaa781aec58af5cdaeb82508b1a6905ea224ef4e75360640b1b5900",
+      "storage": "git"
+    },
+    {
+      "bytes": 4012,
+      "path": "sanitizer/memcheck.log",
+      "role": "correctness_validation",
+      "sha256": "7bbb3eb7da6437ca6485988df661b8c98325ab50b59d527eb68d90bc006fe2ab",
+      "storage": "git"
+    },
+    {
+      "bytes": 4051,
+      "path": "sanitizer/racecheck.log",
+      "role": "correctness_validation",
+      "sha256": "518c50d1204d1946fb74cb19928f2359643c8e80cb035672ca8c021a2fc40b42",
+      "storage": "git"
+    },
+    {
+      "bytes": 4013,
+      "path": "sanitizer/synccheck.log",
+      "role": "correctness_validation",
+      "sha256": "bbbe9fc695e1cf0506503c6ba61aec2f47985344202d0a62260ebdd2c6f0ce93",
+      "storage": "git"
+    },
+    {
+      "archive_path": "raw/benchmark/scan-baseline-main.jsonl",
+      "bytes": 116165,
+      "path": "benchmark/scan-baseline-main.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "b1e6870bc1327c31598c6b197b2944829d3233fa297bfd4f4521c104a35c3815",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/scan-baseline-main.jsonl.manifest.json",
+      "bytes": 54552,
+      "path": "benchmark/scan-baseline-main.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "ba91e360229aae8fd901f105166ca6de269ef534218dec84c80a0bfa7daabf91",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/scan-candidate-decision-release.aggregate.json",
+      "bytes": 1261809,
+      "path": "benchmark/scan-candidate-decision-release.aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "2dc2cc2b48590b71fa8de2a02c05559a36e7f26b04bbdb5f6abcfa7fa797fcf5",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/scan-candidate-decision-release.jsonl",
+      "bytes": 2066793,
+      "path": "benchmark/scan-candidate-decision-release.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "005f062ef893f890ddf9160a54e0659bd84ce6aafded0d9b594f3d1bc0d6f846",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/scan-candidate-decision-release.jsonl.manifest.json",
+      "bytes": 857115,
+      "path": "benchmark/scan-candidate-decision-release.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "e31d606b27cf118a04bb810416b50ac4b54403808e662c2c3ae858b2b975ba93",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/scan-scalar-stability-release.aggregate.json",
+      "bytes": 457652,
+      "path": "benchmark/scan-scalar-stability-release.aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "47809b62d72479a71c0da40e4139bcf567a577710e5832d1b86ba865ee72b757",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/scan-scalar-stability-release.jsonl",
+      "bytes": 1213798,
+      "path": "benchmark/scan-scalar-stability-release.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "67847e0e932adc7d216bff4b92fbb22029531fb9392fcfb2134f3be9cf62e542",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/scan-scalar-stability-release.jsonl.manifest.json",
+      "bytes": 400079,
+      "path": "benchmark/scan-scalar-stability-release.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "84c54606a5326e6f63992185828044b776b327f703b8f3a856b61320c11d46ba",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/legacy/manifest.json",
+      "bytes": 733,
+      "path": "legacy/manifest.json",
+      "role": "run_manifest",
+      "sha256": "80b16e525c52dec2703a067cdb5a33d642e99fb3c5d327030db0abddd9af3b6d",
+      "storage": "release"
+    }
+  ],
+  "hardware": {
+    "compute_capability": "8.6",
+    "gpu_name": "NVIDIA GeForce RTX 3080",
+    "gpu_uuid": "7c5e95c0e5a415d824a0c8c8b58d6f39",
+    "sm_count": 68,
+    "status": "recorded"
+  },
+  "kind": "scan_performance_evidence",
+  "migration": {
+    "checksum_repairs": [],
+    "legacy_manifest_archive_path": "raw/legacy/manifest.json",
+    "legacy_schema": "raggedroute.evidence_bundle.v1"
+  },
+  "provenance": {
+    "git_clean": true,
+    "git_clean_status": "recorded",
+    "source_git_sha": "d26f8a6cdf7d"
+  },
+  "release_asset": {
+    "bytes": 591885,
+    "immutable": true,
+    "name": "scan-sm86-research-32bf6c9-raw.zip",
+    "sha256": "f374dda28e9f5eb4fea59844e07cb160698edcc66f6eb33ec5b2c76d5d0975bc",
+    "tag": "evidence-2026-08-03-v1",
+    "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/scan-sm86-research-32bf6c9-raw.zip"
+  },
   "run_id": "scan-sm86-research-32bf6c9",
-  "created_utc": "2026-08-02T19:24:48.270376+00:00",
-  "benchmark_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-scan-research\\out\\evidence\\scan-final-32bf6c9",
-  "extra_benchmark_sources": [],
-  "profile_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-scan-research\\profile\\scan-final-32bf6c9",
-  "sanitizer_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-scan-research\\out\\sanitizer\\rtx3080-scan-candidates",
-  "raw_profiler_reports": [],
-  "policy": {
-    "profiler_duration_is_release_latency": false,
-    "raw_profiler_binaries_committed": false
+  "schema_version": "raggedroute.evidence_bundle.v2",
+  "semantic_contract": {
+    "accumulator_dtype": null,
+    "dtype": null,
+    "math_mode": "exact_int32",
+    "measurement_levels": [
+      "L2_operator_steady"
+    ],
+    "measurement_rule": "Release A/B timings and profiler durations are separate evidence classes.",
+    "operator": "scan",
+    "status": "recorded"
+  },
+  "toolchain": {
+    "build_type": "Release",
+    "cuda": "13.3.73",
+    "driver": 13010,
+    "ncu": null,
+    "nsys": null,
+    "status": "recorded"
+  },
+  "validation": {
+    "reason": "Validation outputs are inventoried as files; the legacy manifest had no normalized result object.",
+    "status": "historical"
   }
 }

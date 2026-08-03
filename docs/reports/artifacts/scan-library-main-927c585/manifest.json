@@ -1,57 +1,198 @@
 {
-  "schema_version": "raggedroute.evidence_bundle.v1",
-  "run_id": "scan-library-main-927c585",
-  "created_utc": "2026-08-02T19:25:37.426105+00:00",
-  "benchmark_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-scan-research\\out\\evidence\\scan-library-main-927c585",
-  "extra_benchmark_sources": [],
-  "profile_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-scan-research\\profile\\scan-compute-32bf6c9",
-  "sanitizer_source": null,
-  "raw_profiler_reports": [
+  "commands": [
     {
-      "name": "scan.blocked_scalar.e64.detailed.ncu-rep",
-      "bytes": 194454,
-      "sha256": "7388c0140fbcfd4109a47bfadcb86d2b9de60451e690c789cfdcd494eda489f8",
-      "committed": false
-    },
-    {
-      "name": "scan.blocked_vector.e64.detailed.ncu-rep",
-      "bytes": 193757,
-      "sha256": "4be8c237b0a37b8dccd03a5064fd93575017ca2d868cd9ebd05cac73cbb8253f",
-      "committed": false
-    },
-    {
-      "name": "scan.cub_block.e64.basic.ncu-rep",
-      "bytes": 296579,
-      "sha256": "9463bb312a61fe86454173f3da736063d13cd5769c34b65365d4d10984815788",
-      "committed": false
-    },
-    {
-      "name": "scan.naive.e64.basic.ncu-rep",
-      "bytes": 94288,
-      "sha256": "4a13a70c90ae85b979c5c82e9b6cc8936ba2f0ecab6b77c93c8130f2586a721e",
-      "committed": false
-    },
-    {
-      "name": "scan.striped.e32.basic.ncu-rep",
-      "bytes": 104380,
-      "sha256": "0200c0eb7cd2defd1e62d992e110a22c5145c192a99a4ae0a61324c1e1babba0",
-      "committed": false
-    },
-    {
-      "name": "scan.striped.e33.basic.ncu-rep",
-      "bytes": 104380,
-      "sha256": "b7b7f2793e82c686b3542fca08b77816480b70ab29a4b037e0d69f3cae48f728",
-      "committed": false
-    },
-    {
-      "name": "scan.striped.e64.detailed.ncu-rep",
-      "bytes": 194303,
-      "sha256": "6da608d0951341b189093679897064925d7fb7708d48bd19c1042fbfae3775a6",
-      "committed": false
+      "reason": "The legacy bundle did not preserve an exact command line.",
+      "role": "historical_collection",
+      "status": "unavailable"
     }
   ],
-  "policy": {
-    "profiler_duration_is_release_latency": false,
-    "raw_profiler_binaries_committed": false
+  "decision": {
+    "profiler_duration_used_as_speedup": false,
+    "status": "recorded",
+    "value": "baseline_only"
+  },
+  "files": [
+    {
+      "bytes": 4285,
+      "path": "benchmark/scan-baseline-main.aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "a0bbe9f23b8a51ced4386f026246e6c2e714ee56c704b7d35814376fafb6b627",
+      "storage": "git"
+    },
+    {
+      "bytes": 12795,
+      "path": "benchmark/scan-baseline-main.comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "df423b93ce26d006c28ec3b46701adab8babed0645ac10f22c68b995601091ee",
+      "storage": "git"
+    },
+    {
+      "bytes": 30762,
+      "path": "profile/ncu_metrics.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "69e2a045e5ea47114f75144ce4d9626d927e1b82304ca85ab4291c3727429798",
+      "storage": "git"
+    },
+    {
+      "bytes": 41747,
+      "path": "profile/ncu_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "2597b31acf21979f74c842340d1283c8c688336a818894ffc504a99244d085e9",
+      "storage": "git"
+    },
+    {
+      "bytes": 1943,
+      "path": "profile/REPORT.md",
+      "role": "report",
+      "sha256": "3a5be58a0377611e2b925bb695f6f2e34ad1377ad4c8c00bce7b6f13e7795157",
+      "storage": "git"
+    },
+    {
+      "archive_path": "raw/benchmark/scan-baseline-main.aggregate.json",
+      "bytes": 78222,
+      "path": "benchmark/scan-baseline-main.aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "0d6b77b91a7db2cbcf30207bef298fb70a435bc3340728cc4cd5dfbf2131076e",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/scan-baseline-main.jsonl",
+      "bytes": 116165,
+      "path": "benchmark/scan-baseline-main.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "b1e6870bc1327c31598c6b197b2944829d3233fa297bfd4f4521c104a35c3815",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/scan-baseline-main.jsonl.manifest.json",
+      "bytes": 54552,
+      "path": "benchmark/scan-baseline-main.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "ba91e360229aae8fd901f105166ca6de269ef534218dec84c80a0bfa7daabf91",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/legacy/manifest.json",
+      "bytes": 2003,
+      "path": "legacy/manifest.json",
+      "role": "run_manifest",
+      "sha256": "633d48826362b5aa44f9c0b1470e4aa93ca1e65ce178467d41e7ee169b284787",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/manifest.json",
+      "bytes": 12168,
+      "path": "profile/manifest.json",
+      "role": "run_manifest",
+      "sha256": "8e7ee7f8379bb3a56f3887fd0b849cd826646eeb655aa059d17d767752994133",
+      "storage": "release"
+    },
+    {
+      "bytes": 194454,
+      "path": "recovered/scan.blocked_scalar.e64.detailed.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "7388c0140fbcfd4109a47bfadcb86d2b9de60451e690c789cfdcd494eda489f8",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 193757,
+      "path": "recovered/scan.blocked_vector.e64.detailed.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "4be8c237b0a37b8dccd03a5064fd93575017ca2d868cd9ebd05cac73cbb8253f",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 296579,
+      "path": "recovered/scan.cub_block.e64.basic.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "9463bb312a61fe86454173f3da736063d13cd5769c34b65365d4d10984815788",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 94288,
+      "path": "recovered/scan.naive.e64.basic.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "4a13a70c90ae85b979c5c82e9b6cc8936ba2f0ecab6b77c93c8130f2586a721e",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 104380,
+      "path": "recovered/scan.striped.e32.basic.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "0200c0eb7cd2defd1e62d992e110a22c5145c192a99a4ae0a61324c1e1babba0",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 104380,
+      "path": "recovered/scan.striped.e33.basic.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "b7b7f2793e82c686b3542fca08b77816480b70ab29a4b037e0d69f3cae48f728",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 194303,
+      "path": "recovered/scan.striped.e64.detailed.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "6da608d0951341b189093679897064925d7fb7708d48bd19c1042fbfae3775a6",
+      "storage": "unavailable"
+    }
+  ],
+  "hardware": {
+    "compute_capability": "8.6",
+    "gpu_name": "NVIDIA GeForce RTX 3080",
+    "gpu_uuid": "7c5e95c0e5a415d824a0c8c8b58d6f39",
+    "sm_count": 68,
+    "status": "recorded"
+  },
+  "kind": "scan_performance_evidence",
+  "migration": {
+    "checksum_repairs": [],
+    "legacy_manifest_archive_path": "raw/legacy/manifest.json",
+    "legacy_schema": "raggedroute.evidence_bundle.v1"
+  },
+  "provenance": {
+    "git_clean": true,
+    "git_clean_status": "recorded",
+    "source_git_sha": "927c585e031b"
+  },
+  "release_asset": {
+    "bytes": 29795,
+    "immutable": true,
+    "name": "scan-library-main-927c585-raw.zip",
+    "sha256": "21272d17083a5a22ddbfecfea2fb214f121b0f7f6c7939284ca2b65966d30a94",
+    "tag": "evidence-2026-08-03-v1",
+    "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/scan-library-main-927c585-raw.zip"
+  },
+  "run_id": "scan-library-main-927c585",
+  "schema_version": "raggedroute.evidence_bundle.v2",
+  "semantic_contract": {
+    "accumulator_dtype": "fp32",
+    "dtype": "fp32",
+    "math_mode": "strict_fp32",
+    "measurement_levels": [
+      "L2_operator_steady"
+    ],
+    "measurement_rule": "Release A/B timings and profiler durations are separate evidence classes.",
+    "operator": "scan",
+    "status": "recorded"
+  },
+  "toolchain": {
+    "build_type": "Release",
+    "cuda": "13.3.73",
+    "driver": 13010,
+    "ncu": null,
+    "nsys": null,
+    "status": "recorded"
+  },
+  "validation": {
+    "reason": "Validation outputs are inventoried as files; the legacy manifest had no normalized result object.",
+    "status": "historical"
   }
 }

@@ -33,7 +33,7 @@
 ctest --preset test-rtx3080-sm86-release --output-on-failure
 python scripts\run_benchmarks.py `
   --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
-  --config configs\benchmark_dense_gemm_library_release.json `
+  --config configs\operators\dense_gemm\benchmark\library_release.json `
   --output profile\dense-gemm-d0cb1aa-20260801-1350-rerun\benchmark\paired.jsonl `
   --run-id dense-gemm-d0cb1aa-20260801-1350-rerun
 ```

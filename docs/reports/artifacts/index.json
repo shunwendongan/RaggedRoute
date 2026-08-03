@@ -1,0 +1,294 @@
+{
+  "bundles": [
+    {
+      "decision": "baseline_only",
+      "git_clean": true,
+      "git_files": 17,
+      "kind": "multi_operator_performance_evidence",
+      "release_asset": {
+        "bytes": 70905,
+        "immutable": true,
+        "name": "20260731T115243Z-a9489abce704-rtx3080-naive-profile-v1-raw.zip",
+        "sha256": "cba55628a2c35d2b1044011f62d327400d2dadc731f4598899662ac5abe5e514",
+        "tag": "evidence-2026-08-03-v1",
+        "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260731T115243Z-a9489abce704-rtx3080-naive-profile-v1-raw.zip"
+      },
+      "release_files": 11,
+      "run_id": "20260731T115243Z-a9489abce704-rtx3080-naive-profile-v1",
+      "source_git_sha": "a9489abce704",
+      "unavailable_files": 12
+    },
+    {
+      "decision": "rejected_not_promoted",
+      "git_clean": true,
+      "git_files": 13,
+      "kind": "dense_gemm_performance_evidence",
+      "release_asset": {
+        "bytes": 11708,
+        "immutable": true,
+        "name": "20260801T120145Z-44cec95-dense-gemm-opt-exp2-v1-raw.zip",
+        "sha256": "f8111211e1f3e20aa5dde8d6ceb4d1efaf5ae2a8e26ee7923a09e59ea6b6672f",
+        "tag": "evidence-2026-08-03-v1",
+        "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260801T120145Z-44cec95-dense-gemm-opt-exp2-v1-raw.zip"
+      },
+      "release_files": 5,
+      "run_id": "20260801T120145Z-44cec95-dense-gemm-opt-exp2-v1",
+      "source_git_sha": "44cec950a7b6",
+      "unavailable_files": 4
+    },
+    {
+      "decision": "rejected_not_promoted",
+      "git_clean": true,
+      "git_files": 15,
+      "kind": "dense_gemm_performance_evidence",
+      "release_asset": {
+        "bytes": 22524,
+        "immutable": true,
+        "name": "20260801T120145Z-755e257-dense-gemm-opt-exp3-v1-raw.zip",
+        "sha256": "56d39d695a3443cf4619b7b934e832674ed15f143854d861e91b60fe41bfb668",
+        "tag": "evidence-2026-08-03-v1",
+        "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260801T120145Z-755e257-dense-gemm-opt-exp3-v1-raw.zip"
+      },
+      "release_files": 8,
+      "run_id": "20260801T120145Z-755e257-dense-gemm-opt-exp3-v1",
+      "source_git_sha": "755e257dc2b3",
+      "unavailable_files": 4
+    },
+    {
+      "decision": "rejected_not_promoted",
+      "git_clean": true,
+      "git_files": 14,
+      "kind": "dense_gemm_performance_evidence",
+      "release_asset": {
+        "bytes": 13143,
+        "immutable": true,
+        "name": "20260801T120145Z-bfe4494-dense-gemm-opt-exp4-v1-raw.zip",
+        "sha256": "ee564f46bd6afbde4f5ed76ccf94215573b5f3aeaeaa9004e11aa7b0f44877b1",
+        "tag": "evidence-2026-08-03-v1",
+        "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260801T120145Z-bfe4494-dense-gemm-opt-exp4-v1-raw.zip"
+      },
+      "release_files": 5,
+      "run_id": "20260801T120145Z-bfe4494-dense-gemm-opt-exp4-v1",
+      "source_git_sha": "bfe449418e8f",
+      "unavailable_files": 4
+    },
+    {
+      "decision": "rejected_not_promoted",
+      "git_clean": true,
+      "git_files": 13,
+      "kind": "dense_gemm_performance_evidence",
+      "release_asset": {
+        "bytes": 11194,
+        "immutable": true,
+        "name": "20260801T120145Z-cdd3554-dense-gemm-opt-exp1-v1-raw.zip",
+        "sha256": "9b4dd734b9e897e374819003fc2d88a7ff941789c95deb3cbe8bbd51d997ed3e",
+        "tag": "evidence-2026-08-03-v1",
+        "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260801T120145Z-cdd3554-dense-gemm-opt-exp1-v1-raw.zip"
+      },
+      "release_files": 5,
+      "run_id": "20260801T120145Z-cdd3554-dense-gemm-opt-exp1-v1",
+      "source_git_sha": "cdd3554d8cda",
+      "unavailable_files": 4
+    },
+    {
+      "decision": "benchmark_only_not_promoted",
+      "git_clean": null,
+      "git_files": 2,
+      "kind": "dense_gemm_performance_evidence",
+      "release_asset": {
+        "bytes": 1417851,
+        "immutable": true,
+        "name": "20260801T1342Z-365f273-dense-gemm-levels-v1-raw.zip",
+        "sha256": "70b8f0c630c41d78e2fefad19dcf07afbef71799f90a16e18cd89020fe859342",
+        "tag": "evidence-2026-08-03-v1",
+        "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260801T1342Z-365f273-dense-gemm-levels-v1-raw.zip"
+      },
+      "release_files": 33,
+      "run_id": "20260801T1342Z-365f273-dense-gemm-levels-v1",
+      "source_git_sha": "365f273",
+      "unavailable_files": 0
+    },
+    {
+      "decision": "rejected_not_promoted",
+      "git_clean": true,
+      "git_files": 12,
+      "kind": "dense_gemm_performance_evidence",
+      "release_asset": {
+        "bytes": 29781,
+        "immutable": true,
+        "name": "20260802T045524Z-f1da1d2-dense-gemm-v3-64x32-raw.zip",
+        "sha256": "a2d543653169dfc43b98578038c660a11b00b82fccbd01623e2973cc47ac4f3a",
+        "tag": "evidence-2026-08-03-v1",
+        "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260802T045524Z-f1da1d2-dense-gemm-v3-64x32-raw.zip"
+      },
+      "release_files": 5,
+      "run_id": "20260802T045524Z-f1da1d2-dense-gemm-v3-64x32",
+      "source_git_sha": "f1da1d2557e1",
+      "unavailable_files": 9
+    },
+    {
+      "decision": "research_candidates_not_promoted",
+      "git_clean": true,
+      "git_files": 31,
+      "kind": "permute_performance_evidence",
+      "release_asset": {
+        "bytes": 562448,
+        "immutable": true,
+        "name": "20260802T185236Z-5cb9bd4-permute-sm86-candidates-v1-raw.zip",
+        "sha256": "c5dc0d55c1b2560fd62ce2ee3a62d0f5d3d41346e07d29584a6a5f825e9d3e85",
+        "tag": "evidence-2026-08-03-v1",
+        "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260802T185236Z-5cb9bd4-permute-sm86-candidates-v1-raw.zip"
+      },
+      "release_files": 13,
+      "run_id": "20260802T185236Z-5cb9bd4-permute-sm86-candidates-v1",
+      "source_git_sha": "5cb9bd49afba",
+      "unavailable_files": 23
+    },
+    {
+      "decision": "benchmark_only_not_promoted",
+      "git_clean": null,
+      "git_files": 11,
+      "kind": "grouped_gemm_performance_evidence",
+      "release_asset": {
+        "bytes": 54761,
+        "immutable": true,
+        "name": "20260802T190625Z-7fb8f43-grouped-gemm-sm86-raw.zip",
+        "sha256": "db434f8078b1b2a5a48b7a5c4cb4420a09f25e06113cc18fa8b2792883762430",
+        "tag": "evidence-2026-08-03-v1",
+        "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260802T190625Z-7fb8f43-grouped-gemm-sm86-raw.zip"
+      },
+      "release_files": 4,
+      "run_id": "20260802T190625Z-7fb8f43-grouped-gemm-sm86",
+      "source_git_sha": "7fb8f43034a4",
+      "unavailable_files": 0
+    },
+    {
+      "decision": "rejected_not_promoted",
+      "git_clean": true,
+      "git_files": 38,
+      "kind": "unpermute_performance_evidence",
+      "release_asset": {
+        "bytes": 757631,
+        "immutable": true,
+        "name": "20260802T193000Z-eba8f025c718-unpermute-sm86-research-v1-raw.zip",
+        "sha256": "226bcff3cf9e2a34c6270f899fc86155b6feea9cfe61803a284b490c4cd3697a",
+        "tag": "evidence-2026-08-03-v1",
+        "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260802T193000Z-eba8f025c718-unpermute-sm86-research-v1-raw.zip"
+      },
+      "release_files": 19,
+      "run_id": "20260802T193000Z-eba8f025c718-unpermute-sm86-research-v1",
+      "source_git_sha": "eba8f025c718",
+      "unavailable_files": 0
+    },
+    {
+      "decision": "rejected_not_promoted",
+      "git_clean": true,
+      "git_files": 39,
+      "kind": "topk_performance_evidence",
+      "release_asset": {
+        "bytes": 6089542,
+        "immutable": true,
+        "name": "20260803T0705Z-1ce3398-topk-gate-v4-raw.zip",
+        "sha256": "8387697f5c3beec83c2b3e0c0aef45ee5dd648624d54c1e8cf2720a90075dd13",
+        "tag": "evidence-2026-08-03-v1",
+        "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260803T0705Z-1ce3398-topk-gate-v4-raw.zip"
+      },
+      "release_files": 44,
+      "run_id": "20260803T0705Z-1ce3398-topk-gate-v4",
+      "source_git_sha": "1ce3398155a9",
+      "unavailable_files": 0
+    },
+    {
+      "decision": "promoted_shape_dispatch",
+      "git_clean": true,
+      "git_files": 18,
+      "kind": "histogram_performance_evidence",
+      "release_asset": {
+        "bytes": 116722,
+        "immutable": true,
+        "name": "20260803T0708Z-cb02617-histogram-candidate-v1-raw.zip",
+        "sha256": "e24e9e4cf9ceca6a4eb0262702e168eb88647ed8ecd42362e59078fa1557e026",
+        "tag": "evidence-2026-08-03-v1",
+        "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260803T0708Z-cb02617-histogram-candidate-v1-raw.zip"
+      },
+      "release_files": 10,
+      "run_id": "20260803T0708Z-cb02617-histogram-candidate-v1",
+      "source_git_sha": "cb02617af060",
+      "unavailable_files": 7
+    },
+    {
+      "decision": "research_candidate_selected_not_promoted",
+      "git_clean": true,
+      "git_files": 23,
+      "kind": "permute_performance_evidence",
+      "release_asset": {
+        "bytes": 456271,
+        "immutable": true,
+        "name": "20260803T071455Z-af4947f-permute-selected-token-owned-v1-raw.zip",
+        "sha256": "9f7acd59dd3500bc9943ccdf254d68c748fa365266a7fefecf967dfbf9631e51",
+        "tag": "evidence-2026-08-03-v1",
+        "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260803T071455Z-af4947f-permute-selected-token-owned-v1-raw.zip"
+      },
+      "release_files": 11,
+      "run_id": "20260803T071455Z-af4947f-permute-selected-token-owned-v1",
+      "source_git_sha": "cc559173155e",
+      "unavailable_files": 11
+    },
+    {
+      "decision": "reference_only",
+      "git_clean": null,
+      "git_files": 9,
+      "kind": "triton_performance_evidence",
+      "release_asset": {
+        "bytes": 45388,
+        "immutable": true,
+        "name": "20260803T1315Z-d81f6b0-triton-three-levels-v2-raw.zip",
+        "sha256": "58e591a8b592cca4600905b1e1cff960354efbbe8c181be139dd34a3653d0c7c",
+        "tag": "evidence-2026-08-03-v1",
+        "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260803T1315Z-d81f6b0-triton-three-levels-v2-raw.zip"
+      },
+      "release_files": 6,
+      "run_id": "20260803T1315Z-d81f6b0-triton-three-levels-v2",
+      "source_git_sha": "d81f6b015d38",
+      "unavailable_files": 0
+    },
+    {
+      "decision": "baseline_only",
+      "git_clean": true,
+      "git_files": 5,
+      "kind": "scan_performance_evidence",
+      "release_asset": {
+        "bytes": 29795,
+        "immutable": true,
+        "name": "scan-library-main-927c585-raw.zip",
+        "sha256": "21272d17083a5a22ddbfecfea2fb214f121b0f7f6c7939284ca2b65966d30a94",
+        "tag": "evidence-2026-08-03-v1",
+        "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/scan-library-main-927c585-raw.zip"
+      },
+      "release_files": 5,
+      "run_id": "scan-library-main-927c585",
+      "source_git_sha": "927c585e031b",
+      "unavailable_files": 7
+    },
+    {
+      "decision": "rejected_not_promoted",
+      "git_clean": true,
+      "git_files": 15,
+      "kind": "scan_performance_evidence",
+      "release_asset": {
+        "bytes": 591885,
+        "immutable": true,
+        "name": "scan-sm86-research-32bf6c9-raw.zip",
+        "sha256": "f374dda28e9f5eb4fea59844e07cb160698edcc66f6eb33ec5b2c76d5d0975bc",
+        "tag": "evidence-2026-08-03-v1",
+        "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/scan-sm86-research-32bf6c9-raw.zip"
+      },
+      "release_files": 9,
+      "run_id": "scan-sm86-research-32bf6c9",
+      "source_git_sha": "d26f8a6cdf7d",
+      "unavailable_files": 0
+    }
+  ],
+  "release_tag": "evidence-2026-08-03-v1",
+  "schema_version": "raggedroute.evidence_index.v1"
+}

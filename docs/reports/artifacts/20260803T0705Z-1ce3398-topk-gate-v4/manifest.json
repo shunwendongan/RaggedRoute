@@ -1,308 +1,713 @@
 {
-  "schema_version": "raggedroute.topk_evidence_bundle.v1",
-  "run_id": "20260803T0705Z-1ce3398-topk-gate-v4",
-  "created_utc": "2026-08-03T07:25:50.586074+00:00",
-  "policy": {
-    "profiler_duration_is_release_latency": false,
-    "raw_benchmark_jsonl_committed": false,
-    "raw_profiler_binaries_committed": false
+  "commands": [
+    {
+      "command": "ctest --preset test-rtx3080-sm86-release --output-on-failure",
+      "role": "correctness",
+      "status": "recorded"
+    },
+    {
+      "command": "python scripts/profile_benchmarks.py compute --config configs/profile_topk_gate_optimization.json --run-dir out/profile/topk-gate-ncu",
+      "role": "ncu",
+      "status": "recorded"
+    },
+    {
+      "command": "nsys profile --trace=cuda,nvtx --sample=none --cpuctxsw=none ... --profile-once",
+      "role": "nsys",
+      "status": "recorded"
+    },
+    {
+      "command": "python scripts/run_benchmarks.py --binary out/build/rtx3080-sm86-release/raggedroute_benchmark.exe --config configs/benchmark_topk_gate_release.json --output out/benchmark/topk-gate-release.jsonl",
+      "role": "release",
+      "status": "recorded"
+    },
+    {
+      "command": "python scripts/run_sanitizers.py --build-dir out/build/rtx3080-sm86-release --output-dir out/sanitizer/rtx3080-topk-gate",
+      "role": "sanitizers",
+      "status": "recorded"
+    }
+  ],
+  "decision": {
+    "profiler_duration_used_as_speedup": false,
+    "status": "recorded",
+    "value": "rejected_not_promoted"
   },
-  "raw_benchmark_inventory": [
+  "files": [
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\benchmark\\topk-gate-preflight.jsonl",
-      "name": "topk-gate-preflight.jsonl",
-      "bytes": 9185589,
-      "sha256": "c11acdd6fe814fb3051f2f0a88394121b2c9c7768a3757a36bc831d79caff16a",
-      "committed": false
+      "bytes": 35746,
+      "path": "benchmark/promotion.json",
+      "role": "comparison_or_decision",
+      "sha256": "f4795b9f96f2b52b2df7acc19a00ba5a7cb44831c91b7a6424c227c5090a1c8c",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\benchmark\\topk-gate-preflight.jsonl.manifest.json",
-      "name": "topk-gate-preflight.jsonl.manifest.json",
-      "bytes": 4520046,
-      "sha256": "f2ebba68fc482c0c6ccc4a84772b2ddd08eacdad05dcd9a2d577ca6861382af8",
-      "committed": false
+      "bytes": 6013,
+      "path": "benchmark/REPORT.md",
+      "role": "report",
+      "sha256": "54b8a8034a864fdfec6cdae38cc6990ac4d97ef8469a259d1a162fbaef11e39b",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\benchmark\\topk-gate-release.jsonl",
-      "name": "topk-gate-release.jsonl",
-      "bytes": 34633729,
-      "sha256": "f53f8fb0be62d55a5d3e15a0a374191d8681bb2be53ce37d55bc7a62b2042c86",
-      "committed": false
+      "bytes": 2189,
+      "path": "benchmark/representative_metrics.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "4429a0ce7bb483c391da4158f7d3f6131398eccc48b73c593ab19ad435b3f2a5",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\benchmark\\topk-gate-release.jsonl.manifest.json",
-      "name": "topk-gate-release.jsonl.manifest.json",
-      "bytes": 13942800,
-      "sha256": "45d80cec987ce4ab22f5844414f459a3dad8db49e582975393d313a4c96e599d",
-      "committed": false
-    }
-  ],
-  "raw_profiler_inventory": [
-    {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.cub.t2048_e33.basic.ncu-rep",
-      "name": "topk.cub.t2048_e33.basic.ncu-rep",
-      "bytes": 122244,
-      "sha256": "207a84b1f7fc26143cf7b0b0468bc1d3e828b84694ef701c3b7b727a4576b78a",
-      "committed": false
+      "bytes": 1028315,
+      "path": "benchmark/topk-gate-preflight.aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "05a0392c9a41413417bf14fe1a3ad21146748d018cf4411b25b0e02103aa514c",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.cub.t2048_e64.basic.ncu-rep",
-      "name": "topk.cub.t2048_e64.basic.ncu-rep",
-      "bytes": 122255,
-      "sha256": "cdc63deadda9cc2168cbd0deca30bca911d098ac21f524ec9af9132ab2d34596",
-      "committed": false
+      "bytes": 2457198,
+      "path": "benchmark/topk-gate-preflight.comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "2a2e2a9cebf14741317fb6843ac4f64189dc9e08c9f59d1cbfdaaed05983b417",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.cub.t2048_e64.detailed.ncu-rep",
-      "name": "topk.cub.t2048_e64.detailed.ncu-rep",
-      "bytes": 310869,
-      "sha256": "aeb72bf11a545413dd60174fca1183fb6ae84ee72276bb04fc47aa72a7cac6e5",
-      "committed": false
+      "bytes": 693834,
+      "path": "benchmark/topk-gate-release.aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "ed9062cfb74c52facae2fab17e54878450dcf333e37edaca72aac095ec4150c7",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.cub.t2048_e8.basic.ncu-rep",
-      "name": "topk.cub.t2048_e8.basic.ncu-rep",
-      "bytes": 122253,
-      "sha256": "cbd63d87af1ea2708b27400d9b8fbe77ef0e4b8ed5e206eb7a346d1672c7d7d9",
-      "committed": false
+      "bytes": 1519639,
+      "path": "benchmark/topk-gate-release.comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "b42f00cac7a833a2ea2fb2406eaacf75a47d602658873ccc10356bf50545646f",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.cub.t32_e64.basic.ncu-rep",
-      "name": "topk.cub.t32_e64.basic.ncu-rep",
-      "bytes": 123322,
-      "sha256": "1d16a68fdea0eccad7020d0956a584dfcee7dbae4050770c71e920d44e84a333",
-      "committed": false
+      "bytes": 1373,
+      "path": "environment.json",
+      "role": "supporting_evidence",
+      "sha256": "602f1a0acfa90c0da1cc71f86ee36a885a3ab206109e75f913a198e3557cb646",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.naive.t2048_e33.basic.ncu-rep",
-      "name": "topk.naive.t2048_e33.basic.ncu-rep",
-      "bytes": 106903,
-      "sha256": "2bf816172e49b1a4486623f3b1abca886c770d259c3ba4d607eb3432382ba126",
-      "committed": false
+      "bytes": 115754,
+      "path": "profile/ncu/ncu_metrics.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "5b8ef086d333396ab6c965791321e177431e1d4e2b91741b8865e257a72e25b4",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.naive.t2048_e64.basic.ncu-rep",
-      "name": "topk.naive.t2048_e64.basic.ncu-rep",
-      "bytes": 107326,
-      "sha256": "e797e56296ce5889b449babfc2510f08718dafcd6a346375b07950d0a6a3cc12",
-      "committed": false
+      "bytes": 169349,
+      "path": "profile/ncu/ncu_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "8ac5f14e2d6848b9eeb4af5ffbebc48f6b555e4448321eccfb70e0fed48b328d",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.naive.t2048_e64.detailed.ncu-rep",
-      "name": "topk.naive.t2048_e64.detailed.ncu-rep",
-      "bytes": 242873,
-      "sha256": "0f576f2796797127acfb3d7b7c64b88e862e0df79bc9dcf532e535f0afb59c19",
-      "committed": false
+      "bytes": 5667,
+      "path": "profile/ncu/REPORT.md",
+      "role": "report",
+      "sha256": "72e03176120b8a2a7786469ff2d97a90b521428eb602473a1344ace406bf78ae",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.naive.t2048_e8.basic.ncu-rep",
-      "name": "topk.naive.t2048_e8.basic.ncu-rep",
-      "bytes": 105694,
-      "sha256": "95ed4cc967b5ec4cb495af0f12e4078338345b53aa768104566b7d9add7ef82e",
-      "committed": false
+      "bytes": 1096,
+      "path": "profile/nsys/chain_from_logits.after_rejected_auto_cuda_api_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "7c9c085790e2357382206458942c9202feac213ace54f9476ae43cd076cca75a",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.naive.t32_e64.basic.ncu-rep",
-      "name": "topk.naive.t32_e64.basic.ncu-rep",
-      "bytes": 105678,
-      "sha256": "c3f626634efa79c00c85deb877af1ca0b9d6bce5adc1fffb8f59d5505278c6c2",
-      "committed": false
+      "bytes": 1006,
+      "path": "profile/nsys/chain_from_logits.after_rejected_auto_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "b51d3d652afeddf9fc56883fe8179762a122ed6a67e1f695f1fdac9b6e2bec50",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.v1.t2048_e33.basic.ncu-rep",
-      "name": "topk.v1.t2048_e33.basic.ncu-rep",
-      "bytes": 313720,
-      "sha256": "b293df82c3d982d28cb0a24ff9fce57d9f0c16f00bafbbce5775fdeb2b891bc0",
-      "committed": false
+      "bytes": 317,
+      "path": "profile/nsys/chain_from_logits.after_rejected_auto_cuda_gpu_mem_time_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "09a21035db28ae911538836c5594d585750efdf737975e3c4a474c7451709f12",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.v1.t2048_e64.basic.ncu-rep",
-      "name": "topk.v1.t2048_e64.basic.ncu-rep",
-      "bytes": 314639,
-      "sha256": "6f1c0131c7ddb6f7b6e185aa1b93c6b0f6169d3f62da08c6417ac4d9a32a382f",
-      "committed": false
+      "bytes": 1098,
+      "path": "profile/nsys/chain_from_logits.auto_cuda_api_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "a923a8ea5298a02c060a826399a27094b943afcf41172134ff0ae80ce6bad58d",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.v1.t2048_e64.detailed.ncu-rep",
-      "name": "topk.v1.t2048_e64.detailed.ncu-rep",
-      "bytes": 495814,
-      "sha256": "04f73b580e18c1dcf63aa881eaa4be87fdc83d14199e310eb96625df36dcdb62",
-      "committed": false
+      "bytes": 1007,
+      "path": "profile/nsys/chain_from_logits.auto_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "a97cd55cbf5023a69edc788af1a6255c4e69f2c8ce1c1099251fe5983baf8e30",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.v1.t2048_e8.basic.ncu-rep",
-      "name": "topk.v1.t2048_e8.basic.ncu-rep",
-      "bytes": 313200,
-      "sha256": "d75981770ca27c4d7febca408775c6ff2f52c5cbaa0c51b103760195d52006a0",
-      "committed": false
+      "bytes": 317,
+      "path": "profile/nsys/chain_from_logits.auto_cuda_gpu_mem_time_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "cd0ff21c972641481943e18617e044195e5c0520aafd8c27c4824cb9cc68ecd2",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.v1.t32_e64.basic.ncu-rep",
-      "name": "topk.v1.t32_e64.basic.ncu-rep",
-      "bytes": 313899,
-      "sha256": "9287f473cf7c4a667073563af3527aab9b1b9ba1b616816e4915308b93561e4e",
-      "committed": false
+      "bytes": 1017,
+      "path": "profile/nsys/topk.t2048_e64.cub_block_radix_top2_cuda_api_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "8024f98152727f4e70d2344ac40d8f9281150bd9430da07c16b5676281258030",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.v2.t2048_e33.basic.ncu-rep",
-      "name": "topk.v2.t2048_e33.basic.ncu-rep",
-      "bytes": 313206,
-      "sha256": "82ea8d0ac13325f0635a6cbf1d03338ff96c837a2c98b30a1ca34479a25a073f",
-      "committed": false
+      "bytes": 262,
+      "path": "profile/nsys/topk.t2048_e64.cub_block_radix_top2_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "f4a4e236a1ae21b52ecf8d519b05db60fa942b20f3d5bacb14aa1d967e964efb",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.v2.t2048_e64.basic.ncu-rep",
-      "name": "topk.v2.t2048_e64.basic.ncu-rep",
-      "bytes": 314741,
-      "sha256": "5b449f6b6afcb3c6f2f43a40c0ac9514ff82be59194f687d4eee79db034e12a0",
-      "committed": false
+      "bytes": 243,
+      "path": "profile/nsys/topk.t2048_e64.cub_block_radix_top2_cuda_gpu_mem_time_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "3a5c7730c1d1569a90d200c8c15a78af853913b6ae3da9a00d9b066511303a1f",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.v2.t2048_e64.detailed.ncu-rep",
-      "name": "topk.v2.t2048_e64.detailed.ncu-rep",
-      "bytes": 504152,
-      "sha256": "33e42a110751a3bc8accddbadf6228078379b8f07f8deac16989d5055fb3630a",
-      "committed": false
+      "bytes": 1016,
+      "path": "profile/nsys/topk.t2048_e64.cuda_naive_cuda_api_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "81a0d4f3727c3861709e3aade3560914d066cbd9f9f255fe55341c471c1f94fd",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.v2.t2048_e8.basic.ncu-rep",
-      "name": "topk.v2.t2048_e8.basic.ncu-rep",
-      "bytes": 313598,
-      "sha256": "7d5fac0fa70f947a5bdd77394783a7eca2d57f22f0e876b125d2eb42edbfef38",
-      "committed": false
+      "bytes": 232,
+      "path": "profile/nsys/topk.t2048_e64.cuda_naive_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "51700ecac77ddb541df751193593a91ea36b62b76e54641a4a3d042ef9af716a",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.v2.t32_e64.basic.ncu-rep",
-      "name": "topk.v2.t32_e64.basic.ncu-rep",
-      "bytes": 313902,
-      "sha256": "28cc9f803cdb522ea7b87d4470861f39afff909b78429290c90b1f7c3bbb0a30",
-      "committed": false
+      "bytes": 243,
+      "path": "profile/nsys/topk.t2048_e64.cuda_naive_cuda_gpu_mem_time_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "0713a455aab642e9a2f2de0262fac002c13fcee47b9a3fd75c0532a2f684232f",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.v3.t2048_e33.basic.ncu-rep",
-      "name": "topk.v3.t2048_e33.basic.ncu-rep",
-      "bytes": 314751,
-      "sha256": "e8bc5f05daacdb789c7a0b5369c3e4e0976d11f2e9f608eb65a4e829f5b39f7e",
-      "committed": false
+      "bytes": 1019,
+      "path": "profile/nsys/topk.t2048_e64.cuda_subwarp_pair_top2_v2_cuda_api_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "60989f2f664604ced48be6dbacec6cf618a45840ee3c35d175bd3330a366ee13",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.v3.t2048_e64.basic.ncu-rep",
-      "name": "topk.v3.t2048_e64.basic.ncu-rep",
-      "bytes": 314027,
-      "sha256": "c770fc8be3166679306f2fa95219602afe1adf5d78d5bfad047aa0824cf45e71",
-      "committed": false
+      "bytes": 248,
+      "path": "profile/nsys/topk.t2048_e64.cuda_subwarp_pair_top2_v2_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "12ed6ecf2f31583f02e345195fd48a67af1bee40b3fecb394c0e7ca8166e6ed4",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.v3.t2048_e64.detailed.ncu-rep",
-      "name": "topk.v3.t2048_e64.detailed.ncu-rep",
-      "bytes": 456381,
-      "sha256": "96a8c5b450f56573d2ddc43945be3c126079a29cde50e38e1dda1ad8563b709c",
-      "committed": false
+      "bytes": 243,
+      "path": "profile/nsys/topk.t2048_e64.cuda_subwarp_pair_top2_v2_cuda_gpu_mem_time_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "57027291f31416241bad1110eacbc1c8ed7957db37f1f2b755062a179c8c8d27",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.v3.t2048_e8.basic.ncu-rep",
-      "name": "topk.v3.t2048_e8.basic.ncu-rep",
-      "bytes": 314370,
-      "sha256": "ce1a82f097bcf9dd72c7a37d54c508f576f0262f4e36283866d6298f55d17e3e",
-      "committed": false
+      "bytes": 1020,
+      "path": "profile/nsys/topk.t2048_e64.cuda_vector_pair_top2_v3_cuda_api_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "521938cd58e0633bfc71b14dd42cfb3860cba1be2c0b236223f52d4a7c12981a",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.v3.t32_e64.basic.ncu-rep",
-      "name": "topk.v3.t32_e64.basic.ncu-rep",
-      "bytes": 313909,
-      "sha256": "43254104387ea3e7b734476923cd447a72933c833c7f7b0d4b7e1040ea910013",
-      "committed": false
+      "bytes": 250,
+      "path": "profile/nsys/topk.t2048_e64.cuda_vector_pair_top2_v3_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "6259cd4ddd11dd1bc8f8a0db652aeb4dd648bbcbd9f7c2a1c53d4823cc92b28f",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.vllm.t2048_e64.basic.ncu-rep",
-      "name": "topk.vllm.t2048_e64.basic.ncu-rep",
-      "bytes": 174472,
-      "sha256": "81e88c8810facddc71ca09086426a2ba8231b01b219065dcc3fcc3fdaec109f4",
-      "committed": false
+      "bytes": 243,
+      "path": "profile/nsys/topk.t2048_e64.cuda_vector_pair_top2_v3_cuda_gpu_mem_time_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "32e546d9b7be49fa2f65a6b617281cd52297f2a6d06a06e5018d3285872b72c1",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.vllm.t2048_e64.detailed.ncu-rep",
-      "name": "topk.vllm.t2048_e64.detailed.ncu-rep",
-      "bytes": 312323,
-      "sha256": "92861e31e0721cbb62e6bacdf329324fefcae47d60f4ec08e55df8577a48f095",
-      "committed": false
+      "bytes": 1020,
+      "path": "profile/nsys/topk.t2048_e64.cuda_warp_pair_top2_v1_cuda_api_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "5ecbf07dbede43fa3b54e9d1b6363651d93b7371639a51aedb13fe08cd1fb977",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.vllm.t2048_e8.basic.ncu-rep",
-      "name": "topk.vllm.t2048_e8.basic.ncu-rep",
-      "bytes": 175168,
-      "sha256": "b35ae7b82f5d9651d4b6c50de25348662beca0b0298f0a3b556345b38b09ea02",
-      "committed": false
+      "bytes": 249,
+      "path": "profile/nsys/topk.t2048_e64.cuda_warp_pair_top2_v1_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "ab2cafc4b8a7aad95df0077cb97a0511825f56655e7a922e4cfa58fe008bdfe8",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-ncu\\reports\\topk.vllm.t32_e64.basic.ncu-rep",
-      "name": "topk.vllm.t32_e64.basic.ncu-rep",
-      "bytes": 175168,
-      "sha256": "546aa76a07936657c54469ae704941eb97d5165452992ff57fb9c3865a0f1735",
-      "committed": false
+      "bytes": 242,
+      "path": "profile/nsys/topk.t2048_e64.cuda_warp_pair_top2_v1_cuda_gpu_mem_time_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "18d692e8fe2f4170bcdee6c6f57ba2e9d6f75b0930c0fb0b5aaad4d67011c457",
+      "storage": "git"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-nsys\\reports\\chain_from_logits.after_rejected_auto.nsys-rep",
-      "name": "chain_from_logits.after_rejected_auto.nsys-rep",
+      "bytes": 1015,
+      "path": "profile/nsys/topk.t2048_e64.vllm_row_packed_top2_cuda_api_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "ee9ad1ca036e0e2a76811ef912a86d31bf046ffcb05897f206f5eeb2d67ead54",
+      "storage": "git"
+    },
+    {
+      "bytes": 265,
+      "path": "profile/nsys/topk.t2048_e64.vllm_row_packed_top2_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "684307b966c0a4e5ad7ded99006fc213e4d96ff594775db6ee202ed1c1f2a89e",
+      "storage": "git"
+    },
+    {
+      "bytes": 243,
+      "path": "profile/nsys/topk.t2048_e64.vllm_row_packed_top2_cuda_gpu_mem_time_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "15397a9a4733f070ddc71130ace12e4958e55061dbded794454bcb28a30cf9f0",
+      "storage": "git"
+    },
+    {
+      "bytes": 3860,
+      "path": "sanitizer/initcheck.log",
+      "role": "correctness_validation",
+      "sha256": "fae937fe1ca08817d960a7960c706bee753e7caeb5c0f9b7e13a46b19b035e3d",
+      "storage": "git"
+    },
+    {
+      "bytes": 3859,
+      "path": "sanitizer/memcheck.log",
+      "role": "correctness_validation",
+      "sha256": "ab299b06e394408dbff477fba09dc3897f5def5a62689bf0aa2ee7ade7a75408",
+      "storage": "git"
+    },
+    {
+      "bytes": 3898,
+      "path": "sanitizer/racecheck.log",
+      "role": "correctness_validation",
+      "sha256": "fb66a9cd2b5ba4108095129060e054c6067af589411ac48bc833427e420eae6d",
+      "storage": "git"
+    },
+    {
+      "bytes": 3860,
+      "path": "sanitizer/synccheck.log",
+      "role": "correctness_validation",
+      "sha256": "50a0dc6b912ccccecea5bc27e1e2596fd8f2db0f1f21f59036107d6a97e305d0",
+      "storage": "git"
+    },
+    {
+      "archive_path": "raw/benchmark/topk-gate-release.aggregate.json",
+      "bytes": 11989859,
+      "path": "benchmark/topk-gate-release.aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "8c33af046fed3da66ef04487dd19b6144366abdb15663fec5c3928cf028d58b9",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/legacy/manifest.json",
+      "bytes": 15534,
+      "path": "legacy/manifest.json",
+      "role": "run_manifest",
+      "sha256": "978ee95511cb438d9dca1e1b2d327fb077e688215de6ca29928987c0e35fa4ce",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/ncu/manifest.json",
+      "bytes": 49250,
+      "path": "profile/ncu/manifest.json",
+      "role": "run_manifest",
+      "sha256": "abc9b56b6f9c3972959a0ff9e41420e3260a05f48b842929cfd59ed8c42b9ec5",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/chain_from_logits.after_rejected_auto.nsys-rep",
       "bytes": 72414,
+      "path": "recovered/chain_from_logits.after_rejected_auto.nsys-rep",
+      "role": "nsys_report",
       "sha256": "af771ee868a478ee3a09177c7d4bb8e6ac5de2c55e7dfb33b78a331ed01e4451",
-      "committed": false
+      "storage": "release"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-nsys\\reports\\chain_from_logits.auto.nsys-rep",
-      "name": "chain_from_logits.auto.nsys-rep",
+      "archive_path": "raw/recovered/chain_from_logits.auto.nsys-rep",
       "bytes": 72359,
+      "path": "recovered/chain_from_logits.auto.nsys-rep",
+      "role": "nsys_report",
       "sha256": "3c047eac036e15fefaf6e4c26b4d7e88d40c9cbe1bf453b5eda11ba3749cf8bb",
-      "committed": false
+      "storage": "release"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-nsys\\reports\\topk.t2048_e64.cub_block_radix_top2.nsys-rep",
-      "name": "topk.t2048_e64.cub_block_radix_top2.nsys-rep",
+      "archive_path": "raw/recovered/topk-gate-preflight.jsonl",
+      "bytes": 9185589,
+      "path": "recovered/topk-gate-preflight.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "c11acdd6fe814fb3051f2f0a88394121b2c9c7768a3757a36bc831d79caff16a",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk-gate-preflight.jsonl.manifest.json",
+      "bytes": 4520046,
+      "path": "recovered/topk-gate-preflight.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "f2ebba68fc482c0c6ccc4a84772b2ddd08eacdad05dcd9a2d577ca6861382af8",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk-gate-release.jsonl",
+      "bytes": 34633729,
+      "path": "recovered/topk-gate-release.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "f53f8fb0be62d55a5d3e15a0a374191d8681bb2be53ce37d55bc7a62b2042c86",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk-gate-release.jsonl.manifest.json",
+      "bytes": 13942800,
+      "path": "recovered/topk-gate-release.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "45d80cec987ce4ab22f5844414f459a3dad8db49e582975393d313a4c96e599d",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.cub.t2048_e33.basic.ncu-rep",
+      "bytes": 122244,
+      "path": "recovered/topk.cub.t2048_e33.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "207a84b1f7fc26143cf7b0b0468bc1d3e828b84694ef701c3b7b727a4576b78a",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.cub.t2048_e64.basic.ncu-rep",
+      "bytes": 122255,
+      "path": "recovered/topk.cub.t2048_e64.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "cdc63deadda9cc2168cbd0deca30bca911d098ac21f524ec9af9132ab2d34596",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.cub.t2048_e64.detailed.ncu-rep",
+      "bytes": 310869,
+      "path": "recovered/topk.cub.t2048_e64.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "aeb72bf11a545413dd60174fca1183fb6ae84ee72276bb04fc47aa72a7cac6e5",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.cub.t2048_e8.basic.ncu-rep",
+      "bytes": 122253,
+      "path": "recovered/topk.cub.t2048_e8.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "cbd63d87af1ea2708b27400d9b8fbe77ef0e4b8ed5e206eb7a346d1672c7d7d9",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.cub.t32_e64.basic.ncu-rep",
+      "bytes": 123322,
+      "path": "recovered/topk.cub.t32_e64.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "1d16a68fdea0eccad7020d0956a584dfcee7dbae4050770c71e920d44e84a333",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.naive.t2048_e33.basic.ncu-rep",
+      "bytes": 106903,
+      "path": "recovered/topk.naive.t2048_e33.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "2bf816172e49b1a4486623f3b1abca886c770d259c3ba4d607eb3432382ba126",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.naive.t2048_e64.basic.ncu-rep",
+      "bytes": 107326,
+      "path": "recovered/topk.naive.t2048_e64.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "e797e56296ce5889b449babfc2510f08718dafcd6a346375b07950d0a6a3cc12",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.naive.t2048_e64.detailed.ncu-rep",
+      "bytes": 242873,
+      "path": "recovered/topk.naive.t2048_e64.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "0f576f2796797127acfb3d7b7c64b88e862e0df79bc9dcf532e535f0afb59c19",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.naive.t2048_e8.basic.ncu-rep",
+      "bytes": 105694,
+      "path": "recovered/topk.naive.t2048_e8.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "95ed4cc967b5ec4cb495af0f12e4078338345b53aa768104566b7d9add7ef82e",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.naive.t32_e64.basic.ncu-rep",
+      "bytes": 105678,
+      "path": "recovered/topk.naive.t32_e64.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "c3f626634efa79c00c85deb877af1ca0b9d6bce5adc1fffb8f59d5505278c6c2",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.t2048_e64.cub_block_radix_top2.nsys-rep",
       "bytes": 62967,
+      "path": "recovered/topk.t2048_e64.cub_block_radix_top2.nsys-rep",
+      "role": "nsys_report",
       "sha256": "00585a7119b9cb19a231ad80722c87d239e50576dc1f9e3ba493a3be3f1e028e",
-      "committed": false
+      "storage": "release"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-nsys\\reports\\topk.t2048_e64.cuda_naive.nsys-rep",
-      "name": "topk.t2048_e64.cuda_naive.nsys-rep",
+      "archive_path": "raw/recovered/topk.t2048_e64.cuda_naive.nsys-rep",
       "bytes": 62827,
+      "path": "recovered/topk.t2048_e64.cuda_naive.nsys-rep",
+      "role": "nsys_report",
       "sha256": "3ab9f27b39b83d9481ec96379be3ac85947719eb4d5a6925c286e33aaef7ca31",
-      "committed": false
+      "storage": "release"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-nsys\\reports\\topk.t2048_e64.cuda_subwarp_pair_top2_v2.nsys-rep",
-      "name": "topk.t2048_e64.cuda_subwarp_pair_top2_v2.nsys-rep",
+      "archive_path": "raw/recovered/topk.t2048_e64.cuda_subwarp_pair_top2_v2.nsys-rep",
       "bytes": 62998,
+      "path": "recovered/topk.t2048_e64.cuda_subwarp_pair_top2_v2.nsys-rep",
+      "role": "nsys_report",
       "sha256": "97762344e8c7a30949a190fdfea3572aec6694f8fcfa37389eff9289dc57e1ff",
-      "committed": false
+      "storage": "release"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-nsys\\reports\\topk.t2048_e64.cuda_vector_pair_top2_v3.nsys-rep",
-      "name": "topk.t2048_e64.cuda_vector_pair_top2_v3.nsys-rep",
+      "archive_path": "raw/recovered/topk.t2048_e64.cuda_vector_pair_top2_v3.nsys-rep",
       "bytes": 62978,
+      "path": "recovered/topk.t2048_e64.cuda_vector_pair_top2_v3.nsys-rep",
+      "role": "nsys_report",
       "sha256": "d9c21cbcbcea34c33f447e409b137787143e9ce2653b88f33c4b985b78642894",
-      "committed": false
+      "storage": "release"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-nsys\\reports\\topk.t2048_e64.cuda_warp_pair_top2_v1.nsys-rep",
-      "name": "topk.t2048_e64.cuda_warp_pair_top2_v1.nsys-rep",
+      "archive_path": "raw/recovered/topk.t2048_e64.cuda_warp_pair_top2_v1.nsys-rep",
       "bytes": 62965,
+      "path": "recovered/topk.t2048_e64.cuda_warp_pair_top2_v1.nsys-rep",
+      "role": "nsys_report",
       "sha256": "3ebb72c9e4a6a57e271691aa5b6e232abda3ed8de5ee57dcb5826ac6df4d7d7c",
-      "committed": false
+      "storage": "release"
     },
     {
-      "path": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk\\out\\profile\\topk-gate-nsys\\reports\\topk.t2048_e64.vllm_row_packed_top2.nsys-rep",
-      "name": "topk.t2048_e64.vllm_row_packed_top2.nsys-rep",
+      "archive_path": "raw/recovered/topk.t2048_e64.vllm_row_packed_top2.nsys-rep",
       "bytes": 62967,
+      "path": "recovered/topk.t2048_e64.vllm_row_packed_top2.nsys-rep",
+      "role": "nsys_report",
       "sha256": "419087e0b7c1f2455d80e49557d86f793b9965efcf8c60054ea3e392aae4e7d0",
-      "committed": false
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.v1.t2048_e33.basic.ncu-rep",
+      "bytes": 313720,
+      "path": "recovered/topk.v1.t2048_e33.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "b293df82c3d982d28cb0a24ff9fce57d9f0c16f00bafbbce5775fdeb2b891bc0",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.v1.t2048_e64.basic.ncu-rep",
+      "bytes": 314639,
+      "path": "recovered/topk.v1.t2048_e64.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "6f1c0131c7ddb6f7b6e185aa1b93c6b0f6169d3f62da08c6417ac4d9a32a382f",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.v1.t2048_e64.detailed.ncu-rep",
+      "bytes": 495814,
+      "path": "recovered/topk.v1.t2048_e64.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "04f73b580e18c1dcf63aa881eaa4be87fdc83d14199e310eb96625df36dcdb62",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.v1.t2048_e8.basic.ncu-rep",
+      "bytes": 313200,
+      "path": "recovered/topk.v1.t2048_e8.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "d75981770ca27c4d7febca408775c6ff2f52c5cbaa0c51b103760195d52006a0",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.v1.t32_e64.basic.ncu-rep",
+      "bytes": 313899,
+      "path": "recovered/topk.v1.t32_e64.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "9287f473cf7c4a667073563af3527aab9b1b9ba1b616816e4915308b93561e4e",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.v2.t2048_e33.basic.ncu-rep",
+      "bytes": 313206,
+      "path": "recovered/topk.v2.t2048_e33.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "82ea8d0ac13325f0635a6cbf1d03338ff96c837a2c98b30a1ca34479a25a073f",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.v2.t2048_e64.basic.ncu-rep",
+      "bytes": 314741,
+      "path": "recovered/topk.v2.t2048_e64.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "5b449f6b6afcb3c6f2f43a40c0ac9514ff82be59194f687d4eee79db034e12a0",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.v2.t2048_e64.detailed.ncu-rep",
+      "bytes": 504152,
+      "path": "recovered/topk.v2.t2048_e64.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "33e42a110751a3bc8accddbadf6228078379b8f07f8deac16989d5055fb3630a",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.v2.t2048_e8.basic.ncu-rep",
+      "bytes": 313598,
+      "path": "recovered/topk.v2.t2048_e8.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "7d5fac0fa70f947a5bdd77394783a7eca2d57f22f0e876b125d2eb42edbfef38",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.v2.t32_e64.basic.ncu-rep",
+      "bytes": 313902,
+      "path": "recovered/topk.v2.t32_e64.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "28cc9f803cdb522ea7b87d4470861f39afff909b78429290c90b1f7c3bbb0a30",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.v3.t2048_e33.basic.ncu-rep",
+      "bytes": 314751,
+      "path": "recovered/topk.v3.t2048_e33.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "e8bc5f05daacdb789c7a0b5369c3e4e0976d11f2e9f608eb65a4e829f5b39f7e",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.v3.t2048_e64.basic.ncu-rep",
+      "bytes": 314027,
+      "path": "recovered/topk.v3.t2048_e64.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "c770fc8be3166679306f2fa95219602afe1adf5d78d5bfad047aa0824cf45e71",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.v3.t2048_e64.detailed.ncu-rep",
+      "bytes": 456381,
+      "path": "recovered/topk.v3.t2048_e64.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "96a8c5b450f56573d2ddc43945be3c126079a29cde50e38e1dda1ad8563b709c",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.v3.t2048_e8.basic.ncu-rep",
+      "bytes": 314370,
+      "path": "recovered/topk.v3.t2048_e8.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "ce1a82f097bcf9dd72c7a37d54c508f576f0262f4e36283866d6298f55d17e3e",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.v3.t32_e64.basic.ncu-rep",
+      "bytes": 313909,
+      "path": "recovered/topk.v3.t32_e64.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "43254104387ea3e7b734476923cd447a72933c833c7f7b0d4b7e1040ea910013",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.vllm.t2048_e64.basic.ncu-rep",
+      "bytes": 174472,
+      "path": "recovered/topk.vllm.t2048_e64.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "81e88c8810facddc71ca09086426a2ba8231b01b219065dcc3fcc3fdaec109f4",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.vllm.t2048_e64.detailed.ncu-rep",
+      "bytes": 312323,
+      "path": "recovered/topk.vllm.t2048_e64.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "92861e31e0721cbb62e6bacdf329324fefcae47d60f4ec08e55df8577a48f095",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.vllm.t2048_e8.basic.ncu-rep",
+      "bytes": 175168,
+      "path": "recovered/topk.vllm.t2048_e8.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "b35ae7b82f5d9651d4b6c50de25348662beca0b0298f0a3b556345b38b09ea02",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/recovered/topk.vllm.t32_e64.basic.ncu-rep",
+      "bytes": 175168,
+      "path": "recovered/topk.vllm.t32_e64.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "546aa76a07936657c54469ae704941eb97d5165452992ff57fb9c3865a0f1735",
+      "storage": "release"
     }
   ],
-  "command_contract": {
-    "correctness": "ctest --preset test-rtx3080-sm86-release --output-on-failure",
-    "sanitizers": "python scripts/run_sanitizers.py --build-dir out/build/rtx3080-sm86-release --output-dir out/sanitizer/rtx3080-topk-gate",
-    "release": "python scripts/run_benchmarks.py --binary out/build/rtx3080-sm86-release/raggedroute_benchmark.exe --config configs/benchmark_topk_gate_release.json --output out/benchmark/topk-gate-release.jsonl",
+  "hardware": {
+    "compute_capability": "8.6",
+    "gpu_name": "NVIDIA GeForce RTX 3080",
+    "gpu_uuid": "7c5e95c0e5a415d824a0c8c8b58d6f39",
+    "sm_count": 68,
+    "status": "recorded"
+  },
+  "kind": "topk_performance_evidence",
+  "migration": {
+    "checksum_repairs": [],
+    "legacy_manifest_archive_path": "raw/legacy/manifest.json",
+    "legacy_schema": "raggedroute.topk_evidence_bundle.v1"
+  },
+  "provenance": {
+    "git_clean": true,
+    "git_clean_status": "recorded",
+    "source_git_sha": "1ce3398155a9"
+  },
+  "release_asset": {
+    "bytes": 6089542,
+    "immutable": true,
+    "name": "20260803T0705Z-1ce3398-topk-gate-v4-raw.zip",
+    "sha256": "8387697f5c3beec83c2b3e0c0aef45ee5dd648624d54c1e8cf2720a90075dd13",
+    "tag": "evidence-2026-08-03-v1",
+    "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260803T0705Z-1ce3398-topk-gate-v4-raw.zip"
+  },
+  "run_id": "20260803T0705Z-1ce3398-topk-gate-v4",
+  "schema_version": "raggedroute.evidence_bundle.v2",
+  "semantic_contract": {
+    "accumulator_dtype": null,
+    "dtype": "fp32",
+    "math_mode": "strict_fp32",
+    "measurement_levels": [
+      "L1_kernel_body",
+      "L2_operator_steady"
+    ],
+    "measurement_rule": "Release A/B timings and profiler durations are separate evidence classes.",
+    "operator": "topk",
+    "status": "recorded"
+  },
+  "toolchain": {
+    "build_type": "Release",
+    "cuda": "13.3.73",
+    "driver": 13010,
+    "ncu": "python scripts/profile_benchmarks.py compute --config configs/profile_topk_gate_optimization.json --run-dir out/profile/topk-gate-ncu",
     "nsys": "nsys profile --trace=cuda,nvtx --sample=none --cpuctxsw=none ... --profile-once",
-    "ncu": "python scripts/profile_benchmarks.py compute --config configs/profile_topk_gate_optimization.json --run-dir out/profile/topk-gate-ncu"
+    "status": "recorded"
+  },
+  "validation": {
+    "reason": "Validation outputs are inventoried as files; the legacy manifest had no normalized result object.",
+    "status": "historical"
   }
 }

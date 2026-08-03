@@ -41,6 +41,9 @@ run_cross_backend = load_module(
 compare_cross_backend = load_module(
     "compare_cross_backend", ROOT / "scripts" / "compare_cross_backend.py"
 )
+package_triton_evidence = load_module(
+    "package_triton_evidence", ROOT / "scripts" / "package_triton_evidence.py"
+)
 
 
 def make_suite_v2() -> dict:
@@ -671,6 +674,77 @@ class SuiteTests(unittest.TestCase):
     def test_cross_backend_comparison_rejects_missing_records_clearly(self) -> None:
         with self.assertRaisesRegex(ValueError, "missing benchmark records"):
             compare_cross_backend.summarize([])
+
+    def test_cross_backend_l3_is_full_chain_only(self) -> None:
+        suite = run_cross_backend.load_suite(
+            ROOT / "configs" / "benchmark_rtx3080_cross_backend_l3_smoke.json"
+        )
+        case = suite["cases"][0]
+        self.assertEqual(case["suite"], "chain_from_tokens")
+        self.assertEqual(case["levels"], ["l3"])
+        cpp = run_cross_backend.command_for_cpp(
+            pathlib.Path("bench.exe"), suite, case, case["variants"][1],
+            "l3", 1, "run", pathlib.Path("out.jsonl"), "",
+        )
+        triton_command = run_cross_backend.command_for_triton(
+            pathlib.Path("python"), ROOT, suite, case, "l3", 1, "run",
+            pathlib.Path("out.jsonl"),
+        )
+        self.assertEqual(cpp[1:3], ["--suite", "chain_from_tokens"])
+        self.assertIn("--suite", triton_command)
+        self.assertNotIn("--operator", triton_command)
+
+    def test_cross_backend_rejects_invalid_l3_targets(self) -> None:
+        base = {
+            "schema_version": "raggedroute.cross_backend_suite.v1",
+            "protocol": "smoke",
+            "process_runs": 1,
+            "common": {"warmup": 1, "samples": 1},
+            "cases": [{
+                "id": "bad", "operator": "dense_gemm", "levels": ["l3"],
+                "variants": [
+                    {"name": "triton_reference", "backend": "triton", "reference_baseline": True},
+                    {"name": "cuda_naive", "backend": "cpp"},
+                ],
+            }],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "bad.json"
+            path.write_text(json.dumps(base), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "do not support l3"):
+                run_cross_backend.load_suite(path)
+            base["cases"][0].pop("operator")
+            base["cases"][0]["suite"] = "chain_from_tokens"
+            base["cases"][0]["levels"] = ["l2"]
+            path.write_text(json.dumps(base), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "requires exactly level l3"):
+                run_cross_backend.load_suite(path)
+
+    def test_triton_profile_config_covers_three_levels(self) -> None:
+        config = json.loads(
+            (ROOT / "configs" / "profile_triton_three_levels.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(config["schema_version"], "raggedroute.triton_profile_suite.v1")
+        self.assertEqual(len(config["operators"]), 7)
+        self.assertEqual(
+            {item["operator"] for item in config["operators"]},
+            {"dense_gemm", "topk_gate", "histogram", "exclusive_scan", "token_permute", "grouped_gemm", "unpermute"},
+        )
+        self.assertTrue(all(set(item["kernels"]) == {"l1", "l2"} for item in config["operators"]))
+        self.assertEqual(config["l3"]["suite"], "chain_from_tokens")
+        self.assertEqual(len(config["l3"]["kernels"]), 7)
+
+    def test_triton_evidence_packager_rejects_failed_records(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "raw.jsonl"
+            record = self.make_benchmark_record(1)
+            record["schema_version"] = "raggedroute.benchmark.v1"
+            record["validation"] = {"ok": False}
+            path.write_text(json.dumps(record) + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "invalid or failed"):
+                package_triton_evidence.records(path)
 
 
 if __name__ == "__main__":

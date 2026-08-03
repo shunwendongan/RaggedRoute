@@ -17,7 +17,16 @@ from typing import Any
 
 SCHEMA = "raggedroute.cross_backend_suite.v1"
 MANIFEST = "raggedroute.cross_backend_manifest.v1"
-LEVEL_NAMES = {"l1": "L1_kernel_body", "l2": "L2_operator_steady"}
+LEVEL_NAMES = {
+    "l1": "L1_kernel_body",
+    "l2": "L2_operator_steady",
+    "l3": "L3_chain_steady",
+}
+OPERATORS = {
+    "dense_gemm", "topk_gate", "histogram", "exclusive_scan",
+    "token_permute", "grouped_gemm", "unpermute",
+}
+SUITES = {"chain_from_tokens"}
 
 
 def command_output(command: list[str], cwd: pathlib.Path) -> str:
@@ -42,10 +51,19 @@ def load_suite(path: pathlib.Path) -> dict[str, Any]:
         if not isinstance(case_id, str) or not case_id or case_id in seen:
             raise ValueError("case ids must be present and unique")
         seen.add(case_id)
-        if case.get("operator") not in {"dense_gemm", "topk_gate", "histogram", "exclusive_scan", "token_permute", "grouped_gemm", "unpermute"}:
+        operator, target_suite = case.get("operator"), case.get("suite")
+        if (operator is None) == (target_suite is None):
+            raise ValueError(f"{case_id}: specify exactly one operator or suite")
+        if operator is not None and operator not in OPERATORS:
             raise ValueError(f"{case_id}: unknown operator")
+        if target_suite is not None and target_suite not in SUITES:
+            raise ValueError(f"{case_id}: unknown suite")
         if not case.get("levels") or any(level not in LEVEL_NAMES for level in case["levels"]):
             raise ValueError(f"{case_id}: invalid levels")
+        if target_suite is not None and case["levels"] != ["l3"]:
+            raise ValueError(f"{case_id}: chain_from_tokens requires exactly level l3")
+        if operator is not None and "l3" in case["levels"]:
+            raise ValueError(f"{case_id}: individual operators do not support l3")
         variants = case.get("variants")
         if not isinstance(variants, list) or len(variants) < 2:
             raise ValueError(f"{case_id}: requires at least two variants")
@@ -86,7 +104,9 @@ def merged_common(suite: dict[str, Any], case: dict[str, Any]) -> dict[str, Any]
 def command_for_cpp(binary: pathlib.Path, suite: dict[str, Any], case: dict[str, Any], variant: dict[str, Any], level: str, process_run: int, run_id: str, output: pathlib.Path, expected_sha: str) -> list[str]:
     common = merged_common(suite, case)
     repeats = case.get("kernel_repeats_by_level", {}).get(level, common.get("kernel_repeats", 1))
-    command = [str(binary), "--operator", case["operator"], "--variant", variant["name"], "--level", level, "--protocol", suite["protocol"], "--cache-mode", case.get("cache_mode", common.get("cache_mode", "warm")), "--warmup", str(common.get("warmup", 5)), "--kernel-repeats", str(repeats), "--samples", str(common.get("samples", 10)), "--process-run", str(process_run), "--seed", str(common.get("seed", 20260729)), "--run-id", run_id, "--case-id", case["id"], "--output", str(output)]
+    target_flag = "--suite" if "suite" in case else "--operator"
+    target_name = case.get("suite", case.get("operator"))
+    command = [str(binary), target_flag, target_name, "--variant", variant["name"], "--level", level, "--protocol", suite["protocol"], "--cache-mode", case.get("cache_mode", common.get("cache_mode", "warm")), "--warmup", str(common.get("warmup", 5)), "--kernel-repeats", str(repeats), "--samples", str(common.get("samples", 10)), "--process-run", str(process_run), "--seed", str(common.get("seed", 20260729)), "--run-id", run_id, "--case-id", case["id"], "--output", str(output)]
     if expected_sha:
         command.extend(["--expected-git-sha", expected_sha])
     for name, value in sorted(case.get("params", {}).items()):
@@ -99,7 +119,9 @@ def command_for_cpp(binary: pathlib.Path, suite: dict[str, Any], case: dict[str,
 def command_for_triton(python: pathlib.Path, repo: pathlib.Path, suite: dict[str, Any], case: dict[str, Any], level: str, process_run: int, run_id: str, output: pathlib.Path) -> list[str]:
     common = merged_common(suite, case)
     repeats = case.get("kernel_repeats_by_level", {}).get(level, common.get("kernel_repeats", 1))
-    command = [str(python), str(repo / "scripts" / "triton_benchmark.py"), "--operator", case["operator"], "--variant", "triton_reference", "--level", level, "--protocol", suite["protocol"], "--cache-mode", case.get("cache_mode", common.get("cache_mode", "warm")), "--warmup", str(common.get("warmup", 5)), "--kernel-repeats", str(repeats), "--samples", str(common.get("samples", 10)), "--process-run", str(process_run), "--seed", str(common.get("seed", 20260729)), "--run-id", run_id, "--case-id", case["id"], "--output", str(output)]
+    target_flag = "--suite" if "suite" in case else "--operator"
+    target_name = case.get("suite", case.get("operator"))
+    command = [str(python), str(repo / "scripts" / "triton_benchmark.py"), target_flag, target_name, "--variant", "triton_reference", "--level", level, "--protocol", suite["protocol"], "--cache-mode", case.get("cache_mode", common.get("cache_mode", "warm")), "--warmup", str(common.get("warmup", 5)), "--kernel-repeats", str(repeats), "--samples", str(common.get("samples", 10)), "--process-run", str(process_run), "--seed", str(common.get("seed", 20260729)), "--run-id", run_id, "--case-id", case["id"], "--output", str(output)]
     for name, value in sorted(case.get("params", {}).items()):
         if isinstance(value, bool):
             value = str(value).lower()

@@ -58,6 +58,14 @@ class TritonBaselineTests(unittest.TestCase):
         cls.scan = staticmethod(launch_exclusive_scan)
         cls.topk = staticmethod(launch_topk_gate)
         cls.unpermute = staticmethod(launch_unpermute)
+        benchmark_spec = importlib.util.spec_from_file_location(
+            "raggedroute_triton_benchmark", ROOT / "scripts" / "triton_benchmark.py"
+        )
+        assert benchmark_spec and benchmark_spec.loader
+        benchmark_module = importlib.util.module_from_spec(benchmark_spec)
+        sys.modules[benchmark_spec.name] = benchmark_module
+        benchmark_spec.loader.exec_module(benchmark_module)
+        cls.prepare_chain = staticmethod(benchmark_module.prepare_chain_from_tokens)
         torch.manual_seed(20260729)
 
     def test_dense_ieee_fp32_irregular_stream_and_redzone(self) -> None:
@@ -151,6 +159,20 @@ class TritonBaselineTests(unittest.TestCase):
                 for rank in range(top_k)
             )
         torch.testing.assert_close(out, expected, rtol=1e-6, atol=1e-6)
+
+    def test_chain_from_tokens_matches_all_independent_stage_oracles(self) -> None:
+        prepared = self.prepare_chain(
+            {"T": 48, "E": 8, "K": 19, "N": 13}, 20260729
+        )
+        stream = torch.cuda.Stream()
+        with torch.cuda.stream(stream):
+            prepared.launch("l3")
+        stream.synchronize()
+        validation = prepared.validate()
+        self.assertTrue(validation["ok"], validation["message"])
+        self.assertEqual(prepared.operator, "chain_from_tokens")
+        self.assertEqual(prepared.case_config["included_operator_count"], 7)
+        self.assertEqual(prepared.variant_details["grouped_max_m_policy"], "worst_case_R")
 
 
 class TritonSourceContractTests(unittest.TestCase):

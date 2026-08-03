@@ -34,7 +34,11 @@ from unpermute.triton import launch_unpermute
 
 
 TRITON_VARIANT = "triton_reference"
-LEVEL_NAMES = {"l1": "L1_kernel_body", "l2": "L2_operator_steady"}
+LEVEL_NAMES = {
+    "l1": "L1_kernel_body",
+    "l2": "L2_operator_steady",
+    "l3": "L3_chain_steady",
+}
 ALGORITHMS = {
     "dense_gemm": "triton_grouped_pid_ieee_fp32",
     "topk_gate": "triton_row_top2_selected_softmax",
@@ -43,6 +47,7 @@ ALGORITHMS = {
     "token_permute": "triton_per_expert_scan_stable_permute",
     "grouped_gemm": "triton_grid_z_ragged_ieee_fp32",
     "unpermute": "triton_token_owned_weighted_gather",
+    "chain_from_tokens": "triton_seven_operator_chain_from_tokens",
 }
 
 
@@ -372,6 +377,172 @@ def prepare_unpermute(params: dict[str, Any], seed: int) -> PreparedCase:
     )
 
 
+def prepare_chain_from_tokens(params: dict[str, Any], seed: int) -> PreparedCase:
+    tokens = int(option(params, "T", 512))
+    experts = int(option(params, "E", 64))
+    top_k = int(option(params, "top_k", 2))
+    hidden = int(option(params, "K", 128))
+    output = int(option(params, "N", 128))
+    distribution = str(option(params, "distribution", "uniform"))
+    zipf_s = float(option(params, "zipf_s", 1.0))
+    if top_k != 2:
+        raise ValueError("chain_from_tokens requires top_k=2")
+    if distribution != "uniform":
+        raise ValueError("chain_from_tokens labels random router projection as uniform")
+    routes = tokens * top_k
+
+    x_host = make_floats((tokens, hidden), seed)
+    expert_weights_host = make_floats((experts, hidden, output), seed + 1)
+    router_weights_host = make_floats((hidden, experts), seed + 2)
+    logits_expected = (x_host.double() @ router_weights_host.double()).float()
+    ids_expected, route_weights_expected = top2_reference(logits_expected)
+    counts_expected, offsets_expected = offsets_from_ids(ids_expected, experts)
+    flat_ids = ids_expected.flatten().to(torch.int64)
+    sorted_route_expected = torch.argsort(flat_ids, stable=True).to(torch.int32)
+    route_pos_expected = torch.empty(routes, dtype=torch.int32)
+    route_pos_expected[sorted_route_expected.to(torch.int64)] = torch.arange(
+        routes, dtype=torch.int32
+    )
+    repeated_x = x_host.repeat_interleave(top_k, dim=0)
+    x_permuted_expected = repeated_x[sorted_route_expected.to(torch.int64)]
+    y_permuted_expected = torch.empty((routes, output), dtype=torch.float32)
+    for expert in range(experts):
+        begin = int(offsets_expected[expert])
+        end = int(offsets_expected[expert + 1])
+        if end > begin:
+            y_permuted_expected[begin:end] = (
+                x_permuted_expected[begin:end].double()
+                @ expert_weights_host[expert].double()
+            ).float()
+    output_expected = torch.empty((tokens, output), dtype=torch.float32)
+    for token in range(tokens):
+        value = torch.zeros(output, dtype=torch.float64)
+        for rank in range(top_k):
+            route = token * top_k + rank
+            value += (
+                y_permuted_expected[int(route_pos_expected[route])].double()
+                * float(route_weights_expected[token, rank])
+            )
+        output_expected[token] = value.float()
+
+    x = x_host.cuda()
+    router_weights = router_weights_host.cuda()
+    expert_weights = expert_weights_host.cuda()
+    logits = torch.empty((tokens, experts), device="cuda", dtype=torch.float32)
+    ids = torch.empty((tokens, top_k), device="cuda", dtype=torch.int32)
+    route_weights = torch.empty((tokens, top_k), device="cuda", dtype=torch.float32)
+    counts = torch.empty((experts,), device="cuda", dtype=torch.int32)
+    offsets = torch.empty((experts + 1,), device="cuda", dtype=torch.int32)
+    x_permuted = torch.empty((routes, hidden), device="cuda", dtype=torch.float32)
+    route_pos = torch.empty((routes,), device="cuda", dtype=torch.int32)
+    y_permuted = torch.empty((routes, output), device="cuda", dtype=torch.float32)
+    result = torch.empty((tokens, output), device="cuda", dtype=torch.float32)
+
+    def launch(level: str) -> None:
+        if level != "l3":
+            raise ValueError("chain_from_tokens only supports l3")
+        launch_dense_gemm(x, router_weights, logits)
+        launch_topk_gate(logits, ids, route_weights)
+        launch_histogram(ids, counts, reset=True)
+        launch_exclusive_scan(counts, offsets)
+        launch_token_permute(x, ids, offsets, x_permuted, route_pos, None)
+        # Use R as a truthful worst-case launch bound.  No input-dependent
+        # host max-M preparation is hidden outside the L3 interval.
+        launch_grouped_gemm(
+            x_permuted, expert_weights, offsets, y_permuted, routes
+        )
+        launch_unpermute(y_permuted, route_pos, route_weights, result, top_k)
+
+    def validate() -> dict[str, Any]:
+        checks = (
+            (logits.cpu(), logits_expected, 2e-5, 2e-5, "router logits"),
+            # The Top-2 kernel itself is tested at 1e-6.  In the chain its
+            # logits come from strict-FP32 GEMM, while the independent oracle
+            # forms logits in FP64 then rounds once, so permit propagated GEMM
+            # rounding without weakening the exact ID/tie checks below.
+            (route_weights.cpu(), route_weights_expected, 2e-5, 2e-5, "route weights"),
+            (x_permuted.cpu(), x_permuted_expected, 0.0, 0.0, "permuted rows"),
+            (y_permuted.cpu(), y_permuted_expected, 3e-5, 3e-5, "grouped GEMM"),
+            (result.cpu(), output_expected, 4e-5, 4e-5, "chain output"),
+        )
+        if not torch.equal(ids.cpu(), ids_expected):
+            return {"ok": False, "message": "chain Top-2 ids differ", "max_abs_error": None, "max_rel_error": None}
+        if not torch.equal(counts.cpu(), counts_expected):
+            return {"ok": False, "message": "chain histogram differs", "max_abs_error": None, "max_rel_error": None}
+        if not torch.equal(offsets.cpu(), offsets_expected):
+            return {"ok": False, "message": "chain offsets differ", "max_abs_error": None, "max_rel_error": None}
+        if not torch.equal(route_pos.cpu(), route_pos_expected):
+            return {"ok": False, "message": "chain route_pos differs", "max_abs_error": None, "max_rel_error": None}
+        max_abs = 0.0
+        max_rel = 0.0
+        for actual, expected, rtol, atol, name in checks:
+            outcome = validation_close(actual, expected, rtol, atol)
+            if not outcome["ok"]:
+                outcome["message"] = f"{name} differs from independent reference"
+                return outcome
+            max_abs = max(max_abs, float(outcome["max_abs_error"]))
+            max_rel = max(max_rel, float(outcome["max_rel_error"]))
+        return {
+            "ok": True,
+            "message": "all seven stages matched independent references",
+            "max_abs_error": max_abs,
+            "max_rel_error": max_rel,
+        }
+
+    active_experts = int((counts_expected > 0).sum().item())
+    logical_bytes = float(
+        4 * (tokens * hidden + hidden * experts + tokens * experts)
+        + 4 * tokens * experts
+        + 8 * routes
+        + 4 * (3 * experts + 1)
+        + 8 * routes * hidden
+        + 4 * (routes * hidden + routes * output + active_experts * hidden * output)
+        + 4 * (routes * output + tokens * output)
+    )
+    flops = float(
+        2 * tokens * hidden * experts
+        + 2 * routes * hidden * output
+        + (2 * top_k - 1) * tokens * output
+    )
+    return PreparedCase(
+        "chain_from_tokens",
+        launch,
+        lambda level: None,
+        validate,
+        {
+            "T": tokens,
+            "E": experts,
+            "top_k": top_k,
+            "R": routes,
+            "K": hidden,
+            "N": output,
+            "dtype": "fp32",
+            "distribution": "router_projection_random",
+            "zipf_s": zipf_s,
+            "chain_entry": "tokens",
+            "included_operator_count": 7,
+            "active_experts": active_experts,
+        },
+        {
+            "components": "dense_gemm,topk_gate,histogram,exclusive_scan,token_permute,grouped_gemm,unpermute",
+            "component_variant": "triton_reference",
+            "grouped_max_m_policy": "worst_case_R",
+            "materialize_sorted_route": False,
+            "input_precision": "ieee",
+            "integer_math_mode": "exact_int32",
+        },
+        {
+            "logical_bytes": logical_bytes,
+            "flops": flops,
+            "operator_metrics": {
+                "kernel_launches": 9,
+                "counts_reset_bytes": 4 * experts,
+                "mapping_generation_included": True,
+            },
+        },
+    )
+
+
 PREPARERS = {
     "dense_gemm": prepare_dense,
     "topk_gate": prepare_topk,
@@ -380,6 +551,7 @@ PREPARERS = {
     "token_permute": prepare_permute,
     "grouped_gemm": prepare_grouped,
     "unpermute": prepare_unpermute,
+    "chain_from_tokens": prepare_chain_from_tokens,
 }
 
 
@@ -403,6 +575,10 @@ def run(args: argparse.Namespace) -> dict[str, Any] | None:
     if (properties.major, properties.minor) != (8, 6):
         raise RuntimeError(f"validated Triton baseline target is sm86, found sm{properties.major}{properties.minor}")
     params = parse_params(args.param)
+    if args.operator == "chain_from_tokens" and args.level != "l3":
+        raise ValueError("chain_from_tokens only supports l3")
+    if args.operator != "chain_from_tokens" and args.level == "l3":
+        raise ValueError("l3 requires --suite chain_from_tokens")
     prepared = PREPARERS[args.operator](params, args.seed)
     prepared.prepare_sample(args.level)
     prepared.launch(args.level)
@@ -473,7 +649,12 @@ def run(args: argparse.Namespace) -> dict[str, Any] | None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--operator", required=True, choices=sorted(PREPARERS))
+    target = parser.add_mutually_exclusive_group(required=True)
+    target.add_argument(
+        "--operator",
+        choices=sorted(name for name in PREPARERS if name != "chain_from_tokens"),
+    )
+    target.add_argument("--suite", choices=["chain_from_tokens"])
     parser.add_argument("--variant", default=TRITON_VARIANT, choices=[TRITON_VARIANT])
     parser.add_argument("--level", default="l2", choices=sorted(LEVEL_NAMES))
     parser.add_argument("--protocol", default="smoke", choices=["smoke", "release"])
@@ -489,6 +670,8 @@ def main() -> int:
     parser.add_argument("--param", action="append", default=[])
     parser.add_argument("--profile-once", action="store_true")
     args = parser.parse_args()
+    if args.suite is not None:
+        args.operator = args.suite
     if min(args.warmup, args.kernel_repeats, args.samples, args.process_run) < 1:
         raise ValueError("warmup/repeats/samples/process-run must be positive")
     record = run(args)

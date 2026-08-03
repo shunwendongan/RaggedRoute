@@ -112,6 +112,9 @@ Use `scripts\setup_triton_windows.ps1` to create the native Windows Triton
 environment, then run the cross-backend smoke/release suites in
 [Triton reference baselines](docs/triton-baselines.md). Cross-backend ratios are
 explicitly reference-only because NVCC and Triton/PyTorch use distinct toolchains.
+The Triton evidence flow covers seven individual L1/L2 cases and one complete
+seven-operator `chain_from_tokens` L3 case, with parsed NSYS/NCU evidence kept
+separate from unprofiled release latency.
 
 ## Install and consume
 

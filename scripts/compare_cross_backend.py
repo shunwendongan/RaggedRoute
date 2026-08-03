@@ -36,12 +36,27 @@ def verify_pair(reference: dict[str, Any], candidate: dict[str, Any], case: dict
     for field in ("operator", "measurement_level", "protocol", "cache_mode", "warmup", "kernel_repeats", "samples", "seed"):
         if ref[field] != cand[field]:
             raise ValueError(f"{case['id']}: mismatched {field}")
-    expected_level = {"l1": "L1_kernel_body", "l2": "L2_operator_steady"}
+    expected_target = case.get("operator", case.get("suite"))
+    if ref["operator"] != expected_target:
+        raise ValueError(f"{case['id']}: record target does not match manifest")
+    expected_level = {
+        "l1": "L1_kernel_body",
+        "l2": "L2_operator_steady",
+        "l3": "L3_chain_steady",
+    }
     if ref["measurement_level"] not in {expected_level[level] for level in case["levels"]}:
         raise ValueError(f"{case['id']}: undeclared measurement level")
     for name, value in case.get("params", {}).items():
         if ref["case_config"].get(name) != value or cand["case_config"].get(name) != value:
             raise ValueError(f"{case['id']}: parameter {name} does not match manifest")
+    for field in (
+        "dtype", "count_dtype", "accumulator_dtype", "top_k",
+        "chain_entry", "included_operator_count",
+    ):
+        ref_value, cand_value = ref["case_config"].get(field), cand["case_config"].get(field)
+        if ref_value is not None or cand_value is not None:
+            if ref_value != cand_value:
+                raise ValueError(f"{case['id']}: mismatched semantic field {field}")
     for field in ("gpu_uuid", "gpu_name", "compute_capability", "cuda_driver", "build_git_sha", "build_type"):
         if ref["environment"].get(field) != cand["environment"].get(field):
             raise ValueError(f"{case['id']}: mismatched environment.{field}")
@@ -77,7 +92,11 @@ def main() -> int:
     for case in manifest["suite"]["cases"]:
         reference_variant = next(variant for variant in case["variants"] if variant.get("reference_baseline") is True)
         for level in case["levels"]:
-            level_name = {"l1": "L1_kernel_body", "l2": "L2_operator_steady"}[level]
+            level_name = {
+                "l1": "L1_kernel_body",
+                "l2": "L2_operator_steady",
+                "l3": "L3_chain_steady",
+            }[level]
             reference_records = groups[(case["id"], reference_variant["name"], level_name)]
             reference = summarize(reference_records)
             for variant in case["variants"]:
@@ -88,7 +107,7 @@ def main() -> int:
                     raise ValueError(f"{case['id']}: missing records for {variant['name']} at {level_name}")
                 candidate = summarize(candidate_records)
                 toolchains = verify_pair(reference, candidate, case)
-                comparisons.append({"case_id": case["id"], "operator": case["operator"], "measurement_level": level_name, "reference_variant": reference_variant["name"], "candidate_variant": variant["name"], "reference_latency_us": reference["median_of_process_medians_us"], "candidate_latency_us": candidate["median_of_process_medians_us"], "candidate_vs_reference_speedup": reference["median_of_process_medians_us"] / candidate["median_of_process_medians_us"], "reference_p95_us": reference["all_samples_p95_us"], "candidate_p95_us": candidate["all_samples_p95_us"], "reference_cv": reference["all_samples_cv"], "candidate_cv": candidate["all_samples_cv"], "reference_process_runs": reference["process_runs"], "candidate_process_runs": candidate["process_runs"], "toolchain_differences": toolchains, "promotion_eligible": False, "promotion_ineligibility_reason": "cross-backend CUDA runtime/compiler stacks are intentionally compared as reference evidence only"})
+                comparisons.append({"case_id": case["id"], "operator": case.get("operator", case.get("suite")), "measurement_level": level_name, "reference_variant": reference_variant["name"], "candidate_variant": variant["name"], "reference_latency_us": reference["median_of_process_medians_us"], "candidate_latency_us": candidate["median_of_process_medians_us"], "candidate_vs_reference_speedup": reference["median_of_process_medians_us"] / candidate["median_of_process_medians_us"], "reference_p95_us": reference["all_samples_p95_us"], "candidate_p95_us": candidate["all_samples_p95_us"], "reference_cv": reference["all_samples_cv"], "candidate_cv": candidate["all_samples_cv"], "reference_process_runs": reference["process_runs"], "candidate_process_runs": candidate["process_runs"], "toolchain_differences": toolchains, "promotion_eligible": False, "promotion_ineligibility_reason": "cross-backend CUDA runtime/compiler stacks are intentionally compared as reference evidence only"})
     result = {"schema_version": "raggedroute.cross_backend_comparison.v1", "source": str(args.input.resolve()), "manifest": str(args.manifest.resolve()), "suite_id": manifest["suite"].get("suite_id"), "promotion_eligible": False, "comparisons": comparisons}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("x", encoding="utf-8", newline="\n") as stream:

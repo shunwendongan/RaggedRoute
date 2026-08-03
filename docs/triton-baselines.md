@@ -29,7 +29,14 @@ This creates the ignored `.venv-triton` using Python 3.12, PyTorch
 `2.12.1+cu130`, and `triton-windows 3.7.1.post27`. The kernels themselves import
 the standard `triton` package and are also usable in a matching Linux environment.
 
-## Correctness and comparison
+## Correctness and three measurement levels
+
+- L1 measures each of the seven prepared kernel bodies. Histogram reset and
+  Permute mapping generation are excluded and recorded explicitly.
+- L2 measures each complete steady-state operator, including mandatory reset
+  or mapping work.
+- L3 is only `chain_from_tokens`: Dense GEMM through weighted Unpermute as one
+  complete seven-operator device chain. Individual operators cannot claim L3.
 
 ```powershell
 .\.venv-triton\Scripts\python.exe -m unittest -v tests.test_triton_baselines
@@ -44,6 +51,12 @@ the standard `triton` package and are also usable in a matching Linux environmen
   out\benchmark\triton-cross-smoke.jsonl `
   --manifest out\benchmark\triton-cross-smoke.jsonl.manifest.json `
   --output out\benchmark\triton-cross-smoke.comparison.json
+
+.\.venv-triton\Scripts\python.exe scripts\run_cross_backend_benchmarks.py `
+  --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
+  --python .\.venv-triton\Scripts\python.exe `
+  --config configs\benchmark_rtx3080_cross_backend_l3_smoke.json `
+  --output out\benchmark\triton-cross-l3-smoke.jsonl
 ```
 
 `raggedroute.cross_backend_comparison.v1` proves shared GPU, driver, Git,
@@ -52,7 +65,32 @@ NVCC/PyTorch/Triton toolchains and always emits `promotion_eligible: false`.
 Use it as an engineering reference when adding a future CUDA candidate; retain
 the existing fail-closed `compare_results.py` for promotion evidence.
 
-For release evidence, use `configs/benchmark_rtx3080_cross_backend_release.json`
-on a clean worktree. It requires three independent processes, 20 warmups, and
-30 samples. Capture NSYS before filtering a post-warmup emitted Triton kernel
-with NCU `basic`; profiler duration is diagnostic only.
+For release evidence, run both
+`configs/benchmark_rtx3080_cross_backend_release.json` (seven L1/L2 cases) and
+`configs/benchmark_rtx3080_cross_backend_l3_release.json` (one full L3 chain)
+on a clean worktree. Both require three independent processes, 20 warmups, and
+30 samples.
+
+Collect reproducible three-level profiler evidence with:
+
+```powershell
+.\.venv-triton\Scripts\python.exe scripts\profile_triton_baselines.py system `
+  --config configs\profile_triton_three_levels.json `
+  --run-dir out\profile\triton-three-levels `
+  --python .\.venv-triton\Scripts\python.exe
+
+.\.venv-triton\Scripts\python.exe scripts\profile_triton_baselines.py compute `
+  --config configs\profile_triton_three_levels.json `
+  --run-dir out\profile\triton-three-levels `
+  --python .\.venv-triton\Scripts\python.exe
+
+.\.venv-triton\Scripts\python.exe scripts\profile_triton_baselines.py analyze `
+  --config configs\profile_triton_three_levels.json `
+  --run-dir out\profile\triton-three-levels
+```
+
+This produces 15 NSYS traces (7 L1, 7 L2, one L3 chain) and 21 filtered NCU
+`basic` actions (7 per level). Profiler duration is diagnostic only. The tracked
+evidence bundle contains parsed metrics, commands, environment, raw-report
+sizes and SHA256 values; `.nsys-rep`, `.ncu-rep`, and SQLite exports remain
+outside Git.

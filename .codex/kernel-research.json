@@ -7,41 +7,104 @@
     ],
     "correctness": [
       "ctest --preset test-rtx3080-sm86-release --output-on-failure",
-      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\rtx3080-dense-gemm-v2"
+      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\rtx3080-scan-final"
     ],
     "smoke": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_dense_gemm_candidate_v3_smoke.json --output out\\benchmark\\dense-gemm-v3-smoke.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_scan_library_smoke.json --output out\\benchmark\\scan-library-smoke.jsonl"
     ],
     "release": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_dense_gemm_candidate_v3_release.json --output out\\benchmark\\dense-gemm-v3-release.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_scan_library_release.json --output out\\benchmark\\scan-library-final.jsonl"
     ]
   },
   "benchmark": {
     "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
     "profile_cases": [
-      {"name": "dense.v2_sync", "arguments": ["--operator", "dense_gemm", "--variant", "cuda_register_tiled_v2_sync", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "M=1024", "--param", "N=1024", "--param", "K=1024"], "kernel_regex": "dense_gemm_register_tiled_v2_sync_kernel"},
-      {"name": "dense.v2_async", "arguments": ["--operator", "dense_gemm", "--variant", "cuda_register_tiled_v2_async", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "M=1024", "--param", "N=1024", "--param", "K=1024"], "kernel_regex": "dense_gemm_register_tiled_v2_async_kernel"},
-      {"name": "dense.v3_64x32_async", "arguments": ["--operator", "dense_gemm", "--variant", "cuda_register_tiled_v3_64x32_async", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "M=1024", "--param", "N=1024", "--param", "K=1024"], "kernel_regex": "dense_gemm_register_tiled_v3_64x32_async_kernel"}
+      {
+        "name": "scan.naive.e64",
+        "arguments": [
+          "--operator",
+          "exclusive_scan",
+          "--variant",
+          "cuda_naive",
+          "--level",
+          "l1",
+          "--profile-once",
+          "--warmup",
+          "20",
+          "--seed",
+          "20260803",
+          "--param",
+          "E=64",
+          "--param",
+          "R=4096"
+        ],
+        "kernel_regex": "exclusive_scan_naive_kernel"
+      },
+      {
+        "name": "scan.cub_warp.e32",
+        "arguments": [
+          "--operator",
+          "exclusive_scan",
+          "--variant",
+          "cub_warp_scan",
+          "--level",
+          "l1",
+          "--profile-once",
+          "--warmup",
+          "20",
+          "--seed",
+          "20260803",
+          "--param",
+          "E=32",
+          "--param",
+          "R=4096"
+        ],
+        "kernel_regex": "warp_scan_kernel"
+      },
+      {
+        "name": "scan.cub_block.e64",
+        "arguments": [
+          "--operator",
+          "exclusive_scan",
+          "--variant",
+          "cub_block_scan",
+          "--level",
+          "l1",
+          "--profile-once",
+          "--warmup",
+          "20",
+          "--seed",
+          "20260803",
+          "--param",
+          "E=64",
+          "--param",
+          "R=4096"
+        ],
+        "kernel_regex": "block_scan_kernel"
+      }
     ],
-    "kernel_regex": "dense_gemm_register_tiled_v2_sync_kernel"
+    "kernel_regex": "exclusive_scan_naive_kernel|warp_scan_kernel|block_scan_kernel"
   },
   "variants": {
-    "baseline": "cuda_tiled_vector",
-    "candidate": "cuda_register_tiled_v3_64x32_async"
+    "baseline": "cuda_naive",
+    "candidate": "cub_block_scan"
   },
   "output": {
-    "root": "profile",
+    "root": "profile\\scan-library-final",
     "retention": {
-      "keep_raw_for": ["baseline", "final"],
+      "keep_raw_for": [
+        "baseline",
+        "final"
+      ],
       "rejected_candidate": "metrics-and-reason"
     }
   },
   "promotion_policy": {
-    "version": "evidence-only-v1",
+    "version": "scan-sm86-v1",
     "min_processes": 3,
-    "median_speedup": 1.05,
+    "median_speedup": 1.03,
     "p95_regression_tolerance": 0.03,
     "max_shape_regression": 0.05,
-    "max_workspace_growth": 0.25
+    "max_workspace_growth": 0
   }
 }

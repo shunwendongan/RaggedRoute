@@ -166,7 +166,9 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     return variants;
   }
   if (operator_name == "exclusive_scan") {
-    std::vector<VariantDescriptor> variants = {naive_descriptor("single_thread_exclusive")};
+    std::vector<VariantDescriptor> variants = {{"cuda_naive", "in_tree_cuda",
+                                                "raggedroute.cuda_naive.v1", "not_applicable",
+                                                "single_thread_exclusive", "exact_int32"}};
 #if RAGGEDROUTE_HAS_CCCL
     variants.push_back(descriptor("cub_device_scan", "nvidia_cccl", "cub::DeviceScan::ExclusiveSum",
                                   cccl_revision(), "device_scan_plus_terminal_offset"));
@@ -175,6 +177,7 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     variants.push_back(descriptor("cub_warp_scan", "nvidia_cccl", "cub::WarpScan::ExclusiveSum",
                                   cccl_revision(), "warp_scan_32_threads"));
 #endif
+    for (VariantDescriptor& variant : variants) variant.math_mode = "exact_int32";
     return variants;
   }
   if (operator_name == "token_permute") {

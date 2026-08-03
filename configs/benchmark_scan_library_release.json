@@ -1,0 +1,126 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_scan_library_release_v1",
+  "protocol": "release",
+  "process_runs": 3,
+  "common": {
+    "warmup": 20,
+    "samples": 50,
+    "kernel_repeats": 100,
+    "seed": 20260803,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "exclusive_scan.e1.l1",
+      "operator": "exclusive_scan",
+      "levels": ["l1"],
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cub_warp_scan", "promotion_baseline": false},
+        {"name": "cub_block_scan", "promotion_baseline": false}
+      ],
+      "params": {"E": 1, "R": 4096, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "exclusive_scan.e31.l1",
+      "operator": "exclusive_scan",
+      "levels": ["l1"],
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cub_warp_scan", "promotion_baseline": false},
+        {"name": "cub_block_scan", "promotion_baseline": false}
+      ],
+      "params": {"E": 31, "R": 4096, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "exclusive_scan.e32.l1",
+      "operator": "exclusive_scan",
+      "levels": ["l1"],
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cub_warp_scan", "promotion_baseline": false},
+        {"name": "cub_block_scan", "promotion_baseline": false}
+      ],
+      "params": {"E": 32, "R": 4096, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "exclusive_scan.e33.l1",
+      "operator": "exclusive_scan",
+      "levels": ["l1"],
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cub_block_scan", "promotion_baseline": false}
+      ],
+      "params": {"E": 33, "R": 4096, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "exclusive_scan.e64.l1",
+      "operator": "exclusive_scan",
+      "levels": ["l1"],
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cub_block_scan", "promotion_baseline": false}
+      ],
+      "params": {"E": 64, "R": 4096, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "exclusive_scan.e1.l2",
+      "operator": "exclusive_scan",
+      "levels": ["l2"],
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cub_warp_scan", "promotion_baseline": false},
+        {"name": "cub_block_scan", "promotion_baseline": false},
+        {"name": "cub_device_scan", "promotion_baseline": false}
+      ],
+      "params": {"E": 1, "R": 4096, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "exclusive_scan.e31.l2",
+      "operator": "exclusive_scan",
+      "levels": ["l2"],
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cub_warp_scan", "promotion_baseline": false},
+        {"name": "cub_block_scan", "promotion_baseline": false},
+        {"name": "cub_device_scan", "promotion_baseline": false}
+      ],
+      "params": {"E": 31, "R": 4096, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "exclusive_scan.e32.l2",
+      "operator": "exclusive_scan",
+      "levels": ["l2"],
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cub_warp_scan", "promotion_baseline": false},
+        {"name": "cub_block_scan", "promotion_baseline": false},
+        {"name": "cub_device_scan", "promotion_baseline": false}
+      ],
+      "params": {"E": 32, "R": 4096, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "exclusive_scan.e33.l2",
+      "operator": "exclusive_scan",
+      "levels": ["l2"],
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cub_block_scan", "promotion_baseline": false},
+        {"name": "cub_device_scan", "promotion_baseline": false}
+      ],
+      "params": {"E": 33, "R": 4096, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "exclusive_scan.e64.l2",
+      "operator": "exclusive_scan",
+      "levels": ["l2"],
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cub_block_scan", "promotion_baseline": false},
+        {"name": "cub_device_scan", "promotion_baseline": false}
+      ],
+      "params": {"E": 64, "R": 4096, "distribution": "uniform", "zipf_s": 0.0}
+    }
+  ]
+}

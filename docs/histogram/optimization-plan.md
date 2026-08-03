@@ -13,8 +13,8 @@
 |---|---|---|
 | H1 warp 聚合 global atomic | `__match_any_sync` 后由 leader 更新 global bin | 热点分布改善明显，但 uniform 和小 `R` 的额外 warp 指令不稳定；拒绝进入 shipping code。 |
 | H2 单 CTA shared histogram | 256 threads，shared 初始化、累加、覆盖写 counts | `R<=4096` 最稳定；融合 L2 reset，无外部 memset。 |
-| H3 多 CTA block-private | 256 threads，8 items/thread 起步，shared 累加后非零 bin merge | 中大型 `R` 的候选；需以 clean release 和 profiler 决定最终 grid cap。 |
-| H4 warp→shared 聚合 | 仅在 NCU 证明 shared atomic 饱和时实现 | 当前未实现；避免在没有 counter 证据时增加指令。 |
+| H3 多 CTA block-private | 256 threads，8 items/thread 起步，shared 累加后非零 bin merge | `R>=32768` 的 winner；grid cap 128 CTA 降低 merge atomic 上界。 |
+| H4 warp→shared 聚合 | 仅在 NCU 证明 shared atomic 饱和时实现 | NCU detailed 未证明 shared atomic 单元饱和，拒绝实现。 |
 
 ## Shape dispatcher
 
@@ -24,7 +24,7 @@
 - `4097<=R<32768`：交叉区间跨进程方向不稳定，回退 `cuda_naive`。
 - `R>=32768`：多 CTA block-private shared histogram；grid 上限为 128 CTA，降低大 `R` 下的 merge atomic 上界。该值是 shape tuning 参数，不是 68 SM 的硬编码。
 
-稳定 benchmark 名为 `cuda_candidate`，Histogram-local implementation ID 为 `101`。在全部门禁完成前，`kAuto` 仍指向 `cuda_naive`。
+稳定 benchmark 名为 `cuda_candidate`，Histogram-local implementation ID 为 `101`。全部门禁通过后，SM86 Histogram `kAuto` 已晋升到该 candidate；显式 `kCudaNaive/0` 仍保留为 fallback 与 benchmark baseline。
 
 ## Correctness 与性能门禁
 

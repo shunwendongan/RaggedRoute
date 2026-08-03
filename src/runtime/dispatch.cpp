@@ -193,7 +193,10 @@ Status select_kernel(const DispatchRequest& request, DispatchDecision* decision)
 
   decision->operator_kind = request.operator_kind;
   decision->architecture = DeviceArchitecture::kSm86;
-  decision->kernel = {KernelFamily::kCudaNaive, 0};
+  decision->kernel =
+      requested.family == KernelFamily::kAuto && request.operator_kind == OperatorKind::kHistogram
+          ? KernelSelection{KernelFamily::kCudaOptimized, ops::kHistogramCandidateImplementation}
+          : KernelSelection{KernelFamily::kCudaNaive, 0};
   return success_status();
 }
 

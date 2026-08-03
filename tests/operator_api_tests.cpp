@@ -77,9 +77,15 @@ void test_pure_dispatch() {
     request.signature = fp32_signature(kind);
     DispatchDecision decision;
     require_status(select_kernel(request, &decision), "SM86 FP32 auto dispatch");
-    require(decision.kernel.family == KernelFamily::kCudaNaive &&
-                decision.kernel.implementation_id == 0,
-            "SM86 auto dispatch must select cuda_naive implementation zero");
+    if (kind == OperatorKind::kHistogram) {
+      require(decision.kernel.family == KernelFamily::kCudaOptimized &&
+                  decision.kernel.implementation_id == 101,
+              "SM86 Histogram auto dispatch must select the promoted candidate");
+    } else {
+      require(decision.kernel.family == KernelFamily::kCudaNaive &&
+                  decision.kernel.implementation_id == 0,
+              "non-Histogram SM86 auto dispatch must select cuda_naive implementation zero");
+    }
   }
 
   DispatchRequest request;
@@ -169,6 +175,11 @@ void test_pure_dispatch() {
   require(decision.kernel.family == KernelFamily::kCudaOptimized &&
               decision.kernel.implementation_id == 101,
           "Histogram dispatch must preserve its operator-local implementation id");
+  request.requested_kernel = {KernelFamily::kCudaNaive, 0};
+  require_status(select_kernel(request, &decision), "explicit naive histogram dispatch");
+  require(
+      decision.kernel.family == KernelFamily::kCudaNaive && decision.kernel.implementation_id == 0,
+      "explicit Histogram cuda_naive must remain available after promotion");
   request.requested_kernel = {KernelFamily::kCudaOptimized, 1};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "dense GEMM implementation ids must be rejected for Histogram");

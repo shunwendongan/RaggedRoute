@@ -94,3 +94,6 @@ This produces 15 NSYS traces (7 L1, 7 L2, one L3 chain) and 21 filtered NCU
 evidence bundle contains parsed metrics, commands, environment, raw-report
 sizes and SHA256 values; `.nsys-rep`, `.ncu-rep`, and SQLite exports remain
 outside Git.
+
+The validated RTX 3080 evidence for clean commit `d81f6b015d38` is published in
+[the L1/L2/L3 report](reports/artifacts/20260803T1315Z-d81f6b0-triton-three-levels-v2/REPORT.md).

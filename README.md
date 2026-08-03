@@ -114,7 +114,8 @@ environment, then run the cross-backend smoke/release suites in
 explicitly reference-only because NVCC and Triton/PyTorch use distinct toolchains.
 The Triton evidence flow covers seven individual L1/L2 cases and one complete
 seven-operator `chain_from_tokens` L3 case, with parsed NSYS/NCU evidence kept
-separate from unprofiled release latency.
+separate from unprofiled release latency. See the [RTX 3080 Triton L1/L2/L3
+report](docs/reports/artifacts/20260803T1315Z-d81f6b0-triton-three-levels-v2/REPORT.md).
 
 ## Install and consume
 

@@ -1,0 +1,39 @@
+{
+  "schema_version": "raggedroute.cross_backend_comparison.v1",
+  "source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute\\out\\benchmark\\triton-three-levels-l3-release-d81.jsonl",
+  "manifest": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute\\out\\benchmark\\triton-three-levels-l3-release-d81.jsonl.manifest.json",
+  "suite_id": "rtx3080_triton_reference_chain_from_tokens_release_v1",
+  "promotion_eligible": false,
+  "comparisons": [
+    {
+      "case_id": "chain_from_tokens.uniform.t512_e64_k128_n128.cross",
+      "operator": "chain_from_tokens",
+      "measurement_level": "L3_chain_steady",
+      "reference_variant": "triton_reference",
+      "candidate_variant": "cuda_naive",
+      "reference_latency_us": 249.24159049987793,
+      "candidate_latency_us": 122.163200378,
+      "candidate_vs_reference_speedup": 2.0402346183520836,
+      "reference_p95_us": 260.7103931903839,
+      "candidate_p95_us": 131.2665635347,
+      "reference_cv": 0.028986107934777534,
+      "candidate_cv": 0.03289306766602506,
+      "reference_process_runs": 3,
+      "candidate_process_runs": 3,
+      "toolchain_differences": {
+        "reference_toolchain": {
+          "cuda_compiler": "Triton 3.7.1",
+          "cuda_runtime": 13000,
+          "compiler_stack": "Triton 3.7.1; PyTorch CUDA 13.0"
+        },
+        "candidate_toolchain": {
+          "cuda_compiler": "13.3.73",
+          "cuda_runtime": 13010,
+          "compiler_stack": null
+        }
+      },
+      "promotion_eligible": false,
+      "promotion_ineligibility_reason": "cross-backend CUDA runtime/compiler stacks are intentionally compared as reference evidence only"
+    }
+  ]
+}

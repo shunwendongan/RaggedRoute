@@ -1,0 +1,20 @@
+{
+  "schema_version": "raggedroute.validation_summary.v1",
+  "git_sha": "d81f6b015d38",
+  "gpu": "NVIDIA GeForce RTX 3080",
+  "compute_capability": "8.6",
+  "checks": [
+    {"name": "cmake_release_build", "status": "passed", "details": "Fresh configure and 67/67 build steps completed"},
+    {"name": "ctest_release", "status": "passed", "details": "8/8 tests"},
+    {"name": "python_script_tests", "status": "passed", "details": "34/34 tests"},
+    {"name": "native_windows_triton", "status": "passed", "details": "8/8 tests; torch 2.12.1+cu130; triton-windows 3.7.1.post27"},
+    {"name": "wsl_triton_compatibility", "status": "passed", "details": "8/8 tests; torch 2.13.0+cu130; Triton 3.7.1"},
+    {"name": "compute_sanitizer_memcheck", "status": "passed", "details": "out/sanitizer/triton-three-levels-d81-final/memcheck.log"},
+    {"name": "compute_sanitizer_initcheck", "status": "passed", "details": "out/sanitizer/triton-three-levels-d81-final/initcheck.log"},
+    {"name": "compute_sanitizer_racecheck", "status": "passed", "details": "out/sanitizer/triton-three-levels-d81-final/racecheck.log"},
+    {"name": "compute_sanitizer_synccheck", "status": "passed", "details": "out/sanitizer/triton-three-levels-d81-final/synccheck.log"},
+    {"name": "cross_backend_release", "status": "passed", "details": "14 L1/L2 comparisons plus one complete L3 comparison; 3 process runs"},
+    {"name": "nsys", "status": "passed", "details": "15 traces: 7 L1 + 7 L2 + one seven-operator L3 chain"},
+    {"name": "ncu_basic", "status": "passed", "details": "21 filtered actions: 7 L1 + 7 L2 + 7 L3"}
+  ]
+}

@@ -144,6 +144,78 @@ def main() -> int:
     for relative, source in files.items():
         copy_file(source.resolve(), destination / relative)
 
+    comparisons = [*l1_l2["comparisons"], *l3["comparisons"]]
+    lines = [
+        "# Triton L1/L2/L3 reference evidence", "",
+        f"- Git SHA: `{l1_l2['git_sha']}` (clean Release build)",
+        "- GPU: NVIDIA GeForce RTX 3080 / SM86",
+        "- Promotion eligible: **false**",
+        "- Profiler durations are diagnostic only; the table uses unprofiled release CUDA Events.",
+        "", "## Cross-backend release", "",
+        "| Level | Target | Triton p50 (us) | CUDA p50 (us) | CUDA vs Triton | Triton p95 (us) | CUDA p95 (us) | Triton CV | CUDA CV |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for item in comparisons:
+        lines.append(
+            f"| {item['measurement_level']} | {item['operator']} | "
+            f"{item['reference_latency_us']:.4f} | {item['candidate_latency_us']:.4f} | "
+            f"{item['candidate_vs_reference_speedup']:.4f}x | "
+            f"{item['reference_p95_us']:.4f} | {item['candidate_p95_us']:.4f} | "
+            f"{item['reference_cv']:.4f} | {item['candidate_cv']:.4f} |"
+        )
+    lines.extend([
+        "", "## Profiler coverage", "",
+        "- NSYS: 7 L1 + 7 L2 + one complete seven-operator L3 chain.",
+        "- NCU basic: 7 L1 + 7 L2 + 7 emitted L3 operator kernels.",
+        "- Raw `.nsys-rep`/`.ncu-rep` files remain under the reproducible local `out/profile` run; their sizes and SHA256 values are recorded in `profile/manifest.json`.",
+        "- SQLite exports and raw Nsight binaries are intentionally not committed.",
+        "", "## L3 NSYS kernel-time breakdown", "",
+        "| Time (%) | Total time (ns) | Instances | Average (ns) | Kernel |",
+        "|---:|---:|---:|---:|---|",
+    ])
+    l3_nsys = next(item for item in profile["nsys_cases"] if item["case_id"] == "l3.chain_from_tokens")
+    for item in l3_nsys["kernels"]:
+        lines.append(
+            f"| {float(item.get('Time (%)', 0.0)):.2f} | {int(item.get('Total Time (ns)', 0))} | "
+            f"{int(item.get('Instances', 0))} | {float(item.get('Avg (ns)', 0.0)):.2f} | "
+            f"`{item.get('Name', 'unknown')}` |"
+        )
+    lines.extend([
+        "", "## NCU basic headline metrics", "",
+        "| Level | Operator | Kernel | Duration (ns) | SM (%) | Memory (%) | DRAM (%) | Achieved occupancy (%) | Registers/thread | Grid | Block |",
+        "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+    ])
+
+    def metric(action: dict[str, Any], name: str) -> str:
+        value = action["metrics"].get(name, {})
+        if value.get("status") != "collected":
+            return value.get("status", "not_collected")
+        raw = value.get("value")
+        return f"{raw:.2f}" if isinstance(raw, float) else str(raw)
+
+    for action in profile["ncu_actions"]:
+        lines.append(
+            f"| {action['level'].upper()} | {action['operator']} | `{action['kernel']}` | "
+            f"{metric(action, 'duration_ns')} | {metric(action, 'sm_throughput_pct')} | "
+            f"{metric(action, 'memory_throughput_pct')} | {metric(action, 'dram_throughput_pct')} | "
+            f"{metric(action, 'occupancy_achieved_pct')} | {metric(action, 'registers_per_thread')} | "
+            f"{metric(action, 'grid_size')} | {metric(action, 'block_size')} |"
+        )
+    lines.extend([
+        "", "## Validation", "",
+        "| Check | Status | Details |", "|---|---|---|",
+    ])
+    for item in validation["checks"]:
+        lines.append(f"| {item['name']} | {item['status']} | {item['details']} |")
+    lines.extend([
+        "", "## Evidence boundary", "",
+        "- Cross-runtime ratios are reference comparisons only and cannot promote a CUDA candidate.",
+        "- NCU duration is replay-affected diagnostic context and is not a release score.",
+        "- Metrics absent from NCU basic remain `not_collected`; they are never encoded as zero.",
+        "", "See `profile/profile_summary.json`, `validation/summary.json`, and `manifest.json` for machine-readable evidence.", "",
+    ])
+    (destination / "REPORT.md").write_text("\n".join(lines), encoding="utf-8")
+
     artifact_files = []
     for path in sorted(item for item in destination.rglob("*") if item.is_file()):
         artifact_files.append({
@@ -167,34 +239,6 @@ def main() -> int:
         json.dumps(evidence_manifest, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-
-    comparisons = [*l1_l2["comparisons"], *l3["comparisons"]]
-    lines = [
-        "# Triton L1/L2/L3 reference evidence", "",
-        f"- Git SHA: `{l1_l2['git_sha']}` (clean Release build)",
-        "- GPU: NVIDIA GeForce RTX 3080 / SM86",
-        "- Promotion eligible: **false**",
-        "- Profiler durations are diagnostic only; the table uses unprofiled release CUDA Events.",
-        "", "## Cross-backend release", "",
-        "| Level | Target | Triton p50 (us) | CUDA p50 (us) | CUDA vs Triton | Triton p95 (us) | CUDA p95 (us) |",
-        "|---|---|---:|---:|---:|---:|---:|",
-    ]
-    for item in comparisons:
-        lines.append(
-            f"| {item['measurement_level']} | {item['operator']} | "
-            f"{item['reference_latency_us']:.4f} | {item['candidate_latency_us']:.4f} | "
-            f"{item['candidate_vs_reference_speedup']:.4f}x | "
-            f"{item['reference_p95_us']:.4f} | {item['candidate_p95_us']:.4f} |"
-        )
-    lines.extend([
-        "", "## Profiler coverage", "",
-        "- NSYS: 7 L1 + 7 L2 + one complete seven-operator L3 chain.",
-        "- NCU basic: 7 L1 + 7 L2 + 7 emitted L3 operator kernels.",
-        "- Raw `.nsys-rep`/`.ncu-rep` files remain under the reproducible local `out/profile` run; their sizes and SHA256 values are recorded in `profile/manifest.json`.",
-        "- SQLite exports and raw Nsight binaries are intentionally not committed.", "",
-        "See `profile/REPORT.md`, `validation/summary.json`, and `manifest.json` for machine-readable evidence.", "",
-    ])
-    (destination / "REPORT.md").write_text("\n".join(lines), encoding="utf-8")
     print(destination)
     return 0
 

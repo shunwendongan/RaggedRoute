@@ -17,6 +17,7 @@
     {"id": "topk.short_rows", "operator": "topk_gate", "level": "l1", "warmup": 5, "set": "basic", "params": {"T": 2048, "E": 64}},
     {"id": "histogram.skew", "operator": "histogram", "level": "l1", "warmup": 5, "set": "basic", "params": {"T": 2048, "E": 64, "top_k": 2, "distribution": "zipf", "zipf_s": 1.4}},
     {"id": "scan.e64", "operator": "exclusive_scan", "level": "l1", "warmup": 5, "set": "basic", "params": {"E": 64, "R": 4096}},
+    {"id": "histogram_scan.r1024_e64", "operator": "histogram_exclusive_scan", "variant": "cuda_fused_subwarp", "level": "l2", "warmup": 5, "set": "basic", "kernel_pattern": "histogram_exclusive_scan_fused_subwarp_kernel", "params": {"R": 1024, "E": 64, "distribution": "zipf", "zipf_s": 1.4}},
     {"id": "permute.skew", "operator": "token_permute", "level": "l1", "warmup": 5, "set": "basic", "params": {"T": 512, "E": 64, "top_k": 2, "K": 256, "distribution": "zipf", "zipf_s": 1.4, "materialize_sorted_route": true}},
     {"id": "grouped.skew", "operator": "grouped_gemm", "level": "l1", "warmup": 5, "set": "basic", "params": {"T": 512, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}},
     {"id": "unpermute.uniform", "operator": "unpermute", "level": "l1", "warmup": 5, "set": "basic", "params": {"T": 1024, "E": 64, "top_k": 2, "N": 256, "distribution": "uniform", "zipf_s": 0.0}}

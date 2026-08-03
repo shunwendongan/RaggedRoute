@@ -47,6 +47,9 @@ package_triton_evidence = load_module(
 package_evidence = load_module(
     "package_evidence", ROOT / "scripts" / "package_evidence.py"
 )
+resolve_cuda_toolkit = load_module(
+    "resolve_cuda_toolkit", ROOT / "scripts" / "resolve_cuda_toolkit.py"
+)
 validate_evidence = load_module(
     "validate_evidence", ROOT / "scripts" / "validate_evidence.py"
 )
@@ -82,6 +85,39 @@ def make_suite_v2() -> dict:
 
 
 class SuiteTests(unittest.TestCase):
+    @staticmethod
+    def make_fake_cuda(root: pathlib.Path, *, with_cublaslt: bool = True) -> None:
+        for relative in (
+            "bin/nvcc.exe", "include/cuda_runtime.h", "include/cublas_v2.h",
+            "lib/x64/cublas.lib", "lib/x64/cublasLt.lib",
+            "bin/x64/cublas64_13.dll",
+        ):
+            path = root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"x")
+        if with_cublaslt:
+            (root / "bin/x64/cublasLt64_13.dll").write_bytes(b"x")
+
+    def test_cuda_resolver_rejects_incomplete_and_selects_newest_complete_toolkit(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            old = root / "v12.8"
+            incomplete = root / "v13.3"
+            self.make_fake_cuda(old)
+            self.make_fake_cuda(incomplete, with_cublaslt=False)
+            selected = resolve_cuda_toolkit.select_toolkit([old, incomplete])
+            self.assertIsNotNone(selected)
+            self.assertEqual(selected.root, old.resolve())
+            self.assertEqual(selected.runtime_dirs[-1], (old / "bin/x64").resolve())
+
+    def test_cuda_resolver_explicit_override_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            with self.assertRaisesRegex(FileNotFoundError, "RAGGEDROUTE_CUDA_ROOT"):
+                resolve_cuda_toolkit.resolve_toolkit(
+                    ROOT, {"RAGGEDROUTE_CUDA_ROOT": str(root / "broken"), "PATH": ""}
+                )
+
     def test_ci_quality_gates_and_sm86_manual_workflow_are_present(self) -> None:
         ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
         gpu = (ROOT / ".github" / "workflows" / "gpu-sm86.yml").read_text(encoding="utf-8")
@@ -168,6 +204,8 @@ class SuiteTests(unittest.TestCase):
             encoding="utf-8"
         )
         build = (ROOT / "scripts" / "build_windows.bat").read_text(encoding="utf-8")
+        cuda_setup = (ROOT / "scripts" / "setup_cuda_env.bat").read_text(encoding="utf-8")
+        test = (ROOT / "scripts" / "test_windows.bat").read_text(encoding="utf-8")
 
         self.assertIn("VSDEVCMD", setup)
         self.assertIn("vswhere", setup.lower())
@@ -177,14 +215,19 @@ class SuiteTests(unittest.TestCase):
         self.assertIn("where cl.exe", setup)
         self.assertIn("setup_msvc_env.bat", configure)
         self.assertIn("setup_msvc_env.bat", build)
+        self.assertIn("resolve_cuda_toolkit.py", cuda_setup)
+        self.assertIn("bin\\x64", cuda_setup)
+        self.assertIn("setup_cuda_env.bat", configure)
+        self.assertIn("setup_cuda_env.bat", build)
+        self.assertIn("setup_cuda_env.bat", test)
         self.assertIn("cmake --fresh --preset", configure)
         self.assertIn("-DCMAKE_CXX_COMPILER=%RAGGEDROUTE_MSVC_CL%", configure)
         self.assertIn("-DCMAKE_CUDA_COMPILER=%RAGGEDROUTE_NVCC%", configure)
         self.assertIn("-DCMAKE_CUDA_HOST_COMPILER=%RAGGEDROUTE_MSVC_CL%", configure)
         self.assertIn("RAGGEDROUTE_FETCH_REFERENCES", configure)
-        self.assertIn("CMAKE_CXX_COMPILER:FILEPATH", build)
+        self.assertIn("CMAKE_CXX_COMPILER:.*=", build)
         self.assertIn("CMAKE_CUDA_COMPILER", build)
-        self.assertIn("CUDA_PATH", build)
+        self.assertIn("CUDA_PATH", cuda_setup)
         self.assertIn("configure_windows.bat", build)
         self.assertNotIn("vswhere", configure.lower())
         self.assertNotIn("vswhere", build.lower())

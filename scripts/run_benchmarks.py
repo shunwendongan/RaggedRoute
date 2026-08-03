@@ -21,16 +21,21 @@ import subprocess
 import sys
 from typing import Any
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from resolve_cuda_toolkit import runtime_environment
+
 
 SCHEMA_V1 = "raggedroute.suite.v1"
 SCHEMA_V2 = "raggedroute.suite.v2"
 SUPPORTED_SCHEMAS = {SCHEMA_V1, SCHEMA_V2}
 
 
-def command_output(command: list[str], cwd: pathlib.Path) -> str:
+def command_output(
+    command: list[str], cwd: pathlib.Path, env: dict[str, str] | None = None
+) -> str:
     try:
         return subprocess.check_output(
-            command, cwd=cwd, text=True, stderr=subprocess.STDOUT
+            command, cwd=cwd, text=True, stderr=subprocess.STDOUT, env=env
         ).strip()
     except (OSError, subprocess.CalledProcessError) as error:
         return f"unavailable: {error}"
@@ -222,6 +227,10 @@ def main() -> int:
     args = parser.parse_args()
 
     repo = pathlib.Path(__file__).resolve().parents[1]
+    process_env = dict(os.environ)
+    resolved_cuda = None
+    if os.name == "nt":
+        process_env, resolved_cuda = runtime_environment(repo, process_env)
     suite = load_suite(args.config.resolve())
     binary = args.binary.resolve()
     output = args.output.resolve()
@@ -275,9 +284,10 @@ def main() -> int:
             "pstate", "sm_clock_mhz", "memory_clock_mhz", "power_w",
             "power_limit_w", "temperature_c",
         ],
-        "gpu_snapshot_start": command_output(gpu_query, repo),
-        "gpu_processes_start": command_output(gpu_process_query, repo),
-        "nvcc": command_output(["nvcc", "--version"], repo),
+        "gpu_snapshot_start": command_output(gpu_query, repo, process_env),
+        "gpu_processes_start": command_output(gpu_process_query, repo, process_env),
+        "nvcc": command_output(["nvcc", "--version"], repo, process_env),
+        "cuda_toolkit": resolved_cuda.as_dict() if resolved_cuda else None,
         "compile_commands_sha256": file_sha256(
             binary.parent / "compile_commands.json"
         ),
@@ -303,11 +313,11 @@ def main() -> int:
             manifest["commands"].append(command)
             print("+", shlex.join(command), flush=True)
             if not args.dry_run:
-                subprocess.run(command, cwd=repo, check=True)
+                subprocess.run(command, cwd=repo, check=True, env=process_env)
 
     manifest_path = output.with_suffix(output.suffix + ".manifest.json")
-    manifest["gpu_snapshot_end"] = command_output(gpu_query, repo)
-    manifest["gpu_processes_end"] = command_output(gpu_process_query, repo)
+    manifest["gpu_snapshot_end"] = command_output(gpu_query, repo, process_env)
+    manifest["gpu_processes_end"] = command_output(gpu_process_query, repo, process_env)
     if args.dry_run:
         print(json.dumps(manifest, ensure_ascii=False, indent=2))
     else:

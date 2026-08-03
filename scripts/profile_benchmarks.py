@@ -22,6 +22,9 @@ import subprocess
 import sys
 from typing import Any, Iterable
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from resolve_cuda_toolkit import runtime_environment
+
 
 SCHEMA = "raggedroute.profile_run.v1"
 PROFILE_SCHEMAS = {"raggedroute.profile_suite.v1", "raggedroute.profile_suite.v2"}
@@ -201,6 +204,10 @@ def find_ncu_report_path() -> pathlib.Path | None:
 
 
 def doctor_data() -> dict[str, Any]:
+    resolved_cuda = None
+    if os.name == "nt":
+        updated, resolved_cuda = runtime_environment(pathlib.Path(__file__).resolve().parents[1])
+        os.environ.update(updated)
     tools = {name: find_tool(name) for name in ("nvcc", "ncu", "nsys", "nvidia-smi", "python")}
     gpu: dict[str, Any] | None = None
     if tools["nvidia-smi"]:
@@ -229,6 +236,7 @@ def doctor_data() -> dict[str, Any]:
         "python": sys.version.split()[0],
         "gpu": gpu,
         "tools": tools,
+        "cuda_toolkit": resolved_cuda.as_dict() if resolved_cuda else None,
         "versions": {
             "nvcc": version(tools["nvcc"], ["--version"]),
             "ncu": version(tools["ncu"], ["--version"]),
@@ -732,6 +740,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
+    if os.name == "nt":
+        updated, _ = runtime_environment(pathlib.Path(__file__).resolve().parents[1])
+        os.environ.update(updated)
     args = build_parser().parse_args()
     return int(args.handler(args))
 

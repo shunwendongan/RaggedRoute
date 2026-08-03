@@ -8,12 +8,17 @@ set "TARGET=%~2"
 call "%~dp0setup_msvc_env.bat"
 if errorlevel 1 exit /b %errorlevel%
 
+if /i not "%PRESET:~0,4%"=="cpu-" (
+  call "%~dp0setup_cuda_env.bat"
+  if errorlevel 1 exit /b %errorlevel%
+)
+
 set "CACHE=%~dp0..\out\build\%PRESET%\CMakeCache.txt"
 set "RAGGEDROUTE_RECONFIGURE=0"
 if not exist "%CACHE%" set "RAGGEDROUTE_RECONFIGURE=1"
 
 set "RAGGEDROUTE_CACHED_CXX="
-if exist "%CACHE%" for /f "tokens=1,* delims==" %%A in ('findstr /b "CMAKE_CXX_COMPILER:FILEPATH=" "%CACHE%"') do set "RAGGEDROUTE_CACHED_CXX=%%B"
+if exist "%CACHE%" for /f "tokens=1,* delims==" %%A in ('findstr /r /b "CMAKE_CXX_COMPILER:.*=" "%CACHE%"') do set "RAGGEDROUTE_CACHED_CXX=%%B"
 if not defined RAGGEDROUTE_CACHED_CXX set "RAGGEDROUTE_RECONFIGURE=1"
 if defined RAGGEDROUTE_CACHED_CXX if not exist "%RAGGEDROUTE_CACHED_CXX%" set "RAGGEDROUTE_RECONFIGURE=1"
 
@@ -45,10 +50,7 @@ if exist "%CACHE%" for /f "tokens=1,* delims==" %%A in ('findstr /r /b "CMAKE_CU
 if not defined RAGGEDROUTE_CACHED_CUDA set "RAGGEDROUTE_RECONFIGURE=1"
 if defined RAGGEDROUTE_CACHED_CUDA if not exist "%RAGGEDROUTE_CACHED_CUDA%" set "RAGGEDROUTE_RECONFIGURE=1"
 
-set "RAGGEDROUTE_CURRENT_CUDA="
-if defined CUDACXX if exist "%CUDACXX%" set "RAGGEDROUTE_CURRENT_CUDA=%CUDACXX%"
-if not defined RAGGEDROUTE_CURRENT_CUDA if defined CUDA_PATH if exist "%CUDA_PATH%\bin\nvcc.exe" set "RAGGEDROUTE_CURRENT_CUDA=%CUDA_PATH%\bin\nvcc.exe"
-if not defined RAGGEDROUTE_CURRENT_CUDA for /f "delims=" %%I in ('where nvcc.exe 2^>nul') do if not defined RAGGEDROUTE_CURRENT_CUDA set "RAGGEDROUTE_CURRENT_CUDA=%%I"
+set "RAGGEDROUTE_CURRENT_CUDA=%CUDACXX%"
 if not defined RAGGEDROUTE_CURRENT_CUDA set "RAGGEDROUTE_RECONFIGURE=1"
 if defined RAGGEDROUTE_CACHED_CUDA if defined RAGGEDROUTE_CURRENT_CUDA call :compare_cuda_cache
 exit /b 0

@@ -1,6 +1,6 @@
 # RaggedRoute 后续开发路线
 
-> **状态：部分实现。** 里程碑 A1/A2 与 B4 的 profiler/text bundle 子集已实现；A3 promotion evaluator、真实 trace、working-set/plot 仍是计划。当前可执行范围及证据边界以 `implementation-status.md` 为准。
+> **状态：部分实现。** 里程碑 A1/A2 与 B4 的 profiler/text bundle 子集已实现，Histogram 已经过手工门禁晋升为第一个 shape-dispatched `Auto` candidate；A3 通用 promotion evaluator、真实 trace、working-set/plot 仍是计划。当前可执行范围及证据边界以 `implementation-status.md` 为准。
 
 ## 1. 依赖顺序
 

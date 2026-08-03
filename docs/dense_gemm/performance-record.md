@@ -16,3 +16,13 @@ NCU basic：256 blocks、256 threads、0.627 waves/SM、40 registers/thread、48
 结论：保留 naive 作为教学/正确性基线；下一候选应先做 shared-memory tile/register blocking，再独立验证 `cp.async`。
 
 完整证据：[中央报告](../reports/rtx3080-naive-profile-a9489ab.md)；[artifact bundle](../reports/artifacts/20260731T115243Z-a9489abce704-rtx3080-naive-profile-v1/)。
+
+## 2026-08-01–02 / SM86 explicit candidate campaign
+
+- optimized id 1–4 分别覆盖 tiled scalar、2D mapping、vector staging 和 combined 路径；id 5/6 是 64x64 sync/`cp.async` v2，id 7 是 64x32 `cp.async` v3。
+- 四个早期候选中 `cuda_tiled_vector` 的中心 p50 相对 naive 最好约 `1.231x`，但独立复跑 CV 为 `0.188`，不满足门禁。
+- v3 在 512³/1024³ L2 分别比 v2 async 快约 `1.19x/1.25x`；1024³ L2 为 `182.630 us`，仍比 strict-FP32 cuBLAS `153.754 us` 慢约 `1.19x`。
+- 256³ 的 candidate/cuBLAS 结果都有 `CV>0.10`，且当时 manifest 记录了竞争 GPU 进程；因此 `Auto` 继续选 `cuda_naive`，所有 optimized id 只是显式 research path。
+- NCU 对 1024³ v3 显示 85 registers/thread、无 local spill，global-load sectors 比 v2 低 22.2%，但仍是 cuBLAS 的 1.74x；下一轮应隔离 staging mapping/CTA reuse，不把 TF32 当作 strict-FP32 等价优化。
+
+证据：[四候选报告](../reports/rtx3080-dense-gemm-optimization-bfe4494.md)；[v2 报告](../reports/rtx3080-dense-gemm-candidate-v2-0d2cbfa.md)；[v3 报告](../reports/rtx3080-dense-gemm-v3-64x32-f1da1d2.md)。

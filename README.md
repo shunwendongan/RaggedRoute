@@ -2,7 +2,7 @@
 
 CUDA primitives and an auditable benchmark pipeline for single-GPU MoE routing and ragged expert computation.
 
-> Current milestone: the source-breaking v0.2 public API, seven FP32 teaching/reference CUDA baselines, benchmark-only library/production variants, and auditable L1/L2/L3 measurement boundaries are implemented and revalidated on RTX 3080 / SM86. This is a reproducible resume project, not a production-ready operator library.
+> Current milestone: the source-breaking v0.2 public API, seven FP32 teaching/reference CUDA baselines, explicit research candidates, the promoted SM86 Histogram candidate, benchmark-only library/production variants, and auditable L1/L2/L3 measurement boundaries are implemented and revalidated on RTX 3080 / SM86. This is a reproducible resume project, not a production-ready operator library.
 
 ## Operators
 
@@ -28,7 +28,7 @@ The project deliberately keeps two interfaces rather than hiding an L1 result in
 
 Floating payloads use `ConstTensorView`/`MutableTensorView`, whose `TensorSpec` records storage dtype, layout, and element strides. Integer routing metadata remains strongly typed. Runtime and correctness share one `ScalarType` vocabulary; FP8/FP6/FP4 enum values describe reference storage only and do not imply operator support. `KernelSelection` separates the stable `Auto`/`CudaNaive`/`CudaOptimized` family from an operator-local implementation id.
 
-`RuntimeContext` carries the stream, caller-preallocated workspace, and a cached architecture. v0.2 currently dispatches only zero-stride contiguous row-major, all-FP32 operators on SM86 to `cuda_naive`; FP16/BF16 signatures are representable but explicitly unsupported until real kernels exist. SM90 is classified separately but remains unvalidated and unsupported. `histogram` clears its counts internally, while `token_permute` requires `E * sizeof(int32_t)` bytes of caller workspace for its cursors and clears that workspace internally.
+`RuntimeContext` carries the stream, caller-preallocated workspace, and a cached architecture. v0.2 accepts zero-stride contiguous row-major, all-FP32 operators on SM86. `Auto` selects the promoted shape-dispatched Histogram candidate and selects `cuda_naive` for the other six operators. Dense GEMM, Top-K Gate, Histogram, and Token Permute also expose validated operator-local research implementation ids through explicit `CudaOptimized` selection; explicit selection does not imply default promotion. FP16/BF16 signatures are representable but explicitly unsupported until real kernels exist. SM90 is classified separately but remains unvalidated and unsupported. `histogram` clears its counts internally, while `token_permute` requires `E * sizeof(int32_t)` bytes of caller workspace for its cursors and clears that workspace internally.
 
 ## Benchmark design
 
@@ -48,7 +48,7 @@ Correctness, release performance, and profiling are separate flows:
 | `benchmark_rtx3080_library_release.json` | Clean-Git, strict-FP32 library/reference pairing | Contract-matched comparison only |
 | `profile_benchmarks.py` | NSYS system trace plus seven filtered NCU cases | No; profiler duration is not a score |
 
-See [Benchmark architecture](docs/benchmark-architecture.md), the [correctness framework](docs/correctness-framework.md), [implementation status](docs/implementation-status.md), the [current RTX 3080 benchmark/Nsight report](docs/reports/rtx3080-naive-profile-a9489ab.md), and the [full technical design](docs/RaggedRoute-最终产品技术文档.md).
+See [Benchmark architecture](docs/benchmark-architecture.md), the [correctness framework](docs/correctness-framework.md), [implementation status](docs/implementation-status.md), the [repository audit](docs/reviews/repository-audit-2026-08-03.md), the [current RTX 3080 benchmark/Nsight report](docs/reports/rtx3080-naive-profile-a9489ab.md), and the [full technical design](docs/RaggedRoute-最终产品技术文档.md).
 
 ## Build profiles
 
@@ -166,6 +166,10 @@ out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
 
 Implemented now: caller-stream naive launchers, the v0.2 self-describing tensor API, an SM86-only executable runtime/dispatch layer, typed adapters, per-operator CPU oracle implementations behind one correctness facade, benchmark-only cuBLAS/CUB/CUTLASS/vLLM variants, raw samples, p50/p90/p95 of batch means, explicit excluded steps, L1/L2 cost boundaries, and both L3 chains. L2/L3 call the public wrappers, so histogram counts reset and permute cursor reset are included there while L1 keeps them as explicit preconditions. A clean-Git RTX 3080 Release run now provides strict representative library pairings plus a full-chain NSYS trace, seven basic NCU captures, three detailed hotspot captures, and a checksummed text evidence bundle. Third-party dependency and source provenance rules are recorded in `THIRD_PARTY_NOTICES.md`.
 
-Not implemented yet: executable failure replay, FP16/Tensor Core optimized variants, a Top-K external baseline with matching semantics, optimized-candidate shape sweeps, automatic promotion evaluation, default shape dispatch, or H100/Blackwell validation. `configs/benchmark_promotion_policy.json` currently expresses policy only; it is not an evaluator and cannot change dispatch. Those capabilities must be implemented and measured under the same contract before reporting an optimized-kernel speedup or support.
+Not implemented yet: executable failure replay, FP16/Tensor Core optimized variants, a Top-K external baseline with matching semantics, real-trace/working-set shape sweeps, automatic promotion evaluation, default shape dispatch beyond the promoted Histogram path, or H100/Blackwell validation. `configs/benchmark_promotion_policy.json` currently expresses policy only; it is not an evaluator and cannot change dispatch. Those capabilities must be implemented and measured under the same contract before reporting an optimized-kernel speedup or support.
 
 The remaining plan for promotion evidence, real trace/working-set workloads, plots, and optimized variants is tracked in [Development roadmap](docs/development-roadmap.md). Planned items are not current capabilities.
+
+## License
+
+RaggedRoute is licensed under the [Apache License 2.0](LICENSE). Adapted and benchmark-only third-party sources retain their original notices; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and `third_party/licenses/`.

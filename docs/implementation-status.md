@@ -5,7 +5,8 @@
 ## 已实现
 
 - v0.2 公共运行时：完成一次不保留旧 `float*` shim 的 source-breaking 收口；浮点 payload 使用带 dtype/layout/element-strides 的 `ConstTensorView`/`MutableTensorView`，路由 metadata 保持强类型 int32；runtime 与 correctness 共用一套 `ScalarType`，`KernelSelection` 分离 family 与 operator-local implementation id；
-- 可单测的 compute-capability 分派显式区分 SM86、SM90 与其他架构；当前可执行路径只接受 `SM86 + 全 FP32 + zero-stride contiguous row-major + cuda_naive implementation 0`，FP16/BF16 签名虽可表达但显式返回不支持，SM90 也不据交叉编译结果宣称实卡支持；
+- 可单测的 compute-capability 分派显式区分 SM86、SM90 与其他架构；当前可执行路径接受 `SM86 + 全 FP32 + zero-stride contiguous row-major`，`Auto` 对 Histogram 选择已晋升的 shape-dispatched optimized candidate，其余六算子选择 `cuda_naive implementation 0`；FP16/BF16 签名虽可表达但显式返回不支持，SM90 也不据交叉编译结果宣称实卡支持；
+- 显式 research dispatch：Dense GEMM、Top-K Gate、Histogram 与 Token Permute 有已验证的 operator-local `kCudaOptimized` implementation id；显式可调用不等于 `Auto` 晋升。Grouped GEMM 与 Unpermute candidate 只在 benchmark adapter 中保留，Scan 失败 candidate 源码已从最终树删除；
 - 两层 API：保留 `raggedroute::ops::launch_*_naive` 作为 L1 Kernel Entry；新增 `raggedroute::{dense_gemm, topk_gate, histogram, exclusive_scan, token_permute, grouped_gemm, unpermute}` 作为 L2/L3 Operator Wrapper。Wrapper 使用 caller stream，不在 hot path 分配/同步；Histogram 在 Wrapper 内清零 counts，Permute 使用 caller workspace（`E * sizeof(int32_t)`）并在 Wrapper 内清零 cursor；
 - Benchmark 接入：L1 继续调用低层 launcher；L2 和两个 L3 chain 改为经过公开 Wrapper，架构查询在 setup 阶段缓存，不计入 event 计时；
 - 公共 API correctness：覆盖七算子 role signature、SM86 FP32、尚未实现的 FP16/BF16、SM90、layout/stride、kernel family/id、参数/Workspace 拒绝、Dense GEMM、Histogram reset、Permute workspace reset 与 redzone；
@@ -42,7 +43,7 @@
 - 可发布的 Grouped GEMM optimized runtime；现有 `cp.async`/persistent SM86 版本仅为 benchmark-only 失败实验；
 - 与 Top-K tie/NaN/selected-softmax 合同相同的外部库基线；
 - 真实 route trace、working-set rotation 与 distribution-aware shape sweep；当前十 shape synthetic suite 不是完整部署分布；
-- shape-aware default dispatch、自动 promotion evaluator；当前 Grouped GEMM 未晋级结论由固定门禁和配对报告人工审计；
+- Histogram 之外的 shape-aware default dispatch、自动 promotion evaluator；当前 Histogram 晋级以手工审计的固定门禁为依据，Grouped GEMM 未晋级结论也由配对报告人工审计；
 - H100/Blackwell 实卡支持、正确性或性能；本机 SM90/SM90a 交叉编译不等同于 H100 验证；
 - 完整 MoE FFN、训练、多 GPU 或 All-to-All。
 

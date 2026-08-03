@@ -42,6 +42,6 @@
   Top-4 fallback 均通过。candidate 保持 zero workspace、无 atomic，但**不接入公开
   optimized dispatch**，registry 标为 `in_tree_cuda_research`。
 
-结论：candidate 不晋升。保留 benchmark-only 实现、完整 raw/aggregate/profile 证据和
-拒绝记录，提交 Draft evidence PR。完整报告见
+结论：candidate 不晋升。已合并的代码保留 benchmark-only 实现、完整 raw/aggregate/profile 证据和
+拒绝记录，不进入 public optimized dispatch。完整报告见
 [SM86 candidate evidence report](../reports/unpermute-sm86-candidate-eba8f02.md)。

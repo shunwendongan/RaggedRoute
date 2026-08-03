@@ -8,7 +8,8 @@ shapes—for example v2 reduces unprofiled L1 p50 at T2048/E64 from 14.0544 us
 to 9.6358 us (1.46x) and increases throughput from 145.719 to 212.540
 Mrows/s. However, no candidate satisfies the reviewed continuous bucket
 promotion gates across all required T/E shapes. Public `Auto` remains
-`cuda_naive`, and this PR is intentionally draft.
+`cuda_naive`; the merged implementation remains an explicit research path and
+does not constitute default promotion.
 
 ## Scope and semantics
 

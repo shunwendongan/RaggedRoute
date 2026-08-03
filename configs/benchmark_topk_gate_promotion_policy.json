@@ -1,0 +1,21 @@
+{
+  "schema_version": "raggedroute.topk_gate_promotion_policy.v1",
+  "correctness_required": true,
+  "sanitizers_required": ["memcheck", "racecheck", "initcheck", "synccheck"],
+  "minimum_independent_process_runs": 5,
+  "maximum_all_samples_cv": 0.10,
+  "minimum_ratio_of_sums_p50_speedup": 1.05,
+  "maximum_single_shape_p50_regression_fraction": 0.03,
+  "maximum_single_shape_p95_regression_fraction": 0.05,
+  "minimum_external_ratio_of_sums_speedup": 1.03,
+  "maximum_external_single_shape_regression_fraction": 0.05,
+  "require_same_gpu_uuid": true,
+  "require_same_case_config": true,
+  "require_same_math_semantics": true,
+  "require_zero_workspace": true,
+  "require_single_launch": true,
+  "require_no_local_memory_spill": true,
+  "buckets": ["E=2", "E=3-8", "E=9-16", "E=17-32", "E=33-64"],
+  "special_paths": ["v3 aligned E={8,16,32,64}"],
+  "decision": "A candidate is enabled only from a T threshold where every larger tested shape in the bucket passes every gate at both L1 and L2."
+}

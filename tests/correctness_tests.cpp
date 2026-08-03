@@ -31,7 +31,8 @@ void require(bool condition, const std::string& message) {
   if (!condition) throw std::runtime_error(message);
 }
 
-void run_adapter_case(const Case& test_case, cudaStream_t stream, std::uint64_t seed) {
+void run_adapter_case(const Case& test_case, cudaStream_t stream, std::uint64_t seed,
+                      bool verbose = true) {
   auto adapter = rr::make_adapter(test_case.name, test_case.variant);
   require(adapter->supports(test_case.level),
           test_case.name + "/" + test_case.variant + " does not support the requested level");
@@ -50,8 +51,10 @@ void run_adapter_case(const Case& test_case, cudaStream_t stream, std::uint64_t 
     require(variant_config.count(field) == 1,
             test_case.name + " variant config is missing " + field);
   }
-  std::cout << "PASS " << test_case.name << "/" << test_case.variant << " - " << result.message
-            << '\n';
+  if (verbose) {
+    std::cout << "PASS " << test_case.name << "/" << test_case.variant << " - " << result.message
+              << '\n';
+  }
 }
 
 void run_histogram_candidate_matrix(cudaStream_t stream, std::uint64_t* seed) {
@@ -431,6 +434,53 @@ int main() {
       for (const auto& shape : unpermute_candidate_shapes) {
         run_adapter_case({"unpermute", shape, "cuda_warp_token_vec4"}, stream, seed++);
       }
+      const std::vector<std::string> topk_candidates = {
+          "cuda_warp_pair_top2_v1", "cuda_subwarp_pair_top2_v2", "cuda_vector_pair_top2_v3",
+          "cub_block_radix_top2"};
+      const std::vector<int> topk_tokens = {1, 7, 65};
+      const std::vector<std::uint64_t> topk_seeds = {101, 202, 303};
+      for (int experts = 2; experts <= 64; ++experts) {
+        for (std::size_t shape = 0; shape < topk_tokens.size(); ++shape) {
+          for (const std::string& variant : topk_candidates) {
+            if (!has_variant("topk_gate", variant)) continue;
+            run_adapter_case({"topk_gate",
+                              {{"T", std::to_string(topk_tokens[shape])},
+                               {"E", std::to_string(experts)},
+                               {"input_mode", "random"},
+                               {"input_alignment", shape == 1 ? "4" : "16"}},
+                              variant,
+                              rr::MeasurementLevel::kKernelBody},
+                             stream, topk_seeds[shape], false);
+          }
+        }
+      }
+      for (const std::string& mode :
+           {"duplicate_max", "ties", "all_nan", "signed_zero", "mixed_nan_neg_inf",
+            "single_infinity", "multiple_infinity", "extreme"}) {
+        for (const std::string& variant : topk_candidates) {
+          if (has_variant("topk_gate", variant)) {
+            run_adapter_case(
+                {"topk_gate",
+                 {{"T", "33"}, {"E", "63"}, {"input_mode", mode}, {"input_alignment", "16"}},
+                 variant,
+                 rr::MeasurementLevel::kKernelBody},
+                stream, seed++, false);
+          }
+        }
+      }
+      if (has_variant("topk_gate", "vllm_row_packed_top2")) {
+        for (int experts : {2, 4, 8, 16, 32, 64}) {
+          run_adapter_case({"topk_gate",
+                            {{"T", "65"},
+                             {"E", std::to_string(experts)},
+                             {"input_mode", "duplicate_max"},
+                             {"input_alignment", "16"}},
+                            "vllm_row_packed_top2",
+                            rr::MeasurementLevel::kKernelBody},
+                           stream, seed++, false);
+        }
+      }
+      std::cout << "PASS exhaustive topk_gate E=2..64 candidate matrix\n";
       const std::vector<rr::OptionMap> dense_tiled_edge_shapes = {
           {{"M", "1"}, {"N", "1"}, {"K", "1"}},
           {{"M", "17"}, {"N", "19"}, {"K", "13"}},

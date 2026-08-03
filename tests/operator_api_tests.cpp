@@ -165,6 +165,21 @@ void test_pure_dispatch() {
   request.requested_kernel = {KernelFamily::kCudaOptimized, 8};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "unimplemented optimized dense GEMM ids must be rejected");
+  request.operator_kind = OperatorKind::kTopKGate;
+  request.signature = fp32_signature(request.operator_kind);
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 0};
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+          "Top-K optimized id zero must remain unavailable before measured promotion");
+  for (const std::uint32_t implementation : {1U, 2U, 3U}) {
+    request.requested_kernel = {KernelFamily::kCudaOptimized, implementation};
+    require_status(select_kernel(request, &decision), "explicit Top-K candidate dispatch");
+    require(decision.kernel.family == KernelFamily::kCudaOptimized &&
+                decision.kernel.implementation_id == implementation,
+            "Top-K candidate dispatch must preserve its explicit implementation id");
+  }
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 4};
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+          "unknown Top-K optimized ids must be rejected");
   request.operator_kind = OperatorKind::kGroupedGemm;
   request.signature = fp32_signature(request.operator_kind);
   for (const std::uint32_t implementation : {1U, 2U, 3U, 4U, 5U, 6U}) {
@@ -519,6 +534,42 @@ void test_dense_gemm_vector_alignment_fallback(const raggedroute::RuntimeContext
           "unaligned vector dense_gemm fallback changed a redzone");
 }
 
+void test_topk_gate(const raggedroute::RuntimeContext& context) {
+  constexpr int kTokens = 3;
+  constexpr int kExperts = 4;
+  const float nan = std::numeric_limits<float>::quiet_NaN();
+  rc::GuardedDeviceBuffer<float> logits(kTokens * kExperts, context.stream);
+  rc::GuardedDeviceBuffer<std::int32_t> ids(kTokens * 2, context.stream);
+  rc::GuardedDeviceBuffer<float> weights(kTokens * 2, context.stream);
+  logits.copy_from_host({1.0F, 3.0F, 3.0F, 2.0F, nan, nan, nan, nan,
+                         std::numeric_limits<float>::infinity(),
+                         std::numeric_limits<float>::infinity(),
+                         -std::numeric_limits<float>::infinity(), 0.0F},
+                        context.stream);
+
+  raggedroute::TopKGateArgs args;
+  args.logits.data = logits.data();
+  args.expert_ids = ids.data();
+  args.weights.data = weights.data();
+  args.tokens = kTokens;
+  args.experts = kExperts;
+  for (const std::uint32_t implementation : {0U, 1U, 2U, 3U}) {
+    args.kernel = implementation == 0
+                      ? raggedroute::KernelSelection{}
+                      : raggedroute::KernelSelection{raggedroute::KernelFamily::kCudaOptimized,
+                                                     implementation};
+    require_status(raggedroute::topk_gate(args, context), "public topk_gate candidate");
+    require(ids.copy_to_host(context.stream) == std::vector<std::int32_t>({1, 2, 0, 1, 0, 1}),
+            "public topk_gate ids violate deterministic semantics");
+    require(weights.copy_to_host(context.stream) == std::vector<float>({0.5F, 0.5F, 0.5F,
+                                                                         0.5F, 0.5F, 0.5F}),
+            "public topk_gate weights violate selected-softmax semantics");
+  }
+  require(logits.canaries_intact(context.stream) && ids.canaries_intact(context.stream) &&
+              weights.canaries_intact(context.stream),
+          "topk_gate changed a redzone");
+}
+
 void test_histogram_reset(const raggedroute::RuntimeContext& context) {
   rc::GuardedDeviceBuffer<std::int32_t> ids(4, context.stream);
   rc::GuardedDeviceBuffer<std::int32_t> counts(2, context.stream);
@@ -757,6 +808,7 @@ int main() {
       test_argument_and_workspace_contracts(context);
       test_dense_gemm(context);
       test_dense_gemm_vector_alignment_fallback(context);
+      test_topk_gate(context);
       test_exclusive_scan(context);
       test_histogram_reset(context);
       test_permute_workspace_reset(context);

@@ -1,0 +1,39 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_topk_gate_smoke_v1",
+  "protocol": "smoke",
+  "process_runs": 1,
+  "common": {
+    "warmup": 2,
+    "samples": 3,
+    "kernel_repeats": 2,
+    "seed": 20260803,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "topk_gate.smoke",
+      "operator": "topk_gate",
+      "levels": ["l1", "l2"],
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cuda_warp_pair_top2_v1", "promotion_baseline": false},
+        {"name": "cuda_subwarp_pair_top2_v2", "promotion_baseline": false},
+        {"name": "cuda_vector_pair_top2_v3", "promotion_baseline": false}
+      ],
+      "matrix": {"T": [1, 33, 2048], "E": [2, 7, 8, 33, 64]},
+      "params": {"input_mode": "random", "input_alignment": 16}
+    },
+    {
+      "id": "topk_gate.smoke.cub_pair",
+      "operator": "topk_gate",
+      "levels": ["l1"],
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cub_block_radix_top2", "promotion_baseline": false}
+      ],
+      "matrix": {"T": [1, 33, 2048], "E": [2, 7, 8, 33, 64]},
+      "params": {"input_mode": "random", "input_alignment": 16}
+    }
+  ]
+}

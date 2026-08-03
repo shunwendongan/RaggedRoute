@@ -12,6 +12,15 @@ struct DenseCublasPlan;
 struct GroupedCublasPlan;
 struct GroupedCutlassPlan;
 
+cudaError_t launch_cub_block_radix_top2(const float* logits, std::int32_t* expert_ids,
+                                        float* weights, int tokens, int experts,
+                                        cudaStream_t stream);
+
+bool supports_vllm_row_packed_top2(int experts, const float* logits) noexcept;
+cudaError_t launch_vllm_row_packed_top2(const float* logits, std::int32_t* expert_ids,
+                                        float* weights, int tokens, int experts,
+                                        cudaStream_t stream);
+
 DenseCublasLtPlan* create_dense_cublaslt_plan(int m, int n, int k,
                                               std::size_t workspace_limit_bytes,
                                               std::size_t* workspace_bytes);

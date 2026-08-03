@@ -316,6 +316,31 @@ class SuiteTests(unittest.TestCase):
             {command[command.index("--seed") + 1] for command in commands}, {"123"}
         )
 
+    def test_suite_v2_expands_parameter_matrix_deterministically(self) -> None:
+        suite = make_suite_v2()
+        suite["cases"][0]["matrix"] = {"T": [1, 8], "E": [2, 3]}
+        suite["cases"][0]["params"] = {"input_mode": "random"}
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "suite.json"
+            path.write_text(json.dumps(suite), encoding="utf-8")
+            loaded = run_benchmarks.load_suite(path)
+        self.assertEqual(
+            [case["id"] for case in loaded["cases"]],
+            ["case.e2_t1", "case.e2_t8", "case.e3_t1", "case.e3_t8"],
+        )
+        self.assertEqual(
+            loaded["cases"][2]["params"], {"input_mode": "random", "E": 3, "T": 1}
+        )
+
+    def test_suite_v2_rejects_empty_parameter_matrix_axis(self) -> None:
+        suite = make_suite_v2()
+        suite["cases"][0]["matrix"] = {"T": []}
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "suite.json"
+            path.write_text(json.dumps(suite), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                run_benchmarks.load_suite(path)
+
     def test_suite_v2_rejects_invalid_baseline_or_duplicate_variants(self) -> None:
         mutations = []
         no_baseline = make_suite_v2()

@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import hashlib
+import itertools
 import json
 import os
 import pathlib
@@ -53,6 +54,29 @@ def load_suite(path: pathlib.Path) -> dict[str, Any]:
         raise ValueError(f"unsupported schema_version={schema!r}")
     if not isinstance(suite.get("cases"), list) or not suite["cases"]:
         raise ValueError("suite must contain a non-empty cases list")
+    expanded_cases: list[dict[str, Any]] = []
+    for source_case in suite["cases"]:
+        matrix = source_case.get("matrix")
+        if matrix is None:
+            expanded_cases.append(source_case)
+            continue
+        if not isinstance(matrix, dict) or not matrix:
+            raise ValueError(f"case {source_case.get('id')} has an invalid matrix")
+        names = sorted(matrix)
+        values = [matrix[name] for name in names]
+        if any(not isinstance(items, list) or not items for items in values):
+            raise ValueError(f"case {source_case.get('id')} matrix axes must be non-empty lists")
+        for combination in itertools.product(*values):
+            current = dict(source_case)
+            current.pop("matrix")
+            current["params"] = dict(source_case.get("params", {}))
+            suffix = []
+            for name, value in zip(names, combination):
+                current["params"][name] = value
+                suffix.append(f"{name.lower()}{value}")
+            current["id"] = source_case["id"] + "." + "_".join(suffix)
+            expanded_cases.append(current)
+    suite["cases"] = expanded_cases
     ids = [case.get("id") for case in suite["cases"]]
     if any(not case_id for case_id in ids) or len(ids) != len(set(ids)):
         raise ValueError("every case requires a unique non-empty id")

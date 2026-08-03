@@ -1,0 +1,2 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+100.0,101212,21,4819.6,4800.0,4735,5248,105.0,"void raggedroute::ops::<unnamed>::topk_gate_scalar_pair_kernel<(int)32>(const float *, int *, float *, int, int)"

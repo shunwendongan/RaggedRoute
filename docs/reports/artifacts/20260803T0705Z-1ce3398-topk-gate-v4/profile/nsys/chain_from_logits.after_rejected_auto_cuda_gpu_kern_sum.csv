@@ -1,0 +1,7 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+88.6,5131485,21,244356.4,244283.0,243964,244827,248.4,"raggedroute::ops::<unnamed>::grouped_gemm_naive_kernel(const float *, const float *, const int *, float *, int, int)"
+4.2,240636,21,11458.9,11456.0,11392,11552,39.0,"raggedroute::ops::<unnamed>::topk_gate_naive_kernel(const float *, int *, float *, int, int)"
+3.0,175067,21,8336.5,8351.0,8032,8544,89.8,"raggedroute::ops::<unnamed>::token_permute_naive_kernel(const float *, const int *, const int *, int *, float *, int *, int *, int, int, int)"
+2.3,130878,21,6232.3,6239.0,6144,6400,66.3,"raggedroute::ops::<unnamed>::unpermute_naive_kernel(const float *, const int *, const float *, float *, int, int, int)"
+1.2,66783,21,3180.1,3168.0,3167,3264,25.8,"raggedroute::ops::<unnamed>::exclusive_scan_naive_kernel(const int *, int *, int)"
+0.9,49536,21,2358.9,2368.0,2336,2400,17.9,"raggedroute::ops::<unnamed>::histogram_naive_kernel(const int *, int *, int, int)"

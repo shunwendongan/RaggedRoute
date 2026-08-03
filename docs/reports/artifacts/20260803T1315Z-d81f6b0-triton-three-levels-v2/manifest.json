@@ -1,88 +1,176 @@
 {
-  "schema_version": "raggedroute.triton_evidence_bundle.v1",
-  "run_id": "20260803T1315Z-d81f6b0-triton-three-levels-v2",
-  "git_sha": "d81f6b015d38",
-  "promotion_eligible": false,
-  "benchmark": {
-    "l1_l2_records": 84,
-    "l1_l2_groups": 28,
-    "l3_records": 6,
-    "l3_groups": 2
-  },
-  "profile": {
-    "nsys_cases": 15,
-    "ncu_actions": 21
+  "commands": [
+    {
+      "reason": "The legacy bundle did not preserve an exact command line.",
+      "role": "historical_collection",
+      "status": "unavailable"
+    }
+  ],
+  "decision": {
+    "profiler_duration_used_as_speedup": false,
+    "status": "recorded",
+    "value": "reference_only"
   },
   "files": [
     {
-      "path": "benchmark/l1_l2_comparison.json",
       "bytes": 16944,
-      "sha256": "8679e38b425ba509681a47c2f3b3094be832fe3c02aed4f1c6454afc73982d2c"
+      "path": "benchmark/l1_l2_comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "8679e38b425ba509681a47c2f3b3094be832fe3c02aed4f1c6454afc73982d2c",
+      "storage": "git"
     },
     {
-      "path": "benchmark/l1_l2_manifest.json",
-      "bytes": 88484,
-      "sha256": "88d09f81f0940741ccc97d8f938ff2627740e24fd9f15e842aac9a6fae01d741"
-    },
-    {
-      "path": "benchmark/l1_l2_release.jsonl",
-      "bytes": 220746,
-      "sha256": "b3b2a8af4d29ea085872bc8af8083da4517f47d17c6be28abdad1c0f889caf41"
-    },
-    {
-      "path": "benchmark/l3_comparison.json",
       "bytes": 1676,
-      "sha256": "19c878e3a33bafd03462a829f751b55f4b72df702f9db09d7b04d64c9ceacfbe"
+      "path": "benchmark/l3_comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "19c878e3a33bafd03462a829f751b55f4b72df702f9db09d7b04d64c9ceacfbe",
+      "storage": "git"
     },
     {
-      "path": "benchmark/l3_manifest.json",
-      "bytes": 7819,
-      "sha256": "787001352cfbd0aa2fca47b5ec089ecf18d5ec4192e62b5496f83556e67776d3"
-    },
-    {
-      "path": "benchmark/l3_release.jsonl",
-      "bytes": 17837,
-      "sha256": "a68c391d6c9aab0bf50c570ebf7b1c880c41c0b025a65c1e363f7f6efe074e5a"
-    },
-    {
-      "path": "configs/benchmark_rtx3080_cross_backend_l3_release.json",
       "bytes": 688,
-      "sha256": "b42779147a800d8929cbfd2321dd393a80a70a024b35565928e8a2cdc1cfd584"
+      "path": "configs/benchmark_rtx3080_cross_backend_l3_release.json",
+      "role": "supporting_evidence",
+      "sha256": "b42779147a800d8929cbfd2321dd393a80a70a024b35565928e8a2cdc1cfd584",
+      "storage": "git"
     },
     {
-      "path": "configs/benchmark_rtx3080_cross_backend_release.json",
       "bytes": 2935,
-      "sha256": "fc21c0d8efc8eac336862cff5ae017f9a4deffb3b340803b55823bfd39f22651"
+      "path": "configs/benchmark_rtx3080_cross_backend_release.json",
+      "role": "supporting_evidence",
+      "sha256": "fc21c0d8efc8eac336862cff5ae017f9a4deffb3b340803b55823bfd39f22651",
+      "storage": "git"
     },
     {
-      "path": "configs/profile_triton_three_levels.json",
       "bytes": 1977,
-      "sha256": "733523562e8cb7ea0d9e085a8b6644e009b09f3bafde3b71b8db534bc80e71f0"
+      "path": "configs/profile_triton_three_levels.json",
+      "role": "supporting_evidence",
+      "sha256": "733523562e8cb7ea0d9e085a8b6644e009b09f3bafde3b71b8db534bc80e71f0",
+      "storage": "git"
     },
     {
-      "path": "profile/manifest.json",
-      "bytes": 70718,
-      "sha256": "51ba185c21311c96873accdc82db32b1d2a56203416f6acb1b9703ff4c4d3f01"
-    },
-    {
+      "bytes": 158071,
       "path": "profile/profile_summary.json",
-      "bytes": 163393,
-      "sha256": "f3a3309e450bd1ff93e72764e631d54d83f34e7cb3287225db6bda7cd9179c2f"
+      "role": "comparison_or_decision",
+      "sha256": "e21ded3429ee4c47acb9960ac47fc0a5b719dd26f46a9ed9b2c1ede34cb9173e",
+      "storage": "git"
     },
     {
+      "bytes": 1281,
       "path": "profile/REPORT.md",
-      "bytes": 1314,
-      "sha256": "177fce96a69f0a5efc6bae54ea594c11a5087556183fdf7641837f0c4eab7454"
+      "role": "report",
+      "sha256": "86d40041fc1d990872d6d20929b8c24f0044a68afc98c1827109331e9cc0471c",
+      "storage": "git"
     },
     {
+      "bytes": 7001,
       "path": "REPORT.md",
-      "bytes": 7099,
-      "sha256": "149f88ee8437995f4904728a63cd88c465b71892b68a8d3d2828f13ed843cb98"
+      "role": "report",
+      "sha256": "ea08d130c361e95b424e71c6074aadd56fc874eb6bd534a2212c551e08f70b34",
+      "storage": "git"
     },
     {
-      "path": "validation/summary.json",
       "bytes": 1601,
-      "sha256": "b2a39518d2f2bc9d8a9d6590081af025d028f831774ce95460f43c384dccf3b6"
+      "path": "validation/summary.json",
+      "role": "comparison_or_decision",
+      "sha256": "b2a39518d2f2bc9d8a9d6590081af025d028f831774ce95460f43c384dccf3b6",
+      "storage": "git"
+    },
+    {
+      "archive_path": "raw/benchmark/l1_l2_manifest.json",
+      "bytes": 88484,
+      "path": "benchmark/l1_l2_manifest.json",
+      "role": "run_manifest",
+      "sha256": "88d09f81f0940741ccc97d8f938ff2627740e24fd9f15e842aac9a6fae01d741",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/l1_l2_release.jsonl",
+      "bytes": 220746,
+      "path": "benchmark/l1_l2_release.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "b3b2a8af4d29ea085872bc8af8083da4517f47d17c6be28abdad1c0f889caf41",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/l3_manifest.json",
+      "bytes": 7819,
+      "path": "benchmark/l3_manifest.json",
+      "role": "run_manifest",
+      "sha256": "787001352cfbd0aa2fca47b5ec089ecf18d5ec4192e62b5496f83556e67776d3",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/l3_release.jsonl",
+      "bytes": 17837,
+      "path": "benchmark/l3_release.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "a68c391d6c9aab0bf50c570ebf7b1c880c41c0b025a65c1e363f7f6efe074e5a",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/legacy/manifest.json",
+      "bytes": 2776,
+      "path": "legacy/manifest.json",
+      "role": "run_manifest",
+      "sha256": "90110794047b2074a03fd9af1d4e27bb75b1d024f2ac6a3b242c8cf22f05b928",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/manifest.json",
+      "bytes": 70718,
+      "path": "profile/manifest.json",
+      "role": "run_manifest",
+      "sha256": "51ba185c21311c96873accdc82db32b1d2a56203416f6acb1b9703ff4c4d3f01",
+      "storage": "release"
     }
-  ]
+  ],
+  "hardware": {
+    "compute_capability": "8.6",
+    "gpu_name": null,
+    "gpu_uuid": null,
+    "sm_count": null,
+    "status": "recorded"
+  },
+  "kind": "triton_performance_evidence",
+  "migration": {
+    "checksum_repairs": [],
+    "legacy_manifest_archive_path": "raw/legacy/manifest.json",
+    "legacy_schema": "raggedroute.triton_evidence_bundle.v1"
+  },
+  "provenance": {
+    "git_clean": null,
+    "git_clean_status": "unavailable",
+    "source_git_sha": "d81f6b015d38"
+  },
+  "release_asset": {
+    "bytes": 45388,
+    "immutable": true,
+    "name": "20260803T1315Z-d81f6b0-triton-three-levels-v2-raw.zip",
+    "sha256": "58e591a8b592cca4600905b1e1cff960354efbbe8c181be139dd34a3653d0c7c",
+    "tag": "evidence-2026-08-03-v1",
+    "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260803T1315Z-d81f6b0-triton-three-levels-v2-raw.zip"
+  },
+  "run_id": "20260803T1315Z-d81f6b0-triton-three-levels-v2",
+  "schema_version": "raggedroute.evidence_bundle.v2",
+  "semantic_contract": {
+    "accumulator_dtype": null,
+    "dtype": null,
+    "math_mode": null,
+    "measurement_levels": [],
+    "measurement_rule": "Release A/B timings and profiler durations are separate evidence classes.",
+    "operator": "triton",
+    "status": "historical"
+  },
+  "toolchain": {
+    "build_type": null,
+    "cuda": null,
+    "driver": null,
+    "ncu": null,
+    "nsys": null,
+    "status": "unavailable"
+  },
+  "validation": {
+    "reason": "Validation outputs are inventoried as files; the legacy manifest had no normalized result object.",
+    "status": "historical"
+  }
 }

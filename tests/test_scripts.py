@@ -44,6 +44,12 @@ compare_cross_backend = load_module(
 package_triton_evidence = load_module(
     "package_triton_evidence", ROOT / "scripts" / "package_triton_evidence.py"
 )
+package_evidence = load_module(
+    "package_evidence", ROOT / "scripts" / "package_evidence.py"
+)
+validate_evidence = load_module(
+    "validate_evidence", ROOT / "scripts" / "validate_evidence.py"
+)
 
 
 def make_suite_v2() -> dict:
@@ -76,6 +82,67 @@ def make_suite_v2() -> dict:
 
 
 class SuiteTests(unittest.TestCase):
+    def test_evidence_v2_schema_and_all_published_bundles_validate(self) -> None:
+        schema = json.loads(
+            (ROOT / "schemas" / "evidence-bundle-v2.schema.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            schema["properties"]["schema_version"]["const"],
+            "raggedroute.evidence_bundle.v2",
+        )
+        errors = validate_evidence.validate_root(ROOT / "docs" / "reports" / "artifacts")
+        self.assertEqual(errors, [])
+
+    def test_evidence_archive_is_deterministic_and_refuses_overwrite(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            source = root / "raw.jsonl"
+            source.write_text('{"ok": true}\n', encoding="utf-8")
+            item = package_evidence.ArchiveItem(
+                source=source,
+                logical_path="benchmark/raw.jsonl",
+                archive_path="raw/benchmark/raw.jsonl",
+                role="raw_benchmark_records",
+                bytes=source.stat().st_size,
+                sha256=package_evidence.sha256_file(source),
+            )
+            first = root / "first.zip"
+            second = root / "second.zip"
+            package_evidence.deterministic_zip(first, [item], "run")
+            package_evidence.deterministic_zip(second, [item], "run")
+            self.assertEqual(
+                package_evidence.sha256_file(first),
+                package_evidence.sha256_file(second),
+            )
+            with self.assertRaises(FileExistsError):
+                package_evidence.deterministic_zip(first, [item], "run")
+
+    def test_unavailable_evidence_requires_a_reason(self) -> None:
+        bundle = pathlib.Path("bundle")
+        manifest = {
+            "schema_version": "raggedroute.evidence_bundle.v2",
+            "run_id": "run",
+            "kind": "test",
+            "provenance": {"source_git_sha": "1234567", "git_clean": None},
+            "hardware": {"status": "unavailable"},
+            "toolchain": {"status": "unavailable"},
+            "semantic_contract": {"status": "unavailable"},
+            "commands": [{"role": "test", "status": "unavailable", "reason": "missing"}],
+            "validation": {"status": "unavailable"},
+            "decision": {"status": "historical"},
+            "release_asset": {
+                "tag": "tag", "name": "run-raw.zip",
+                "url": "https://github.com/example/repo/releases/download/tag/run-raw.zip",
+                "bytes": 1, "sha256": "0" * 64, "immutable": True,
+            },
+            "files": [{
+                "path": "missing.jsonl", "role": "raw_benchmark_records", "bytes": 1,
+                "sha256": "0" * 64, "storage": "unavailable",
+            }],
+        }
+        errors = validate_evidence.validate_manifest(manifest, bundle)
+        self.assertTrue(any("missing reason" in error for error in errors))
+
     def test_windows_entrypoints_share_dynamic_msvc_discovery(self) -> None:
         setup = (ROOT / "scripts" / "setup_msvc_env.bat").read_text(encoding="utf-8")
         configure = (ROOT / "scripts" / "configure_windows.bat").read_text(

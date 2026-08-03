@@ -1,0 +1,239 @@
+[
+  {
+    "report": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-grouped-gemm-opt\\profile\\grouped-final-a5df-uniform-basic\\reports\\ncu_basic.ncu-rep",
+    "action_index": 0,
+    "kernel": "grouped_gemm_register16x32_async_v3_kernel",
+    "architecture": {
+      "device_name": "NVIDIA GeForce RTX 3080",
+      "compute_capability": "8.6",
+      "architecture": "sm86",
+      "family": "Ampere",
+      "sm_count": 68,
+      "notes": "Use Ampere Tensor Cores/WMMA and cp.async; do not recommend TMA, WGMMA, TMEM, or tcgen05."
+    },
+    "metrics": {
+      "device_name": {
+        "status": "collected",
+        "metric": "device__attribute_display_name",
+        "value": "NVIDIA GeForce RTX 3080"
+      },
+      "cc_major": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_major",
+        "value": 8
+      },
+      "cc_minor": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_minor",
+        "value": 6
+      },
+      "sm_count": {
+        "status": "collected",
+        "metric": "device__attribute_multiprocessor_count",
+        "value": 68
+      },
+      "max_warps_per_sm": {
+        "status": "collected",
+        "metric": "device__attribute_max_warps_per_multiprocessor",
+        "value": 48
+      },
+      "duration_ns": {
+        "status": "collected",
+        "metric": "gpu__time_duration.sum",
+        "value": 30176.0
+      },
+      "grid_size": {
+        "status": "collected",
+        "metric": "launch__grid_size",
+        "value": 272
+      },
+      "block_size": {
+        "status": "collected",
+        "metric": "launch__block_size",
+        "value": 128
+      },
+      "waves_per_sm": {
+        "status": "collected",
+        "metric": "launch__waves_per_multiprocessor",
+        "value": 1.0
+      },
+      "registers_per_thread": {
+        "status": "collected",
+        "metric": "launch__registers_per_thread",
+        "value": 106
+      },
+      "shared_mem_per_block": {
+        "status": "collected",
+        "metric": "launch__shared_mem_per_block",
+        "value": 7952
+      },
+      "occupancy_theoretical_pct": {
+        "status": "collected",
+        "metric": "sm__maximum_warps_per_active_cycle_pct",
+        "value": 33.33333333333333
+      },
+      "occupancy_achieved_pct": {
+        "status": "collected",
+        "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+        "value": 26.815273215923753
+      },
+      "sm_throughput_pct": {
+        "status": "collected",
+        "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 22.645479097336718
+      },
+      "memory_throughput_pct": {
+        "status": "collected",
+        "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 30.838694852941174
+      },
+      "dram_throughput_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "dram_read_bytes": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "dram_write_bytes": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "l1_throughput_pct": {
+        "status": "collected",
+        "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+        "value": 34.56365088983493
+      },
+      "l1_hit_rate_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "l2_hit_rate_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "global_load_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "global_load_requests": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "global_store_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "global_store_requests": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "local_load_instructions": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "local_store_instructions": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "tensor_active_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "eligible_warps_per_scheduler": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "issue_active_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "stall_long_scoreboard": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "stall_short_scoreboard": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "stall_wait": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "stall_barrier": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "stall_math_pipe": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "stall_memory_throttle": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      }
+    },
+    "findings": [
+      {
+        "kind": "latency-or-underfill",
+        "evidence": "sm=22.6%, memory=30.8%"
+      },
+      {
+        "kind": "low-occupancy",
+        "evidence": "achieved occupancy=26.8%"
+      }
+    ],
+    "rules": [
+      [
+        66.66666666666667,
+        "Theoretical Occupancy",
+        "The 4.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the hardware maximum of 12. This kernel's theoretical occupancy (33.3%) is limited by the number of required registers."
+      ],
+      [
+        20.83645988279914,
+        "Workload Imbalance",
+        "One or more SMs have a much lower number of active cycles than the average number of active cycles. Maximum instance value is 31.80% above the average, while the minimum instance value is 38.05% below the average."
+      ],
+      [
+        20.83645988279914,
+        "Workload Imbalance",
+        "One or more L1 Slices have a much lower number of active cycles than the average number of active cycles. Maximum instance value is 31.80% above the average, while the minimum instance value is 38.05% below the average."
+      ],
+      [
+        20.208939874743237,
+        "Workload Imbalance",
+        "One or more SMSPs have a much higher number of active cycles than the average number of active cycles. Additionally, other SMSPs have a much lower number of active cycles than the average number of active cycles. Maximum instance value is 32.71% above the average, while the minimum instance value is 33.78% below the average."
+      ],
+      [
+        8.822916197286046,
+        "Workload Imbalance",
+        "One or more L2 Slices have a much higher number of active cycles than the average number of active cycles. Maximum instance value is 13.93% above the average, while the minimum instance value is 6.43% below the average."
+      ],
+      [
+        null,
+        "Bottleneck",
+        "This workload exhibits low compute throughput and memory bandwidth utilization relative to the peak performance of this device. Achieved compute throughput and/or memory bandwidth below 60.0% of peak typically indicate latency issues. Look at @section:SchedulerStats:Scheduler Statistics@ and @section:WarpStateStats:Warp State Statistics@ for potential reasons."
+      ]
+    ]
+  }
+]

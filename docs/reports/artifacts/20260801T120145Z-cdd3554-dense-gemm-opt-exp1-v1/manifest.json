@@ -1,39 +1,230 @@
 {
-  "schema_version": "raggedroute.evidence_bundle.v1",
-  "run_id": "20260801T120145Z-cdd3554-dense-gemm-opt-exp1-v1",
-  "created_utc": "2026-08-01T12:03:43.375790+00:00",
-  "benchmark_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute\\profile\\dense-gemm-cdd3554-exp1\\benchmark",
-  "extra_benchmark_sources": [],
-  "profile_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute\\profile\\dense-gemm-cdd3554-exp1\\profile",
-  "sanitizer_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute\\profile\\dense-gemm-cdd3554-exp1\\sanitizer",
-  "raw_profiler_reports": [
+  "commands": [
     {
-      "name": "dense.tiled_scalar.basic.ncu-rep",
-      "bytes": 98543,
-      "sha256": "4873d4c64c60dbdd924dcdf8dcce78b9dbd2bd3ba512b1c7de9d1ddc6df6faf0",
-      "committed": false
-    },
-    {
-      "name": "dense.tiled_scalar.detailed.ncu-rep",
-      "bytes": 267064,
-      "sha256": "ce448cc4c8adfa9cee6420965e9ce85aa37b446bdd061fca003cfe3123b76bf3",
-      "committed": false
-    },
-    {
-      "name": "system.exp1.nsys-rep",
-      "bytes": 62212,
-      "sha256": "8b0f4bfd2831276398e435aa2a995a019a2d955a49b58612ebea9253cf6baca0",
-      "committed": false
-    },
-    {
-      "name": "system.exp1.sqlite",
-      "bytes": 270336,
-      "sha256": "2584a8e47a0835a03b21bf74ad0660bfdf031f9517fa860f268a85321221ed09",
-      "committed": false
+      "reason": "The legacy bundle did not preserve an exact command line.",
+      "role": "historical_collection",
+      "status": "unavailable"
     }
   ],
-  "policy": {
-    "profiler_duration_is_release_latency": false,
-    "raw_profiler_binaries_committed": false
+  "decision": {
+    "profiler_duration_used_as_speedup": false,
+    "status": "recorded",
+    "value": "rejected_not_promoted"
+  },
+  "files": [
+    {
+      "bytes": 1153,
+      "path": "benchmark/aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "4aebd6234bf1d3f8e600d115799bf4bb8885a49edaf6ee0938e897c8a17882dc",
+      "storage": "git"
+    },
+    {
+      "bytes": 4297,
+      "path": "benchmark/comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "1faac8d0d0c8b24ec62cc04ae12175128d3aedd3679de52fee16a2930879f238",
+      "storage": "git"
+    },
+    {
+      "bytes": 8770,
+      "path": "profile/ncu_metrics.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "6203ea91577062ff1c055724c0e2668b8cca799fe21000b02cc8302341118d3b",
+      "storage": "git"
+    },
+    {
+      "bytes": 12011,
+      "path": "profile/ncu_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "b01bd6145bfdf16e0f1d24b102e31019c0a338a9b079ff44f0c60e4537a8cfdb",
+      "storage": "git"
+    },
+    {
+      "bytes": 1032,
+      "path": "profile/nsys_cuda_api_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "91cf00689a8099d30fd27325bf0e15f4e5f3bb06b883dc0c59605cd3c53a35b9",
+      "storage": "git"
+    },
+    {
+      "bytes": 254,
+      "path": "profile/nsys_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "3198c6481a6f4d81a4462708542d8f7d72b1338aad7cd540fca83aae1e2f6806",
+      "storage": "git"
+    },
+    {
+      "bytes": 250,
+      "path": "profile/nsys_cuda_gpu_mem_time_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "8429226bf21112883a99b00b6f4a99c4a5a9e139c2bc18420408e9b815db873e",
+      "storage": "git"
+    },
+    {
+      "bytes": 570,
+      "path": "profile/nsys_hotspots.json",
+      "role": "supporting_evidence",
+      "sha256": "e05cde0343f2a1776d384240d566e1356076e1e60e2a30d345d7739ebf75820e",
+      "storage": "git"
+    },
+    {
+      "bytes": 1169,
+      "path": "profile/REPORT.md",
+      "role": "report",
+      "sha256": "511412b07c509eea4919a2cb90ce1568130fed7113ffb3ce2e492a358a01b650",
+      "storage": "git"
+    },
+    {
+      "bytes": 2029,
+      "path": "sanitizer/initcheck.log",
+      "role": "correctness_validation",
+      "sha256": "25ca6e17bf11c2d779bb138e970a1ba268b119c76b126f06043fb352d72a1d2c",
+      "storage": "git"
+    },
+    {
+      "bytes": 2028,
+      "path": "sanitizer/memcheck.log",
+      "role": "correctness_validation",
+      "sha256": "bbaedbc8af23374cc21173faedad161c9604effd15485cf0555fc825102cf040",
+      "storage": "git"
+    },
+    {
+      "bytes": 2067,
+      "path": "sanitizer/racecheck.log",
+      "role": "correctness_validation",
+      "sha256": "e39c4d0d6ca6c5a6301a6edd5269c953745030299664c24b5f0e46b36fa36bc8",
+      "storage": "git"
+    },
+    {
+      "bytes": 2029,
+      "path": "sanitizer/synccheck.log",
+      "role": "correctness_validation",
+      "sha256": "f54017d3e054d730629fbde727f1c0ac43dc42922f76963ba8c2351e0571a6da",
+      "storage": "git"
+    },
+    {
+      "archive_path": "raw/benchmark/aggregate.json",
+      "bytes": 20744,
+      "path": "benchmark/aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "272f42bd7a1b60a41c61af62b6ef8cbc4b605f3f447171822858df622ce7e2e6",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/release.jsonl",
+      "bytes": 30635,
+      "path": "benchmark/release.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "e1ed326a8b44f527b6ceab5a5111b60116f990c942f5c57a066665989c4e3e30",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/release.jsonl.manifest.json",
+      "bytes": 19314,
+      "path": "benchmark/release.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "c2f0869847849ab9e576584b6660146e57bc7d9f32c84a745587276ab441662a",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/legacy/manifest.json",
+      "bytes": 1497,
+      "path": "legacy/manifest.json",
+      "role": "run_manifest",
+      "sha256": "f9236a41490624249b1c3a3e42674a2dc6c05dbf2e1b5415053d58a9be1f4ce2",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/manifest.json",
+      "bytes": 5943,
+      "path": "profile/manifest.json",
+      "role": "run_manifest",
+      "sha256": "0335b179c0e170cddc2e54e0a7c0d325a13d25225cce233e5a6214ae623d3930",
+      "storage": "release"
+    },
+    {
+      "bytes": 98543,
+      "path": "recovered/dense.tiled_scalar.basic.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "4873d4c64c60dbdd924dcdf8dcce78b9dbd2bd3ba512b1c7de9d1ddc6df6faf0",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 267064,
+      "path": "recovered/dense.tiled_scalar.detailed.ncu-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "ncu_report",
+      "sha256": "ce448cc4c8adfa9cee6420965e9ce85aa37b446bdd061fca003cfe3123b76bf3",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 62212,
+      "path": "recovered/system.exp1.nsys-rep",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "nsys_report",
+      "sha256": "8b0f4bfd2831276398e435aa2a995a019a2d955a49b58612ebea9253cf6baca0",
+      "storage": "unavailable"
+    },
+    {
+      "bytes": 270336,
+      "path": "recovered/system.exp1.sqlite",
+      "reason": "The legacy inventory entry was not present in the supplied recovery roots.",
+      "role": "profiler_database",
+      "sha256": "2584a8e47a0835a03b21bf74ad0660bfdf031f9517fa860f268a85321221ed09",
+      "storage": "unavailable"
+    }
+  ],
+  "hardware": {
+    "compute_capability": "8.6",
+    "gpu_name": "NVIDIA GeForce RTX 3080",
+    "gpu_uuid": "7c5e95c0e5a415d824a0c8c8b58d6f39",
+    "sm_count": 68,
+    "status": "recorded"
+  },
+  "kind": "dense_gemm_performance_evidence",
+  "migration": {
+    "checksum_repairs": [],
+    "legacy_manifest_archive_path": "raw/legacy/manifest.json",
+    "legacy_schema": "raggedroute.evidence_bundle.v1"
+  },
+  "provenance": {
+    "git_clean": true,
+    "git_clean_status": "recorded",
+    "source_git_sha": "cdd3554d8cda"
+  },
+  "release_asset": {
+    "bytes": 11194,
+    "immutable": true,
+    "name": "20260801T120145Z-cdd3554-dense-gemm-opt-exp1-v1-raw.zip",
+    "sha256": "9b4dd734b9e897e374819003fc2d88a7ff941789c95deb3cbe8bbd51d997ed3e",
+    "tag": "evidence-2026-08-03-v1",
+    "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260801T120145Z-cdd3554-dense-gemm-opt-exp1-v1-raw.zip"
+  },
+  "run_id": "20260801T120145Z-cdd3554-dense-gemm-opt-exp1-v1",
+  "schema_version": "raggedroute.evidence_bundle.v2",
+  "semantic_contract": {
+    "accumulator_dtype": "fp32",
+    "dtype": "fp32",
+    "math_mode": "strict_fp32",
+    "measurement_levels": [
+      "L2_operator_steady"
+    ],
+    "measurement_rule": "Release A/B timings and profiler durations are separate evidence classes.",
+    "operator": "dense_gemm",
+    "status": "recorded"
+  },
+  "toolchain": {
+    "build_type": "Release",
+    "cuda": "13.3.73",
+    "driver": 13010,
+    "ncu": null,
+    "nsys": null,
+    "status": "recorded"
+  },
+  "validation": {
+    "reason": "Validation outputs are inventoried as files; the legacy manifest had no normalized result object.",
+    "status": "historical"
   }
 }

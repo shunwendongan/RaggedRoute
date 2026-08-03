@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/shunwendongan/RaggedRoute/schemas/evidence-bundle-v2.schema.json",
+  "title": "RaggedRoute evidence bundle v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "kind",
+    "provenance",
+    "hardware",
+    "toolchain",
+    "semantic_contract",
+    "commands",
+    "validation",
+    "decision",
+    "release_asset",
+    "files"
+  ],
+  "properties": {
+    "schema_version": {"const": "raggedroute.evidence_bundle.v2"},
+    "run_id": {"type": "string", "minLength": 1},
+    "kind": {"type": "string", "minLength": 1},
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_git_sha", "git_clean"],
+      "properties": {
+        "source_git_sha": {"type": "string", "minLength": 7},
+        "git_clean": {"type": ["boolean", "null"]},
+        "git_clean_status": {"enum": ["recorded", "unavailable"]}
+      }
+    },
+    "hardware": {"$ref": "#/$defs/statusObject"},
+    "toolchain": {"$ref": "#/$defs/statusObject"},
+    "semantic_contract": {"$ref": "#/$defs/statusObject"},
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["role", "status"],
+        "properties": {
+          "role": {"type": "string", "minLength": 1},
+          "status": {"enum": ["recorded", "unavailable"]},
+          "command": {"type": "string"},
+          "reason": {"type": "string"}
+        }
+      }
+    },
+    "validation": {"$ref": "#/$defs/statusObject"},
+    "decision": {"$ref": "#/$defs/statusObject"},
+    "release_asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tag", "name", "url", "bytes", "sha256", "immutable"],
+      "properties": {
+        "tag": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "pattern": "-raw\\.zip$"},
+        "url": {"type": "string", "pattern": "^https://github\\.com/"},
+        "bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "immutable": {"const": true}
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "role", "bytes", "sha256", "storage"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "archive_path": {"type": "string", "minLength": 1},
+          "role": {"type": "string", "minLength": 1},
+          "bytes": {"type": "integer", "minimum": 0},
+          "sha256": {"$ref": "#/$defs/sha256"},
+          "storage": {"enum": ["git", "release", "unavailable"]},
+          "reason": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "migration": {"type": "object"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "statusObject": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["recorded", "passed", "failed", "unavailable", "historical"]},
+        "reason": {"type": "string"}
+      }
+    }
+  }
+}

@@ -1,28 +1,490 @@
 {
-  "schema_version": "raggedroute.evidence-bundle.v1",
-  "created_utc": "2026-08-02T19:30:00Z",
-  "operator": "unpermute",
-  "decision": "rejected_not_promoted",
-  "base_git_sha": "927c585e031ba6a01e41c01d21db03cb0d1ca9d0",
-  "candidate_checkpoint_git_sha": "eba8f025c718",
-  "branch": "codex/unpermute-warp-vectorized",
-  "candidate_variant": "cuda_warp_token_vec4",
-  "promotion_baseline": "vllm_finalize_routing",
-  "public_dispatch": "naive_only",
-  "target": {
-    "gpu": "NVIDIA GeForce RTX 3080",
-    "compute_capability": "8.6",
-    "sm_count": 68,
-    "driver": "591.86",
-    "cuda": "13.3.73",
-    "ncu": "2026.2.1",
-    "nsys": "2026.1.3"
+  "commands": [
+    {
+      "reason": "The legacy bundle did not preserve an exact command line.",
+      "role": "historical_collection",
+      "status": "unavailable"
+    }
+  ],
+  "decision": {
+    "profiler_duration_used_as_speedup": false,
+    "status": "recorded",
+    "value": "rejected_not_promoted"
   },
-  "retention": {
-    "raw_jsonl": true,
-    "normalized_profiler_csv_json": true,
-    "binary_profiler_reports": false,
-    "sqlite": false,
-    "build_products": false
+  "files": [
+    {
+      "bytes": 852,
+      "path": "benchmark/chain/unpermute-candidate-chain-release.aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "441acf5b0458ebe21741805316e8be1e2b82aa6dd590957c9016f24b922b8c66",
+      "storage": "git"
+    },
+    {
+      "bytes": 1715,
+      "path": "benchmark/chain/unpermute-candidate-chain-release.comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "a44a07013eb790acdd443d89d5d194e20db2e55f35b37b0316c763e28452b2fe",
+      "storage": "git"
+    },
+    {
+      "bytes": 23442,
+      "path": "benchmark/formal-rerun/throughput-comparison.csv",
+      "role": "comparison_or_decision",
+      "sha256": "54aea8379dc5fdec023164bdef28a2c9d3f5f4a25f5368941804b514516956d3",
+      "storage": "git"
+    },
+    {
+      "bytes": 57852,
+      "path": "benchmark/formal-rerun/unpermute-candidate-release-rerun.aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "ec46dc701728e3beb612a7b4bc5df39240e6e771bfa2d5cf4d76fd92ab2e0828",
+      "storage": "git"
+    },
+    {
+      "bytes": 140963,
+      "path": "benchmark/formal-rerun/unpermute-candidate-release-rerun.comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "928797b646a2666a521420f28fb4ccf15de669d3c26b95d1fa9513b93c134d3e",
+      "storage": "git"
+    },
+    {
+      "bytes": 23472,
+      "path": "benchmark/formal-run1/throughput-comparison.csv",
+      "role": "comparison_or_decision",
+      "sha256": "9fd379f8d0cd6932e8e4018b5f583951c76f7958e479c7ea876db9731e6b7b26",
+      "storage": "git"
+    },
+    {
+      "bytes": 57754,
+      "path": "benchmark/formal-run1/unpermute-candidate-release.aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "6ae690f9919c3e793d68af83c6e70c87bb20981c844ed3ff76cdf6051dcdf96c",
+      "storage": "git"
+    },
+    {
+      "bytes": 140871,
+      "path": "benchmark/formal-run1/unpermute-candidate-release.comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "12897a77df726ea47c8f623e37ffb57429b2209730ee532cc0986c05c007502a",
+      "storage": "git"
+    },
+    {
+      "bytes": 4639,
+      "path": "benchmark/validation/initcheck.log",
+      "role": "correctness_validation",
+      "sha256": "940b83a9ceddffa6e0c4a30499bdf16c853ef9a62f2a6cad9a33bd978a150993",
+      "storage": "git"
+    },
+    {
+      "bytes": 4638,
+      "path": "benchmark/validation/memcheck.log",
+      "role": "correctness_validation",
+      "sha256": "e545df4512bd2401b868aa3f2b4aae251713bd04591dc9ff098dbd93a07a6dac",
+      "storage": "git"
+    },
+    {
+      "bytes": 4677,
+      "path": "benchmark/validation/racecheck.log",
+      "role": "correctness_validation",
+      "sha256": "2f80834e61a496d95747f677038bed961bf80bd82196bf49fd85df4535c81de3",
+      "storage": "git"
+    },
+    {
+      "bytes": 4639,
+      "path": "benchmark/validation/synccheck.log",
+      "role": "correctness_validation",
+      "sha256": "0321f65829d436110155e3aa5f0a115674dc0405f4b793d1a75ed97441889045",
+      "storage": "git"
+    },
+    {
+      "bytes": 503,
+      "path": "benchmark/validation/validation-summary.md",
+      "role": "comparison_or_decision",
+      "sha256": "afea6e689d27086dee5d6836aed85cd8fad246d606b7d356729aaba4f0db82cd",
+      "storage": "git"
+    },
+    {
+      "bytes": 31565,
+      "path": "profile/final-cta-ncu/ncu_basic_raw.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "216ccb35e7965b01f7a233be962dc5c092606f85cd5de1bda9d01f172ddb098f",
+      "storage": "git"
+    },
+    {
+      "bytes": 7715,
+      "path": "profile/final-cta-ncu/ncu_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "52852273c5631498b0f363a78938246cb98e3382b94127cb58ca6b1a744b6b83",
+      "storage": "git"
+    },
+    {
+      "bytes": 2492,
+      "path": "profile/final-cta-ncu/REPORT.md",
+      "role": "report",
+      "sha256": "5e5a15ca9afbe7487073eae8533d9472a731dc4a38fcf77935ee77a76bfb4b3e",
+      "storage": "git"
+    },
+    {
+      "bytes": 1752,
+      "path": "profile/final-cta-ncu/supported_key_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "eaeb9ab00d56e6e0fd26472ab36bebb48423944447092018af1f99a2d0d8b87b",
+      "storage": "git"
+    },
+    {
+      "bytes": 257,
+      "path": "profile/final-cta-nsys/nsys_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "2d3329e474f1c88c45a2476dfa179a674e3c5f5dafefb1353913b25e24be9c36",
+      "storage": "git"
+    },
+    {
+      "bytes": 581,
+      "path": "profile/final-cta-nsys/nsys_hotspots.json",
+      "role": "supporting_evidence",
+      "sha256": "130727cdee8e8ae8db209e928a3a5746abd1c8177e79dc9a750a256f9e6dbe7c",
+      "storage": "git"
+    },
+    {
+      "bytes": 31787,
+      "path": "profile/final-warp-ncu/ncu_basic_raw.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "0cdee66a079718245987af19bd164cc9abfdcbbcfdf88d1b9d6df2b6fab4c9af",
+      "storage": "git"
+    },
+    {
+      "bytes": 7890,
+      "path": "profile/final-warp-ncu/ncu_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "fc4dc2fbcb72880ca7b77d459422fd913fb7dd2160469a62d62f99a70e2a0af0",
+      "storage": "git"
+    },
+    {
+      "bytes": 2492,
+      "path": "profile/final-warp-ncu/REPORT.md",
+      "role": "report",
+      "sha256": "712e2a58cc33673b84d43c65d4e2afc38b642be403e7e330b3acf426dcb0928e",
+      "storage": "git"
+    },
+    {
+      "bytes": 1752,
+      "path": "profile/final-warp-ncu/supported_key_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "eaeb9ab00d56e6e0fd26472ab36bebb48423944447092018af1f99a2d0d8b87b",
+      "storage": "git"
+    },
+    {
+      "bytes": 1257,
+      "path": "profile/ncu_summary.json",
+      "role": "comparison_or_decision",
+      "sha256": "ac5731b68a4cae0c3cec1e150d8e25bb76bf04773c2180c3e02933ab66f80b7e",
+      "storage": "git"
+    },
+    {
+      "bytes": 31557,
+      "path": "profile/rejected-warp-ncu/ncu_basic_raw.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "e963764b1464dcdb21f54f99b9b9daa9e7e075a6d6c9cc52e1f5969581a34e88",
+      "storage": "git"
+    },
+    {
+      "bytes": 8317,
+      "path": "profile/rejected-warp-ncu/ncu_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "53673b1d9a359a97a5f877647eb0bd07dfe05c7c0ba1b35cf389c3603c9833d0",
+      "storage": "git"
+    },
+    {
+      "bytes": 2838,
+      "path": "profile/rejected-warp-ncu/REPORT.md",
+      "role": "report",
+      "sha256": "6841da8feedf68400af923096d396159503e1dfa766f823c39943df8d7284538",
+      "storage": "git"
+    },
+    {
+      "bytes": 1752,
+      "path": "profile/rejected-warp-ncu/supported_key_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "eaeb9ab00d56e6e0fd26472ab36bebb48423944447092018af1f99a2d0d8b87b",
+      "storage": "git"
+    },
+    {
+      "bytes": 278,
+      "path": "profile/rejected-warp-nsys/nsys_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "c241c1eba087c039f67c1e33ce04a0409957018c011a996edf76d6b0009626c2",
+      "storage": "git"
+    },
+    {
+      "bytes": 623,
+      "path": "profile/rejected-warp-nsys/nsys_hotspots.json",
+      "role": "supporting_evidence",
+      "sha256": "96e26599500c1f90a838c2a95d101cf65943530d6bdf208587a30caaf0de5797",
+      "storage": "git"
+    },
+    {
+      "bytes": 732,
+      "path": "profile/SASS.md",
+      "role": "report",
+      "sha256": "60f385f4cf5850bce75558cb96dad27ed3c1aba417b7e89e4cbdbbc1b2d9be9f",
+      "storage": "git"
+    },
+    {
+      "bytes": 31541,
+      "path": "profile/vllm-ncu/ncu_basic_raw.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "542306ca45d8d3634173055b0f745d740a52af751cdb23b2a86614af8186d737",
+      "storage": "git"
+    },
+    {
+      "bytes": 7397,
+      "path": "profile/vllm-ncu/ncu_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "96100a9a61f488629cca6f355728aae5dda7f3706060e589ad08d371c9ede179",
+      "storage": "git"
+    },
+    {
+      "bytes": 2828,
+      "path": "profile/vllm-ncu/REPORT.md",
+      "role": "report",
+      "sha256": "ff19b12438479b714f59c71eecb7db6b89303a686e4fcf182d976051d1798e31",
+      "storage": "git"
+    },
+    {
+      "bytes": 1752,
+      "path": "profile/vllm-ncu/supported_key_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "eaeb9ab00d56e6e0fd26472ab36bebb48423944447092018af1f99a2d0d8b87b",
+      "storage": "git"
+    },
+    {
+      "bytes": 285,
+      "path": "profile/vllm-nsys/nsys_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "93b8db02c9ed4f4f35aaf225160c5bec8a9156d8bd489893f664da9633785129",
+      "storage": "git"
+    },
+    {
+      "bytes": 637,
+      "path": "profile/vllm-nsys/nsys_hotspots.json",
+      "role": "supporting_evidence",
+      "sha256": "3cb409c0806f65e9f0c662b25a37d90d4d7f4b3a70cb51e2f0ac9e682be9c8d0",
+      "storage": "git"
+    },
+    {
+      "bytes": 790,
+      "path": "REPORT.md",
+      "role": "report",
+      "sha256": "adde0d5104bc81ea95c1819eea8696d2e9cf69407b0b66733844f46463e306c2",
+      "storage": "git"
+    },
+    {
+      "archive_path": "raw/benchmark/chain/unpermute-candidate-chain-release.aggregate.json",
+      "bytes": 14338,
+      "path": "benchmark/chain/unpermute-candidate-chain-release.aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "96e388cf07287daaf92ffaf299224736d616dbdc18d9f86c2a2163d47af0be6a",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/chain/unpermute-candidate-chain-release.jsonl",
+      "bytes": 28291,
+      "path": "benchmark/chain/unpermute-candidate-chain-release.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "6f5f812e30c502f67581035ceb5a2b1a7152f249e2019b2c5e20e85f0eb7d36d",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/chain/unpermute-candidate-chain-release.jsonl.manifest.json",
+      "bytes": 14655,
+      "path": "benchmark/chain/unpermute-candidate-chain-release.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "4d5e8d0ddc7a80b12f8b5fc3b18cc9c9593c0ee469b0e4b60e56fe7bcd997a74",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/formal-rerun/unpermute-candidate-release-rerun.aggregate.json",
+      "bytes": 1462835,
+      "path": "benchmark/formal-rerun/unpermute-candidate-release-rerun.aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "58e975b565e042e84b9f9398e9ad06bd8d1bdc5a92c02ad48e9e2bd70a18853f",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/formal-rerun/unpermute-candidate-release-rerun.jsonl",
+      "bytes": 2915263,
+      "path": "benchmark/formal-rerun/unpermute-candidate-release-rerun.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "c5afc6ce48b5526d91d53f6648dad9f62470352cbb979f83058b7887840e901c",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/formal-rerun/unpermute-candidate-release-rerun.jsonl.manifest.json",
+      "bytes": 1250866,
+      "path": "benchmark/formal-rerun/unpermute-candidate-release-rerun.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "386bce95bb429bede5b9657176468402c93e2fb93b68d189914b995584d82bf3",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/formal-run1/unpermute-candidate-release.aggregate.json",
+      "bytes": 1462738,
+      "path": "benchmark/formal-run1/unpermute-candidate-release.aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "513b06930615ffbbb4c3573df7c5a484686100be8154eb278cfa81537fd96917",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/formal-run1/unpermute-candidate-release.jsonl",
+      "bytes": 2915580,
+      "path": "benchmark/formal-run1/unpermute-candidate-release.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "9915c5f2da3eff6240726ab689cdeb1cba447354d646b57fe1d10aab41fd3a6d",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/formal-run1/unpermute-candidate-release.jsonl.manifest.json",
+      "bytes": 1244238,
+      "path": "benchmark/formal-run1/unpermute-candidate-release.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "28c7ee873fe2802991ebbd0016408d6ad48d5163b74f41f265047e1cc17caa0c",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/validation/unpermute-candidate-final-dispatch-smoke.jsonl",
+      "bytes": 55531,
+      "path": "benchmark/validation/unpermute-candidate-final-dispatch-smoke.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "81533a845a4e3c0f3778134905358a8eedf57a887db7f26478e63cf95d1e38d8",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/validation/unpermute-candidate-final-dispatch-smoke.jsonl.manifest.json",
+      "bytes": 30509,
+      "path": "benchmark/validation/unpermute-candidate-final-dispatch-smoke.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "13cd3b3a82cc62b837832d4998ef4eb05b1b24ae25e8188888c9f9be367e311c",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/legacy/manifest.json",
+      "bytes": 831,
+      "path": "legacy/manifest.json",
+      "role": "run_manifest",
+      "sha256": "998ef54e609e831934ab5fe3f99b72d174bb198a98f1f39dce4e549ad50c125d",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/final-cta-ncu/manifest.json",
+      "bytes": 4364,
+      "path": "profile/final-cta-ncu/manifest.json",
+      "role": "run_manifest",
+      "sha256": "71e0982b50b125ce0933562a7b5f71e3fd03fcc852d1583a8afd5a482e4a4893",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/final-cta-nsys/manifest.json",
+      "bytes": 5212,
+      "path": "profile/final-cta-nsys/manifest.json",
+      "role": "run_manifest",
+      "sha256": "b3303013c62b69ae2d20d58c1a57166c16f773caab9199a578bafaaef1707f78",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/final-warp-ncu/manifest.json",
+      "bytes": 4256,
+      "path": "profile/final-warp-ncu/manifest.json",
+      "role": "run_manifest",
+      "sha256": "b0bbef48422b5c4ebeaa95df4a9c3e7f79aaf0a21aad270558636eb3ab823263",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/rejected-warp-ncu/manifest.json",
+      "bytes": 4244,
+      "path": "profile/rejected-warp-ncu/manifest.json",
+      "role": "run_manifest",
+      "sha256": "bd10b6ac67bd2f67a1ec9523b960348d45a9ebaccdab89d71f05494eb004f947",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/rejected-warp-nsys/manifest.json",
+      "bytes": 5201,
+      "path": "profile/rejected-warp-nsys/manifest.json",
+      "role": "run_manifest",
+      "sha256": "d4a14f794254933f509c82b9f24cbc01a87538600e025c350f56e9a0849b4832",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/vllm-ncu/manifest.json",
+      "bytes": 4224,
+      "path": "profile/vllm-ncu/manifest.json",
+      "role": "run_manifest",
+      "sha256": "5041a2ebf77a57010fdda8e9c8589d4e28422a38b21db6cc9594aca46f671901",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/vllm-nsys/manifest.json",
+      "bytes": 5221,
+      "path": "profile/vllm-nsys/manifest.json",
+      "role": "run_manifest",
+      "sha256": "4bf62edf9735e44a85621c21da33bd7055148ea2c3ca9af79d9864be0e431a90",
+      "storage": "release"
+    }
+  ],
+  "hardware": {
+    "compute_capability": "8.6",
+    "gpu_name": "NVIDIA GeForce RTX 3080",
+    "gpu_uuid": "7c5e95c0e5a415d824a0c8c8b58d6f39",
+    "sm_count": 68,
+    "status": "recorded"
+  },
+  "kind": "unpermute_performance_evidence",
+  "migration": {
+    "checksum_repairs": [
+      "benchmark/formal-rerun/throughput-comparison.csv",
+      "benchmark/formal-run1/throughput-comparison.csv"
+    ],
+    "legacy_manifest_archive_path": "raw/legacy/manifest.json",
+    "legacy_schema": "raggedroute.evidence-bundle.v1"
+  },
+  "provenance": {
+    "git_clean": true,
+    "git_clean_status": "recorded",
+    "source_git_sha": "eba8f025c718"
+  },
+  "release_asset": {
+    "bytes": 757631,
+    "immutable": true,
+    "name": "20260802T193000Z-eba8f025c718-unpermute-sm86-research-v1-raw.zip",
+    "sha256": "226bcff3cf9e2a34c6270f899fc86155b6feea9cfe61803a284b490c4cd3697a",
+    "tag": "evidence-2026-08-03-v1",
+    "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-03-v1/20260802T193000Z-eba8f025c718-unpermute-sm86-research-v1-raw.zip"
+  },
+  "run_id": "20260802T193000Z-eba8f025c718-unpermute-sm86-research-v1",
+  "schema_version": "raggedroute.evidence_bundle.v2",
+  "semantic_contract": {
+    "accumulator_dtype": "fp32",
+    "dtype": "fp32",
+    "math_mode": "strict_fp32",
+    "measurement_levels": [
+      "L1_kernel_body",
+      "L2_operator_steady",
+      "L3_chain_steady"
+    ],
+    "measurement_rule": "Release A/B timings and profiler durations are separate evidence classes.",
+    "operator": "unpermute",
+    "status": "recorded"
+  },
+  "toolchain": {
+    "build_type": "Release",
+    "cuda": "13.3.73",
+    "driver": 13010,
+    "ncu": "2026.2.1",
+    "nsys": "2026.1.3",
+    "status": "recorded"
+  },
+  "validation": {
+    "reason": "Validation outputs are inventoried as files; the legacy manifest had no normalized result object.",
+    "status": "historical"
   }
 }

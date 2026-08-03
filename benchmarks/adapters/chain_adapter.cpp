@@ -8,6 +8,7 @@
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/benchmark/adapter_utils.h"
 #include "raggedroute/benchmark/registry.h"
+#include "../../src/unpermute/cuda_candidate/optimized_internal.h"
 
 namespace raggedroute::benchmark {
 namespace {
@@ -22,8 +23,12 @@ class ChainAdapter final : public BenchmarkAdapter {
   }
   std::string variant_name() const override { return variant_name_; }
   std::string description() const override {
-    return include_router_projection_ ? "Seven-operator token-to-output baseline chain"
-                                      : "Six-operator logits-to-output baseline chain";
+    const std::string prefix = include_router_projection_
+                                   ? "Seven-operator token-to-output chain"
+                                   : "Six-operator logits-to-output chain";
+    return variant_name_ == "cuda_unpermute_candidate"
+               ? prefix + " with optimized Unpermute"
+               : prefix + " baseline";
   }
   bool supports(MeasurementLevel level) const override {
     return level == MeasurementLevel::kChainSteady;
@@ -161,6 +166,16 @@ class ChainAdapter final : public BenchmarkAdapter {
     unpermute_args.tokens = tokens_;
     unpermute_args.top_k = 2;
     unpermute_args.output = output_;
+    if (variant_name_ == "cuda_unpermute_candidate") {
+      cuda_check(ops::launch_unpermute_optimized(
+                     static_cast<const float*>(unpermute_args.y_permuted.data),
+                     unpermute_args.route_pos,
+                     static_cast<const float*>(unpermute_args.route_weights.data),
+                     static_cast<float*>(unpermute_args.y.data), unpermute_args.tokens,
+                     unpermute_args.top_k, unpermute_args.output, stream),
+                 "chain research unpermute candidate");
+      return;
+    }
     operator_check(unpermute(unpermute_args, context), "chain unpermute operator");
   }
 
@@ -208,7 +223,13 @@ class ChainAdapter final : public BenchmarkAdapter {
                                "grouped_gemm,unpermute")
                  : std::string(
                        "topk_gate,histogram,exclusive_scan,token_permute,grouped_gemm,unpermute")},
-            {"component_variant", std::string("cuda_naive")},
+            {"component_variant",
+             variant_name_ == "cuda_unpermute_candidate" ? std::string("mixed")
+                                                          : std::string("cuda_naive")},
+            {"unpermute_variant",
+             variant_name_ == "cuda_unpermute_candidate"
+                 ? std::string("cuda_warp_token_vec4")
+                 : std::string("cuda_naive")},
             {"grouped_max_m_policy", std::string("worst_case_R")},
             {"materialize_sorted_route", false}};
   }

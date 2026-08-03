@@ -24,8 +24,16 @@ Status topk_gate(const TopKGateArgs& args, const RuntimeContext& context) noexce
   signature.input = args.logits.spec;
   signature.accumulator = args.accumulator_dtype;
   signature.output = args.weights.spec;
+  KernelSelection requested_kernel = args.kernel;
+  if (requested_kernel.family == KernelFamily::kAuto && args.tokens > 0) {
+    const ops::TopKGateAutoResolution resolution =
+        ops::resolve_topk_gate_auto_policy(args.tokens, args.experts, args.logits.data);
+    if (resolution.implementation_id != 0) {
+      requested_kernel = {KernelFamily::kCudaOptimized, resolution.implementation_id};
+    }
+  }
   DispatchDecision decision;
-  Status status = detail::dispatch_operator(OperatorKind::kTopKGate, signature, args.kernel,
+  Status status = detail::dispatch_operator(OperatorKind::kTopKGate, signature, requested_kernel,
                                             context.architecture, &decision);
   if (!status.ok()) return status;
   if (args.tokens == 0) return success_status();

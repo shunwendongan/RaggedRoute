@@ -4,6 +4,8 @@
 
 #include <cstdint>
 
+#include "auto_policy.h"
+
 namespace raggedroute::ops {
 
 constexpr std::uint32_t kTopKGateWarpPairV1Implementation = 1;

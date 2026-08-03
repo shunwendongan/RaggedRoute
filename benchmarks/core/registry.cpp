@@ -5,8 +5,9 @@
 #include <utility>
 
 #if RAGGEDROUTE_HAS_CCCL
-#include <cub/version.cuh>
 #include <cuda/std/__cccl/version.h>
+
+#include <cub/version.cuh>
 #endif
 #if RAGGEDROUTE_HAS_CUTLASS
 #include <cutlass/version.h>
@@ -67,13 +68,13 @@ VariantDescriptor naive_descriptor(const std::string& algorithm_id) {
 }
 
 VariantDescriptor optimized_dense_descriptor(std::string name, std::string algorithm_id) {
-  return {std::move(name), "in_tree_cuda", "raggedroute.cuda_optimized.v1", "not_applicable",
-          std::move(algorithm_id), "strict_fp32"};
+  return {std::move(name),  "in_tree_cuda",          "raggedroute.cuda_optimized.v1",
+          "not_applicable", std::move(algorithm_id), "strict_fp32"};
 }
 
 VariantDescriptor optimized_dense_v2_descriptor(std::string name, std::string algorithm_id) {
-  return {std::move(name), "in_tree_cuda", "raggedroute.cuda_optimized.v2", "not_applicable",
-          std::move(algorithm_id), "strict_fp32"};
+  return {std::move(name),  "in_tree_cuda",          "raggedroute.cuda_optimized.v2",
+          "not_applicable", std::move(algorithm_id), "strict_fp32"};
 }
 
 VariantDescriptor descriptor(std::string name, std::string category, std::string version,
@@ -136,20 +137,20 @@ std::vector<std::string> available_operators() {
 std::vector<VariantDescriptor> available_variant_descriptors(const std::string& operator_name) {
   if (operator_name == "dense_gemm") {
     std::vector<VariantDescriptor> variants = {naive_descriptor("thread_per_output")};
-    variants.push_back(optimized_dense_descriptor("cuda_tiled_scalar",
-                                                  "shared_tile16_linear_cta_scalar"));
-    variants.push_back(optimized_dense_descriptor("cuda_2d_mapping",
-                                                  "direct_2d_row_column_scalar"));
-    variants.push_back(optimized_dense_descriptor("cuda_tiled_vector",
-                                                  "shared_tile16_linear_cta_float4"));
-    variants.push_back(optimized_dense_descriptor("cuda_combined",
-                                                  "shared_tile16_direct_2d_scalar"));
+    variants.push_back(
+        optimized_dense_descriptor("cuda_tiled_scalar", "shared_tile16_linear_cta_scalar"));
+    variants.push_back(
+        optimized_dense_descriptor("cuda_2d_mapping", "direct_2d_row_column_scalar"));
+    variants.push_back(
+        optimized_dense_descriptor("cuda_tiled_vector", "shared_tile16_linear_cta_float4"));
+    variants.push_back(
+        optimized_dense_descriptor("cuda_combined", "shared_tile16_direct_2d_scalar"));
     variants.push_back(optimized_dense_v2_descriptor("cuda_register_tiled_v2_sync",
                                                      "shared_tile32_register_4x2_sync"));
     variants.push_back(optimized_dense_v2_descriptor("cuda_register_tiled_v2_async",
                                                      "shared_tile32_register_4x2_cp_async_2stage"));
-    variants.push_back(optimized_dense_v2_descriptor("cuda_register_tiled_v3_64x32_async",
-                                                     "shared_tile64x32_register_8x2_cp_async_2stage"));
+    variants.push_back(optimized_dense_v2_descriptor(
+        "cuda_register_tiled_v3_64x32_async", "shared_tile64x32_register_8x2_cp_async_2stage"));
 #if RAGGEDROUTE_HAS_CUBLAS
     variants.push_back(descriptor("cublaslt", "nvidia_cuda_library", "cublasLtMatmul.v1",
                                   cuda_library_revision(), "cublaslt_heuristic_0"));
@@ -160,6 +161,9 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
   }
   if (operator_name == "topk_gate") {
     std::vector<VariantDescriptor> variants = {naive_descriptor("serial_row_top2")};
+    variants.push_back(descriptor("cuda_auto", "in_tree_cuda",
+                                  "raggedroute.cuda_auto.topk_shape_policy.v1", "not_applicable",
+                                  "operator_local_measured_shape_dispatch"));
     variants.push_back(descriptor("cuda_warp_pair_top2_v1", "in_tree_cuda",
                                   "raggedroute.cuda_optimized.v1", "not_applicable",
                                   "warp32_register_pair_merge"));
@@ -169,10 +173,10 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     variants.push_back(descriptor("cuda_vector_pair_top2_v3", "in_tree_cuda",
                                   "raggedroute.cuda_optimized.v3", "not_applicable",
                                   "aligned_float4_subwarp_pair_merge"));
-    variants.push_back(descriptor(
-        "vllm_row_packed_top2", "adapted_production_cuda", "vllm.topk_softmax.adapted.fp32.v1",
-        "vllm@55c98e370aa058f567a9e682dc0652bdfba6b0bb; Apache-2.0",
-        "row_packed_vector_iterative_argmax"));
+    variants.push_back(descriptor("vllm_row_packed_top2", "adapted_production_cuda",
+                                  "vllm.topk_softmax.adapted.fp32.v1",
+                                  "vllm@55c98e370aa058f567a9e682dc0652bdfba6b0bb; Apache-2.0",
+                                  "row_packed_vector_iterative_argmax"));
 #if RAGGEDROUTE_HAS_CCCL
     variants.push_back(descriptor("cub_block_radix_top2", "nvidia_cccl",
                                   "cub::BlockRadixSort<uint64_t,32,2>", cccl_revision(),

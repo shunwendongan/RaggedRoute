@@ -373,6 +373,10 @@ void test_topk_gate(const raggedroute::RuntimeContext& context) {
   args.weights.data = weights.data();
   args.tokens = kTokens;
   args.experts = kExperts;
+  args.kernel = {};
+  require_status(raggedroute::topk_gate(args, context), "public topk_gate Auto");
+  require(ids.copy_to_host(context.stream) == std::vector<std::int32_t>({1, 2, 0, 1, 0, 1}),
+          "public topk_gate Auto ids violate deterministic semantics");
   for (const std::uint32_t implementation : {0U, 1U, 2U, 3U}) {
     args.kernel = implementation == 0
                       ? raggedroute::KernelSelection{}

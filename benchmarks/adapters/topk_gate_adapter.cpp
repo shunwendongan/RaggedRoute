@@ -21,6 +21,8 @@ bool is_optimized_variant(const std::string& name) {
          name == "cuda_vector_pair_top2_v3";
 }
 
+bool is_auto_variant(const std::string& name) { return name == "cuda_auto"; }
+
 bool is_library_variant(const std::string& name) {
   return name == "cub_block_radix_top2" || name == "vllm_row_packed_top2";
 }
@@ -43,6 +45,7 @@ class TopKGateAdapter final : public BenchmarkAdapter {
       return "Shape-specialized subwarp Top-2 pair merge";
     if (variant_name_ == "cuda_vector_pair_top2_v3")
       return "Aligned float4 subwarp Top-2 pair merge with scalar fallback";
+    if (variant_name_ == "cuda_auto") return "Public Top-K Auto shape-dispatch policy";
     if (variant_name_ == "cub_block_radix_top2")
       return "CUB BlockRadixSort composite-key strict Top-2";
     if (variant_name_ == "vllm_row_packed_top2") return "Adapted vLLM row-packed vector Top-2";
@@ -50,6 +53,7 @@ class TopKGateAdapter final : public BenchmarkAdapter {
   }
   bool supports(MeasurementLevel level) const override {
     if (is_library_variant(variant_name_)) return level == MeasurementLevel::kKernelBody;
+    if (is_auto_variant(variant_name_)) return level == MeasurementLevel::kOperatorSteady;
     return level == MeasurementLevel::kKernelBody || level == MeasurementLevel::kOperatorSteady;
   }
   RepeatPolicy repeat_policy(MeasurementLevel) const override { return {}; }
@@ -78,6 +82,7 @@ class TopKGateAdapter final : public BenchmarkAdapter {
     cuda_check(cudaMemcpyAsync(logits_data_, logits_host_.data(),
                                logits_host_.size() * sizeof(float), cudaMemcpyHostToDevice, stream),
                "cudaMemcpyAsync topk logits H2D");
+    auto_resolution_ = ops::resolve_topk_gate_auto_policy(tokens_, experts_, logits_data_);
 
     if (variant_name_ == "vllm_row_packed_top2" &&
         !library_baseline::supports_vllm_row_packed_top2(experts_, logits_data_)) {
@@ -124,7 +129,9 @@ class TopKGateAdapter final : public BenchmarkAdapter {
     args.weights.data = weights_.data();
     args.tokens = tokens_;
     args.experts = experts_;
-    if (is_optimized_variant(variant_name_)) {
+    if (variant_name_ == "cuda_naive") {
+      args.kernel = {KernelFamily::kCudaNaive, 0};
+    } else if (is_optimized_variant(variant_name_)) {
       args.kernel = {KernelFamily::kCudaOptimized, implementation_id(variant_name_)};
     }
     operator_check(topk_gate(args, make_runtime_context(stream, architecture_)),
@@ -175,7 +182,11 @@ class TopKGateAdapter final : public BenchmarkAdapter {
     }
     return {{"load_path", load_path},
             {"workspace_bytes", static_cast<std::int64_t>(0)},
-            {"launch_count", static_cast<std::int64_t>(1)}};
+            {"launch_count", static_cast<std::int64_t>(1)},
+            {"auto_resolved_implementation",
+             static_cast<std::int64_t>(auto_resolution_.implementation_id)},
+            {"auto_resolution_reason", std::string(auto_resolution_.reason)},
+            {"auto_policy_version", std::string(ops::kTopKGateAutoPolicyVersion)}};
   }
 
   WorkEstimate work_estimate(MeasurementLevel) const override {
@@ -254,6 +265,7 @@ class TopKGateAdapter final : public BenchmarkAdapter {
   std::vector<std::int32_t> ids_expected_;
   DeviceBuffer<float> logits_storage_, weights_;
   float* logits_data_ = nullptr;
+  ops::TopKGateAutoResolution auto_resolution_;
   DeviceBuffer<std::int32_t> ids_;
 };
 

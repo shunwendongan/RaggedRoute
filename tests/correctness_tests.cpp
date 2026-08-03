@@ -54,6 +54,37 @@ void run_adapter_case(const Case& test_case, cudaStream_t stream, std::uint64_t 
             << '\n';
 }
 
+void run_histogram_candidate_matrix(cudaStream_t stream, std::uint64_t* seed) {
+  const std::vector<int> experts = {1, 8, 16, 31, 32, 33, 64};
+  const std::vector<int> route_pairs = {1, 31, 32, 33, 255, 256, 257, 4096, 65536};
+  const std::vector<std::pair<std::string, std::string>> distributions = {
+      {"uniform", "0.0"}, {"round_robin", "0.0"}, {"zipf", "1.0"},
+      {"zipf", "1.4"},    {"zipf", "2.0"},        {"single_hot", "0.0"},
+  };
+  for (std::size_t expert_index = 0; expert_index < experts.size(); ++expert_index) {
+    for (std::size_t route_index = 0; route_index < route_pairs.size(); ++route_index) {
+      const auto& distribution = distributions[(expert_index + route_index) % distributions.size()];
+      run_adapter_case({"histogram",
+                        {{"T", std::to_string(route_pairs[route_index])},
+                         {"E", std::to_string(experts[expert_index])},
+                         {"top_k", "1"},
+                         {"distribution", distribution.first},
+                         {"zipf_s", distribution.second}},
+                        "cuda_candidate"},
+                       stream, (*seed)++);
+    }
+  }
+  for (const int route_count : {32, 256, 4096, 65536}) {
+    run_adapter_case({"histogram",
+                      {{"T", std::to_string(route_count / 2)},
+                       {"E", "64"},
+                       {"top_k", "2"},
+                       {"distribution", "single_hot"}},
+                      "cuda_candidate"},
+                     stream, (*seed)++);
+  }
+}
+
 bool has_variant(const std::string& operator_name, const std::string& variant) {
   const auto variants = rr::available_variants(operator_name);
   return std::find(variants.begin(), variants.end(), variant) != variants.end();
@@ -80,8 +111,8 @@ void run_library_alignment_fallbacks(cudaStream_t stream) {
                    "initialize unaligned vLLM permute output storage");
     expert_ids.copy_from_host({1, 0}, stream);
     std::size_t workspace_bytes = 0;
-    rr::cuda_check(rr::library_baseline::query_vllm_permute_workspace(
-                       kTokens, kExperts, kTopK, &workspace_bytes),
+    rr::cuda_check(rr::library_baseline::query_vllm_permute_workspace(kTokens, kExperts, kTopK,
+                                                                      &workspace_bytes),
                    "query unaligned vLLM permute workspace");
     rr::DeviceBuffer<std::uint8_t> workspace(workspace_bytes);
     rr::cuda_check(rr::library_baseline::initialize_vllm_permute_workspace(
@@ -103,7 +134,7 @@ void run_library_alignment_fallbacks(cudaStream_t stream) {
             "unaligned vLLM permute mapping is incorrect");
     for (int column = 0; column < kHidden; ++column) {
       require(output_host[static_cast<std::size_t>(1 + column)] ==
-                  static_cast<float>(kHidden + column) &&
+                      static_cast<float>(kHidden + column) &&
                   output_host[static_cast<std::size_t>(1 + kHidden + column)] ==
                       static_cast<float>(column),
               "unaligned vLLM permute scalar fallback copied the wrong row");
@@ -209,6 +240,25 @@ int main() {
           {"topk_gate", {{"T", "3"}, {"E", "8"}, {"input_mode", "infinities"}}},
           {"histogram",
            {{"T", "11"}, {"E", "8"}, {"top_k", "2"}, {"distribution", "zipf"}, {"zipf_s", "1.4"}}},
+          {"histogram", {{"T", "1"}, {"E", "1"}, {"top_k", "1"}, {"distribution", "single_hot"}}},
+          {"histogram",
+           {{"T", "33"}, {"E", "31"}, {"top_k", "1"}, {"distribution", "round_robin"}}},
+          {"histogram", {{"T", "255"}, {"E", "32"}, {"top_k", "1"}, {"distribution", "uniform"}}},
+          {"histogram",
+           {{"T", "256"},
+            {"E", "33"},
+            {"top_k", "1"},
+            {"distribution", "zipf"},
+            {"zipf_s", "1.0"}}},
+          {"histogram",
+           {{"T", "257"},
+            {"E", "64"},
+            {"top_k", "1"},
+            {"distribution", "zipf"},
+            {"zipf_s", "2.0"}}},
+          {"histogram",
+           {{"T", "4096"}, {"E", "8"}, {"top_k", "1"}, {"distribution", "single_hot"}}},
+          {"histogram", {{"T", "65536"}, {"E", "16"}, {"top_k", "1"}, {"distribution", "uniform"}}},
           {"exclusive_scan", {{"E", "7"}, {"R", "23"}, {"distribution", "single_hot"}}},
           {"token_permute",
            {{"T", "5"},
@@ -255,9 +305,27 @@ int main() {
           {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cuda_combined"},
           {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cuda_register_tiled_v2_sync"},
           {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cuda_register_tiled_v2_async"},
-          {"dense_gemm", {{"M", "5"}, {"N", "7"}, {"K", "3"}}, "cuda_register_tiled_v3_64x32_async"},
-          {"histogram", {{"T", "11"}, {"E", "8"}, {"top_k", "2"}},
-           "cub_device_histogram"},
+          {"dense_gemm",
+           {{"M", "5"}, {"N", "7"}, {"K", "3"}},
+           "cuda_register_tiled_v3_64x32_async"},
+          {"histogram", {{"T", "11"}, {"E", "8"}, {"top_k", "2"}}, "cub_device_histogram"},
+          {"histogram",
+           {{"T", "257"}, {"E", "64"}, {"top_k", "1"}, {"distribution", "single_hot"}},
+           "cuda_candidate"},
+          {"histogram",
+           {{"T", "8192"},
+            {"E", "33"},
+            {"top_k", "1"},
+            {"distribution", "zipf"},
+            {"zipf_s", "2.0"}},
+           "cuda_candidate"},
+          {"histogram",
+           {{"T", "32768"},
+            {"E", "33"},
+            {"top_k", "1"},
+            {"distribution", "zipf"},
+            {"zipf_s", "2.0"}},
+           "cuda_candidate"},
           {"exclusive_scan", {{"E", "7"}, {"R", "23"}}, "cub_device_scan"},
           {"exclusive_scan", {{"E", "33"}, {"R", "67"}}, "cub_block_scan"},
           {"exclusive_scan", {{"E", "31"}, {"R", "67"}}, "cub_warp_scan"},
@@ -290,19 +358,23 @@ int main() {
            "vllm_moe_permute"},
           {"token_permute",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "8"}},
-           "vllm_expand_rows", rr::MeasurementLevel::kKernelBody},
+           "vllm_expand_rows",
+           rr::MeasurementLevel::kKernelBody},
           {"grouped_gemm",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
            "cublas_per_expert"},
           {"grouped_gemm",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
-           "cutlass_grouped", rr::MeasurementLevel::kKernelBody},
+           "cutlass_grouped",
+           rr::MeasurementLevel::kKernelBody},
           {"unpermute",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"N", "7"}},
-           "vllm_finalize_routing", rr::MeasurementLevel::kKernelBody},
+           "vllm_finalize_routing",
+           rr::MeasurementLevel::kKernelBody},
           {"unpermute",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"N", "8"}},
-           "vllm_finalize_routing", rr::MeasurementLevel::kOperatorSteady},
+           "vllm_finalize_routing",
+           rr::MeasurementLevel::kOperatorSteady},
       };
       for (const auto& test_case : library_cases) {
         if (has_variant(test_case.name, test_case.variant)) {
@@ -312,6 +384,7 @@ int main() {
                     << " - optional dependency unavailable\n";
         }
       }
+      run_histogram_candidate_matrix(stream, &seed);
       const std::vector<rr::OptionMap> unpermute_candidate_shapes = {
           {{"T", "1"}, {"E", "64"}, {"top_k", "1"}, {"N", "1"},
            {"distribution", "round_robin"}},
@@ -402,14 +475,12 @@ int main() {
       if (has_variant("token_permute", "vllm_moe_permute")) {
         auto from_ids = rr::make_adapter("token_permute", "cuda_naive_from_ids");
         auto vllm_full = rr::make_adapter("token_permute", "vllm_moe_permute");
-        const rr::OptionMap options = {
-            {"T", "4"}, {"E", "8"}, {"top_k", "2"}, {"K", "7"}};
+        const rr::OptionMap options = {{"T", "4"}, {"E", "8"}, {"top_k", "2"}, {"K", "7"}};
         from_ids->setup(options, seed, stream);
         vllm_full->setup(options, seed, stream);
         require(from_ids->case_config() == vllm_full->case_config(),
                 "full permute baselines must have an identical logical boundary");
-        const auto from_ids_work =
-            from_ids->work_estimate(rr::MeasurementLevel::kOperatorSteady);
+        const auto from_ids_work = from_ids->work_estimate(rr::MeasurementLevel::kOperatorSteady);
         const auto vllm_work = vllm_full->work_estimate(rr::MeasurementLevel::kOperatorSteady);
         require(from_ids_work.operator_metrics.count("cursor_reset_bytes") == 1 &&
                     from_ids_work.operator_metrics.count("counts_reset_bytes") == 1,
@@ -437,8 +508,7 @@ int main() {
       if (has_variant("histogram", "cub_device_histogram")) {
         auto cub_histogram = rr::make_adapter("histogram", "cub_device_histogram");
         cub_histogram->setup({{"T", "4"}, {"E", "8"}, {"top_k", "2"}}, seed, stream);
-        const auto cub_work =
-            cub_histogram->work_estimate(rr::MeasurementLevel::kOperatorSteady);
+        const auto cub_work = cub_histogram->work_estimate(rr::MeasurementLevel::kOperatorSteady);
         require(cub_work.operator_metrics.count("global_atomic_operations") == 0 &&
                     cub_work.operator_metrics.count("histogram_input_items") == 1,
                 "CUB histogram metrics must not invent its internal atomic strategy");

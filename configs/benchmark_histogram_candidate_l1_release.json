@@ -1,0 +1,21 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "histogram_candidate_l1_release_v1",
+  "protocol": "release",
+  "process_runs": 5,
+  "common": {"warmup": 20, "samples": 30, "kernel_repeats": 20, "seed": 20260729, "cache_mode": "warm"},
+  "cases": [
+    {"id": "histogram.r128_e8.uniform.l1", "operator": "histogram", "levels": ["l1"], "kernel_repeats_by_level": {"l1": 100}, "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cuda_candidate", "promotion_baseline": false}], "params": {"T": 128, "E": 8, "top_k": 1, "distribution": "uniform", "zipf_s": 0.0}},
+    {"id": "histogram.r4096_e1.single_hot.l1", "operator": "histogram", "levels": ["l1"], "kernel_repeats_by_level": {"l1": 50}, "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cuda_candidate", "promotion_baseline": false}], "params": {"T": 4096, "E": 1, "top_k": 1, "distribution": "single_hot", "zipf_s": 0.0}},
+    {"id": "histogram.r4096_e64.uniform.l1", "operator": "histogram", "levels": ["l1"], "kernel_repeats_by_level": {"l1": 50}, "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cuda_candidate", "promotion_baseline": false}], "params": {"T": 2048, "E": 64, "top_k": 2, "distribution": "uniform", "zipf_s": 0.0}},
+    {"id": "histogram.r4096_e64.round_robin.l1", "operator": "histogram", "levels": ["l1"], "kernel_repeats_by_level": {"l1": 50}, "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cuda_candidate", "promotion_baseline": false}], "params": {"T": 2048, "E": 64, "top_k": 2, "distribution": "round_robin", "zipf_s": 0.0}},
+    {"id": "histogram.r4096_e64.zipf14.l1", "operator": "histogram", "levels": ["l1"], "kernel_repeats_by_level": {"l1": 50}, "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cuda_candidate", "promotion_baseline": false}], "params": {"T": 2048, "E": 64, "top_k": 2, "distribution": "zipf", "zipf_s": 1.4}},
+    {"id": "histogram.r65536_e16.uniform.l1", "operator": "histogram", "levels": ["l1"], "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cuda_candidate", "promotion_baseline": false}], "params": {"T": 65536, "E": 16, "top_k": 1, "distribution": "uniform", "zipf_s": 0.0}},
+    {"id": "histogram.r65536_e64.uniform.l1", "operator": "histogram", "levels": ["l1"], "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cuda_candidate", "promotion_baseline": false}], "params": {"T": 32768, "E": 64, "top_k": 2, "distribution": "uniform", "zipf_s": 0.0}},
+    {"id": "histogram.r65536_e64.zipf14.l1", "operator": "histogram", "levels": ["l1"], "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cuda_candidate", "promotion_baseline": false}], "params": {"T": 32768, "E": 64, "top_k": 2, "distribution": "zipf", "zipf_s": 1.4}},
+    {"id": "histogram.r65536_e64.single_hot.l1", "operator": "histogram", "levels": ["l1"], "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cuda_candidate", "promotion_baseline": false}], "params": {"T": 65536, "E": 64, "top_k": 1, "distribution": "single_hot", "zipf_s": 0.0}},
+    {"id": "histogram.r1048576_e64.uniform.l1", "operator": "histogram", "levels": ["l1"], "kernel_repeats_by_level": {"l1": 10}, "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cuda_candidate", "promotion_baseline": false}], "params": {"T": 524288, "E": 64, "top_k": 2, "distribution": "uniform", "zipf_s": 0.0}},
+    {"id": "histogram.r1048576_e64.zipf14.l1", "operator": "histogram", "levels": ["l1"], "kernel_repeats_by_level": {"l1": 10}, "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cuda_candidate", "promotion_baseline": false}], "params": {"T": 524288, "E": 64, "top_k": 2, "distribution": "zipf", "zipf_s": 1.4}},
+    {"id": "histogram.r1048576_e64.single_hot.l1", "operator": "histogram", "levels": ["l1"], "kernel_repeats_by_level": {"l1": 10}, "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cuda_candidate", "promotion_baseline": false}], "params": {"T": 1048576, "E": 64, "top_k": 1, "distribution": "single_hot", "zipf_s": 0.0}}
+  ]
+}

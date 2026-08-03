@@ -158,6 +158,9 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
   if (operator_name == "topk_gate") return {naive_descriptor("serial_row_top2")};
   if (operator_name == "histogram") {
     std::vector<VariantDescriptor> variants = {naive_descriptor("global_atomic")};
+    variants.push_back(descriptor("cuda_candidate", "in_tree_cuda",
+                                  "raggedroute.histogram.cuda_candidate.v1",
+                                  "not_applicable", "shape_dispatched_shared_histogram"));
 #if RAGGEDROUTE_HAS_CCCL
     variants.push_back(descriptor("cub_device_histogram", "nvidia_cccl",
                                   "cub::DeviceHistogram::HistogramEven", cccl_revision(),

@@ -2,8 +2,8 @@
   "schema_version": "codex.kernel-research.v1",
   "commands": {
     "build": [
-      "$env:RAGGEDROUTE_FETCH_REFERENCES='ON'; cmd /c scripts\\configure_windows.bat rtx3080-sm86-release",
-      "$env:RAGGEDROUTE_FETCH_REFERENCES='ON'; cmd /c scripts\\build_windows.bat rtx3080-sm86-release"
+      "cmd /c scripts\\configure_windows.bat rtx3080-sm86-release",
+      "cmd /c scripts\\build_windows.bat rtx3080-sm86-release"
     ],
     "correctness": [
       "ctest --preset test-rtx3080-sm86-release --output-on-failure",
@@ -43,6 +43,6 @@
     "median_speedup": 1.03,
     "p95_regression_tolerance": 0.03,
     "max_shape_regression": 0.05,
-    "max_workspace_growth": 0
+    "max_workspace_growth": 0.0
   }
 }

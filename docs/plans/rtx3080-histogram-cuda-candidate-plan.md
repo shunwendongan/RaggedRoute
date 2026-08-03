@@ -1,7 +1,9 @@
-# RTX 3080 Expert Histogram `cuda_candidate` 优化计划（待评审）
+# RTX 3080 Expert Histogram `cuda_candidate` 优化计划与执行状态
 
-> 状态：**仅计划，尚未修改算子实现，也没有产生新的性能结论。**  
-> 基线：`origin/main@927c585`；目标硬件为本机 NVIDIA GeForce RTX 3080（GA102、SM 8.6、68 SM、10 GiB）。  
+> 状态：**计划已批准并执行，candidate 已通过门禁并晋升；最终结果见 Histogram performance record。**
+>
+> 基线：`origin/main@927c585`；目标硬件为本机 NVIDIA GeForce RTX 3080（GA102、SM 8.6、68 SM、10 GiB）。
+>
 > 工具可用性已核对：CUDA 13.3、Nsight Systems 2026.1.3、Nsight Compute 2026.2.1。
 
 ## 1. 目标、范围与非目标

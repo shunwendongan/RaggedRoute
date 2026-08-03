@@ -9,7 +9,8 @@
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/benchmark/adapter_utils.h"
 #include "raggedroute/benchmark/registry.h"
-#include "../../src/unpermute/cuda_candidate/optimized_internal.h"
+#include "permute/cuda_candidate/optimized_internal.h"
+#include "unpermute/cuda_candidate/optimized_internal.h"
 
 namespace raggedroute::benchmark {
 namespace {
@@ -27,6 +28,9 @@ class ChainAdapter final : public BenchmarkAdapter {
     const std::string prefix = include_router_projection_
                                    ? "Seven-operator token-to-output chain"
                                    : "Six-operator logits-to-output chain";
+    if (variant_name_ == "cuda_permute_candidate") {
+      return prefix + " with the selected optimized Permute";
+    }
     if (variant_name_ == "cuda_grouped_sm86_fp32_v1") {
       return prefix + " with benchmark-only SM86 grouped GEMM candidate";
     }
@@ -145,6 +149,10 @@ class ChainAdapter final : public BenchmarkAdapter {
     permute_args.experts = experts_;
     permute_args.top_k = 2;
     permute_args.hidden = hidden_;
+    if (variant_name_ == "cuda_permute_candidate") {
+      permute_args.kernel = {KernelFamily::kCudaOptimized,
+                             ops::kTokenPermuteCandidateImplementation};
+    }
     operator_check(
         token_permute(permute_args, make_runtime_context(stream, architecture_, cursors_.data(),
                                                          cursors_.bytes())),
@@ -240,10 +248,16 @@ class ChainAdapter final : public BenchmarkAdapter {
                  : std::string(
                        "topk_gate,histogram,exclusive_scan,token_permute,grouped_gemm,unpermute")},
             {"component_variant",
-             variant_name_ == "cuda_grouped_sm86_fp32_v1"
-                 ? std::string("cuda_naive_except_benchmark_only_grouped_sm86_fp32_v1")
-                 : variant_name_ == "cuda_unpermute_candidate" ? std::string("mixed")
-                                                                  : std::string("cuda_naive")},
+             variant_name_ == "cuda_permute_candidate"
+                 ? std::string("cuda_naive_except_token_permute_candidate")
+                 : variant_name_ == "cuda_grouped_sm86_fp32_v1"
+                       ? std::string("cuda_naive_except_benchmark_only_grouped_sm86_fp32_v1")
+                       : variant_name_ == "cuda_unpermute_candidate" ? std::string("mixed")
+                                                                        : std::string("cuda_naive")},
+            {"permute_variant",
+             variant_name_ == "cuda_permute_candidate"
+                 ? std::string("cuda_token_owned_top2")
+                 : std::string("cuda_naive")},
             {"runtime_status",
              variant_name_ == "cuda_grouped_sm86_fp32_v1"
                  ? std::string("benchmark_only_not_promoted")

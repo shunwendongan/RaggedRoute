@@ -1,0 +1,4 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+42.1,18559,6,3093.2,3072.0,3072,3136,32.8,"raggedroute::ops::<unnamed>::exclusive_scan_naive_kernel(const int *, int *, int)"
+37.3,16448,6,2741.3,2736.0,2720,2784,26.1,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+20.6,9056,6,1509.3,1456.0,1440,1792,139.4,"raggedroute::ops::<unnamed>::histogram_naive_kernel(const int *, int *, int, int)"

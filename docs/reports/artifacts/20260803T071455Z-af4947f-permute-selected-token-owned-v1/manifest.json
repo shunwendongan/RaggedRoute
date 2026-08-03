@@ -1,0 +1,81 @@
+{
+  "schema_version": "raggedroute.evidence_bundle.v1",
+  "run_id": "20260803T071455Z-af4947f-permute-selected-token-owned-v1",
+  "created_utc": "2026-08-03T07:37:24.464822+00:00",
+  "benchmark_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-permute-sm86\\out\\evidence\\permute-selected-token-owned\\benchmark",
+  "extra_benchmark_sources": [],
+  "profile_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-permute-sm86\\out\\profile\\permute-selected\\ncu",
+  "sanitizer_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-permute-sm86\\out\\sanitizer\\rtx3080-permute-selected-token-owned",
+  "raw_profiler_reports": [
+    {
+      "name": "full-candidate-from-ids.nsys-rep",
+      "bytes": 64809,
+      "sha256": "fe36900046ea40a940ad94f95a76b1d2c5b5a40c3aa3cfb31c5bce8adb46a354",
+      "committed": false
+    },
+    {
+      "name": "full-candidate-from-ids.sqlite",
+      "bytes": 274432,
+      "sha256": "eb716b3db0a9c45e23208f742a8e91f8e01650cee8c6877a98b1dbd121906834",
+      "committed": false
+    },
+    {
+      "name": "full-vllm.nsys-rep",
+      "bytes": 64800,
+      "sha256": "905d0a797ad60caa41852928590857de97fe18d8fcc8396fca8a34024c4fb715",
+      "committed": false
+    },
+    {
+      "name": "full-vllm.sqlite",
+      "bytes": 286720,
+      "sha256": "170090fd4713b002d980073d6ef3689d520ee90a5b354c301903a122db6199c8",
+      "committed": false
+    },
+    {
+      "name": "permute.candidate.anchor.detailed.detailed.ncu-rep",
+      "bytes": 366014,
+      "sha256": "d02acf6c802cde92356dca222af18f8377e82424d38e88d9d5065851a36e1b01",
+      "committed": false
+    },
+    {
+      "name": "permute.candidate.wide_hot.detailed.detailed.ncu-rep",
+      "bytes": 372701,
+      "sha256": "106748eb8ba93089a211ce09c70fbfd73e9eb64362146d2e1accbc6d2f5edb7f",
+      "committed": false
+    },
+    {
+      "name": "permute.naive.anchor.detailed.detailed.ncu-rep",
+      "bytes": 212573,
+      "sha256": "47bd518289d7431661b4ff8577e0f1568f7b29099e3ecb432c28e80cd5c1acd7",
+      "committed": false
+    },
+    {
+      "name": "permute.naive.wide_hot.detailed.detailed.ncu-rep",
+      "bytes": 234972,
+      "sha256": "bae1e4537655cbfd1afc6ffd888dd203f16920b617f158f91b7745ddf7af6c3c",
+      "committed": false
+    },
+    {
+      "name": "permute.token_owned.anchor.basic.ncu-rep",
+      "bytes": 223054,
+      "sha256": "d2741fd9ac9032648aea5653c20219b077ad7eb2ad54810e625d57d965e63f7d",
+      "committed": false
+    },
+    {
+      "name": "prepared-candidate.nsys-rep",
+      "bytes": 63449,
+      "sha256": "ef63e6f3420067027e32acd14ec19395b6f740e2394d95b7f5da7f6a16412ed6",
+      "committed": false
+    },
+    {
+      "name": "prepared-candidate.sqlite",
+      "bytes": 274432,
+      "sha256": "8ce616b617e94adde0f59c4373fde96ffe42383a38d32147b2cb5ba053cc6f71",
+      "committed": false
+    }
+  ],
+  "policy": {
+    "profiler_duration_is_release_latency": false,
+    "raw_profiler_binaries_committed": false
+  }
+}

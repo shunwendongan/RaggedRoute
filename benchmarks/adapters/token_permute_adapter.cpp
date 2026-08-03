@@ -9,9 +9,36 @@
 #include "raggedroute/benchmark/adapter_utils.h"
 #include "raggedroute/benchmark/library_baselines.h"
 #include "raggedroute/benchmark/registry.h"
+#include "permute/cuda_candidate/optimized_internal.h"
 
 namespace raggedroute::benchmark {
 namespace {
+
+bool is_optimized_variant(const std::string& name) {
+  return name == "cuda_atomic_vectorized_128" || name == "cuda_atomic_vectorized_64" ||
+         name == "cuda_atomic_vectorized_256" || name == "cuda_token_owned_top2" ||
+         name == "cuda_block_partial" || name == "cuda_candidate" ||
+         name == "cuda_candidate_from_ids";
+}
+
+bool is_from_ids_variant(const std::string& name) {
+  return name == "cuda_naive_from_ids" || name == "cuda_candidate_from_ids";
+}
+
+std::uint32_t optimized_implementation(const std::string& name) {
+  if (name == "cuda_atomic_vectorized_128")
+    return ops::kTokenPermuteAtomicVectorized128Implementation;
+  if (name == "cuda_atomic_vectorized_64")
+    return ops::kTokenPermuteAtomicVectorized64Implementation;
+  if (name == "cuda_atomic_vectorized_256")
+    return ops::kTokenPermuteAtomicVectorized256Implementation;
+  if (name == "cuda_token_owned_top2")
+    return ops::kTokenPermuteTokenOwnedTop2Implementation;
+  if (name == "cuda_block_partial") return ops::kTokenPermuteBlockPartialImplementation;
+  if (name == "cuda_candidate" || name == "cuda_candidate_from_ids")
+    return ops::kTokenPermuteCandidateImplementation;
+  return 0;
+}
 
 class TokenPermuteAdapter final : public BenchmarkAdapter {
  public:
@@ -22,6 +49,27 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
     if (variant_name_ == "cuda_naive_from_ids") {
       return "Naive histogram, scan, and atomic-cursor permute from Top-K ids";
     }
+    if (variant_name_ == "cuda_candidate_from_ids") {
+      return "Histogram, scan, and selected CUDA candidate from Top-K ids";
+    }
+    if (variant_name_ == "cuda_atomic_vectorized_128") {
+      return "128-thread atomic placement with aligned float4 row copy";
+    }
+    if (variant_name_ == "cuda_atomic_vectorized_64") {
+      return "64-thread atomic placement with aligned float4 row copy";
+    }
+    if (variant_name_ == "cuda_atomic_vectorized_256") {
+      return "256-thread atomic placement with aligned float4 row copy";
+    }
+    if (variant_name_ == "cuda_token_owned_top2") {
+      return "Top-2 token-owned placement with one input load and two destination stores";
+    }
+    if (variant_name_ == "cuda_block_partial") {
+      return "Block-private placement ranks followed by vectorized row copy";
+    }
+    if (variant_name_ == "cuda_candidate") {
+      return "Evidence-selected CUDA token permute candidate";
+    }
     if (variant_name_ == "vllm_moe_permute") {
       return "Adapted vLLM radix-sort mapping and vectorized row expansion";
     }
@@ -31,7 +79,7 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
     return "Atomic-cursor placement with scalar FP32 row copy";
   }
   bool supports(MeasurementLevel level) const override {
-    if (variant_name_ == "cuda_naive_from_ids" || variant_name_ == "vllm_moe_permute") {
+    if (is_from_ids_variant(variant_name_) || variant_name_ == "vllm_moe_permute") {
       return level == MeasurementLevel::kOperatorSteady;
     }
     if (variant_name_ == "vllm_expand_rows") {
@@ -40,7 +88,8 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
     return level == MeasurementLevel::kKernelBody || level == MeasurementLevel::kOperatorSteady;
   }
   RepeatPolicy repeat_policy(MeasurementLevel level) const override {
-    if (variant_name_ == "cuda_naive" && level == MeasurementLevel::kKernelBody) {
+    if ((variant_name_ == "cuda_naive" || is_optimized_variant(variant_name_)) &&
+        !is_from_ids_variant(variant_name_) && level == MeasurementLevel::kKernelBody) {
       return {1, "L1 token permute mutates cursor state; use one launch per event sample"};
     }
     return {};
@@ -102,7 +151,8 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
   }
 
   void prepare_sample(MeasurementLevel level, cudaStream_t stream) override {
-    if (variant_name_ == "cuda_naive" && level == MeasurementLevel::kKernelBody) {
+    if ((variant_name_ == "cuda_naive" || is_optimized_variant(variant_name_)) &&
+        !is_from_ids_variant(variant_name_) && level == MeasurementLevel::kKernelBody) {
       reset_cursors(stream);
     }
   }
@@ -128,7 +178,7 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
       return;
     }
 #endif
-    if (variant_name_ == "cuda_naive_from_ids") {
+    if (is_from_ids_variant(variant_name_)) {
       HistogramArgs histogram_args;
       histogram_args.expert_ids = ids_.data();
       histogram_args.counts = counts_.data();
@@ -146,6 +196,16 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
       return;
     }
     if (level == MeasurementLevel::kKernelBody) {
+      if (is_optimized_variant(variant_name_)) {
+        cuda_check(
+            ops::launch_token_permute_optimized(
+                x_.data(), ids_.data(), offsets_.data(), cursors_.data(), x_permuted_.data(),
+                route_pos_.data(), materialize_sorted_route_ ? sorted_route_.data() : nullptr,
+                tokens_, experts_, top_k_, hidden_, optimized_implementation(variant_name_),
+                stream),
+            "launch_token_permute_optimized");
+        return;
+      }
       cuda_check(ops::launch_token_permute_naive(
                      x_.data(), ids_.data(), offsets_.data(), cursors_.data(), x_permuted_.data(),
                      route_pos_.data(), materialize_sorted_route_ ? sorted_route_.data() : nullptr,
@@ -168,6 +228,9 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
     args.experts = experts_;
     args.top_k = top_k_;
     args.hidden = hidden_;
+    if (is_optimized_variant(variant_name_)) {
+      args.kernel = {KernelFamily::kCudaOptimized, optimized_implementation(variant_name_)};
+    }
     operator_check(token_permute(args, make_runtime_context(stream, architecture_, cursors_.data(),
                                                             cursors_.bytes())),
                    "token_permute operator");
@@ -215,7 +278,7 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
                        {"distribution", distribution_},
                        {"zipf_s", zipf_s_},
                        {"materialize_sorted_route", materialize_sorted_route_}};
-    if (variant_name_ == "cuda_naive_from_ids" || variant_name_ == "vllm_moe_permute") {
+    if (is_from_ids_variant(variant_name_) || variant_name_ == "vllm_moe_permute") {
       config["placement_order"] = std::string("unspecified_within_expert");
       config["input_boundary"] = std::string("topk_ids_to_permuted_rows");
     } else if (variant_name_ == "vllm_expand_rows") {
@@ -233,6 +296,13 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
               {"placement", std::string("global_atomic_cursor")},
               {"copy", std::string("scalar")}};
     }
+    if (variant_name_ == "cuda_candidate_from_ids") {
+      return {{"components", std::string("histogram,exclusive_scan,cuda_candidate")},
+              {"placement", std::string("global_atomic_cursor")},
+              {"copy", std::string("float4_fast_scalar_fallback")},
+              {"implementation_id",
+               static_cast<std::int64_t>(ops::kTokenPermuteCandidateImplementation)}};
+    }
     if (variant_name_ == "vllm_moe_permute") {
       return {{"upstream_symbol", std::string("moe_permute_with_scratch")},
               {"mapping", std::string("cub_radix_sort_and_expert_scan")},
@@ -245,6 +315,28 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
               {"vector_width_bytes", static_cast<std::int64_t>(hidden_ % 4 == 0 ? 16 : 4)},
               {"alignment_policy", std::string("float4_fast_scalar_fallback")}};
     }
+    if (is_optimized_variant(variant_name_)) {
+      const std::uint32_t implementation = optimized_implementation(variant_name_);
+      std::string placement = "global_atomic_cursor";
+      std::int64_t threads = 128;
+      std::int64_t launches = 1;
+      if (implementation == ops::kTokenPermuteAtomicVectorized64Implementation) threads = 64;
+      if (implementation == ops::kTokenPermuteAtomicVectorized256Implementation) threads = 256;
+      if (implementation == ops::kTokenPermuteTokenOwnedTop2Implementation) {
+        placement = "token_owned_top2_atomic";
+      }
+      if (implementation == ops::kTokenPermuteBlockPartialImplementation) {
+        placement = "block_private_rank_global_reserve";
+        threads = 256;
+        launches = hidden_ == 0 ? 1 : 2;
+      }
+      return {{"implementation_id", static_cast<std::int64_t>(implementation)},
+              {"threads", threads},
+              {"kernel_launches", launches},
+              {"placement", placement},
+              {"copy", std::string("float4_fast_scalar_fallback")},
+              {"vector_width_bytes", static_cast<std::int64_t>(hidden_ % 4 == 0 ? 16 : 4)}};
+    }
     return {{"threads_per_route", static_cast<std::int64_t>(128)},
             {"copy", std::string("scalar")},
             {"cursor", std::string("global_atomic")}};
@@ -255,11 +347,13 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
                          2.0 * sizeof(std::int32_t) * route_pairs_ +
                          (materialize_sorted_route_ ? sizeof(std::int32_t) * route_pairs_ : 0.0);
     work.operator_metrics["copied_rows"] = static_cast<std::int64_t>(route_pairs_);
-    if (variant_name_ == "cuda_naive" && level == MeasurementLevel::kOperatorSteady) {
+    if ((variant_name_ == "cuda_naive" ||
+         (is_optimized_variant(variant_name_) && !is_from_ids_variant(variant_name_))) &&
+        level == MeasurementLevel::kOperatorSteady) {
       work.logical_bytes += static_cast<double>(cursors_.bytes());
       work.operator_metrics["cursor_reset_bytes"] = static_cast<std::int64_t>(cursors_.bytes());
     }
-    if (variant_name_ == "cuda_naive_from_ids") {
+    if (is_from_ids_variant(variant_name_)) {
       work.logical_bytes +=
           static_cast<double>(ids_.bytes() + 3 * counts_.bytes() + offsets_.bytes() +
                               cursors_.bytes());
@@ -276,7 +370,7 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
     if (variant_name_ == "vllm_moe_permute" || variant_name_ == "vllm_expand_rows") {
       return library_workspace_bytes_;
     }
-    if (variant_name_ == "cuda_naive_from_ids") {
+    if (is_from_ids_variant(variant_name_)) {
       return cursors_.bytes() + counts_.bytes() + offsets_.bytes();
     }
     return cursors_.bytes();
@@ -285,7 +379,9 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
     std::vector<std::string> excluded = {"input_generation", "h2d_copy", "workspace_allocation"};
     if (variant_name_ == "vllm_expand_rows") {
       excluded.push_back("mapping_generation");
-    } else if (variant_name_ == "cuda_naive" && level == MeasurementLevel::kKernelBody) {
+    } else if ((variant_name_ == "cuda_naive" || is_optimized_variant(variant_name_)) &&
+               !is_from_ids_variant(variant_name_) &&
+               level == MeasurementLevel::kKernelBody) {
       excluded.push_back("cursor_reset");
     }
     return excluded;

@@ -1,0 +1,153 @@
+{
+  "schema_version": "raggedroute.evidence_bundle.v1",
+  "run_id": "20260802T185236Z-5cb9bd4-permute-sm86-candidates-v1",
+  "created_utc": "2026-08-02T19:10:58.162110+00:00",
+  "benchmark_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-permute-sm86\\out\\evidence\\permute-sm86-candidates\\benchmark",
+  "extra_benchmark_sources": [],
+  "profile_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-permute-sm86\\out\\profile\\permute-sm86\\ncu",
+  "sanitizer_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-permute-sm86\\out\\sanitizer\\rtx3080-permute-candidate",
+  "raw_profiler_reports": [
+    {
+      "name": "anchor-candidate.nsys-rep",
+      "bytes": 63198,
+      "sha256": "f14810f002f2fccf3c7ae4d546d2042777e2cac99e4f48b3f8da03812f10b5c7",
+      "committed": false
+    },
+    {
+      "name": "anchor-candidate.sqlite",
+      "bytes": 274432,
+      "sha256": "9d965daac2f7848f8d40bfc47f20c36718fb5de7d9e0f6f878addf086c5a0a26",
+      "committed": false
+    },
+    {
+      "name": "anchor-naive.nsys-rep",
+      "bytes": 63103,
+      "sha256": "fcabc406953364b89a002fc2db3f5c12891d482503fcd7953fc5ed3eff00dd77",
+      "committed": false
+    },
+    {
+      "name": "anchor-naive.sqlite",
+      "bytes": 274432,
+      "sha256": "523001b88086141e2ab8b35dbc157ad5107fd8c5c18a344064d2a5b623f9aed3",
+      "committed": false
+    },
+    {
+      "name": "chain-logits-candidate.nsys-rep",
+      "bytes": 66139,
+      "sha256": "02c6b61ac303823d31e99dae28a151011537149d01767645984f5dae0e7549ae",
+      "committed": false
+    },
+    {
+      "name": "chain-logits-candidate.sqlite",
+      "bytes": 290816,
+      "sha256": "c43c6ba3a0a32b4e5dc6f600d53584b94d2b863bae40e3e6afb5c2232a503518",
+      "committed": false
+    },
+    {
+      "name": "chain-logits-naive.nsys-rep",
+      "bytes": 65995,
+      "sha256": "96659cb26adc6176195c661113449129257961b4fc1d8727db55b40b601d03ec",
+      "committed": false
+    },
+    {
+      "name": "chain-logits-naive.sqlite",
+      "bytes": 290816,
+      "sha256": "78d9716b6097c4291b3598f797a7b6a4a507d6b11a479d5ff3b1bfd0f03b0c7e",
+      "committed": false
+    },
+    {
+      "name": "chain-tokens-candidate.nsys-rep",
+      "bytes": 66594,
+      "sha256": "7923f4968c209b46f960a0c2bc6418ba0f6088e49c09b01fc42186f5b8f240c3",
+      "committed": false
+    },
+    {
+      "name": "chain-tokens-candidate.sqlite",
+      "bytes": 290816,
+      "sha256": "3bfd9b908c8b70aa0d045ae1e357e33f6f35e399d7b8f856bb0454abc22e4e76",
+      "committed": false
+    },
+    {
+      "name": "chain-tokens-naive.nsys-rep",
+      "bytes": 66476,
+      "sha256": "eb64ba2eb8caa7db3f9662b101b0b2b36408e4ce9157bcc1a2720943d27e5fbc",
+      "committed": false
+    },
+    {
+      "name": "chain-tokens-naive.sqlite",
+      "bytes": 290816,
+      "sha256": "f0c11157bd42e0912c7bde9fd1bf3aa45388a9edbbce857e4e4d9cd8c2b34c91",
+      "committed": false
+    },
+    {
+      "name": "permute.atomic128.anchor.basic.ncu-rep",
+      "bytes": 225473,
+      "sha256": "5a46a9e05221549a48a078506c3a86b1c0cf2009fd63c7320f855a3177e3272e",
+      "committed": false
+    },
+    {
+      "name": "permute.atomic256.anchor.basic.ncu-rep",
+      "bytes": 224263,
+      "sha256": "1608a919a462af989021f2c6b5ba165d9edce5f4094af8dab38d9ae6ae969317",
+      "committed": false
+    },
+    {
+      "name": "permute.atomic64.anchor.basic.ncu-rep",
+      "bytes": 224635,
+      "sha256": "eaaf607c465369878788a8a5439a8b12b3a66ef8a895c4589d8589dcd1960e7e",
+      "committed": false
+    },
+    {
+      "name": "permute.block_partial.copy.anchor.basic.ncu-rep",
+      "bytes": 224262,
+      "sha256": "2878e65171108d87b66de6c6380e0c3b000752b92e11432f7f3f9db83796c4e6",
+      "committed": false
+    },
+    {
+      "name": "permute.block_partial.placement.anchor.basic.ncu-rep",
+      "bytes": 223428,
+      "sha256": "80c4c31eb7dd65b236535292a1354b8cf0a5678f3a39f4f059946846d704fa70",
+      "committed": false
+    },
+    {
+      "name": "permute.candidate.anchor.detailed.detailed.ncu-rep",
+      "bytes": 344283,
+      "sha256": "d7094aeba21664e66a6dde5e1c1988f5d7e4a058a1a2ea5487910376b92e8391",
+      "committed": false
+    },
+    {
+      "name": "permute.candidate.wide_hot.detailed.detailed.ncu-rep",
+      "bytes": 366609,
+      "sha256": "4738946fd84714c27558281a24daa8445e638d01ab9ae5434e55a7c67f1f3b31",
+      "committed": false
+    },
+    {
+      "name": "permute.naive.anchor.basic.ncu-rep",
+      "bytes": 98586,
+      "sha256": "9e48de84fc363c52159ac993d66ab955d699e3397c54fa08ad88644ef6742bad",
+      "committed": false
+    },
+    {
+      "name": "permute.naive.anchor.detailed.detailed.ncu-rep",
+      "bytes": 210479,
+      "sha256": "4019796684b9a271ea017d9af04dea124b1963ae16f9748e150e810201a66dcc",
+      "committed": false
+    },
+    {
+      "name": "permute.naive.wide_hot.detailed.detailed.ncu-rep",
+      "bytes": 236599,
+      "sha256": "3774948299f8745196906b01bc830eb6cc2b9f24d154a16fc2b3760bdab090d8",
+      "committed": false
+    },
+    {
+      "name": "permute.token_owned.anchor.basic.ncu-rep",
+      "bytes": 223027,
+      "sha256": "7d1bd8b17ec735a42b70ab6f092f43770dbd766d45df22235db3d0af1944cfdf",
+      "committed": false
+    }
+  ],
+  "policy": {
+    "profiler_duration_is_release_latency": false,
+    "raw_profiler_binaries_committed": false
+  }
+}

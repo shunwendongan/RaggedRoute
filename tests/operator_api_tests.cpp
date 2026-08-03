@@ -187,17 +187,24 @@ void test_pure_dispatch() {
     require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
             "benchmark-only grouped GEMM candidates must not be runtime-dispatchable");
   }
-  request.requested_kernel = {KernelFamily::kCudaOptimized, 101};
-  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
-          "Histogram implementation ids must be rejected for dense GEMM");
+  for (const std::uint32_t implementation : {101U, 102U, 103U, 104U, 105U}) {
+    request.requested_kernel = {KernelFamily::kCudaOptimized, implementation};
+    require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+            "Histogram implementation ids must be rejected for dense GEMM");
+  }
 
   request.operator_kind = OperatorKind::kHistogram;
   request.signature = fp32_signature(request.operator_kind);
-  request.requested_kernel = {KernelFamily::kCudaOptimized, 101};
-  require_status(select_kernel(request, &decision), "explicit histogram candidate dispatch");
-  require(decision.kernel.family == KernelFamily::kCudaOptimized &&
-              decision.kernel.implementation_id == 101,
-          "Histogram dispatch must preserve its operator-local implementation id");
+  for (const std::uint32_t implementation : {101U, 102U, 103U, 104U, 105U}) {
+    request.requested_kernel = {KernelFamily::kCudaOptimized, implementation};
+    require_status(select_kernel(request, &decision), "explicit histogram candidate dispatch");
+    require(decision.kernel.family == KernelFamily::kCudaOptimized &&
+                decision.kernel.implementation_id == implementation,
+            "Histogram dispatch must preserve its operator-local implementation id");
+  }
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 106};
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+          "unknown Histogram experiment ids must be rejected");
   request.requested_kernel = {KernelFamily::kCudaNaive, 0};
   require_status(select_kernel(request, &decision), "explicit naive histogram dispatch");
   require(
@@ -607,6 +614,36 @@ void test_histogram_reset(const raggedroute::RuntimeContext& context) {
   require(ids.canaries_intact(context.stream) && counts.canaries_intact(context.stream),
           "small histogram candidate changed a redzone");
 
+  rc::GuardedDeviceBuffer<std::int32_t> h5_ids(4, context.stream);
+  rc::GuardedDeviceBuffer<std::int32_t> h5_counts(1, context.stream);
+  const std::vector<std::int32_t> h5_host_ids = {0, 0, 0, 0};
+  h5_ids.copy_from_host(h5_host_ids, context.stream);
+  h5_counts.copy_from_host({123}, context.stream);
+  args.expert_ids = h5_ids.data();
+  args.counts = h5_counts.data();
+  args.route_pairs = 4;
+  args.experts = 1;
+  args.kernel = {raggedroute::KernelFamily::kCudaOptimized, 102};
+  require_status(raggedroute::histogram(args, context), "H5 single-bin direct write");
+  require(h5_counts.copy_to_host(context.stream) == std::vector<std::int32_t>({4}),
+          "H5 single-bin path did not overwrite old counts");
+  require(h5_ids.copy_to_host(context.stream) == h5_host_ids,
+          "H5 single-bin path changed its input");
+  require(h5_ids.canaries_intact(context.stream) && h5_counts.canaries_intact(context.stream),
+          "H5 single-bin path changed a redzone");
+
+  args.expert_ids = nullptr;
+  args.route_pairs = 0;
+  h5_counts.copy_from_host({321}, context.stream);
+  require_status(raggedroute::histogram(args, context), "zero-route H5 single-bin direct write");
+  require(h5_counts.copy_to_host(context.stream) == std::vector<std::int32_t>({0}),
+          "zero-route H5 single-bin path did not write zero");
+  require(h5_counts.canaries_intact(context.stream),
+          "zero-route H5 single-bin path changed a redzone");
+
+  args.counts = counts.data();
+  args.experts = 2;
+  args.kernel = {raggedroute::KernelFamily::kCudaOptimized, 101};
   args.expert_ids = nullptr;
   args.route_pairs = 0;
   counts.copy_from_host({22, 11}, context.stream);

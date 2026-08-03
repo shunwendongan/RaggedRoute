@@ -1,0 +1,54 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "histogram_candidate_v2_experiments_l1_v1",
+  "protocol": "smoke",
+  "process_runs": 1,
+  "common": {"warmup": 10, "samples": 20, "kernel_repeats": 20, "seed": 20260729, "cache_mode": "warm"},
+  "cases": [
+    {
+      "id": "histogram.v2.e1",
+      "operator": "histogram",
+      "levels": ["l1"],
+      "matrix": {"T": [128, 4096, 65536, 1048576]},
+      "variants": [
+        {"name": "cuda_candidate_v1", "promotion_baseline": true},
+        {"name": "cuda_candidate_h5_single_bin", "promotion_baseline": false},
+        {"name": "cuda_candidate_h6_cap256", "promotion_baseline": false},
+        {"name": "cuda_candidate_h6_cap384", "promotion_baseline": false},
+        {"name": "cuda_candidate_h6_cap512", "promotion_baseline": false},
+        {"name": "cuda_naive", "promotion_baseline": false}
+      ],
+      "params": {"E": 1, "top_k": 1, "distribution": "single_hot", "zipf_s": 0.0}
+    },
+    {
+      "id": "histogram.v2.e64.uniform",
+      "operator": "histogram",
+      "levels": ["l1"],
+      "matrix": {"T": [16384, 32768, 131072, 524288]},
+      "variants": [
+        {"name": "cuda_candidate_v1", "promotion_baseline": true},
+        {"name": "cuda_candidate_h5_single_bin", "promotion_baseline": false},
+        {"name": "cuda_candidate_h6_cap256", "promotion_baseline": false},
+        {"name": "cuda_candidate_h6_cap384", "promotion_baseline": false},
+        {"name": "cuda_candidate_h6_cap512", "promotion_baseline": false},
+        {"name": "cuda_naive", "promotion_baseline": false}
+      ],
+      "params": {"E": 64, "top_k": 2, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "histogram.v2.e64.skew",
+      "operator": "histogram",
+      "levels": ["l1"],
+      "matrix": {"T": [32768, 524288], "distribution": ["single_hot", "zipf"]},
+      "variants": [
+        {"name": "cuda_candidate_v1", "promotion_baseline": true},
+        {"name": "cuda_candidate_h5_single_bin", "promotion_baseline": false},
+        {"name": "cuda_candidate_h6_cap256", "promotion_baseline": false},
+        {"name": "cuda_candidate_h6_cap384", "promotion_baseline": false},
+        {"name": "cuda_candidate_h6_cap512", "promotion_baseline": false},
+        {"name": "cuda_naive", "promotion_baseline": false}
+      ],
+      "params": {"E": 64, "top_k": 2, "zipf_s": 1.4}
+    }
+  ]
+}

@@ -58,8 +58,12 @@ void run_adapter_case(const Case& test_case, cudaStream_t stream, std::uint64_t 
 }
 
 void run_histogram_candidate_matrix(cudaStream_t stream, std::uint64_t* seed) {
-  const std::vector<int> experts = {1, 8, 16, 31, 32, 33, 64};
-  const std::vector<int> route_pairs = {1, 31, 32, 33, 255, 256, 257, 4096, 65536};
+  // R=0 is exercised through the public operator API because the benchmark adapter
+  // intentionally requires T>=1. Keep every dispatch and vector-tail boundary here.
+  const std::vector<int> experts = {1, 2, 8, 16, 31, 32, 33, 64};
+  const std::vector<int> route_pairs = {1,    31,    32,    33,    255,
+                                        256,  257,   4096,  8192,  16384,
+                                        32767, 32768, 65536, 1048576};
   const std::vector<std::pair<std::string, std::string>> distributions = {
       {"uniform", "0.0"}, {"round_robin", "0.0"}, {"zipf", "1.0"},
       {"zipf", "1.4"},    {"zipf", "2.0"},        {"single_hot", "0.0"},
@@ -78,12 +82,32 @@ void run_histogram_candidate_matrix(cudaStream_t stream, std::uint64_t* seed) {
     }
   }
   for (const int route_count : {32, 256, 4096, 65536}) {
+    // top_k=2 with single_hot deterministically targets experts 0 and 1: the
+    // dual-hot distribution required by the Histogram correctness contract.
     run_adapter_case({"histogram",
                       {{"T", std::to_string(route_count / 2)},
                        {"E", "64"},
                        {"top_k", "2"},
                        {"distribution", "single_hot"}},
                       "cuda_candidate"},
+                     stream, (*seed)++);
+  }
+  for (const std::string& variant : {"cuda_candidate_v1", "cuda_candidate_h5_single_bin",
+                                     "cuda_candidate_h6_cap256", "cuda_candidate_h6_cap384",
+                                     "cuda_candidate_h6_cap512"}) {
+    for (const int route_count : {1, 4096, 8192, 32768, 65536, 1048576}) {
+      run_adapter_case({"histogram",
+                        {{"T", std::to_string(route_count)},
+                         {"E", "1"},
+                         {"top_k", "1"},
+                         {"distribution", "single_hot"}},
+                        variant},
+                       stream, (*seed)++);
+    }
+    run_adapter_case({"histogram",
+                      {{"T", "32768"}, {"E", "64"}, {"top_k", "2"},
+                       {"distribution", "zipf"}, {"zipf_s", "1.4"}},
+                      variant},
                      stream, (*seed)++);
   }
 }

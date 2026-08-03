@@ -1,20 +1,56 @@
 {
   "schema_version": "codex.kernel-research.v1",
   "commands": {
-    "build": ["cmd /c scripts\\configure_windows.bat rtx3080-sm86-release", "cmd /c scripts\\build_windows.bat rtx3080-sm86-release"],
-    "correctness": ["ctest --preset test-rtx3080-sm86-release --output-on-failure", "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\grouped-gemm-next"],
-    "smoke": ["python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\grouped_gemm\\benchmark\\candidate_smoke.json --output out\\benchmark\\grouped-gemm-next-smoke.jsonl"],
-    "release": ["python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\grouped_gemm\\benchmark\\candidate_release.json --output out\\benchmark\\grouped-gemm-next-release.jsonl"]
+    "build": [
+      "cmd /d /c call scripts\\configure_windows.bat rtx3080-sm86-release",
+      "cmd /d /c call scripts\\build_windows.bat rtx3080-sm86-release"
+    ],
+    "correctness": [
+      "cmd /d /c call scripts\\test_windows.bat test-rtx3080-sm86-release",
+      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\histogram-v2"
+    ],
+    "smoke": [
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\histogram\\benchmark\\candidate_v2_experiments_l1.json --output out\\benchmark\\histogram-v2-experiments-l1.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\histogram\\benchmark\\candidate_v2_experiments_l2.json --output out\\benchmark\\histogram-v2-experiments-l2.jsonl"
+    ],
+    "release": [
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\histogram\\benchmark\\candidate_l1_release.json --output out\\benchmark\\histogram-v2-final-l1.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\histogram\\benchmark\\candidate_l2_release.json --output out\\benchmark\\histogram-v2-final-l2.jsonl"
+    ]
   },
   "benchmark": {
     "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
     "profile_cases": [
-      {"name": "grouped.uniform.t2048_e64_k128_n128", "arguments": ["--operator", "grouped_gemm", "--variant", "cuda_grouped_sm86_fp32_v1", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=2048", "--param", "E=64", "--param", "top_k=2", "--param", "K=128", "--param", "N=128", "--param", "distribution=uniform"], "kernel_regex": "grouped_gemm_register16x32_async_v3_kernel"},
-      {"name": "grouped.zipf14.t2048_e64_k128_n128", "arguments": ["--operator", "grouped_gemm", "--variant", "cuda_grouped_sm86_fp32_v1", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=2048", "--param", "E=64", "--param", "top_k=2", "--param", "K=128", "--param", "N=128", "--param", "distribution=zipf", "--param", "zipf_s=1.4"], "kernel_regex": "grouped_gemm_register16x32_async_v3_kernel"}
+      {
+        "name": "histogram.single-hot.r4096_e1",
+        "arguments": ["--operator", "histogram", "--variant", "cuda_candidate_h5_single_bin", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=4096", "--param", "E=1", "--param", "top_k=1", "--param", "distribution=single_hot"],
+        "kernel_regex": "histogram_single_bin_write_kernel"
+      },
+      {
+        "name": "histogram.uniform.r1m_e64",
+        "arguments": ["--operator", "histogram", "--variant", "cuda_candidate_h6_cap256", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=524288", "--param", "E=64", "--param", "top_k=2", "--param", "distribution=uniform"],
+        "kernel_regex": "histogram_block_private_kernel"
+      }
     ],
-    "kernel_regex": "grouped_gemm_(register16x32_async_v3|naive)_kernel"
+    "kernel_regex": "histogram_(single_bin_write|single_cta_shared|block_private|naive).*kernel"
   },
-  "variants": {"baseline": "cutlass_grouped", "candidate": "cuda_grouped_sm86_fp32_v1"},
-  "output": {"root": "out\\profile", "retention": {"keep_raw_for": ["baseline", "promoted", "final"], "rejected_candidate": "metrics-and-reason"}},
-  "promotion_policy": {"version": "grouped-gemm-cutlass-v2", "min_processes": 3, "median_speedup": 1.05, "p95_regression_tolerance": 0.03, "max_shape_regression": 0.05, "max_workspace_growth": 0.0}
+  "variants": {
+    "baseline": "min(cuda_candidate_v1,cub_device_histogram)",
+    "candidate": "cuda_candidate_h5_single_bin|cuda_candidate_h6_cap256|cuda_candidate_h6_cap384|cuda_candidate_h6_cap512"
+  },
+  "output": {
+    "root": "out\\profile\\histogram-v2",
+    "retention": {
+      "keep_raw_for": ["baseline", "promoted", "final"],
+      "rejected_candidate": "metrics-and-reason"
+    }
+  },
+  "promotion_policy": {
+    "version": "histogram-sm86-v2",
+    "min_processes": 5,
+    "median_speedup": 1.05,
+    "p95_regression_tolerance": 0.03,
+    "max_shape_regression": 0.01,
+    "max_workspace_growth": 0.0
+  }
 }

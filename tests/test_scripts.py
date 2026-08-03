@@ -50,6 +50,9 @@ package_evidence = load_module(
 resolve_cuda_toolkit = load_module(
     "resolve_cuda_toolkit", ROOT / "scripts" / "resolve_cuda_toolkit.py"
 )
+analyze_histogram_levels = load_module(
+    "analyze_histogram_levels", ROOT / "scripts" / "analyze_histogram_levels.py"
+)
 validate_evidence = load_module(
     "validate_evidence", ROOT / "scripts" / "validate_evidence.py"
 )
@@ -85,6 +88,27 @@ def make_suite_v2() -> dict:
 
 
 class SuiteTests(unittest.TestCase):
+    def test_histogram_level_gap_reports_reset_and_throughput_cost(self) -> None:
+        base = {
+            "operator": "histogram", "case_id": "case", "variant": "candidate",
+            "case_config": {"R": 1000, "E": 8, "distribution": "uniform"},
+            "cache_mode": "warm", "seed": 7, "process_runs": 5, "samples": 30,
+        }
+        l1 = dict(base, measurement_level="L1_kernel_body",
+                  median_of_process_medians_us=10.0, all_samples_p95_us=12.0)
+        l2 = dict(base, measurement_level="L2_operator_steady",
+                  median_of_process_medians_us=12.5, all_samples_p95_us=15.0)
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            first, second = root / "l1.json", root / "l2.json"
+            first.write_text(json.dumps({"groups": [l1]}), encoding="utf-8")
+            second.write_text(json.dumps({"groups": [l2]}), encoding="utf-8")
+            row = analyze_histogram_levels.analyze(first, second)["rows"][0]
+        self.assertAlmostEqual(row["l2_minus_l1_p50_us"], 2.5)
+        self.assertAlmostEqual(row["l2_over_l1_p50_ratio"], 1.25)
+        self.assertAlmostEqual(row["reset_wrapper_share"], 0.2)
+        self.assertAlmostEqual(row["throughput_loss_fraction"], 0.2)
+
     @staticmethod
     def make_fake_cuda(root: pathlib.Path, *, with_cublaslt: bool = True) -> None:
         for relative in (

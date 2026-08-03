@@ -1,7 +1,7 @@
 #include <cuda_runtime_api.h>
 
-#include <cstdint>
 #include <cmath>
+#include <cstdint>
 #include <exception>
 #include <iostream>
 #include <stdexcept>
@@ -77,9 +77,15 @@ void test_pure_dispatch() {
     request.signature = fp32_signature(kind);
     DispatchDecision decision;
     require_status(select_kernel(request, &decision), "SM86 FP32 auto dispatch");
-    require(decision.kernel.family == KernelFamily::kCudaNaive &&
-                decision.kernel.implementation_id == 0,
-            "SM86 auto dispatch must select cuda_naive implementation zero");
+    if (kind == OperatorKind::kHistogram) {
+      require(decision.kernel.family == KernelFamily::kCudaOptimized &&
+                  decision.kernel.implementation_id == 101,
+              "SM86 Histogram auto dispatch must select the promoted candidate");
+    } else {
+      require(decision.kernel.family == KernelFamily::kCudaNaive &&
+                  decision.kernel.implementation_id == 0,
+              "non-Histogram SM86 auto dispatch must select cuda_naive implementation zero");
+    }
   }
 
   DispatchRequest request;
@@ -158,6 +164,26 @@ void test_pure_dispatch() {
   request.requested_kernel = {KernelFamily::kCudaOptimized, 8};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "unimplemented optimized dense GEMM ids must be rejected");
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 101};
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+          "Histogram implementation ids must be rejected for dense GEMM");
+
+  request.operator_kind = OperatorKind::kHistogram;
+  request.signature = fp32_signature(request.operator_kind);
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 101};
+  require_status(select_kernel(request, &decision), "explicit histogram candidate dispatch");
+  require(decision.kernel.family == KernelFamily::kCudaOptimized &&
+              decision.kernel.implementation_id == 101,
+          "Histogram dispatch must preserve its operator-local implementation id");
+  request.requested_kernel = {KernelFamily::kCudaNaive, 0};
+  require_status(select_kernel(request, &decision), "explicit naive histogram dispatch");
+  require(
+      decision.kernel.family == KernelFamily::kCudaNaive && decision.kernel.implementation_id == 0,
+      "explicit Histogram cuda_naive must remain available after promotion");
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 1};
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+          "dense GEMM implementation ids must be rejected for Histogram");
+
   request.operator_kind = OperatorKind::kUnpermute;
   request.signature = fp32_signature(request.operator_kind);
   request.requested_kernel = {KernelFamily::kCudaOptimized, 1};
@@ -365,8 +391,61 @@ void test_histogram_reset(const raggedroute::RuntimeContext& context) {
   require_status(raggedroute::histogram(args, context), "public histogram");
   require(counts.copy_to_host(context.stream) == std::vector<std::int32_t>({1, 3}),
           "histogram wrapper did not reset counts before atomic accumulation");
+
+  counts.copy_from_host({77, 88}, context.stream);
+  args.expert_ids = nullptr;
+  args.route_pairs = 0;
+  require_status(raggedroute::histogram(args, context), "zero-route public histogram");
+  require(counts.copy_to_host(context.stream) == std::vector<std::int32_t>({0, 0}),
+          "zero-route histogram did not clear all counts");
   require(ids.canaries_intact(context.stream) && counts.canaries_intact(context.stream),
           "histogram changed a redzone");
+
+  ids.copy_from_host({0, 1, 1, 1}, context.stream);
+  counts.copy_from_host({55, 66}, context.stream);
+  args.expert_ids = ids.data();
+  args.route_pairs = 4;
+  args.kernel = {raggedroute::KernelFamily::kCudaOptimized, 101};
+  require_status(raggedroute::histogram(args, context), "small histogram candidate");
+  require(counts.copy_to_host(context.stream) == std::vector<std::int32_t>({1, 3}),
+          "small histogram candidate did not overwrite old counts correctly");
+  require(ids.copy_to_host(context.stream) == std::vector<std::int32_t>({0, 1, 1, 1}),
+          "small histogram candidate changed its input");
+  require(ids.canaries_intact(context.stream) && counts.canaries_intact(context.stream),
+          "small histogram candidate changed a redzone");
+
+  args.expert_ids = nullptr;
+  args.route_pairs = 0;
+  counts.copy_from_host({22, 11}, context.stream);
+  require_status(raggedroute::histogram(args, context), "zero-route histogram candidate");
+  require(counts.copy_to_host(context.stream) == std::vector<std::int32_t>({0, 0}),
+          "zero-route histogram candidate did not clear counts");
+  require(ids.canaries_intact(context.stream) && counts.canaries_intact(context.stream),
+          "zero-route histogram candidate changed a redzone");
+
+  for (const int route_pairs : {8192, 32768}) {
+    rc::GuardedDeviceBuffer<std::int32_t> candidate_ids(static_cast<std::size_t>(route_pairs),
+                                                        context.stream);
+    rc::GuardedDeviceBuffer<std::int32_t> candidate_counts(2, context.stream);
+    std::vector<std::int32_t> host_ids(static_cast<std::size_t>(route_pairs));
+    for (int route = 0; route < route_pairs; ++route) host_ids[route] = route & 1;
+    candidate_ids.copy_from_host(host_ids, context.stream);
+    candidate_counts.copy_from_host({9, 9}, context.stream);
+    args.expert_ids = candidate_ids.data();
+    args.counts = candidate_counts.data();
+    args.route_pairs = route_pairs;
+    require_status(raggedroute::histogram(args, context), route_pairs == 8192
+                                                              ? "candidate naive fallback"
+                                                              : "candidate block-private path");
+    require(candidate_counts.copy_to_host(context.stream) ==
+                std::vector<std::int32_t>({route_pairs / 2, route_pairs / 2}),
+            "histogram candidate dispatch path produced incorrect counts");
+    require(candidate_ids.copy_to_host(context.stream) == host_ids,
+            "histogram candidate dispatch path changed its input");
+    require(candidate_ids.canaries_intact(context.stream) &&
+                candidate_counts.canaries_intact(context.stream),
+            "histogram candidate dispatch path changed a redzone");
+  }
 }
 
 void test_permute_workspace_reset(const raggedroute::RuntimeContext& context) {

@@ -2,84 +2,33 @@
   "schema_version": "codex.kernel-research.v1",
   "commands": {
     "build": [
-      "$env:RAGGEDROUTE_FETCH_REFERENCES='ON'; cmd /c scripts\\configure_windows.bat rtx3080-sm86-release",
-      "$env:RAGGEDROUTE_FETCH_REFERENCES='ON'; cmd /c scripts\\build_windows.bat rtx3080-sm86-release"
+      "cmd /c scripts\\configure_windows.bat rtx3080-sm86-release",
+      "cmd /c scripts\\build_windows.bat rtx3080-sm86-release"
     ],
     "correctness": [
       "ctest --preset test-rtx3080-sm86-release --output-on-failure",
-      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\rtx3080-unpermute-candidate"
+      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\rtx3080-histogram-candidate-full"
     ],
     "smoke": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_unpermute_candidate_smoke.json --output out\\benchmark\\unpermute-candidate-smoke.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_candidate_smoke.json --output out\\benchmark\\histogram-candidate-smoke.jsonl"
     ],
     "release": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_unpermute_candidate_release.json --output out\\benchmark\\unpermute-candidate-release.jsonl",
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_unpermute_candidate_chain_release.json --output out\\benchmark\\unpermute-candidate-chain-release.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_candidate_l1_release.json --output out\\benchmark\\histogram-candidate-l1-release-final.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_candidate_l2_release.json --output out\\benchmark\\histogram-candidate-l2-release-final.jsonl"
     ]
   },
   "benchmark": {
     "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
     "profile_cases": [
-      {
-        "name": "unpermute.warp.t1024_n256",
-        "arguments": [
-          "--operator",
-          "unpermute",
-          "--variant",
-          "cuda_warp_token_vec4",
-          "--level",
-          "l2",
-          "--profile-once",
-          "--warmup",
-          "20",
-          "--seed",
-          "20260729",
-          "--param",
-          "T=1024",
-          "--param",
-          "E=64",
-          "--param",
-          "top_k=2",
-          "--param",
-          "N=256",
-          "--param",
-          "distribution=uniform"
-        ],
-        "kernel_regex": "unpermute_warp_token_vec4_kernel"
-      },
-      {
-        "name": "unpermute.cta.t64_n1024",
-        "arguments": [
-          "--operator",
-          "unpermute",
-          "--variant",
-          "cuda_warp_token_vec4",
-          "--level",
-          "l2",
-          "--profile-once",
-          "--warmup",
-          "20",
-          "--seed",
-          "20260729",
-          "--param",
-          "T=64",
-          "--param",
-          "E=64",
-          "--param",
-          "top_k=2",
-          "--param",
-          "N=1024",
-          "--param",
-          "distribution=uniform"
-        ],
-        "kernel_regex": "unpermute_cta_token_vec4_kernel"
-      }
+      {"name": "histogram.zipf.r4096_e64", "arguments": ["--operator", "histogram", "--variant", "cuda_candidate", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=2048", "--param", "E=64", "--param", "top_k=2", "--param", "distribution=zipf", "--param", "zipf_s=1.4"], "kernel_regex": "histogram_single_cta_shared_kernel"},
+      {"name": "histogram.uniform.r1m_e64", "arguments": ["--operator", "histogram", "--variant", "cuda_candidate", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=524288", "--param", "E=64", "--param", "top_k=2", "--param", "distribution=uniform"], "kernel_regex": "histogram_block_private_kernel"},
+      {"name": "histogram.hot.r1m_e1", "arguments": ["--operator", "histogram", "--variant", "cuda_candidate", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=1048576", "--param", "E=1", "--param", "top_k=1", "--param", "distribution=single_hot"], "kernel_regex": "histogram_block_private_kernel"}
     ],
-    "kernel_regex": "unpermute_(warp|cta)_token_vec4_kernel"
+    "kernel_regex": "histogram_(single_cta_shared|block_private)_kernel"
   },
   "variants": {
-    "baseline": "vllm_finalize_routing",
-    "candidate": "cuda_warp_token_vec4"
+    "baseline": "min(cuda_naive,cub_device_histogram)",
+    "candidate": "cuda_candidate"
   },
   "output": {
     "root": "out\\profile",
@@ -93,11 +42,11 @@
     }
   },
   "promotion_policy": {
-    "version": "unpermute-strict-v1",
+    "version": "histogram-strongest-baseline-v1",
     "min_processes": 5,
     "median_speedup": 1.05,
     "p95_regression_tolerance": 0.03,
     "max_shape_regression": 0.05,
-    "max_workspace_growth": 0
+    "max_workspace_growth": 0.0
   }
 }

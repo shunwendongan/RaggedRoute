@@ -1,0 +1,48 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_grouped_gemm_candidate_context_v1",
+  "protocol": "release",
+  "process_runs": 3,
+  "common": {
+    "warmup": 20,
+    "samples": 30,
+    "kernel_repeats": 1,
+    "seed": 20260729,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "grouped_gemm.zipf14.t512_e64_k128_n128.cold_scrub",
+      "operator": "grouped_gemm",
+      "levels": ["l2"],
+      "cache_mode": "cold_scrub",
+      "cache_scrub_bytes": 67108864,
+      "variants": [
+        {"name": "cutlass_grouped", "promotion_baseline": true},
+        {"name": "cuda_grouped_sm86_fp32_v1", "promotion_baseline": false},
+        {"name": "cuda_naive", "promotion_baseline": false}
+      ],
+      "params": {"T": 512, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    },
+    {
+      "id": "chain_from_logits.uniform.t512_e64_k128_n128",
+      "suite": "chain_from_logits",
+      "levels": ["l3"],
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cuda_grouped_sm86_fp32_v1", "promotion_baseline": false}
+      ],
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "chain_from_logits.zipf14.t512_e64_k128_n128",
+      "suite": "chain_from_logits",
+      "levels": ["l3"],
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cuda_grouped_sm86_fp32_v1", "promotion_baseline": false}
+      ],
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    }
+  ]
+}

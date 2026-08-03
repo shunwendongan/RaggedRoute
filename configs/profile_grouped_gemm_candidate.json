@@ -1,0 +1,27 @@
+{
+  "schema_version": "raggedroute.profile_suite.v1",
+  "suite_id": "rtx3080_grouped_gemm_candidate_profile_v1",
+  "cases": [
+    {
+      "id": "grouped.naive.zipf14",
+      "operator": "grouped_gemm", "variant": "cuda_naive", "level": "l1", "warmup": 20,
+      "seed": 20260729, "set": "basic", "cache_control": "none",
+      "kernel_pattern": "grouped_gemm_naive_kernel",
+      "params": {"T": 512, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    },
+    {
+      "id": "grouped.candidate_v4.zipf14",
+      "operator": "grouped_gemm", "variant": "cuda_grouped_register16x32_async_full_v4", "level": "l1", "warmup": 20,
+      "seed": 20260729, "set": "basic", "cache_control": "none",
+      "kernel_pattern": "grouped_gemm_register16x32_async_v3_kernel",
+      "params": {"T": 512, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    },
+    {
+      "id": "grouped.candidate_v4.uniform",
+      "operator": "grouped_gemm", "variant": "cuda_grouped_register16x32_async_full_v4", "level": "l1", "warmup": 20,
+      "seed": 20260729, "set": "basic", "cache_control": "none",
+      "kernel_pattern": "grouped_gemm_register16x32_async_v3_kernel",
+      "params": {"T": 512, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "uniform", "zipf_s": 0.0}
+    }
+  ]
+}

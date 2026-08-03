@@ -1,6 +1,6 @@
 # 实现状态与证据边界
 
-更新时间：2026-07-31
+更新时间：2026-08-03
 
 ## 已实现
 
@@ -26,7 +26,7 @@
 - L1/L2 reset 成本边界、状态型 repeat policy、raw JSONL 和聚合 JSON/CSV；
 - `raggedroute.suite.v2` 多 variant logical case：每个 case 至少两个唯一 variant、恰好一个 `promotion_baseline`，并复用 case ID、seed、params、level、cache 与采样协议；suite v1 与 `raggedroute.benchmark.v1` raw evidence 保持兼容；
 - registry 为 typed adapter 注入标准实现元数据；`raggedroute.aggregate.v2` 从 v2 manifest 保留完整配对字段，`raggedroute.comparison.v1` 对 GPU/build/语义/math/seed/level/cache/repeats/排除项严格 fail-closed，并输出 per-pair speedup、shape geometric mean 和具备权重时的 trace ratio-of-sums；
-- benchmark-only library/production variants：Dense GEMM `cublaslt`/`cublas`；Histogram `cub_device_histogram`；Scan `cub_device_scan`/`cub_block_scan`/`cub_warp_scan`；Permute `cuda_naive_from_ids`、`vllm_moe_permute` 与 prepared-mapping `vllm_expand_rows`；Grouped GEMM `cublas_per_expert` 与可选 `cutlass_grouped`；Unpermute `vllm_finalize_routing`。它们不进入 v0.2 runtime dispatch；Top-K 因 tie/NaN/selected-softmax 合同尚无语义等价库实现，明确不注册伪基线；
+- benchmark-only library/production variants：Dense GEMM `cublaslt`/`cublas`；Histogram `cub_device_histogram`；Scan `cub_device_scan`/`cub_block_scan`/`cub_warp_scan`；Permute `cuda_naive_from_ids`、`vllm_moe_permute` 与 prepared-mapping `vllm_expand_rows`；Grouped GEMM `cublas_per_expert`、可选 `cutlass_grouped` 及 SM86 strict-FP32 C0-C4/final 实验候选；Unpermute `vllm_finalize_routing`。它们不进入 v0.2 runtime dispatch；Grouped final 因十 shape CUTLASS 门禁失败而明确不晋级；Top-K 因 tie/NaN/selected-softmax 合同尚无语义等价库实现，明确不注册伪基线；
 - 每个 `src/<operator>/library_baseline/` 均有来源记录；vLLM 固定 commit `837eae64580c885101ee95b073aafb27a485e7ce` 的改写源码保留 Apache-2.0，CUTLASS 改写入口保留 BSD-3-Clause；不提交 CUDA/cuBLAS 二进制；
 - 新增 `configs/benchmark_library_smoke.json`，覆盖六个可严格配对的 library/production 边界；本机 SM86 Debug 已通过 raw JSONL → aggregate.v2 → comparison.v1 全链路及所有后置 reference validation。该 tiny Debug smoke 只验证接口和公平 join，不产生性能结论；
 - correctness、benchmark smoke、release benchmark、Nsight profile 四个独立入口；
@@ -39,13 +39,13 @@
 ## 尚未实现，禁止据此宣称
 
 - 通用的 failure artifact 自动重放、失败用例最小化与随机 GPU fuzz；当前 artifact 只保存和校验诊断信息；
-- FP16/Tensor Core、`cp.async`、persistent grouped scheduler 等优化版本；
+- 可发布的 Grouped GEMM optimized runtime；现有 `cp.async`/persistent SM86 版本仅为 benchmark-only 失败实验；
 - 与 Top-K tie/NaN/selected-softmax 合同相同的外部库基线；
-- optimized-candidate shape sweep、真实 route trace、working-set rotation 与 promotion 结论；当前 clean Release library evidence 只是固定代表 case 的 reference，不是完整部署分布；
-- shape-aware default dispatch、promotion evaluator；`configs/benchmark_promotion_policy.json` 仍不会自动产生晋升结论；
+- 真实 route trace、working-set rotation 与 distribution-aware shape sweep；当前十 shape synthetic suite 不是完整部署分布；
+- shape-aware default dispatch、自动 promotion evaluator；当前 Grouped GEMM 未晋级结论由固定门禁和配对报告人工审计；
 - H100/Blackwell 实卡支持、正确性或性能；本机 SM90/SM90a 交叉编译不等同于 H100 验证；
 - 完整 MoE FFN、训练、多 GPU 或 All-to-All。
 
-因此当前提交是 benchmark 基础设施、naive baseline 和 benchmark-only library/prod-reference milestone，不是“七个算子已经优化完成”。任何正式 speedup 必须等候选 optimized variant 与 clean-Git、同机同语义的 Release performance baseline 完成后再生成。
+因此当前提交仍不是“七个算子已经优化完成”。Grouped GEMM 候选会保留 clean-Git、同机同语义的 Release 证据，但因相对 CUTLASS 的门禁失败而不发布 runtime optimized 路径；后续性能声明仍必须来自相同协议的未 profile A/B。
 
 候选 variant 评估闭环、trace/working-set workload 与图表的后续实施顺序见 [development-roadmap.md](development-roadmap.md)。未勾选项不属于上方“已实现”事实。

@@ -1,0 +1,14 @@
+{
+  "schema_version": "raggedroute.evidence_bundle.v1",
+  "run_id": "scan-sm86-research-32bf6c9",
+  "created_utc": "2026-08-02T19:24:48.270376+00:00",
+  "benchmark_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-scan-research\\out\\evidence\\scan-final-32bf6c9",
+  "extra_benchmark_sources": [],
+  "profile_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-scan-research\\profile\\scan-final-32bf6c9",
+  "sanitizer_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-scan-research\\out\\sanitizer\\rtx3080-scan-candidates",
+  "raw_profiler_reports": [],
+  "policy": {
+    "profiler_duration_is_release_latency": false,
+    "raw_profiler_binaries_committed": false
+  }
+}

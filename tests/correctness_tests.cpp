@@ -365,8 +365,25 @@ int main() {
            "cublas_per_expert"},
           {"grouped_gemm",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
-           "cutlass_grouped",
-           rr::MeasurementLevel::kKernelBody},
+           "cutlass_grouped", rr::MeasurementLevel::kKernelBody},
+          {"grouped_gemm",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
+           "cuda_grouped_tiled16_sync_v0"},
+          {"grouped_gemm",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
+           "cuda_grouped_persistent16_v1"},
+          {"grouped_gemm",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
+           "cuda_grouped_register16x32_sync_v2"},
+          {"grouped_gemm",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
+           "cuda_grouped_register16x32_async_v3"},
+          {"grouped_gemm",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
+           "cuda_grouped_register16x32_async_full_v4"},
+          {"grouped_gemm",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
+           "cuda_grouped_sm86_fp32_v1"},
           {"unpermute",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"N", "7"}},
            "vllm_finalize_routing",
@@ -427,6 +444,23 @@ int main() {
         if (!has_variant("dense_gemm", variant)) continue;
         for (const auto& shape : dense_tiled_edge_shapes) {
           run_adapter_case({"dense_gemm", shape, variant}, stream, seed++);
+        }
+      }
+      const std::vector<rr::OptionMap> grouped_edge_shapes = {
+          {{"T", "17"}, {"E", "8"}, {"top_k", "2"}, {"K", "13"}, {"N", "11"},
+           {"distribution", "zipf"}, {"zipf_s", "1.0"}},
+          {{"T", "16"}, {"E", "64"}, {"top_k", "2"}, {"K", "64"}, {"N", "64"},
+           {"distribution", "round_robin"}},
+          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"K", "128"}, {"N", "128"},
+           {"distribution", "single_hot"}},
+      };
+      for (const std::string& variant :
+           {"cuda_grouped_tiled16_sync_v0", "cuda_grouped_persistent16_v1",
+            "cuda_grouped_register16x32_sync_v2", "cuda_grouped_register16x32_async_v3",
+            "cuda_grouped_register16x32_async_full_v4",
+            "cuda_grouped_sm86_fp32_v1"}) {
+        for (const auto& shape : grouped_edge_shapes) {
+          run_adapter_case({"grouped_gemm", shape, variant}, stream, seed++);
         }
       }
       run_library_alignment_fallbacks(stream);

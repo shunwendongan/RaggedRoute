@@ -1,0 +1,31 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_grouped_gemm_candidates_preflight_v1",
+  "protocol": "smoke",
+  "process_runs": 1,
+  "common": {
+    "warmup": 20,
+    "samples": 30,
+    "kernel_repeats": 5,
+    "seed": 20260729,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "grouped_gemm.fp32.zipf14.preflight",
+      "operator": "grouped_gemm",
+      "levels": ["l2"],
+      "variants": [
+        {"name": "cutlass_grouped", "promotion_baseline": true},
+        {"name": "cuda_naive", "promotion_baseline": false},
+        {"name": "cuda_grouped_tiled16_sync_v0", "promotion_baseline": false},
+        {"name": "cuda_grouped_persistent16_v1", "promotion_baseline": false},
+        {"name": "cuda_grouped_register16x32_sync_v2", "promotion_baseline": false},
+        {"name": "cuda_grouped_register16x32_async_v3", "promotion_baseline": false},
+        {"name": "cuda_grouped_register16x32_async_full_v4", "promotion_baseline": false},
+        {"name": "cuda_grouped_sm86_fp32_v1", "promotion_baseline": false}
+      ],
+      "params": {"T": 512, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    }
+  ]
+}

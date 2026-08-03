@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <exception>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -265,6 +266,127 @@ void test_argument_and_workspace_contracts(const raggedroute::RuntimeContext& co
           "permute workspace query is wrong");
   require(token_permute(permute, context).code == StatusCode::kInsufficientWorkspace,
           "permute must reject missing caller workspace before launch");
+}
+
+void test_exclusive_scan(const raggedroute::RuntimeContext& context) {
+  using raggedroute::ExclusiveScanArgs;
+  using raggedroute::KernelFamily;
+  using raggedroute::StatusCode;
+
+  for (const int experts : {1, 31, 32, 33, 63, 64}) {
+    std::vector<std::int32_t> counts(static_cast<std::size_t>(experts));
+    std::vector<std::int32_t> expected(static_cast<std::size_t>(experts + 1), 0);
+    for (int index = 0; index < experts; ++index) {
+      counts[static_cast<std::size_t>(index)] = index % 5;
+      expected[static_cast<std::size_t>(index + 1)] =
+          expected[static_cast<std::size_t>(index)] + counts[static_cast<std::size_t>(index)];
+    }
+    rc::GuardedDeviceBuffer<std::int32_t> device_counts(counts.size(), context.stream);
+    rc::GuardedDeviceBuffer<std::int32_t> device_offsets(expected.size(), context.stream);
+    device_counts.copy_from_host(counts, context.stream);
+    ExclusiveScanArgs args;
+    args.counts = device_counts.data();
+    args.offsets = device_offsets.data();
+    args.experts = experts;
+    require(raggedroute::get_exclusive_scan_workspace_size(args) == 0,
+            "exclusive_scan must remain workspace-free");
+    require_status(raggedroute::exclusive_scan(args, context), "default exclusive_scan");
+    require(device_offsets.copy_to_host(context.stream) == expected,
+            "default exclusive_scan produced incorrect offsets");
+    require(device_counts.canaries_intact(context.stream) &&
+                device_offsets.canaries_intact(context.stream),
+            "default exclusive_scan changed a redzone");
+
+    std::vector<std::int32_t> in_place_input = counts;
+    in_place_input.push_back(-1);
+    rc::GuardedDeviceBuffer<std::int32_t> in_place(in_place_input.size(), context.stream);
+    in_place.copy_from_host(in_place_input, context.stream);
+    args.counts = in_place.data();
+    args.offsets = in_place.data();
+    args.kernel = {KernelFamily::kCudaNaive, 0};
+    require_status(raggedroute::exclusive_scan(args, context), "in-place exclusive_scan");
+    require(in_place.copy_to_host(context.stream) == expected,
+            "in-place exclusive_scan produced incorrect offsets");
+    require(in_place.canaries_intact(context.stream), "in-place exclusive_scan changed a redzone");
+  }
+
+  constexpr int kFourByteAlignedExperts = 33;
+  std::vector<std::int32_t> four_byte_counts(kFourByteAlignedExperts + 2, 0);
+  std::vector<std::int32_t> four_byte_offsets(kFourByteAlignedExperts + 3, -1);
+  std::vector<std::int32_t> four_byte_expected(kFourByteAlignedExperts + 1, 0);
+  for (int index = 0; index < kFourByteAlignedExperts; ++index) {
+    four_byte_counts[static_cast<std::size_t>(index + 1)] = index % 7;
+    four_byte_expected[static_cast<std::size_t>(index + 1)] =
+        four_byte_expected[static_cast<std::size_t>(index)] + index % 7;
+  }
+  rc::GuardedDeviceBuffer<std::int32_t> four_byte_counts_device(four_byte_counts.size(),
+                                                                context.stream);
+  rc::GuardedDeviceBuffer<std::int32_t> four_byte_offsets_device(four_byte_offsets.size(),
+                                                                 context.stream);
+  four_byte_counts_device.copy_from_host(four_byte_counts, context.stream);
+  four_byte_offsets_device.copy_from_host(four_byte_offsets, context.stream);
+  ExclusiveScanArgs four_byte_args;
+  four_byte_args.counts = four_byte_counts_device.data() + 1;
+  four_byte_args.offsets = four_byte_offsets_device.data() + 1;
+  four_byte_args.experts = kFourByteAlignedExperts;
+  require(reinterpret_cast<std::uintptr_t>(four_byte_args.counts) % 8 == 4 &&
+              reinterpret_cast<std::uintptr_t>(four_byte_args.offsets) % 8 == 4,
+          "test setup must exercise pointers that are 4-byte but not 8-byte aligned");
+  require_status(raggedroute::exclusive_scan(four_byte_args, context),
+                 "4-byte-aligned exclusive_scan");
+  const std::vector<std::int32_t> four_byte_actual =
+      four_byte_offsets_device.copy_to_host(context.stream);
+  require(std::vector<std::int32_t>(four_byte_actual.begin() + 1,
+                                    four_byte_actual.begin() + kFourByteAlignedExperts + 2) ==
+              four_byte_expected,
+          "4-byte-aligned exclusive_scan produced incorrect offsets");
+  require(four_byte_actual.front() == -1 && four_byte_actual.back() == -1,
+          "4-byte-aligned exclusive_scan wrote outside its output span");
+
+  std::vector<std::int32_t> max_safe_counts(64, 0);
+  max_safe_counts.front() = std::numeric_limits<std::int32_t>::max();
+  std::vector<std::int32_t> max_safe_expected(65, std::numeric_limits<std::int32_t>::max());
+  max_safe_expected.front() = 0;
+  rc::GuardedDeviceBuffer<std::int32_t> max_safe_device(max_safe_expected.size(), context.stream);
+  max_safe_counts.push_back(-1);
+  max_safe_device.copy_from_host(max_safe_counts, context.stream);
+  ExclusiveScanArgs max_safe_args;
+  max_safe_args.counts = max_safe_device.data();
+  max_safe_args.offsets = max_safe_device.data();
+  max_safe_args.experts = 64;
+  require_status(raggedroute::exclusive_scan(max_safe_args, context),
+                 "maximum-safe in-place exclusive_scan");
+  require(max_safe_device.copy_to_host(context.stream) == max_safe_expected,
+          "maximum-safe in-place exclusive_scan produced incorrect offsets");
+  require(max_safe_device.canaries_intact(context.stream),
+          "maximum-safe in-place exclusive_scan changed a redzone");
+
+  rc::GuardedDeviceBuffer<std::int32_t> aligned_storage(66, context.stream);
+
+  ExclusiveScanArgs invalid;
+  invalid.experts = 1;
+  require(raggedroute::exclusive_scan(invalid, context).code == StatusCode::kInvalidArgument,
+          "exclusive_scan must reject null pointers");
+  invalid.counts = aligned_storage.data();
+  invalid.offsets = aligned_storage.data();
+  invalid.experts = 65;
+  require(raggedroute::exclusive_scan(invalid, context).code == StatusCode::kInvalidArgument,
+          "exclusive_scan must reject E>64");
+  invalid.experts = 0;
+  require(raggedroute::exclusive_scan(invalid, context).code == StatusCode::kInvalidArgument,
+          "exclusive_scan must reject E=0");
+  invalid.experts = 1;
+  invalid.kernel = {KernelFamily::kCudaOptimized, 1};
+  require(
+      raggedroute::exclusive_scan(invalid, context).code == StatusCode::kUnsupportedKernelVariant,
+      "exclusive_scan must reject unpromoted optimized implementation ids");
+
+  alignas(std::int32_t) unsigned char misaligned_storage[2 * sizeof(std::int32_t) + 1]{};
+  invalid.kernel = {};
+  invalid.counts = reinterpret_cast<const std::int32_t*>(misaligned_storage + 1);
+  invalid.offsets = reinterpret_cast<std::int32_t*>(misaligned_storage + 1);
+  require(raggedroute::exclusive_scan(invalid, context).code == StatusCode::kInvalidArgument,
+          "exclusive_scan must reject pointers that are not 4-byte aligned");
 }
 
 void test_dense_gemm(const raggedroute::RuntimeContext& context) {
@@ -540,6 +662,7 @@ int main() {
       test_argument_and_workspace_contracts(context);
       test_dense_gemm(context);
       test_dense_gemm_vector_alignment_fallback(context);
+      test_exclusive_scan(context);
       test_histogram_reset(context);
       test_permute_workspace_reset(context);
     } catch (...) {

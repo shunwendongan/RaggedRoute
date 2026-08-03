@@ -91,6 +91,16 @@ class SuiteTests(unittest.TestCase):
             analyze_triton_topk_results.percentile([1.0, 2.0, 3.0], 0.5), 2.0
         )
 
+    def test_topk_library_controlled_suite_keeps_strict_support_sets(self) -> None:
+        suite = run_benchmarks.load_suite(
+            ROOT / "configs" / "benchmark_topk_gate_library_controlled_release_v2.json"
+        )
+        self.assertEqual(suite["process_runs"], 5)
+        self.assertEqual(suite["common"]["kernel_repeats"], 1000)
+        vllm = [case for case in suite["cases"] if case["id"].startswith("topk_gate.library_v2.vllm_pair")]
+        self.assertEqual(len(vllm), 13 * 6)
+        self.assertEqual({case["params"]["E"] for case in vllm}, {2, 4, 8, 16, 32, 64})
+
     def test_windows_entrypoints_share_dynamic_msvc_discovery(self) -> None:
         setup = (ROOT / "scripts" / "setup_msvc_env.bat").read_text(encoding="utf-8")
         configure = (ROOT / "scripts" / "configure_windows.bat").read_text(

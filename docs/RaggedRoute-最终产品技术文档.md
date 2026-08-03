@@ -1,5 +1,7 @@
 # RaggedRoute 最终产品技术文档
 
+> **文档定位：** 本文保留 v2.1 产品设计、历史规划和简历模板；其中 `[待实测]`/`[未测试]` 表格是发布模板，不代表当前已经没有实测结果。当前 runtime 事实以 [实现状态](implementation-status.md) 为准，实测数字与决策以 [算子优化索引](operator-optimization-index.md) 和 `docs/reports/` 为准。
+
 > 项目定位：单 GPU MoE 路由与专家计算 CUDA 核心算子库  
 > 使用目标：第一段 AI Infra / CUDA 实习的可复现简历项目  
 > 主开发平台：NVIDIA RTX 3080（Ampere，SM 8.6）  

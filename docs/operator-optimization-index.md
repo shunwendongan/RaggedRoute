@@ -4,6 +4,16 @@
 
 当前统一实测报告：[RTX 3080 七算子 naive benchmark 与 Nsight 分析（a9489ab）](reports/rtx3080-naive-profile-a9489ab.md)。
 
+| 算子 | 当前 `Auto` | 显式/研究 candidate | 最新决策 |
+|---|---|---|---|
+| Dense GEMM | `cuda_naive` | optimized id 1–7，v3 为大 shape 最快自研路径 | 256³ 方差超限，不晋级 |
+| Top-K Gate | `cuda_naive` | optimized id 1–3 | 大 E 单点获益，连续 bucket 门禁失败 |
+| Histogram | `cuda_candidate` | small/sparse/block-private shape paths | **已晋级** SM86 `Auto` |
+| Exclusive Scan | `cuda_naive` | 最终树不保留失败 candidate | 受 WDDM tail/CV 限制 |
+| Token Permute | `cuda_naive` | optimized id 1–5，alias 选 id 4 | 只保留显式 research alias |
+| Grouped GEMM | `cuda_naive` | benchmark-only SM86 candidate | 未通过 CUTLASS 门禁 |
+| Unpermute | `cuda_naive` | benchmark-only warp/CTA hybrid | 正式拒绝，不进入 public dispatch |
+
 | 算子 | 定位 | 优化文档 | 性能记录 |
 |---|---|---|---|
 | Dense GEMM | 主算子：路由投影/通用矩阵乘 | [optimization-plan](dense_gemm/optimization-plan.md) | [performance-record](dense_gemm/performance-record.md) |

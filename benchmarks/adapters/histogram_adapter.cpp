@@ -16,11 +16,22 @@ namespace raggedroute::benchmark {
 namespace {
 
 bool is_optimized_histogram_variant(const std::string& variant_name) {
-  return variant_name == "cuda_candidate";
+  return variant_name == "cuda_candidate" || variant_name == "cuda_candidate_v1" ||
+         variant_name == "cuda_candidate_h5_single_bin" ||
+         variant_name == "cuda_candidate_h6_cap256" ||
+         variant_name == "cuda_candidate_h6_cap384" ||
+         variant_name == "cuda_candidate_h6_cap512";
 }
 
 std::uint32_t optimized_histogram_implementation(const std::string& variant_name) {
   if (variant_name == "cuda_candidate") return ops::kHistogramCandidateImplementation;
+  if (variant_name == "cuda_candidate_v1") return ops::kHistogramCandidateV1Implementation;
+  if (variant_name == "cuda_candidate_h5_single_bin") {
+    return ops::kHistogramH5SingleBinImplementation;
+  }
+  if (variant_name == "cuda_candidate_h6_cap256") return ops::kHistogramH6Cap256Implementation;
+  if (variant_name == "cuda_candidate_h6_cap384") return ops::kHistogramH6Cap384Implementation;
+  if (variant_name == "cuda_candidate_h6_cap512") return ops::kHistogramH6Cap512Implementation;
   throw std::invalid_argument("unsupported optimized histogram variant: " + variant_name);
 }
 
@@ -33,7 +44,7 @@ class HistogramAdapter final : public BenchmarkAdapter {
     if (variant_name_ == "cub_device_histogram") {
       return "CUB device-wide even histogram over discrete int32 expert ids";
     }
-    if (variant_name_ == "cuda_candidate") {
+    if (is_optimized_histogram_variant(variant_name_)) {
       return "Shape-dispatched SM86 shared-memory histogram candidate";
     }
     return "One global atomicAdd per route pair";
@@ -156,9 +167,12 @@ class HistogramAdapter final : public BenchmarkAdapter {
               {"upper_level", static_cast<std::int64_t>(experts_)},
               {"output_reset", std::string("inside_library_call")}};
     }
-    if (variant_name_ == "cuda_candidate") {
+    if (is_optimized_histogram_variant(variant_name_)) {
+      const std::uint32_t implementation = optimized_histogram_implementation(variant_name_);
       const std::string path =
-          ids_host_.size() <= static_cast<std::size_t>(ops::kHistogramSingleCtaMaxRoutePairs)
+          implementation == ops::kHistogramH5SingleBinImplementation && experts_ == 1
+              ? "single_bin_direct_write"
+              : ids_host_.size() <= static_cast<std::size_t>(ops::kHistogramSingleCtaMaxRoutePairs)
               ? "single_cta_shared_overwrite"
               : (ids_host_.size() >=
                          static_cast<std::size_t>(ops::kHistogramBlockPrivateMinRoutePairs)
@@ -171,7 +185,9 @@ class HistogramAdapter final : public BenchmarkAdapter {
               {"block_private_min_route_pairs",
                static_cast<std::int64_t>(ops::kHistogramBlockPrivateMinRoutePairs)},
               {"block_private_max_ctas",
-               static_cast<std::int64_t>(ops::kHistogramBlockPrivateMaxBlocks)},
+               static_cast<std::int64_t>(
+                   ops::histogram_block_private_max_blocks(implementation))},
+              {"implementation_id", static_cast<std::int64_t>(implementation)},
               {"workspace_bytes", static_cast<std::int64_t>(0)},
               {"threads_per_block", static_cast<std::int64_t>(256)},
               {"shared_bytes_per_cta", static_cast<std::int64_t>(64 * sizeof(std::int32_t))}};
@@ -192,22 +208,26 @@ class HistogramAdapter final : public BenchmarkAdapter {
     work.operator_metrics["histogram_bins"] = static_cast<std::int64_t>(experts_);
     work.operator_metrics["active_experts"] = static_cast<std::int64_t>(active_experts_);
     if (variant_name_ == "cuda_naive" ||
-        (variant_name_ == "cuda_candidate" && !uses_single_cta() && !uses_block_private())) {
+        (is_optimized_histogram_variant(variant_name_) && !uses_single_cta() &&
+         !uses_block_private() && !uses_single_bin_direct())) {
       work.operator_metrics["global_atomic_operations"] =
           static_cast<std::int64_t>(ids_host_.size());
       work.operator_metrics["kernel_launches"] = static_cast<std::int64_t>(1);
     }
-    if (variant_name_ == "cuda_candidate" && uses_single_cta()) {
+    if (is_optimized_histogram_variant(variant_name_) && uses_single_cta() &&
+        !uses_single_bin_direct()) {
       work.operator_metrics["shared_atomic_operations_upper_bound"] =
           static_cast<std::int64_t>(ids_host_.size());
       work.operator_metrics["kernel_launches"] = static_cast<std::int64_t>(1);
     }
-    if (variant_name_ == "cuda_candidate" && uses_block_private()) {
+    if (is_optimized_histogram_variant(variant_name_) && uses_block_private()) {
       constexpr std::int64_t kItemsPerBlock = 256 * 8;
       const std::int64_t uncapped_blocks =
           (static_cast<std::int64_t>(ids_host_.size()) + kItemsPerBlock - 1) / kItemsPerBlock;
       const std::int64_t blocks = std::min(
-          uncapped_blocks, static_cast<std::int64_t>(ops::kHistogramBlockPrivateMaxBlocks));
+          uncapped_blocks,
+          static_cast<std::int64_t>(ops::histogram_block_private_max_blocks(
+              optimized_histogram_implementation(variant_name_))));
       work.operator_metrics["shared_atomic_operations_upper_bound"] =
           static_cast<std::int64_t>(ids_host_.size());
       work.operator_metrics["global_atomic_operations_upper_bound"] =
@@ -234,14 +254,22 @@ class HistogramAdapter final : public BenchmarkAdapter {
 
  private:
   bool uses_single_cta() const {
-    return variant_name_ == "cuda_candidate" &&
+    return is_optimized_histogram_variant(variant_name_) &&
            ids_host_.size() <= static_cast<std::size_t>(ops::kHistogramSingleCtaMaxRoutePairs);
   }
   bool uses_block_private() const {
-    return variant_name_ == "cuda_candidate" &&
+    return is_optimized_histogram_variant(variant_name_) && !uses_single_bin_direct() &&
            ids_host_.size() >= static_cast<std::size_t>(ops::kHistogramBlockPrivateMinRoutePairs);
   }
-  bool overwrites_output() const { return uses_single_cta(); }
+  bool uses_single_bin_direct() const {
+    return variant_name_ == "cuda_candidate_h5_single_bin" && experts_ == 1;
+  }
+  bool overwrites_output() const {
+    if (!is_optimized_histogram_variant(variant_name_)) return false;
+    return ops::histogram_optimized_overwrites_output(
+        optimized_histogram_implementation(variant_name_), static_cast<int>(ids_host_.size()),
+        experts_);
+  }
 
   static void reject_unknown(const OptionMap& options) {
     const std::set<std::string> allowed = {"T", "E", "top_k", "distribution", "zipf_s"};

@@ -1,0 +1,2 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+100.0,90365,21,4303.1,4288.0,4287,4608,69.9,"raggedroute::ops::<unnamed>::histogram_single_cta_shared_kernel(const int *, int *, int, int)"

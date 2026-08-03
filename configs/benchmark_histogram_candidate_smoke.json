@@ -1,0 +1,12 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "histogram_candidate_smoke_v1",
+  "protocol": "smoke",
+  "process_runs": 1,
+  "common": {"warmup": 10, "samples": 15, "kernel_repeats": 20, "seed": 20260729, "cache_mode": "warm"},
+  "cases": [
+    {"id": "histogram.r4096_e64.zipf14.smoke", "operator": "histogram", "levels": ["l1", "l2"], "kernel_repeats_by_level": {"l1": 50, "l2": 50}, "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cuda_candidate", "promotion_baseline": false}], "params": {"T": 2048, "E": 64, "top_k": 2, "distribution": "zipf", "zipf_s": 1.4}},
+    {"id": "histogram.r8192_e64.uniform.fallback.smoke", "operator": "histogram", "levels": ["l1", "l2"], "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cuda_candidate", "promotion_baseline": false}], "params": {"T": 8192, "E": 64, "top_k": 1, "distribution": "uniform", "zipf_s": 0.0}},
+    {"id": "histogram.r1048576_e64.uniform.smoke", "operator": "histogram", "levels": ["l1", "l2"], "kernel_repeats_by_level": {"l1": 10, "l2": 10}, "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cuda_candidate", "promotion_baseline": false}], "params": {"T": 524288, "E": 64, "top_k": 2, "distribution": "uniform", "zipf_s": 0.0}}
+  ]
+}

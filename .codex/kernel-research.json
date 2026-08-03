@@ -2,109 +2,51 @@
   "schema_version": "codex.kernel-research.v1",
   "commands": {
     "build": [
-      "$env:RAGGEDROUTE_FETCH_REFERENCES='ON'; cmd /c scripts\\configure_windows.bat rtx3080-sm86-release",
-      "$env:RAGGEDROUTE_FETCH_REFERENCES='ON'; cmd /c scripts\\build_windows.bat rtx3080-sm86-release"
+      "cmd /c scripts\\configure_windows.bat rtx3080-sm86-release",
+      "cmd /c scripts\\build_windows.bat rtx3080-sm86-release"
     ],
     "correctness": [
       "ctest --preset test-rtx3080-sm86-release --output-on-failure",
-      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\rtx3080-scan-final"
+      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\rtx3080-histogram-candidate-full"
     ],
     "smoke": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_scan_library_smoke.json --output out\\benchmark\\scan-library-smoke.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_candidate_smoke.json --output out\\benchmark\\histogram-candidate-smoke.jsonl"
     ],
     "release": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_scan_library_release.json --output out\\benchmark\\scan-library-final.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_candidate_l1_release.json --output out\\benchmark\\histogram-candidate-l1-release-final.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_candidate_l2_release.json --output out\\benchmark\\histogram-candidate-l2-release-final.jsonl"
     ]
   },
   "benchmark": {
     "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
     "profile_cases": [
-      {
-        "name": "scan.naive.e64",
-        "arguments": [
-          "--operator",
-          "exclusive_scan",
-          "--variant",
-          "cuda_naive",
-          "--level",
-          "l1",
-          "--profile-once",
-          "--warmup",
-          "20",
-          "--seed",
-          "20260803",
-          "--param",
-          "E=64",
-          "--param",
-          "R=4096"
-        ],
-        "kernel_regex": "exclusive_scan_naive_kernel"
-      },
-      {
-        "name": "scan.cub_warp.e32",
-        "arguments": [
-          "--operator",
-          "exclusive_scan",
-          "--variant",
-          "cub_warp_scan",
-          "--level",
-          "l1",
-          "--profile-once",
-          "--warmup",
-          "20",
-          "--seed",
-          "20260803",
-          "--param",
-          "E=32",
-          "--param",
-          "R=4096"
-        ],
-        "kernel_regex": "warp_scan_kernel"
-      },
-      {
-        "name": "scan.cub_block.e64",
-        "arguments": [
-          "--operator",
-          "exclusive_scan",
-          "--variant",
-          "cub_block_scan",
-          "--level",
-          "l1",
-          "--profile-once",
-          "--warmup",
-          "20",
-          "--seed",
-          "20260803",
-          "--param",
-          "E=64",
-          "--param",
-          "R=4096"
-        ],
-        "kernel_regex": "block_scan_kernel"
-      }
+      {"name": "histogram.zipf.r4096_e64", "arguments": ["--operator", "histogram", "--variant", "cuda_candidate", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=2048", "--param", "E=64", "--param", "top_k=2", "--param", "distribution=zipf", "--param", "zipf_s=1.4"], "kernel_regex": "histogram_single_cta_shared_kernel"},
+      {"name": "histogram.uniform.r1m_e64", "arguments": ["--operator", "histogram", "--variant", "cuda_candidate", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=524288", "--param", "E=64", "--param", "top_k=2", "--param", "distribution=uniform"], "kernel_regex": "histogram_block_private_kernel"},
+      {"name": "histogram.hot.r1m_e1", "arguments": ["--operator", "histogram", "--variant", "cuda_candidate", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=1048576", "--param", "E=1", "--param", "top_k=1", "--param", "distribution=single_hot"], "kernel_regex": "histogram_block_private_kernel"}
     ],
-    "kernel_regex": "exclusive_scan_naive_kernel|warp_scan_kernel|block_scan_kernel"
+    "kernel_regex": "histogram_(single_cta_shared|block_private)_kernel"
   },
   "variants": {
-    "baseline": "cuda_naive",
-    "candidate": "cub_block_scan"
+    "baseline": "min(cuda_naive,cub_device_histogram)",
+    "candidate": "cuda_candidate"
   },
   "output": {
-    "root": "profile\\scan-library-final",
+    "root": "out\\profile",
     "retention": {
       "keep_raw_for": [
         "baseline",
+        "promoted",
         "final"
       ],
       "rejected_candidate": "metrics-and-reason"
     }
   },
   "promotion_policy": {
-    "version": "scan-sm86-v1",
-    "min_processes": 3,
-    "median_speedup": 1.03,
+    "version": "histogram-strongest-baseline-v1",
+    "min_processes": 5,
+    "median_speedup": 1.05,
     "p95_regression_tolerance": 0.03,
     "max_shape_regression": 0.05,
-    "max_workspace_growth": 0
+    "max_workspace_growth": 0.0
   }
 }

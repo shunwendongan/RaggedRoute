@@ -1,0 +1,43 @@
+{
+  "schema_version": "raggedroute.profile_suite.v1",
+  "suite_id": "rtx3080_histogram_candidate_profile_v1",
+  "note": "Profiler durations are diagnostic only; release A/B owns performance claims.",
+  "cases": [
+    {
+      "id": "histogram.zipf.r4096_e64",
+      "operator": "histogram",
+      "variant": "cuda_candidate",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260729,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "histogram_single_cta_shared_kernel",
+      "params": {"T": 2048, "E": 64, "top_k": 2, "distribution": "zipf", "zipf_s": 1.4}
+    },
+    {
+      "id": "histogram.uniform.r1m_e64",
+      "operator": "histogram",
+      "variant": "cuda_candidate",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260729,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "histogram_block_private_kernel",
+      "params": {"T": 524288, "E": 64, "top_k": 2, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "histogram.hot.r1m_e1",
+      "operator": "histogram",
+      "variant": "cuda_candidate",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260729,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "histogram_block_private_kernel",
+      "params": {"T": 1048576, "E": 1, "top_k": 1, "distribution": "single_hot", "zipf_s": 0.0}
+    }
+  ]
+}

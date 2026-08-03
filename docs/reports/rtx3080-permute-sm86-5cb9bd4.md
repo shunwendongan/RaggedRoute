@@ -8,20 +8,20 @@
 
 ## 2. 环境与合同
 
-- Source SHA：`5cb9bd49afba09edf8438416312257e9827cf4da`，clean Release build。
+- Initial candidates SHA：`5cb9bd49afba09edf8438416312257e9827cf4da`；selection suite SHA：`cc559173155e2f584303bef54f43d61f685df516`；selected alias/library SHA：`af4947fcd665a899e72714122a0765340903d5c1`。全部为 clean Release build。
 - GPU：NVIDIA GeForce RTX 3080，SM86，68 SM，GPU UUID `GPU-7c5e95c0-e5a4-15d8-24a0-c8c8b58d6f39`。
 - CUDA compiler/runtime 13.3，NCU 2026.2.1，NSYS 2026.1.3，driver 591.86。
 - strict FP32；caller stream；zero hot-path allocation；workspace 恒为 `4*E` bytes；数学、mapping 和输入边界配对一致。
-- seed `20260729`；5 processes；20 warmups；30 samples；L1 repeats=1、L2 repeats=10、cold repeats=1。
+- seed `20260729`；5 processes。初始套件为 20 warmups/30 samples/L2 repeats=10；最终 selection 为 50 warmups/50 samples/warm L2 repeats=100；最终 library 对照为 repeats=50。
 - 当前为非独占桌面 GPU；采样时存在非 CUDA 的桌面图形上下文。没有擅自关闭用户应用，稳定性限制按原样计入 gate。
 
 ## 3. Correctness capability
 
 - CTest：8/8 passed。
 - Compute Sanitizer：memcheck、initcheck、racecheck、synccheck 全部 passed。
-- 两轮 candidate Release 共 1920 records，library/chain Release 140 records；全部 `validation.ok=true`，均为单一 GPU UUID、单一 clean SHA。
+- 初始两轮 candidate Release 共 1920 records，初始 library/chain Release 140 records；新增 selection 两轮 960 records、selected library 75 records。全部 `validation.ok=true`，每个 suite 内均为单一 GPU UUID、单一 clean SHA。
 - 覆盖 scalar/vector path、Top-2 与 generic Top-K fallback、duplicate expert route、optional inverse mapping、unaligned payload、redzone、caller stream 和 overflow/invalid dispatch。
-- 五个 explicit implementation ID 可用；未知 ID 拒绝。Auto dispatch 未改变。
+- 五个 explicit implementation ID 可用；未知 ID 拒绝。`cuda_candidate`/`cuda_candidate_from_ids` 的记录均确认 `implementation_id=4`；Auto dispatch 未改变。
 
 ## 4. Initial low-repeat matrix（历史）
 
@@ -63,36 +63,36 @@ Token-owned Top-2 的主要收益来自 `T=2048,K=256`：selection 1 的 uniform
 | wide/hot atomic-256 | 45.773 | 44,742,729 | 89,485,459 | 734.14 | 0.511 |
 | wide/hot token-owned | 45.670 | 44,843,050 | 89,686,100 | 735.79 | 0.976 |
 
-## 5. Library baseline 与 L3 capability
+## 5. Selected candidate 与 library baseline
 
-以下均为同一 clean build 的 median-of-process-medians。所有 full-from-ids/L3 组也存在 CV 超限，只用于定位能力。
+最终 full-from-ids 套件使用 50 warmups、50 samples、每 sample 50 calls；以下为 250 raw samples 的 median-of-process-medians。candidate 和 naive workspace 为 772 B（tail 100 B）；vLLM 为 16,928–66,080 B。
 
-| Boundary / case | vLLM or naive (us) | cuda naive (us) | cuda candidate (us) | Candidate workspace |
-|---|---:|---:|---:|---:|
-| full-from-ids tail | vLLM 28.160 | 120.934 | 38.093 | 100 B |
-| full-from-ids anchor uniform | vLLM 70.144 | 105.574 | 37.683 | 772 B |
-| full-from-ids anchor Zipf-1.4 | vLLM 31.232 | 106.598 | 40.141 | 772 B |
-| full-from-ids large uniform | vLLM 37.581 | 45.056 | 44.851 | 772 B |
-| full-from-ids large single-hot | vLLM 72.602 | 54.579 | 142.438 | 772 B |
-| L3 chain from tokens | naive 87.040 | n/a | permute-candidate 76.288 | 64 B |
-| L3 chain from logits | naive 71.168 | n/a | permute-candidate 40.960 | 64 B |
+| Full-from-ids case | vLLM p50/CV | cuda naive p50/CV | selected candidate p50/CV | candidate vs naive | candidate vs vLLM |
+|---|---:|---:|---:|---:|---:|
+| tail | 26.061 us / 0.079 | 35.348 / 0.065 | 34.826 / 0.027 | 1.015x | 0.748x |
+| anchor uniform | 30.812 / 0.028 | 41.277 / 0.067 | 40.274 / 0.055 | 1.025x | 0.765x |
+| anchor Zipf-1.4 | 30.853 / 0.035 | 41.636 / 0.066 | 41.011 / 0.055 | 1.015x | 0.752x |
+| large uniform | 33.403 / 0.139 | 42.988 / 0.047 | 43.141 / 0.045 | 0.996x | 0.774x |
+| large single-hot | 32.625 / 0.108 | 47.923 / 0.049 | 46.182 / 0.045 | 1.038x | 0.706x |
 
-Prepared-mapping 是 copy 上界诊断，不是 full-from-ids：tail/anchor/wide-hot 的 vLLM `expand_rows` p50 分别为 8.192/10.240/57.344 us，in-tree candidate 分别为 9.216/9.216/45.056 us。两者 `excluded_steps` 和 workspace 合同不同，严格比较器拒绝生成 promotion speedup；本报告保留原值而不伪造配对结论。
+Selected candidate 相对仓库 `cuda_naive_from_ids`：4/5 case 加速、ratio-of-sums 1.0182x；相对 vLLM full-from-ids：0/5 case 加速、ratio-of-sums 0.7484x，即 candidate aggregate latency 约高 33.6%。后者是明确保留的 library capability gap，不用 prepared-mapping 数字掩盖。
+
+Prepared-mapping 仍只作为 copy 上界诊断；它与 full-from-ids 的 `excluded_steps` 和 workspace 合同不同，不参与上述 ratio。
 
 ## 6. NSYS
 
 NSYS 使用 CUDA/NVTX、`--sample=none --cpuctxsw=none`。Profiler duration 仅诊断：
 
-- anchor L2 的 kernel median：naive 3.168 us，atomic-128 2.736 us；各 6 instances。
-- chain-from-tokens 中 permute median：naive 1.728 us（kernel time 9.8%），candidate 1.696 us（9.6%）。
-- chain-from-logits 中 permute median：naive 1.744 us（11.7%），candidate 1.712 us（11.5%）。
-- 两条 chain 的 kernel 数不变；candidate 没有引入额外 chain launch。Block-partial 独立候选仍为 placement+copy 两个 kernel。
+- prepared selected candidate 的 token-owned kernel median 为 2.736 us（6 instances）。
+- full candidate-from-ids 的 histogram/scan/token-owned medians 为 1.456/3.072/2.736 us，共 3 个 kernel。
+- vLLM full-from-ids 的 radix-sort/offset/expand medians为 7.328/2.848/3.248 us；initialize_source_rows 只出现一次。
+- Block-partial 负面候选仍为 placement+copy 两个 kernel；selected candidate 没有增加该额外 launch。
 
-这些 trace 说明 atomic-128 的 launch 结构正确，但微小的 profiler 内核差异远小于 unprofiled Release 抖动，不能覆盖 promotion 失败。
+这些 trace 用于核对 dispatch 和 pipeline 组成；Release latency 仍以上一节的未采 profiler 数据为准。
 
 ## 7. NCU
 
-NCU 使用 `--clock-control none`，先 basic，再只对 anchor 和 wide/hot 的 naive/atomic-128 做 detailed。Duration 不作为 Release latency。
+NCU 使用 `--clock-control none`。五候选 initial basic 仍保留；selected follow-up 对 anchor 和 wide/hot 的 naive/token-owned 做 detailed。Duration 不作为 Release latency。
 
 | Kernel / case | Waves/SM | Registers | Achieved occ. | SM % | DRAM % |
 |---|---:|---:|---:|---:|---:|
@@ -106,14 +106,14 @@ NCU 使用 `--clock-control none`，先 basic，再只对 anchor 和 wide/hot �
 
 Detailed physical traffic：
 
-| Case | Physical DRAM read/write | Logical bytes | L2 hit | Local load/store |
+| Case | Grid / waves | Physical DRAM read/write | L2 hit | Local load/store |
 |---|---:|---:|---:|---:|
-| anchor naive | 533,376 / 124,800 B | 2,109,440 B | 71.3% | 0 / 0 |
-| anchor atomic-128 | 534,656 / 36,224 B | 2,109,440 B | 71.4% | 0 / 0 |
-| wide/hot naive | 8,409,600 / 14,274,688 B | 33,603,584 B | 73.2% | 0 / 0 |
-| wide/hot atomic-128 | 8,413,056 / 16,666,368 B | 33,603,584 B | 73.4% | 0 / 0 |
+| anchor naive | 1024 / 1.255 | 533,376 / 209,792 B | 71.3% | 0 / 0 |
+| anchor token-owned | 512 / 0.627 | 535,296 / 177,536 B | 69.7% | 0 / 0 |
+| wide/hot naive | 4096 / 5.020 | 8,409,472 / 15,910,144 B | 74.1% | 0 / 0 |
+| wide/hot token-owned | 2048 / 2.510 | 8,411,520 / 15,887,744 B | 67.2% | 0 / 0 |
 
-当前 NCU metric alias 对 global sector 总数报告 `not_collected`，但 global request、DRAM bytes、hit rate、stall 和 local memory 状态均保留在 `ncu_metrics.json/csv`。Vector path 把 registers/thread 从 26 提高到 38；anchor occupancy 降低，wide/hot 已接近高 occupancy 且 DRAM 约 86%，与“只靠 float4 不会普遍获胜”的 Release 结果一致。
+Token-owned 将 Top-2 grid 减半，registers/thread 为 34（naive 26），没有 spill。Anchor underfill 下 NCU diagnostic duration 8.864 us，和 naive 8.768 us 基本相同；wide/hot 为 38.592 us，低于 naive 40.320 us，且 DRAM 约 85.2%。这解释了 selection 中 anchor 持平、large/wide 获益的形状分布。
 
 ## 8. Reproduction
 
@@ -121,7 +121,9 @@ Detailed physical traffic：
 ctest --preset test-rtx3080-sm86-release --output-on-failure
 python scripts\run_sanitizers.py --build-dir out\build\rtx3080-sm86-release --output-dir out\sanitizer\rtx3080-permute-candidate
 python scripts\run_benchmarks.py --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\benchmark_permute_candidate_release.json --output out\benchmark\permute-candidate-release.jsonl
+python scripts\run_benchmarks.py --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\benchmark_permute_candidate_selection_release.json --output out\benchmark\permute-candidate-selection-release.jsonl
 python scripts\run_benchmarks.py --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\benchmark_permute_library_release.json --output out\benchmark\permute-library-release.jsonl
+python scripts\run_benchmarks.py --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\benchmark_permute_selected_library_release.json --output out\benchmark\permute-selected-library-release.jsonl
 python scripts\profile_benchmarks.py compute --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\profile_permute_candidate.json --run-dir out\profile\permute-sm86\ncu
 python scripts\profile_benchmarks.py analyze --run-dir out\profile\permute-sm86\ncu
 ```
@@ -129,3 +131,5 @@ python scripts\profile_benchmarks.py analyze --run-dir out\profile\permute-sm86\
 Raw `.ncu-rep`、`.nsys-rep`、`.sqlite` 只保存在本地忽略目录；versioned evidence bundle 只提交 raw benchmark/text/JSON/CSV、sanitizer logs、profiler normalized outputs、raw report inventory hashes 和 `SHA256SUMS`。
 
 Versioned evidence：[artifact bundle](artifacts/20260802T185236Z-5cb9bd4-permute-sm86-candidates-v1/)；[bundle manifest](artifacts/20260802T185236Z-5cb9bd4-permute-sm86-candidates-v1/manifest.json)；[SHA256SUMS](artifacts/20260802T185236Z-5cb9bd4-permute-sm86-candidates-v1/SHA256SUMS)。
+
+Selected token-owned follow-up evidence：[artifact bundle](artifacts/20260803T071455Z-af4947f-permute-selected-token-owned-v1/)；[manifest](artifacts/20260803T071455Z-af4947f-permute-selected-token-owned-v1/manifest.json)；[SHA256SUMS](artifacts/20260803T071455Z-af4947f-permute-selected-token-owned-v1/SHA256SUMS)。

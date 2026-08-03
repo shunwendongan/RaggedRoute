@@ -1,0 +1,5 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+53.6,43999,6,7333.2,7328.0,7327,7360,13.2,"void cub::_V_300304_SM_860::detail::radix_sort::DeviceRadixSortSingleTileKernel<cub::_V_300304_SM_860::detail::radix_sort::policy_selector_from_types<int, int, unsigned int>, (cub::_V_300304_SM_860::SortOrder)0, int, int, unsigned int, cub::_V_300304_SM_860::detail::identity_decomposer_t>(const T3 *, T3 *, const T4 *, T4 *, T5, int, int, T6)"
+23.9,19584,6,3264.0,3248.0,3232,3360,49.6,"void raggedroute::benchmark::library_baseline::<unnamed>::expand_rows<(bool)1>(const float *, float *, const int *, int *, int *, int, int, int)"
+20.8,17056,6,2842.7,2848.0,2816,2880,24.1,"raggedroute::benchmark::library_baseline::<unnamed>::compute_expert_offsets(const int *, int, int, long long *)"
+1.7,1375,1,1375.0,1375.0,1375,1375,0.0,"raggedroute::benchmark::library_baseline::<unnamed>::initialize_source_rows(int *, int)"

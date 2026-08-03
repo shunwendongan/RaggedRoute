@@ -27,4 +27,6 @@
 - 后续增加 L2-only 高重复 selection suite（50 warmups、50 samples、warm-case repeats=100）。token-owned Top-2 在两轮中均排名第一，ratio-of-sums 为 1.0456x/1.0463x，因此 `cuda_candidate` alias 已绑定 implementation ID 4；generic top-k 仍由该实现内部回退 atomic-128。
 - vLLM full-from-ids、prepared mapping、L3、NSYS 与 NCU 只用于 selected candidate 的能力定位；`KernelFamily::kAuto` 是否晋升仍与 explicit `cuda_candidate` alias 分开处理。
 
-完整数据、能力矩阵和 profiler 摘要：[中央报告](../reports/rtx3080-permute-sm86-5cb9bd4.md)；[artifact bundle](../reports/artifacts/20260802T185236Z-5cb9bd4-permute-sm86-candidates-v1/)。
+最终 high-repeat library 对照中，`cuda_candidate_from_ids` 相对 `cuda_naive_from_ids` ratio-of-sums 为 1.0182x（4/5 case 加速）；相对 vLLM full-from-ids 为 0.7484x，即 aggregate latency 约高 33.6%。
+
+完整数据、能力矩阵和 profiler 摘要：[中央报告](../reports/rtx3080-permute-sm86-5cb9bd4.md)；[initial bundle](../reports/artifacts/20260802T185236Z-5cb9bd4-permute-sm86-candidates-v1/)；[selected token-owned bundle](../reports/artifacts/20260803T071455Z-af4947f-permute-selected-token-owned-v1/)。

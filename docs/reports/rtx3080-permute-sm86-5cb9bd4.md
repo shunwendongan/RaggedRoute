@@ -120,11 +120,11 @@ Token-owned 将 Top-2 grid 减半，registers/thread 为 34（naive 26），没�
 ```powershell
 ctest --preset test-rtx3080-sm86-release --output-on-failure
 python scripts\run_sanitizers.py --build-dir out\build\rtx3080-sm86-release --output-dir out\sanitizer\rtx3080-permute-candidate
-python scripts\run_benchmarks.py --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\benchmark_permute_candidate_release.json --output out\benchmark\permute-candidate-release.jsonl
-python scripts\run_benchmarks.py --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\benchmark_permute_candidate_selection_release.json --output out\benchmark\permute-candidate-selection-release.jsonl
-python scripts\run_benchmarks.py --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\benchmark_permute_library_release.json --output out\benchmark\permute-library-release.jsonl
-python scripts\run_benchmarks.py --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\benchmark_permute_selected_library_release.json --output out\benchmark\permute-selected-library-release.jsonl
-python scripts\profile_benchmarks.py compute --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\profile_permute_candidate.json --run-dir out\profile\permute-sm86\ncu
+python scripts\run_benchmarks.py --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\operators\permute\benchmark\candidate_release.json --output out\benchmark\permute-candidate-release.jsonl
+python scripts\run_benchmarks.py --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\operators\permute\benchmark\candidate_selection_release.json --output out\benchmark\permute-candidate-selection-release.jsonl
+python scripts\run_benchmarks.py --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\operators\permute\benchmark\library_release.json --output out\benchmark\permute-library-release.jsonl
+python scripts\run_benchmarks.py --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\operators\permute\benchmark\selected_library_release.json --output out\benchmark\permute-selected-library-release.jsonl
+python scripts\profile_benchmarks.py compute --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config configs\operators\permute\profile\candidate.json --run-dir out\profile\permute-sm86\ncu
 python scripts\profile_benchmarks.py analyze --run-dir out\profile\permute-sm86\ncu
 ```
 

@@ -94,7 +94,7 @@ E=29..64，5 independent processes、100 samples/process、1000 repeats/sample�
 - [候选 raw/aggregate/comparison、NCU/NSYS CSV/JSON、sanitizer logs](artifacts/scan-sm86-research-32bf6c9/)
 - [clean-main CUB/naive baseline](artifacts/scan-library-main-927c585/)
 - 二进制 `.ncu-rep/.nsys-rep` 不提交；文件名、大小、SHA256 和工具命令记录在 manifests/SHA256SUMS 中。
-- 最终可执行配置：`configs/benchmark_scan_library_smoke.json`、`configs/benchmark_scan_library_release.json`、`configs/profile_scan_library.json` 和 `.codex/kernel-research.json`。
+- 最终可执行配置：`configs/operators/scan/benchmark/library_smoke.json`、`configs/operators/scan/benchmark/library_release.json`、`configs/operators/scan/profile/library.json` 和 `.codex/campaigns/scan.json`。
 
 ## 后续
 

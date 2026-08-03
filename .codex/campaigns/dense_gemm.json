@@ -1,0 +1,13 @@
+{
+  "schema_version": "codex.kernel-research.v1",
+  "commands": {
+    "build": ["cmd /c scripts\\configure_windows.bat rtx3080-sm86-release", "cmd /c scripts\\build_windows.bat rtx3080-sm86-release"],
+    "correctness": ["ctest --preset test-rtx3080-sm86-release --output-on-failure"],
+    "smoke": ["python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\dense_gemm\\benchmark\\candidate_v3_smoke.json --output out\\benchmark\\dense-v3-smoke.jsonl"],
+    "release": ["python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\dense_gemm\\benchmark\\candidate_v3_release.json --output out\\benchmark\\dense-v3-release.jsonl"]
+  },
+  "benchmark": {"binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe", "profile_cases": [{"name": "dense.m1024_n1024_k1024", "arguments": ["--operator", "dense_gemm", "--variant", "cuda_register_tiled_v3_64x32_async", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "M=1024", "--param", "N=1024", "--param", "K=1024"], "kernel_regex": "dense_gemm_register_tiled_v3_64x32_async_kernel"}], "kernel_regex": "dense_gemm_(register_tiled_v3_64x32_async|register_tiled_v2|naive)_kernel"},
+  "variants": {"baseline": "min(cublas,cublaslt)", "candidate": "cuda_register_tiled_v3_64x32_async"},
+  "output": {"root": "out\\profile", "retention": {"keep_raw_for": ["baseline", "promoted", "final"], "rejected_candidate": "metrics-and-reason"}},
+  "promotion_policy": {"version": "dense-strict-fp32-v2", "min_processes": 3, "median_speedup": 1.05, "p95_regression_tolerance": 0.03, "max_shape_regression": 0.05, "max_workspace_growth": 0.0}
+}

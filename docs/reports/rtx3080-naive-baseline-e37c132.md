@@ -6,7 +6,7 @@
 
 - tested commit：`e37c132ae2879c4ce6a74be9823da980a1c9f717`
 - run id：`20260729T134736Z-e37c132ae287-rtx3080_baseline_release_v1`
-- suite：`configs/benchmark_rtx3080_release.json`
+- suite：`configs/project/benchmark/rtx3080_release.json`
 - GPU：NVIDIA GeForce RTX 3080，10 GiB，SM 8.6，68 SM
 - driver：591.86；CUDA compiler：13.3.73；记录中的 CUDA runtime/driver API version 字段均为 `13010`
 - build：Release、`sm_86`、clean Git；二进制内嵌 SHA 为 `e37c132ae287`
@@ -66,7 +66,7 @@ ctest --preset test-rtx3080-sm86-release
 
 python scripts\run_benchmarks.py `
   --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
-  --config configs\benchmark_rtx3080_release.json `
+  --config configs\project\benchmark\rtx3080_release.json `
   --output reports\runs\rtx3080-release.jsonl
 
 python scripts\aggregate_results.py reports\runs\rtx3080-release.jsonl `
@@ -74,4 +74,4 @@ python scripts\aggregate_results.py reports\runs\rtx3080-release.jsonl `
   --csv reports\runs\rtx3080-release.aggregate.csv
 ```
 
-正式 candidate/baseline 对比必须重新在同一 tested commit lineage、同一 GPU UUID、同一 case/seed/math semantics 下运行，并由 `configs/benchmark_promotion_policy.json` 做晋升判定。
+正式 candidate/baseline 对比必须重新在同一 tested commit lineage、同一 GPU UUID、同一 case/seed/math semantics 下运行，并由 `configs/policies/default_promotion.json` 做晋升判定。

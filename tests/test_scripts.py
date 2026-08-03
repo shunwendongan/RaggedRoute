@@ -115,13 +115,15 @@ class SuiteTests(unittest.TestCase):
         self.assertNotIn("FetchContent_Declare(raggedroute_cutlass_source", dependencies)
 
     def test_smoke_suite_is_versioned_and_unique(self) -> None:
-        suite = run_benchmarks.load_suite(ROOT / "configs" / "benchmark_smoke.json")
+        suite = run_benchmarks.load_suite(
+            ROOT / "configs" / "project" / "benchmark" / "smoke.json"
+        )
         self.assertEqual(suite["schema_version"], "raggedroute.suite.v1")
         self.assertEqual(len(suite["cases"]), 9)
 
     def test_library_smoke_suite_has_strong_promotion_baselines(self) -> None:
         suite = run_benchmarks.load_suite(
-            ROOT / "configs" / "benchmark_library_smoke.json"
+            ROOT / "configs" / "project" / "benchmark" / "library_smoke.json"
         )
         self.assertEqual(suite["schema_version"], "raggedroute.suite.v2")
         self.assertEqual(len(suite["cases"]), 6)
@@ -135,7 +137,7 @@ class SuiteTests(unittest.TestCase):
 
     def test_library_release_suite_is_strict_and_uses_strong_baselines(self) -> None:
         suite = run_benchmarks.load_suite(
-            ROOT / "configs" / "benchmark_rtx3080_library_release.json"
+            ROOT / "configs" / "project" / "benchmark" / "rtx3080_library_release.json"
         )
         self.assertEqual(suite["schema_version"], "raggedroute.suite.v2")
         self.assertEqual(suite["protocol"], "release")
@@ -149,7 +151,7 @@ class SuiteTests(unittest.TestCase):
 
     def test_profile_v2_covers_all_operators_and_skips_warmups(self) -> None:
         config = profile_benchmarks.load_config(
-            ROOT / "configs" / "profile_representative.json"
+            ROOT / "configs" / "project" / "profile" / "representative.json"
         )
         self.assertEqual(config["schema_version"], "raggedroute.profile_suite.v2")
         self.assertEqual(
@@ -372,7 +374,9 @@ class SuiteTests(unittest.TestCase):
                     run_benchmarks.load_suite(path)
 
     def test_stateful_repeat_override_is_applied(self) -> None:
-        suite = run_benchmarks.load_suite(ROOT / "configs" / "benchmark_smoke.json")
+        suite = run_benchmarks.load_suite(
+            ROOT / "configs" / "project" / "benchmark" / "smoke.json"
+        )
         case = next(case for case in suite["cases"] if case["operator"] == "token_permute")
         command = run_benchmarks.case_command(
             pathlib.Path("bench"), suite, case, "l1", 1, "run", pathlib.Path("out.jsonl")
@@ -413,7 +417,7 @@ class SuiteTests(unittest.TestCase):
 
     def test_release_gate_rejects_dirty_or_too_few_runs(self) -> None:
         suite = run_benchmarks.load_suite(
-            ROOT / "configs" / "benchmark_rtx3080_release.json"
+            ROOT / "configs" / "project" / "benchmark" / "rtx3080_release.json"
         )
         with self.assertRaises(ValueError):
             run_benchmarks.validate_release(suite, True)
@@ -632,7 +636,7 @@ class SuiteTests(unittest.TestCase):
 
     def test_cross_backend_suite_and_pairing_remain_reference_only(self) -> None:
         suite = run_cross_backend.load_suite(
-            ROOT / "configs" / "benchmark_rtx3080_cross_backend_smoke.json"
+            ROOT / "configs" / "cross_backend" / "benchmark" / "l1_l2_smoke.json"
         )
         self.assertEqual(suite["schema_version"], "raggedroute.cross_backend_suite.v1")
         self.assertEqual({case["operator"] for case in suite["cases"]}, {
@@ -677,7 +681,7 @@ class SuiteTests(unittest.TestCase):
 
     def test_cross_backend_l3_is_full_chain_only(self) -> None:
         suite = run_cross_backend.load_suite(
-            ROOT / "configs" / "benchmark_rtx3080_cross_backend_l3_smoke.json"
+            ROOT / "configs" / "cross_backend" / "benchmark" / "l3_smoke.json"
         )
         case = suite["cases"][0]
         self.assertEqual(case["suite"], "chain_from_tokens")
@@ -722,7 +726,13 @@ class SuiteTests(unittest.TestCase):
 
     def test_triton_profile_config_covers_three_levels(self) -> None:
         config = json.loads(
-            (ROOT / "configs" / "profile_triton_three_levels.json").read_text(
+            (
+                ROOT
+                / "configs"
+                / "cross_backend"
+                / "profile"
+                / "triton_three_levels.json"
+            ).read_text(
                 encoding="utf-8"
             )
         )

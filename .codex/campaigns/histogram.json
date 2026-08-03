@@ -1,0 +1,13 @@
+{
+  "schema_version": "codex.kernel-research.v1",
+  "commands": {
+    "build": ["cmd /c scripts\\configure_windows.bat rtx3080-sm86-release", "cmd /c scripts\\build_windows.bat rtx3080-sm86-release"],
+    "correctness": ["ctest --preset test-rtx3080-sm86-release --output-on-failure"],
+    "smoke": ["python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\histogram\\benchmark\\candidate_smoke.json --output out\\benchmark\\histogram-smoke.jsonl"],
+    "release": ["python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\histogram\\benchmark\\candidate_l1_release.json --output out\\benchmark\\histogram-l1.jsonl", "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\histogram\\benchmark\\candidate_l2_release.json --output out\\benchmark\\histogram-l2.jsonl"]
+  },
+  "benchmark": {"binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe", "profile_cases": [{"name": "histogram.uniform.r1m_e64", "arguments": ["--operator", "histogram", "--variant", "cuda_candidate", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=524288", "--param", "E=64", "--param", "top_k=2", "--param", "distribution=uniform"], "kernel_regex": "histogram_block_private_kernel"}], "kernel_regex": "histogram_(single_cta_shared|block_private)_kernel"},
+  "variants": {"baseline": "min(cuda_naive,cub_device_histogram)", "candidate": "cuda_candidate"},
+  "output": {"root": "out\\profile", "retention": {"keep_raw_for": ["baseline", "promoted", "final"], "rejected_candidate": "metrics-and-reason"}},
+  "promotion_policy": {"version": "histogram-strongest-baseline-v1", "min_processes": 5, "median_speedup": 1.05, "p95_regression_tolerance": 0.03, "max_shape_regression": 0.05, "max_workspace_growth": 0.0}
+}

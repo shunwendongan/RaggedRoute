@@ -90,7 +90,7 @@ NSYS trace 位于 `profile/dense-gemm-365f273-industrial-profile-v1/nsys-*-l2/`�
 
 ```powershell
 python scripts\run_benchmarks.py --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
-  --config configs\benchmark_dense_gemm_industrial_supplement.json `
+  --config configs\operators\dense_gemm\benchmark\industrial_supplement.json `
   --output profile\dense-gemm-365f273-industrial-v1\release.jsonl
 python scripts\aggregate_results.py profile\dense-gemm-365f273-industrial-v1\release.jsonl `
   --json profile\dense-gemm-365f273-industrial-v1\aggregate.json `

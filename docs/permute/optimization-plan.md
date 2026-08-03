@@ -30,7 +30,7 @@
 
 ## 4. Release 测量与晋升
 
-正式配置为 `configs/benchmark_permute_candidate_release.json`：seed `20260729`，5 个独立进程，20 warmups、30 samples；L1 stateful kernel repeats 为 1，L2 为 10，cold scrub 为 1。覆盖 tiny/tail、sorted on/off、uniform/Zipf/single-hot、K tail、generic top-k、large/wide 和 64 MiB cold scrub。
+正式配置为 `configs/operators/permute/benchmark/candidate_release.json`：seed `20260729`，5 个独立进程，20 warmups、30 samples；L1 stateful kernel repeats 为 1，L2 为 10，cold scrub 为 1。覆盖 tiny/tail、sorted on/off、uniform/Zipf/single-hot、K tail、generic top-k、large/wide 和 64 MiB cold scrub。
 
 报告 p50/p90/p95、mean、stddev、CV、per-shape speedup、ratio-of-sums、tokens/s、route-rows/s、logical effective GB/s、workspace 和 kernel launch 数。logical bytes 与 NCU physical DRAM/L2 bytes 分开报告。
 

@@ -128,9 +128,9 @@ def main() -> int:
         "command_contract": {
             "correctness": "ctest --preset test-rtx3080-sm86-release --output-on-failure",
             "sanitizers": "python scripts/run_sanitizers.py --build-dir out/build/rtx3080-sm86-release --output-dir out/sanitizer/rtx3080-topk-gate",
-            "release": "python scripts/run_benchmarks.py --binary out/build/rtx3080-sm86-release/raggedroute_benchmark.exe --config configs/benchmark_topk_gate_release.json --output out/benchmark/topk-gate-release.jsonl",
+            "release": "python scripts/run_benchmarks.py --binary out/build/rtx3080-sm86-release/raggedroute_benchmark.exe --config configs/operators/topk_gate/benchmark/release.json --output out/benchmark/topk-gate-release.jsonl",
             "nsys": "nsys profile --trace=cuda,nvtx --sample=none --cpuctxsw=none ... --profile-once",
-            "ncu": "python scripts/profile_benchmarks.py compute --config configs/profile_topk_gate_optimization.json --run-dir out/profile/topk-gate-ncu",
+            "ncu": "python scripts/profile_benchmarks.py compute --config configs/operators/topk_gate/profile/optimization.json --run-dir out/profile/topk-gate-ncu",
         },
     }
     manifest_path = destination / "manifest.json"

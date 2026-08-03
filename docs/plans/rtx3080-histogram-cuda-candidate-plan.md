@@ -36,7 +36,7 @@ launch/underfill、global/shared atomic、memory transactions、occupancy 和 st
 
 | 位置 | 当前职责 | 本轮约束 |
 |---|---|---|
-| `src/histogram/baseline.cu` | 256 threads/CTA、grid-stride、每项 global atomic | 保持为不可变 oracle-side CUDA baseline |
+| `src/histogram/cuda_naive/baseline.cu` | 256 threads/CTA、grid-stride、每项 global atomic | 保持为不可变 oracle-side CUDA baseline |
 | `src/histogram/operator.cpp` | 参数检查；L2 先 `cudaMemsetAsync(counts)` 再 launch | candidate 若覆盖写全部 counts，可安全跳过外部 reset；否则仍计入 L2 |
 | `src/histogram/library_baseline/cub_histogram.cu` | CUB DeviceHistogram L2 reference | 不修改算法；固定 CCCL provenance |
 | `src/histogram/cpu_reference/reference.cpp` | CPU bincount | exact correctness oracle |
@@ -157,9 +157,9 @@ candidate 的代码由本次 review 决定，但负结果、原始证据和 reje
 
 - `src/histogram/cuda_candidate/optimized_internal.h`：Histogram-local implementation IDs、合法性检查、launch API；
 - `src/histogram/cuda_candidate/optimized.cu`：H1/H2/H3（以及有条件的 H4）和最终 dispatcher；
-- `configs/benchmark_histogram_candidate_smoke.json`；
-- `configs/benchmark_histogram_candidate_release.json`；
-- `configs/profile_histogram_candidate.json`；
+- `configs/operators/histogram/benchmark/candidate_smoke.json`；
+- `configs/operators/histogram/benchmark/candidate_l1_release.json` 和 `candidate_l2_release.json`；
+- `configs/operators/histogram/profile/candidate.json`；
 - `docs/reports/rtx3080-histogram-candidate-<sha>.md` 和新的不可覆盖 artifact 目录。
 
 修改：

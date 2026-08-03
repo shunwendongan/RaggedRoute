@@ -44,7 +44,7 @@ the standard `triton` package and are also usable in a matching Linux environmen
 .\.venv-triton\Scripts\python.exe scripts\run_cross_backend_benchmarks.py `
   --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
   --python .\.venv-triton\Scripts\python.exe `
-  --config configs\benchmark_rtx3080_cross_backend_smoke.json `
+  --config configs\cross_backend\benchmark\l1_l2_smoke.json `
   --output out\benchmark\triton-cross-smoke.jsonl
 
 .\.venv-triton\Scripts\python.exe scripts\compare_cross_backend.py `
@@ -55,7 +55,7 @@ the standard `triton` package and are also usable in a matching Linux environmen
 .\.venv-triton\Scripts\python.exe scripts\run_cross_backend_benchmarks.py `
   --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe `
   --python .\.venv-triton\Scripts\python.exe `
-  --config configs\benchmark_rtx3080_cross_backend_l3_smoke.json `
+  --config configs\cross_backend\benchmark\l3_smoke.json `
   --output out\benchmark\triton-cross-l3-smoke.jsonl
 ```
 
@@ -66,8 +66,8 @@ Use it as an engineering reference when adding a future CUDA candidate; retain
 the existing fail-closed `compare_results.py` for promotion evidence.
 
 For release evidence, run both
-`configs/benchmark_rtx3080_cross_backend_release.json` (seven L1/L2 cases) and
-`configs/benchmark_rtx3080_cross_backend_l3_release.json` (one full L3 chain)
+`configs/cross_backend/benchmark/l1_l2_release.json` (seven L1/L2 cases) and
+`configs/cross_backend/benchmark/l3_release.json` (one full L3 chain)
 on a clean worktree. Both require three independent processes, 20 warmups, and
 30 samples.
 
@@ -75,17 +75,17 @@ Collect reproducible three-level profiler evidence with:
 
 ```powershell
 .\.venv-triton\Scripts\python.exe scripts\profile_triton_baselines.py system `
-  --config configs\profile_triton_three_levels.json `
+  --config configs\cross_backend\profile\triton_three_levels.json `
   --run-dir out\profile\triton-three-levels `
   --python .\.venv-triton\Scripts\python.exe
 
 .\.venv-triton\Scripts\python.exe scripts\profile_triton_baselines.py compute `
-  --config configs\profile_triton_three_levels.json `
+  --config configs\cross_backend\profile\triton_three_levels.json `
   --run-dir out\profile\triton-three-levels `
   --python .\.venv-triton\Scripts\python.exe
 
 .\.venv-triton\Scripts\python.exe scripts\profile_triton_baselines.py analyze `
-  --config configs\profile_triton_three_levels.json `
+  --config configs\cross_backend\profile\triton_three_levels.json `
   --run-dir out\profile\triton-three-levels
 ```
 

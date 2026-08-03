@@ -29,7 +29,7 @@
 - registry 为 typed adapter 注入标准实现元数据；`raggedroute.aggregate.v2` 从 v2 manifest 保留完整配对字段，`raggedroute.comparison.v1` 对 GPU/build/语义/math/seed/level/cache/repeats/排除项严格 fail-closed，并输出 per-pair speedup、shape geometric mean 和具备权重时的 trace ratio-of-sums；
 - benchmark-only library/production variants：Dense GEMM `cublaslt`/`cublas`；Histogram `cub_device_histogram`；Scan `cub_device_scan`/`cub_block_scan`/`cub_warp_scan`；Permute `cuda_naive_from_ids`、`vllm_moe_permute` 与 prepared-mapping `vllm_expand_rows`；Grouped GEMM `cublas_per_expert`、可选 `cutlass_grouped` 及 SM86 strict-FP32 C0-C4/final 实验候选；Unpermute `vllm_finalize_routing`。它们不进入 v0.2 runtime dispatch；Grouped final 因十 shape CUTLASS 门禁失败而明确不晋级；Top-K 因 tie/NaN/selected-softmax 合同尚无语义等价库实现，明确不注册伪基线；
 - 每个 `src/<operator>/library_baseline/` 均有来源记录；vLLM 固定 commit `837eae64580c885101ee95b073aafb27a485e7ce` 的改写源码保留 Apache-2.0，CUTLASS 改写入口保留 BSD-3-Clause；不提交 CUDA/cuBLAS 二进制；
-- 新增 `configs/benchmark_library_smoke.json`，覆盖六个可严格配对的 library/production 边界；本机 SM86 Debug 已通过 raw JSONL → aggregate.v2 → comparison.v1 全链路及所有后置 reference validation。该 tiny Debug smoke 只验证接口和公平 join，不产生性能结论；
+- 新增 `configs/project/benchmark/library_smoke.json`，覆盖六个可严格配对的 library/production 边界；本机 SM86 Debug 已通过 raw JSONL → aggregate.v2 → comparison.v1 全链路及所有后置 reference validation。该 tiny Debug smoke 只验证接口和公平 join，不产生性能结论；
 - correctness、benchmark smoke、release benchmark、Nsight profile 四个独立入口；
 - RTX 3080（CUDA 13.3 / MSVC 19.50 / CMake 4.3.1）SM86 Debug/Release 均已在当前工具链迁移后重新构建，CTest 与 CUDA smoke 均已通过；CUTLASS v4.6.1 也在独立 Fetch Debug build 中编译并通过完整 CTest 和 grouped GEMM correctness；
 - commit `e37c132` 的 RTX 3080 正式 baseline suite 已完成：3 个独立进程、78 条 raw records、26 个聚合组、全部后置验证通过；结果与噪声限制见 [baseline report](reports/rtx3080-naive-baseline-e37c132.md)；

@@ -135,12 +135,16 @@ def main() -> int:
         "validation/summary.json": args.validation,
     }
     repo = pathlib.Path(__file__).resolve().parents[1]
-    for name in (
-        "benchmark_rtx3080_cross_backend_release.json",
-        "benchmark_rtx3080_cross_backend_l3_release.json",
-        "profile_triton_three_levels.json",
-    ):
-        files[f"configs/{name}"] = repo / "configs" / name
+    config_sources = {
+        "benchmark_rtx3080_cross_backend_release.json":
+            repo / "configs" / "cross_backend" / "benchmark" / "l1_l2_release.json",
+        "benchmark_rtx3080_cross_backend_l3_release.json":
+            repo / "configs" / "cross_backend" / "benchmark" / "l3_release.json",
+        "profile_triton_three_levels.json":
+            repo / "configs" / "cross_backend" / "profile" / "triton_three_levels.json",
+    }
+    for name, source in config_sources.items():
+        files[f"configs/{name}"] = source
     for relative, source in files.items():
         copy_file(source.resolve(), destination / relative)
 

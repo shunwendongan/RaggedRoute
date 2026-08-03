@@ -2,7 +2,7 @@
 
 ## 1. 当前范围
 
-- 代码入口：`src/unpermute/baseline.cu`、`src/unpermute/operator.cpp`。
+- 代码入口：`src/unpermute/cuda_naive/baseline.cu`、`src/unpermute/operator.cpp`。
 - API：`UnpermuteArgs`；按 `route_pos` 从 packed expert output gather，并按 route weights 做 weighted reduce。
 - 当前目标是 token-owned、无全局 atomic 的确定性合并；任何 fusion 方案都必须保持该语义。
 

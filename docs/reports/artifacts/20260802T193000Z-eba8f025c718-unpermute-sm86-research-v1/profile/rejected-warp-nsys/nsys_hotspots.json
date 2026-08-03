@@ -1,0 +1,18 @@
+[
+  {
+    "name": "void raggedroute::ops::<unnamed>::unpermute_warp_vec4_top2_kernel<(int)4, (int)1>(const float *, const int *, const float *, float *, int, int)",
+    "total_time": 66303.0,
+    "time_pct": 100.0,
+    "raw": {
+      "Time (%)": "100.0",
+      "Total Time (ns)": "66303",
+      "Instances": "21",
+      "Avg (ns)": "3157.3",
+      "Med (ns)": "3136.0",
+      "Min (ns)": "3103",
+      "Max (ns)": "3456",
+      "StdDev (ns)": "73.9",
+      "Name": "void raggedroute::ops::<unnamed>::unpermute_warp_vec4_top2_kernel<(int)4, (int)1>(const float *, const int *, const float *, float *, int, int)"
+    }
+  }
+]

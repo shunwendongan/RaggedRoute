@@ -1,0 +1,2 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+100.0,19360,6,3226.7,2736.0,2720,4256,772.9,"void raggedroute::ops::<unnamed>::token_permute_atomic_vectorized_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int, int)"

@@ -1,0 +1,2 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+100.0,42784,21,2037.3,2016.0,2016,2432,90.7,"void raggedroute::benchmark::library_baseline::<unnamed>::finalize_routing<(bool)1>(const float *, float *, const float *, const int *, int, int, int)"

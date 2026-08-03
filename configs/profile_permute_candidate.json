@@ -1,0 +1,19 @@
+{
+  "schema_version": "raggedroute.profile_suite.v1",
+  "suite_id": "permute_candidate_profile_v1",
+  "note": "Diagnostic only; profiler durations are not release scores.",
+  "seed": 20260729,
+  "cases": [
+    {"id": "permute.naive.anchor", "operator": "token_permute", "variant": "cuda_naive", "level": "l1", "warmup": 5, "set": "basic", "params": {"T": 512, "E": 64, "top_k": 2, "K": 256, "distribution": "zipf", "zipf_s": 1.4, "materialize_sorted_route": true}},
+    {"id": "permute.atomic128.anchor", "operator": "token_permute", "variant": "cuda_atomic_vectorized_128", "level": "l1", "warmup": 5, "set": "basic", "kernel_pattern": "token_permute_atomic_vectorized_kernel", "params": {"T": 512, "E": 64, "top_k": 2, "K": 256, "distribution": "zipf", "zipf_s": 1.4, "materialize_sorted_route": true}},
+    {"id": "permute.atomic64.anchor", "operator": "token_permute", "variant": "cuda_atomic_vectorized_64", "level": "l1", "warmup": 5, "set": "basic", "kernel_pattern": "token_permute_atomic_vectorized_kernel", "params": {"T": 512, "E": 64, "top_k": 2, "K": 256, "distribution": "zipf", "zipf_s": 1.4, "materialize_sorted_route": true}},
+    {"id": "permute.atomic256.anchor", "operator": "token_permute", "variant": "cuda_atomic_vectorized_256", "level": "l1", "warmup": 5, "set": "basic", "kernel_pattern": "token_permute_atomic_vectorized_kernel", "params": {"T": 512, "E": 64, "top_k": 2, "K": 256, "distribution": "zipf", "zipf_s": 1.4, "materialize_sorted_route": true}},
+    {"id": "permute.token_owned.anchor", "operator": "token_permute", "variant": "cuda_token_owned_top2", "level": "l1", "warmup": 5, "set": "basic", "kernel_pattern": "token_permute_token_owned_top2_kernel", "params": {"T": 512, "E": 64, "top_k": 2, "K": 256, "distribution": "zipf", "zipf_s": 1.4, "materialize_sorted_route": true}},
+    {"id": "permute.block_partial.placement.anchor", "operator": "token_permute", "variant": "cuda_block_partial", "level": "l1", "warmup": 5, "set": "basic", "kernel_pattern": "token_permute_block_partial_placement_kernel", "params": {"T": 512, "E": 64, "top_k": 2, "K": 256, "distribution": "zipf", "zipf_s": 1.4, "materialize_sorted_route": true}},
+    {"id": "permute.block_partial.copy.anchor", "operator": "token_permute", "variant": "cuda_block_partial", "level": "l1", "warmup": 5, "set": "basic", "kernel_pattern": "token_permute_copy_from_positions_kernel", "params": {"T": 512, "E": 64, "top_k": 2, "K": 256, "distribution": "zipf", "zipf_s": 1.4, "materialize_sorted_route": true}},
+    {"id": "permute.naive.anchor.detailed", "operator": "token_permute", "variant": "cuda_naive", "level": "l1", "warmup": 5, "set": "detailed", "params": {"T": 512, "E": 64, "top_k": 2, "K": 256, "distribution": "zipf", "zipf_s": 1.4, "materialize_sorted_route": true}},
+    {"id": "permute.candidate.anchor.detailed", "operator": "token_permute", "variant": "cuda_candidate", "level": "l1", "warmup": 5, "set": "detailed", "kernel_pattern": "token_permute_token_owned_top2_kernel", "params": {"T": 512, "E": 64, "top_k": 2, "K": 256, "distribution": "zipf", "zipf_s": 1.4, "materialize_sorted_route": true}},
+    {"id": "permute.naive.wide_hot.detailed", "operator": "token_permute", "variant": "cuda_naive", "level": "l1", "warmup": 5, "set": "detailed", "params": {"T": 2048, "E": 64, "top_k": 2, "K": 1024, "distribution": "single_hot", "zipf_s": 0.0, "materialize_sorted_route": true}},
+    {"id": "permute.candidate.wide_hot.detailed", "operator": "token_permute", "variant": "cuda_candidate", "level": "l1", "warmup": 5, "set": "detailed", "kernel_pattern": "token_permute_token_owned_top2_kernel", "params": {"T": 2048, "E": 64, "top_k": 2, "K": 1024, "distribution": "single_hot", "zipf_s": 0.0, "materialize_sorted_route": true}}
+  ]
+}

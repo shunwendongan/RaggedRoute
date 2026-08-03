@@ -1,0 +1,13 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "histogram_h2_smoke_v1",
+  "protocol": "smoke",
+  "process_runs": 1,
+  "common": {"warmup": 5, "samples": 10, "kernel_repeats": 20, "seed": 20260729, "cache_mode": "warm"},
+  "cases": [
+    {"id": "histogram.r128_e8.uniform.h2", "operator": "histogram", "levels": ["l2"], "kernel_repeats_by_level": {"l2": 100}, "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cub_device_histogram", "promotion_baseline": false}, {"name": "cuda_single_cta_shared", "promotion_baseline": false}], "params": {"T": 128, "E": 8, "top_k": 1, "distribution": "uniform", "zipf_s": 0.0}},
+    {"id": "histogram.r4096_e1.single_hot.h2", "operator": "histogram", "levels": ["l2"], "kernel_repeats_by_level": {"l2": 50}, "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cub_device_histogram", "promotion_baseline": false}, {"name": "cuda_single_cta_shared", "promotion_baseline": false}], "params": {"T": 4096, "E": 1, "top_k": 1, "distribution": "single_hot", "zipf_s": 0.0}},
+    {"id": "histogram.r4096_e64.zipf14.h2", "operator": "histogram", "levels": ["l2"], "kernel_repeats_by_level": {"l2": 50}, "variants": [{"name": "cuda_naive", "promotion_baseline": true}, {"name": "cub_device_histogram", "promotion_baseline": false}, {"name": "cuda_single_cta_shared", "promotion_baseline": false}], "params": {"T": 2048, "E": 64, "top_k": 2, "distribution": "zipf", "zipf_s": 1.4}},
+    {"id": "histogram.r65536_e64.single_hot.h2", "operator": "histogram", "levels": ["l2"], "variants": [{"name": "cub_device_histogram", "promotion_baseline": true}, {"name": "cuda_naive", "promotion_baseline": false}, {"name": "cuda_single_cta_shared", "promotion_baseline": false}], "params": {"T": 65536, "E": 64, "top_k": 1, "distribution": "single_hot", "zipf_s": 0.0}}
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "schema_version": "raggedroute.evidence_bundle.v1",
+  "run_id": "scan-library-main-927c585",
+  "created_utc": "2026-08-02T19:25:37.426105+00:00",
+  "benchmark_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-scan-research\\out\\evidence\\scan-library-main-927c585",
+  "extra_benchmark_sources": [],
+  "profile_source": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-scan-research\\profile\\scan-compute-32bf6c9",
+  "sanitizer_source": null,
+  "raw_profiler_reports": [
+    {
+      "name": "scan.blocked_scalar.e64.detailed.ncu-rep",
+      "bytes": 194454,
+      "sha256": "7388c0140fbcfd4109a47bfadcb86d2b9de60451e690c789cfdcd494eda489f8",
+      "committed": false
+    },
+    {
+      "name": "scan.blocked_vector.e64.detailed.ncu-rep",
+      "bytes": 193757,
+      "sha256": "4be8c237b0a37b8dccd03a5064fd93575017ca2d868cd9ebd05cac73cbb8253f",
+      "committed": false
+    },
+    {
+      "name": "scan.cub_block.e64.basic.ncu-rep",
+      "bytes": 296579,
+      "sha256": "9463bb312a61fe86454173f3da736063d13cd5769c34b65365d4d10984815788",
+      "committed": false
+    },
+    {
+      "name": "scan.naive.e64.basic.ncu-rep",
+      "bytes": 94288,
+      "sha256": "4a13a70c90ae85b979c5c82e9b6cc8936ba2f0ecab6b77c93c8130f2586a721e",
+      "committed": false
+    },
+    {
+      "name": "scan.striped.e32.basic.ncu-rep",
+      "bytes": 104380,
+      "sha256": "0200c0eb7cd2defd1e62d992e110a22c5145c192a99a4ae0a61324c1e1babba0",
+      "committed": false
+    },
+    {
+      "name": "scan.striped.e33.basic.ncu-rep",
+      "bytes": 104380,
+      "sha256": "b7b7f2793e82c686b3542fca08b77816480b70ab29a4b037e0d69f3cae48f728",
+      "committed": false
+    },
+    {
+      "name": "scan.striped.e64.detailed.ncu-rep",
+      "bytes": 194303,
+      "sha256": "6da608d0951341b189093679897064925d7fb7708d48bd19c1042fbfae3775a6",
+      "committed": false
+    }
+  ],
+  "policy": {
+    "profiler_duration_is_release_latency": false,
+    "raw_profiler_binaries_committed": false
+  }
+}

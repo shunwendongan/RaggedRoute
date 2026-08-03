@@ -57,6 +57,37 @@ void run_adapter_case(const Case& test_case, cudaStream_t stream, std::uint64_t 
   }
 }
 
+void run_histogram_candidate_matrix(cudaStream_t stream, std::uint64_t* seed) {
+  const std::vector<int> experts = {1, 8, 16, 31, 32, 33, 64};
+  const std::vector<int> route_pairs = {1, 31, 32, 33, 255, 256, 257, 4096, 65536};
+  const std::vector<std::pair<std::string, std::string>> distributions = {
+      {"uniform", "0.0"}, {"round_robin", "0.0"}, {"zipf", "1.0"},
+      {"zipf", "1.4"},    {"zipf", "2.0"},        {"single_hot", "0.0"},
+  };
+  for (std::size_t expert_index = 0; expert_index < experts.size(); ++expert_index) {
+    for (std::size_t route_index = 0; route_index < route_pairs.size(); ++route_index) {
+      const auto& distribution = distributions[(expert_index + route_index) % distributions.size()];
+      run_adapter_case({"histogram",
+                        {{"T", std::to_string(route_pairs[route_index])},
+                         {"E", std::to_string(experts[expert_index])},
+                         {"top_k", "1"},
+                         {"distribution", distribution.first},
+                         {"zipf_s", distribution.second}},
+                        "cuda_candidate"},
+                       stream, (*seed)++);
+    }
+  }
+  for (const int route_count : {32, 256, 4096, 65536}) {
+    run_adapter_case({"histogram",
+                      {{"T", std::to_string(route_count / 2)},
+                       {"E", "64"},
+                       {"top_k", "2"},
+                       {"distribution", "single_hot"}},
+                      "cuda_candidate"},
+                     stream, (*seed)++);
+  }
+}
+
 bool has_variant(const std::string& operator_name, const std::string& variant) {
   const auto variants = rr::available_variants(operator_name);
   return std::find(variants.begin(), variants.end(), variant) != variants.end();
@@ -212,6 +243,25 @@ int main() {
           {"topk_gate", {{"T", "3"}, {"E", "8"}, {"input_mode", "infinities"}}},
           {"histogram",
            {{"T", "11"}, {"E", "8"}, {"top_k", "2"}, {"distribution", "zipf"}, {"zipf_s", "1.4"}}},
+          {"histogram", {{"T", "1"}, {"E", "1"}, {"top_k", "1"}, {"distribution", "single_hot"}}},
+          {"histogram",
+           {{"T", "33"}, {"E", "31"}, {"top_k", "1"}, {"distribution", "round_robin"}}},
+          {"histogram", {{"T", "255"}, {"E", "32"}, {"top_k", "1"}, {"distribution", "uniform"}}},
+          {"histogram",
+           {{"T", "256"},
+            {"E", "33"},
+            {"top_k", "1"},
+            {"distribution", "zipf"},
+            {"zipf_s", "1.0"}}},
+          {"histogram",
+           {{"T", "257"},
+            {"E", "64"},
+            {"top_k", "1"},
+            {"distribution", "zipf"},
+            {"zipf_s", "2.0"}}},
+          {"histogram",
+           {{"T", "4096"}, {"E", "8"}, {"top_k", "1"}, {"distribution", "single_hot"}}},
+          {"histogram", {{"T", "65536"}, {"E", "16"}, {"top_k", "1"}, {"distribution", "uniform"}}},
           {"exclusive_scan", {{"E", "7"}, {"R", "23"}, {"distribution", "single_hot"}}},
           {"token_permute",
            {{"T", "5"},
@@ -262,12 +312,50 @@ int main() {
            {{"M", "5"}, {"N", "7"}, {"K", "3"}},
            "cuda_register_tiled_v3_64x32_async"},
           {"histogram", {{"T", "11"}, {"E", "8"}, {"top_k", "2"}}, "cub_device_histogram"},
+          {"histogram",
+           {{"T", "257"}, {"E", "64"}, {"top_k", "1"}, {"distribution", "single_hot"}},
+           "cuda_candidate"},
+          {"histogram",
+           {{"T", "8192"},
+            {"E", "33"},
+            {"top_k", "1"},
+            {"distribution", "zipf"},
+            {"zipf_s", "2.0"}},
+           "cuda_candidate"},
+          {"histogram",
+           {{"T", "32768"},
+            {"E", "33"},
+            {"top_k", "1"},
+            {"distribution", "zipf"},
+            {"zipf_s", "2.0"}},
+           "cuda_candidate"},
           {"exclusive_scan", {{"E", "7"}, {"R", "23"}}, "cub_device_scan"},
           {"exclusive_scan", {{"E", "33"}, {"R", "67"}}, "cub_block_scan"},
           {"exclusive_scan", {{"E", "31"}, {"R", "67"}}, "cub_warp_scan"},
           {"token_permute",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}},
            "cuda_naive_from_ids"},
+          {"token_permute",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}},
+           "cuda_atomic_vectorized_128"},
+          {"token_permute",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "8"}},
+           "cuda_atomic_vectorized_64"},
+          {"token_permute",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "8"}},
+           "cuda_atomic_vectorized_256"},
+          {"token_permute",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}},
+           "cuda_token_owned_top2"},
+          {"token_permute",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "8"}},
+           "cuda_block_partial"},
+          {"token_permute",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "8"}},
+           "cuda_candidate"},
+          {"token_permute",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}},
+           "cuda_candidate_from_ids"},
           {"token_permute",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}},
            "vllm_moe_permute"},
@@ -280,8 +368,25 @@ int main() {
            "cublas_per_expert"},
           {"grouped_gemm",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
-           "cutlass_grouped",
-           rr::MeasurementLevel::kKernelBody},
+           "cutlass_grouped", rr::MeasurementLevel::kKernelBody},
+          {"grouped_gemm",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
+           "cuda_grouped_tiled16_sync_v0"},
+          {"grouped_gemm",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
+           "cuda_grouped_persistent16_v1"},
+          {"grouped_gemm",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
+           "cuda_grouped_register16x32_sync_v2"},
+          {"grouped_gemm",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
+           "cuda_grouped_register16x32_async_v3"},
+          {"grouped_gemm",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
+           "cuda_grouped_register16x32_async_full_v4"},
+          {"grouped_gemm",
+           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
+           "cuda_grouped_sm86_fp32_v1"},
           {"unpermute",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"N", "7"}},
            "vllm_finalize_routing",
@@ -299,7 +404,36 @@ int main() {
                     << " - optional dependency unavailable\n";
         }
       }
-
+      run_histogram_candidate_matrix(stream, &seed);
+      const std::vector<rr::OptionMap> unpermute_candidate_shapes = {
+          {{"T", "1"}, {"E", "64"}, {"top_k", "1"}, {"N", "1"},
+           {"distribution", "round_robin"}},
+          {{"T", "17"}, {"E", "64"}, {"top_k", "2"}, {"N", "3"},
+           {"distribution", "uniform"}},
+          {{"T", "64"}, {"E", "64"}, {"top_k", "4"}, {"N", "4"},
+           {"distribution", "round_robin"}},
+          {{"T", "512"}, {"E", "64"}, {"top_k", "64"}, {"N", "7"},
+           {"distribution", "single_hot"}},
+          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"N", "63"},
+           {"distribution", "zipf"}, {"zipf_s", "1.4"}},
+          {{"T", "4096"}, {"E", "64"}, {"top_k", "2"}, {"N", "64"},
+           {"distribution", "uniform"}},
+          {{"T", "17"}, {"E", "64"}, {"top_k", "2"}, {"N", "65"},
+           {"distribution", "zipf"}, {"zipf_s", "1.4"}},
+          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"N", "255"},
+           {"distribution", "uniform"}},
+          {{"T", "1024"}, {"E", "64"}, {"top_k", "2"}, {"N", "256"},
+           {"distribution", "zipf"}, {"zipf_s", "1.4"}},
+          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"N", "257"},
+           {"distribution", "uniform"}},
+          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"N", "1024"},
+           {"distribution", "round_robin"}},
+          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"N", "256"},
+           {"distribution", "uniform"}, {"pointer_offset_elements", "1"}},
+      };
+      for (const auto& shape : unpermute_candidate_shapes) {
+        run_adapter_case({"unpermute", shape, "cuda_warp_token_vec4"}, stream, seed++);
+      }
       const std::vector<std::string> topk_candidates = {
           "cuda_warp_pair_top2_v1", "cuda_subwarp_pair_top2_v2", "cuda_vector_pair_top2_v3",
           "cub_block_radix_top2"};
@@ -362,19 +496,42 @@ int main() {
           run_adapter_case({"dense_gemm", shape, variant}, stream, seed++);
         }
       }
+      const std::vector<rr::OptionMap> grouped_edge_shapes = {
+          {{"T", "17"}, {"E", "8"}, {"top_k", "2"}, {"K", "13"}, {"N", "11"},
+           {"distribution", "zipf"}, {"zipf_s", "1.0"}},
+          {{"T", "16"}, {"E", "64"}, {"top_k", "2"}, {"K", "64"}, {"N", "64"},
+           {"distribution", "round_robin"}},
+          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"K", "128"}, {"N", "128"},
+           {"distribution", "single_hot"}},
+      };
+      for (const std::string& variant :
+           {"cuda_grouped_tiled16_sync_v0", "cuda_grouped_persistent16_v1",
+            "cuda_grouped_register16x32_sync_v2", "cuda_grouped_register16x32_async_v3",
+            "cuda_grouped_register16x32_async_full_v4",
+            "cuda_grouped_sm86_fp32_v1"}) {
+        for (const auto& shape : grouped_edge_shapes) {
+          run_adapter_case({"grouped_gemm", shape, variant}, stream, seed++);
+        }
+      }
       run_library_alignment_fallbacks(stream);
 
       for (const auto& suite_name : rr::available_suites()) {
-        auto chain = rr::make_suite_adapter(suite_name, "cuda_naive");
-        rr::OptionMap options = {
-            {"T", "5"}, {"E", "4"}, {"K", "7"}, {"N", "5"}, {"distribution", "uniform"}};
-        chain->setup(options, seed++, stream);
-        chain->prepare_sample(rr::MeasurementLevel::kChainSteady, stream);
-        chain->enqueue(rr::MeasurementLevel::kChainSteady, stream);
-        rr::cuda_check(cudaStreamSynchronize(stream), "chain correctness sync");
-        const auto validation = chain->validate(stream);
-        require(validation.ok, suite_name + ": " + validation.message);
-        std::cout << "PASS " << suite_name << " - " << validation.message << '\n';
+        for (const auto& variant : rr::available_suite_variants(suite_name)) {
+          auto chain = rr::make_suite_adapter(suite_name, variant);
+          rr::OptionMap options = {{"T", "5"},
+                                   {"E", "4"},
+                                   {"K", "7"},
+                                   {"N", "5"},
+                                   {"distribution", "uniform"}};
+          chain->setup(options, seed++, stream);
+          chain->prepare_sample(rr::MeasurementLevel::kChainSteady, stream);
+          chain->enqueue(rr::MeasurementLevel::kChainSteady, stream);
+          rr::cuda_check(cudaStreamSynchronize(stream), "chain correctness sync");
+          const auto validation = chain->validate(stream);
+          require(validation.ok, suite_name + "/" + variant + ": " + validation.message);
+          std::cout << "PASS " << suite_name << "/" << variant << " - "
+                    << validation.message << '\n';
+        }
       }
 
       auto permute = rr::make_adapter("token_permute", "cuda_naive");

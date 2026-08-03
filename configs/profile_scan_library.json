@@ -1,0 +1,55 @@
+{
+  "schema_version": "raggedroute.profile_suite.v1",
+  "suite_id": "rtx3080_scan_library_profile_v1",
+  "note": "Compute-only diagnostics; use unprofiled Release results for latency claims.",
+  "cases": [
+    {
+      "id": "scan.naive.e32",
+      "operator": "exclusive_scan",
+      "variant": "cuda_naive",
+      "level": "l1",
+      "warmup": 20,
+      "seed": 20260803,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "exclusive_scan_naive_kernel",
+      "params": {"E": 32, "R": 4096}
+    },
+    {
+      "id": "scan.naive.e64",
+      "operator": "exclusive_scan",
+      "variant": "cuda_naive",
+      "level": "l1",
+      "warmup": 20,
+      "seed": 20260803,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "exclusive_scan_naive_kernel",
+      "params": {"E": 64, "R": 4096}
+    },
+    {
+      "id": "scan.cub_warp.e32",
+      "operator": "exclusive_scan",
+      "variant": "cub_warp_scan",
+      "level": "l1",
+      "warmup": 20,
+      "seed": 20260803,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "warp_scan_kernel",
+      "params": {"E": 32, "R": 4096}
+    },
+    {
+      "id": "scan.cub_block.e64",
+      "operator": "exclusive_scan",
+      "variant": "cub_block_scan",
+      "level": "l1",
+      "warmup": 20,
+      "seed": 20260803,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "block_scan_kernel",
+      "params": {"E": 64, "R": 4096}
+    }
+  ]
+}

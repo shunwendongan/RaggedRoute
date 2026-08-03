@@ -74,10 +74,15 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     src/topk_gate/baseline.cu
     src/topk_gate/cuda_candidate/optimized.cu
     src/histogram/baseline.cu
+    src/histogram/cuda_candidate/optimized.cu
     src/scan/baseline.cu
     src/permute/baseline.cu
+    src/permute/cuda_candidate/optimized.cu
     src/grouped_gemm/baseline.cu
-    src/unpermute/baseline.cu)
+    src/grouped_gemm/cuda_candidate/optimized.cu
+    src/grouped_gemm/cuda_candidate/optimized_register.cu
+    src/unpermute/baseline.cu
+    src/unpermute/cuda_candidate/optimized.cu)
   add_library(RaggedRoute::baseline_ops ALIAS raggedroute_baseline_ops)
   target_include_directories(raggedroute_baseline_ops PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
@@ -209,7 +214,9 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     target_include_directories(raggedroute_benchmark_core PRIVATE
       "${CMAKE_CURRENT_SOURCE_DIR}/src"
       "${CMAKE_CURRENT_SOURCE_DIR}/src/dense_gemm"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/topk_gate")
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/topk_gate"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/permute"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/unpermute")
     target_link_libraries(raggedroute_benchmark_core PUBLIC
       raggedroute_runtime
       raggedroute_correctness_framework

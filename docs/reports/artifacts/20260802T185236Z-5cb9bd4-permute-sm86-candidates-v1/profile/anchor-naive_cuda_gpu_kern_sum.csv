@@ -1,0 +1,2 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+100.0,19616,6,3269.3,3168.0,3136,3776,249.0,"raggedroute::ops::<unnamed>::token_permute_naive_kernel(const float *, const int *, const int *, int *, float *, int *, int *, int, int, int)"

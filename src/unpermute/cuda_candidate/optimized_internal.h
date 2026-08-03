@@ -2,6 +2,8 @@
 
 #include <cuda_runtime_api.h>
 
+#include <cstdint>
+
 namespace raggedroute::ops {
 
 // Benchmark/research-only launcher. This candidate is intentionally absent from

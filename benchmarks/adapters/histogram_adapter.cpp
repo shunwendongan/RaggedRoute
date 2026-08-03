@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "histogram/cuda_candidate/optimized_internal.h"
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/benchmark/adapter_utils.h"
 #include "raggedroute/benchmark/library_baselines.h"
@@ -13,6 +14,15 @@
 
 namespace raggedroute::benchmark {
 namespace {
+
+bool is_optimized_histogram_variant(const std::string& variant_name) {
+  return variant_name == "cuda_candidate";
+}
+
+std::uint32_t optimized_histogram_implementation(const std::string& variant_name) {
+  if (variant_name == "cuda_candidate") return ops::kHistogramCandidateImplementation;
+  throw std::invalid_argument("unsupported optimized histogram variant: " + variant_name);
+}
 
 class HistogramAdapter final : public BenchmarkAdapter {
  public:
@@ -22,6 +32,9 @@ class HistogramAdapter final : public BenchmarkAdapter {
   std::string description() const override {
     if (variant_name_ == "cub_device_histogram") {
       return "CUB device-wide even histogram over discrete int32 expert ids";
+    }
+    if (variant_name_ == "cuda_candidate") {
+      return "Shape-dispatched SM86 shared-memory histogram candidate";
     }
     return "One global atomicAdd per route pair";
   }
@@ -33,6 +46,7 @@ class HistogramAdapter final : public BenchmarkAdapter {
   }
   RepeatPolicy repeat_policy(MeasurementLevel level) const override {
     if (variant_name_ == "cub_device_histogram") return {};
+    if (overwrites_output()) return {};
     if (level != MeasurementLevel::kKernelBody || max_count_ == 0) return {};
     const int cap = std::numeric_limits<std::int32_t>::max() / max_count_;
     return {cap, "L1 histogram accumulates counts across batched launches"};
@@ -53,6 +67,8 @@ class HistogramAdapter final : public BenchmarkAdapter {
     ids_host_ = make_route_ids(tokens_, top_k_, experts_, distribution_, zipf_s_, seed);
     expected_ = counts_from_ids(ids_host_, experts_);
     max_count_ = *std::max_element(expected_.begin(), expected_.end());
+    active_experts_ = static_cast<int>(std::count_if(
+        expected_.begin(), expected_.end(), [](std::int32_t count) { return count != 0; }));
     ids_.resize(ids_host_.size());
     counts_.resize(expected_.size());
     ids_.copy_from_host(ids_host_, stream);
@@ -68,6 +84,7 @@ class HistogramAdapter final : public BenchmarkAdapter {
   }
   void prepare_sample(MeasurementLevel level, cudaStream_t stream) override {
     if (variant_name_ == "cub_device_histogram") return;
+    if (overwrites_output()) return;
     if (level == MeasurementLevel::kKernelBody) reset_counts(stream);
   }
   void enqueue(MeasurementLevel level, cudaStream_t stream) override {
@@ -80,6 +97,25 @@ class HistogramAdapter final : public BenchmarkAdapter {
       return;
     }
 #endif
+    if (is_optimized_histogram_variant(variant_name_)) {
+      const std::uint32_t implementation = optimized_histogram_implementation(variant_name_);
+      if (level == MeasurementLevel::kKernelBody) {
+        cuda_check(ops::launch_histogram_optimized(ids_.data(), counts_.data(),
+                                                   static_cast<int>(ids_host_.size()), experts_,
+                                                   implementation, stream),
+                   "launch_histogram_optimized");
+        return;
+      }
+      HistogramArgs args;
+      args.expert_ids = ids_.data();
+      args.counts = counts_.data();
+      args.route_pairs = static_cast<int>(ids_host_.size());
+      args.experts = experts_;
+      args.kernel = {KernelFamily::kCudaOptimized, implementation};
+      operator_check(histogram(args, make_runtime_context(stream, architecture_)),
+                     "optimized histogram operator");
+      return;
+    }
     if (level == MeasurementLevel::kKernelBody) {
       cuda_check(ops::launch_histogram_naive(ids_.data(), counts_.data(),
                                              static_cast<int>(ids_host_.size()), experts_, stream),
@@ -91,6 +127,7 @@ class HistogramAdapter final : public BenchmarkAdapter {
     args.counts = counts_.data();
     args.route_pairs = static_cast<int>(ids_host_.size());
     args.experts = experts_;
+    args.kernel = {KernelFamily::kCudaNaive, 0};
     operator_check(histogram(args, make_runtime_context(stream, architecture_)),
                    "histogram operator");
   }
@@ -109,6 +146,7 @@ class HistogramAdapter final : public BenchmarkAdapter {
             {"count_dtype", std::string("int32")},
             {"distribution", distribution_},
             {"zipf_s", zipf_s_},
+            {"active_experts", static_cast<std::int64_t>(active_experts_)},
             {"max_count", static_cast<std::int64_t>(max_count_)}};
   }
   FieldMap variant_config() const override {
@@ -118,8 +156,29 @@ class HistogramAdapter final : public BenchmarkAdapter {
               {"upper_level", static_cast<std::int64_t>(experts_)},
               {"output_reset", std::string("inside_library_call")}};
     }
+    if (variant_name_ == "cuda_candidate") {
+      const std::string path =
+          ids_host_.size() <= static_cast<std::size_t>(ops::kHistogramSingleCtaMaxRoutePairs)
+              ? "single_cta_shared_overwrite"
+              : (ids_host_.size() >=
+                         static_cast<std::size_t>(ops::kHistogramBlockPrivateMinRoutePairs)
+                     ? "block_private_shared_global_merge"
+                     : "cuda_naive_fallback");
+      return {{"algorithm_path", path},
+              {"dispatch_key", std::string("route_pairs")},
+              {"single_cta_max_route_pairs",
+               static_cast<std::int64_t>(ops::kHistogramSingleCtaMaxRoutePairs)},
+              {"block_private_min_route_pairs",
+               static_cast<std::int64_t>(ops::kHistogramBlockPrivateMinRoutePairs)},
+              {"block_private_max_ctas",
+               static_cast<std::int64_t>(ops::kHistogramBlockPrivateMaxBlocks)},
+              {"workspace_bytes", static_cast<std::int64_t>(0)},
+              {"threads_per_block", static_cast<std::int64_t>(256)},
+              {"shared_bytes_per_cta", static_cast<std::int64_t>(64 * sizeof(std::int32_t))}};
+    }
     return {{"atomic_scope", std::string("device")},
             {"privatization", false},
+            {"output_mode", std::string("accumulate_l1_reset_then_accumulate_l2")},
             {"threads_per_block", static_cast<std::int64_t>(256)}};
   }
   std::size_t workspace_bytes() const override { return library_workspace_bytes_; }
@@ -127,27 +186,63 @@ class HistogramAdapter final : public BenchmarkAdapter {
     WorkEstimate work;
     work.logical_bytes =
         sizeof(std::int32_t) * static_cast<double>(ids_host_.size() + expected_.size());
-    if (variant_name_ == "cub_device_histogram") {
-      work.operator_metrics["histogram_input_items"] =
-          static_cast<std::int64_t>(ids_host_.size());
-      work.operator_metrics["histogram_bins"] = static_cast<std::int64_t>(experts_);
-    } else {
+    work.operator_metrics["common_useful_bytes"] =
+        static_cast<std::int64_t>(sizeof(std::int32_t) * (ids_host_.size() + expected_.size()));
+    work.operator_metrics["histogram_input_items"] = static_cast<std::int64_t>(ids_host_.size());
+    work.operator_metrics["histogram_bins"] = static_cast<std::int64_t>(experts_);
+    work.operator_metrics["active_experts"] = static_cast<std::int64_t>(active_experts_);
+    if (variant_name_ == "cuda_naive" ||
+        (variant_name_ == "cuda_candidate" && !uses_single_cta() && !uses_block_private())) {
       work.operator_metrics["global_atomic_operations"] =
           static_cast<std::int64_t>(ids_host_.size());
+      work.operator_metrics["kernel_launches"] = static_cast<std::int64_t>(1);
     }
-    if (level == MeasurementLevel::kOperatorSteady) {
+    if (variant_name_ == "cuda_candidate" && uses_single_cta()) {
+      work.operator_metrics["shared_atomic_operations_upper_bound"] =
+          static_cast<std::int64_t>(ids_host_.size());
+      work.operator_metrics["kernel_launches"] = static_cast<std::int64_t>(1);
+    }
+    if (variant_name_ == "cuda_candidate" && uses_block_private()) {
+      constexpr std::int64_t kItemsPerBlock = 256 * 8;
+      const std::int64_t uncapped_blocks =
+          (static_cast<std::int64_t>(ids_host_.size()) + kItemsPerBlock - 1) / kItemsPerBlock;
+      const std::int64_t blocks = std::min(
+          uncapped_blocks, static_cast<std::int64_t>(ops::kHistogramBlockPrivateMaxBlocks));
+      work.operator_metrics["shared_atomic_operations_upper_bound"] =
+          static_cast<std::int64_t>(ids_host_.size());
+      work.operator_metrics["global_atomic_operations_upper_bound"] =
+          blocks * static_cast<std::int64_t>(experts_);
+      work.operator_metrics["histogram_ctas"] = blocks;
+      work.operator_metrics["kernel_launches"] = static_cast<std::int64_t>(1);
+    }
+    if (level == MeasurementLevel::kOperatorSteady && !overwrites_output()) {
       work.logical_bytes += static_cast<double>(counts_.bytes());
       work.operator_metrics["counts_reset_bytes"] = static_cast<std::int64_t>(counts_.bytes());
+      if (variant_name_ != "cub_device_histogram") {
+        work.operator_metrics["memset_operations"] = static_cast<std::int64_t>(1);
+      }
     }
     return work;
   }
   std::vector<std::string> excluded_steps(MeasurementLevel level) const override {
     std::vector<std::string> excluded = {"route_generation", "h2d_copy", "workspace_allocation"};
-    if (level == MeasurementLevel::kKernelBody) excluded.push_back("counts_reset");
+    if (level == MeasurementLevel::kKernelBody && !overwrites_output()) {
+      excluded.push_back("counts_reset");
+    }
     return excluded;
   }
 
  private:
+  bool uses_single_cta() const {
+    return variant_name_ == "cuda_candidate" &&
+           ids_host_.size() <= static_cast<std::size_t>(ops::kHistogramSingleCtaMaxRoutePairs);
+  }
+  bool uses_block_private() const {
+    return variant_name_ == "cuda_candidate" &&
+           ids_host_.size() >= static_cast<std::size_t>(ops::kHistogramBlockPrivateMinRoutePairs);
+  }
+  bool overwrites_output() const { return uses_single_cta(); }
+
   static void reject_unknown(const OptionMap& options) {
     const std::set<std::string> allowed = {"T", "E", "top_k", "distribution", "zipf_s"};
     for (const auto& [name, unused] : options) {
@@ -159,7 +254,7 @@ class HistogramAdapter final : public BenchmarkAdapter {
     cuda_check(cudaMemsetAsync(counts_.data(), 0, counts_.bytes(), stream),
                "reset histogram counts");
   }
-  int tokens_ = 0, experts_ = 0, top_k_ = 0, max_count_ = 0;
+  int tokens_ = 0, experts_ = 0, top_k_ = 0, max_count_ = 0, active_experts_ = 0;
   std::string variant_name_;
   std::size_t library_workspace_bytes_ = 0;
   DeviceArchitecture architecture_ = DeviceArchitecture::kOther;

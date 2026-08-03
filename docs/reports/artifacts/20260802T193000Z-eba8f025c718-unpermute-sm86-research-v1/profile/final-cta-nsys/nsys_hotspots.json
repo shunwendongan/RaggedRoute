@@ -1,0 +1,18 @@
+[
+  {
+    "name": "raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)",
+    "total_time": 37696.0,
+    "time_pct": 100.0,
+    "raw": {
+      "Time (%)": "100.0",
+      "Total Time (ns)": "37696",
+      "Instances": "21",
+      "Avg (ns)": "1795.0",
+      "Med (ns)": "1792.0",
+      "Min (ns)": "1760",
+      "Max (ns)": "1856",
+      "StdDev (ns)": "28.5",
+      "Name": "raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+    }
+  }
+]

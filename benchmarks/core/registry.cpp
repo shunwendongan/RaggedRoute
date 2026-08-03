@@ -158,6 +158,9 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
   if (operator_name == "topk_gate") return {naive_descriptor("serial_row_top2")};
   if (operator_name == "histogram") {
     std::vector<VariantDescriptor> variants = {naive_descriptor("global_atomic")};
+    variants.push_back(descriptor("cuda_candidate", "in_tree_cuda",
+                                  "raggedroute.histogram.cuda_candidate.v1",
+                                  "not_applicable", "shape_dispatched_shared_histogram"));
 #if RAGGEDROUTE_HAS_CCCL
     variants.push_back(descriptor("cub_device_histogram", "nvidia_cccl",
                                   "cub::DeviceHistogram::HistogramEven", cccl_revision(),
@@ -166,7 +169,9 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     return variants;
   }
   if (operator_name == "exclusive_scan") {
-    std::vector<VariantDescriptor> variants = {naive_descriptor("single_thread_exclusive")};
+    std::vector<VariantDescriptor> variants = {{"cuda_naive", "in_tree_cuda",
+                                                "raggedroute.cuda_naive.v1", "not_applicable",
+                                                "single_thread_exclusive", "exact_int32"}};
 #if RAGGEDROUTE_HAS_CCCL
     variants.push_back(descriptor("cub_device_scan", "nvidia_cccl", "cub::DeviceScan::ExclusiveSum",
                                   cccl_revision(), "device_scan_plus_terminal_offset"));
@@ -175,6 +180,7 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     variants.push_back(descriptor("cub_warp_scan", "nvidia_cccl", "cub::WarpScan::ExclusiveSum",
                                   cccl_revision(), "warp_scan_32_threads"));
 #endif
+    for (VariantDescriptor& variant : variants) variant.math_mode = "exact_int32";
     return variants;
   }
   if (operator_name == "token_permute") {
@@ -229,6 +235,9 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
   if (operator_name == "unpermute") {
     std::vector<VariantDescriptor> variants = {
         naive_descriptor("token_owned_scalar_gather_reduce")};
+    variants.push_back(descriptor("cuda_warp_token_vec4", "in_tree_cuda_research",
+                                  "raggedroute.unpermute.cuda_candidate.v1", "not_applicable",
+                                  "shape_dispatched_warp_or_cta_top2_float4"));
     variants.push_back(descriptor("vllm_finalize_routing", "adapted_production_cuda",
                                   "vllm.finalizeMoeRoutingKernelLauncher.fp32.v1",
                                   "vllm@837eae64580c885101ee95b073aafb27a485e7ce",
@@ -265,7 +274,10 @@ std::vector<VariantDescriptor> available_suite_variant_descriptors(const std::st
     return {naive_descriptor("sequential_cuda_naive_chain"),
             descriptor("cuda_grouped_sm86_fp32_v1", "in_tree_cuda",
                        "raggedroute.chain.grouped_benchmark_candidate.v1", "not_applicable",
-                       "naive_chain_with_benchmark_only_grouped_sm86_fp32_v1")};
+                       "naive_chain_with_benchmark_only_grouped_sm86_fp32_v1"),
+            descriptor("cuda_unpermute_candidate", "in_tree_cuda_research",
+                       "raggedroute.chain.unpermute_candidate.v1", "not_applicable",
+                       "naive_chain_with_warp_token_vec4_unpermute")};
   }
   return {};
 }

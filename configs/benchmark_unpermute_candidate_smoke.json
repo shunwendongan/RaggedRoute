@@ -1,0 +1,136 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_unpermute_candidate_smoke_v1",
+  "protocol": "smoke",
+  "process_runs": 1,
+  "common": {
+    "warmup": 2,
+    "samples": 3,
+    "kernel_repeats": 2,
+    "seed": 20260729,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "unpermute.top2.aligned.warp",
+      "operator": "unpermute",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "vllm_finalize_routing",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_warp_token_vec4",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_naive",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "T": 64,
+        "E": 64,
+        "top_k": 2,
+        "N": 256,
+        "distribution": "uniform",
+        "zipf_s": 0
+      }
+    },
+    {
+      "id": "unpermute.top2.aligned.cta",
+      "operator": "unpermute",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "vllm_finalize_routing",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_warp_token_vec4",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_naive",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "T": 64,
+        "E": 64,
+        "top_k": 2,
+        "N": 1024,
+        "distribution": "zipf",
+        "zipf_s": 1.4
+      }
+    },
+    {
+      "id": "unpermute.top2.unaligned.tail",
+      "operator": "unpermute",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "vllm_finalize_routing",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_warp_token_vec4",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_naive",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "T": 17,
+        "E": 8,
+        "top_k": 2,
+        "N": 257,
+        "distribution": "zipf",
+        "zipf_s": 1.4,
+        "pointer_offset_elements": 1
+      }
+    },
+    {
+      "id": "unpermute.top4.generic",
+      "operator": "unpermute",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "vllm_finalize_routing",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_warp_token_vec4",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_naive",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "T": 17,
+        "E": 8,
+        "top_k": 4,
+        "N": 7,
+        "distribution": "round_robin",
+        "zipf_s": 0
+      }
+    }
+  ]
+}

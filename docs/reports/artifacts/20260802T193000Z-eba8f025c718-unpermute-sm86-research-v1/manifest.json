@@ -1,0 +1,28 @@
+{
+  "schema_version": "raggedroute.evidence-bundle.v1",
+  "created_utc": "2026-08-02T19:30:00Z",
+  "operator": "unpermute",
+  "decision": "rejected_not_promoted",
+  "base_git_sha": "927c585e031ba6a01e41c01d21db03cb0d1ca9d0",
+  "candidate_checkpoint_git_sha": "eba8f025c718",
+  "branch": "codex/unpermute-warp-vectorized",
+  "candidate_variant": "cuda_warp_token_vec4",
+  "promotion_baseline": "vllm_finalize_routing",
+  "public_dispatch": "naive_only",
+  "target": {
+    "gpu": "NVIDIA GeForce RTX 3080",
+    "compute_capability": "8.6",
+    "sm_count": 68,
+    "driver": "591.86",
+    "cuda": "13.3.73",
+    "ncu": "2026.2.1",
+    "nsys": "2026.1.3"
+  },
+  "retention": {
+    "raw_jsonl": true,
+    "normalized_profiler_csv_json": true,
+    "binary_profiler_reports": false,
+    "sqlite": false,
+    "build_products": false
+  }
+}

@@ -23,6 +23,10 @@ Status exclusive_scan(const ExclusiveScanArgs& args, const RuntimeContext& conte
   if (args.counts == nullptr || args.offsets == nullptr) {
     return detail::invalid_argument("exclusive_scan received a null device pointer");
   }
+  if (!detail::is_aligned(args.counts, alignof(std::int32_t)) ||
+      !detail::is_aligned(args.offsets, alignof(std::int32_t))) {
+    return detail::invalid_argument("exclusive_scan buffers must be 4-byte aligned");
+  }
   return detail::cuda_status(
       ops::launch_exclusive_scan_naive(args.counts, args.offsets, args.experts, context.stream),
       "exclusive_scan kernel launch failed");

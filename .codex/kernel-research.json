@@ -13,12 +13,8 @@
       "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_candidate_smoke.json --output out\\benchmark\\histogram-candidate-smoke.jsonl"
     ],
     "release": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_candidate_l1_release.json --output out\\benchmark\\histogram-candidate-l1-release.jsonl",
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_candidate_l2_release.json --output out\\benchmark\\histogram-candidate-l2-release.jsonl"
-    ],
-    "profile": [
-      "python scripts\\profile_benchmarks.py compute --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\profile_histogram_candidate.json --run-dir out\\profile\\histogram-candidate-final --set basic",
-      "python scripts\\profile_benchmarks.py analyze --run-dir out\\profile\\histogram-candidate-final"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_candidate_l1_release.json --output out\\benchmark\\histogram-candidate-l1-release-final.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\benchmark_histogram_candidate_l2_release.json --output out\\benchmark\\histogram-candidate-l2-release-final.jsonl"
     ]
   },
   "benchmark": {
@@ -48,11 +44,5 @@
     "p95_regression_tolerance": 0.03,
     "max_shape_regression": 0.05,
     "max_workspace_growth": 0.0
-  },
-  "dispatch": {
-    "single_cta_max_route_pairs": 4096,
-    "block_private_min_route_pairs": 32768,
-    "unstable_interval": "4097..32767",
-    "unstable_interval_action": "cuda_naive_fallback"
   }
 }

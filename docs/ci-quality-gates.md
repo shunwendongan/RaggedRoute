@@ -12,6 +12,6 @@ cmake --build --preset build-cpu-release --parallel
 ctest --preset test-cpu-release
 ```
 
-`GPU SM86 validation` is a manually dispatched workflow for the Windows RTX 3080 self-hosted runner. It performs the Release build, CTest, seven-operator plus two-chain smoke suite, and Compute Sanitizer. NSYS and NCU are optional inputs; when enabled, NSYS runs first and NCU defaults to the `basic` set. Profiler durations remain diagnostic and never substitute for unprofiled Release A/B timing.
+`GPU SM86 validation` is a manually dispatched workflow for the Windows RTX 3080 self-hosted runner. It performs the Release build, CTest, seven-operator plus two-chain smoke suite, and Compute Sanitizer. NSYS and NCU are optional inputs; when enabled, NSYS runs first and NCU defaults to the `basic` set. Profiler durations remain diagnostic and never substitute for unprofiled Release A/B timing. The self-hosted runner must be version 2.327.1 or newer because the official checkout/upload actions use the Node 24 runtime.
 
 The repository's current private GitHub plan does not allow the desired required-check branch protection. Until the repository is public or the plan is upgraded, maintainers must require a green CI run and completed pull-request checklist before merge. Do not bypass that procedural gate for performance or dispatch changes.

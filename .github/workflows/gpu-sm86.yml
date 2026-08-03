@@ -33,7 +33,7 @@ jobs:
       BENCHMARK: out/build/rtx3080-sm86-release/raggedroute_benchmark.exe
       PROFILE_DIR: out/profile/ci-sm86-${{ github.run_id }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           clean: true
       - name: Resolve CUDA toolkit and runtime DLLs
@@ -90,7 +90,7 @@ jobs:
         run: python scripts/profile_benchmarks.py analyze --run-dir $env:PROFILE_DIR
       - name: Upload validation outputs
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: gpu-sm86-${{ github.run_id }}
           if-no-files-found: warn

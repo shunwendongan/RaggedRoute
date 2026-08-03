@@ -170,14 +170,14 @@ void test_pure_dispatch() {
   request.requested_kernel = {KernelFamily::kCudaOptimized, 0};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "Top-K optimized id zero must remain unavailable before measured promotion");
-  for (const std::uint32_t implementation : {1U, 2U, 3U}) {
+  for (const std::uint32_t implementation : {1U, 2U, 3U, 4U}) {
     request.requested_kernel = {KernelFamily::kCudaOptimized, implementation};
     require_status(select_kernel(request, &decision), "explicit Top-K candidate dispatch");
     require(decision.kernel.family == KernelFamily::kCudaOptimized &&
                 decision.kernel.implementation_id == implementation,
             "Top-K candidate dispatch must preserve its explicit implementation id");
   }
-  request.requested_kernel = {KernelFamily::kCudaOptimized, 4};
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 5};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "unknown Top-K optimized ids must be rejected");
   request.operator_kind = OperatorKind::kGroupedGemm;
@@ -553,7 +553,7 @@ void test_topk_gate(const raggedroute::RuntimeContext& context) {
   args.weights.data = weights.data();
   args.tokens = kTokens;
   args.experts = kExperts;
-  for (const std::uint32_t implementation : {0U, 1U, 2U, 3U}) {
+  for (const std::uint32_t implementation : {0U, 1U, 2U, 3U, 4U}) {
     args.kernel = implementation == 0
                       ? raggedroute::KernelSelection{}
                       : raggedroute::KernelSelection{raggedroute::KernelFamily::kCudaOptimized,

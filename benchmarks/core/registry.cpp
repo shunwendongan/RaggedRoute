@@ -169,6 +169,9 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     variants.push_back(descriptor("cuda_vector_pair_top2_v3", "in_tree_cuda",
                                   "raggedroute.cuda_optimized.v3", "not_applicable",
                                   "aligned_float4_subwarp_pair_merge"));
+    variants.push_back(descriptor("cuda_local_pair_two_reduce_top2_v4", "in_tree_cuda",
+                                  "raggedroute.cuda_optimized.v4", "not_applicable",
+                                  "row_packed_local_pair_two_subgroup_reductions"));
     variants.push_back(descriptor(
         "vllm_row_packed_top2", "adapted_production_cuda", "vllm.topk_softmax.adapted.fp32.v1",
         "vllm@55c98e370aa058f567a9e682dc0652bdfba6b0bb; Apache-2.0",

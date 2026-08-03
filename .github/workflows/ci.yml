@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  repository-quality:
+    name: Repository quality gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: python scripts/repository_checks.py
+
+  python-tests:
+    name: Python tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s tests -p "test_*.py"
+
+  cuda-off-build:
+    name: CUDA-off build and CTest (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Configure (Linux)
+        if: runner.os == 'Linux'
+        run: cmake --preset cpu-release
+      - name: Configure (Windows MSVC)
+        if: runner.os == 'Windows'
+        run: cmd /c scripts\configure_windows.bat cpu-release
+      - name: Build (Linux)
+        if: runner.os == 'Linux'
+        run: cmake --build --preset build-cpu-release --parallel
+      - name: Build (Windows MSVC)
+        if: runner.os == 'Windows'
+        run: cmd /c scripts\build_windows.bat cpu-release
+      - name: CTest
+        run: ctest --preset test-cpu-release

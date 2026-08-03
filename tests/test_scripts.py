@@ -82,6 +82,25 @@ def make_suite_v2() -> dict:
 
 
 class SuiteTests(unittest.TestCase):
+    def test_ci_quality_gates_and_sm86_manual_workflow_are_present(self) -> None:
+        ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+        gpu = (ROOT / ".github" / "workflows" / "gpu-sm86.yml").read_text(encoding="utf-8")
+        template = (ROOT / ".github" / "pull_request_template.md").read_text(encoding="utf-8")
+        self.assertIn("python scripts/repository_checks.py", ci)
+        self.assertIn("cpu-release", ci)
+        self.assertIn("ubuntu-latest", ci)
+        self.assertIn("windows-latest", ci)
+        self.assertIn("runs-on: [self-hosted, Windows, X64, gpu-sm86]", gpu)
+        self.assertIn("profile_benchmarks.py system", gpu)
+        self.assertIn("profile_benchmarks.py compute", gpu)
+        self.assertIn("run_sanitizers.py", gpu)
+        self.assertIn("Profiler duration is not used as benchmark speedup", template)
+        for relative in (
+            "benchmarks/.gitkeep", "cmake/.gitkeep", "include/raggedroute/.gitkeep",
+            "scripts/.gitkeep", "tests/.gitkeep",
+        ):
+            self.assertFalse((ROOT / relative).is_file())
+
     def test_evidence_v2_schema_and_all_published_bundles_validate(self) -> None:
         schema = json.loads(
             (ROOT / "schemas" / "evidence-bundle-v2.schema.json").read_text(encoding="utf-8")

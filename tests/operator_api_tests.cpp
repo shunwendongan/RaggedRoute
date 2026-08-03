@@ -209,14 +209,14 @@ void test_pure_dispatch() {
 
   request.operator_kind = OperatorKind::kTokenPermute;
   request.signature = fp32_signature(request.operator_kind);
-  for (std::uint32_t implementation = 1; implementation <= 8; ++implementation) {
+  for (std::uint32_t implementation = 1; implementation <= 7; ++implementation) {
     request.requested_kernel = {KernelFamily::kCudaOptimized, implementation};
     require_status(select_kernel(request, &decision), "explicit optimized token permute dispatch");
     require(decision.kernel.family == KernelFamily::kCudaOptimized &&
                 decision.kernel.implementation_id == implementation,
             "token permute must preserve its explicit implementation id");
   }
-  request.requested_kernel = {KernelFamily::kCudaOptimized, 9};
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 8};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "unimplemented optimized token permute ids must be rejected");
 
@@ -672,7 +672,7 @@ void test_permute_workspace_reset(const raggedroute::RuntimeContext& context) {
   const std::vector<std::int32_t> host_offsets = {0, 2, 4};
   const std::vector<float> host_x = {1.0F, 2.0F, 3.0F, 4.0F};
 
-  for (std::uint32_t implementation = 0; implementation <= 8; ++implementation) {
+  for (std::uint32_t implementation = 0; implementation <= 7; ++implementation) {
     cursors.copy_from_host({99, 99}, context.stream);
     args.kernel = implementation == 0
                       ? raggedroute::KernelSelection{}
@@ -748,7 +748,7 @@ void test_permute_optimized_unaligned_duplicate_top2(
   permute_context.workspace = cursors.data();
   permute_context.workspace_bytes = cursors.bytes();
 
-  for (std::uint32_t implementation = 1; implementation <= 8; ++implementation) {
+  for (std::uint32_t implementation = 1; implementation <= 7; ++implementation) {
     args.kernel = {raggedroute::KernelFamily::kCudaOptimized, implementation};
     require_status(raggedroute::token_permute(args, permute_context),
                    "unaligned duplicate-id optimized token_permute");

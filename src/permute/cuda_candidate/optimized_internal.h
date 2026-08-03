@@ -13,7 +13,6 @@ constexpr std::uint32_t kTokenPermuteTokenOwnedTop2Implementation = 4;
 constexpr std::uint32_t kTokenPermuteBlockPartialImplementation = 5;
 constexpr std::uint32_t kTokenPermuteTokenTile4DirectImplementation = 6;
 constexpr std::uint32_t kTokenPermuteTokenTile4WarpAggregatedImplementation = 7;
-constexpr std::uint32_t kTokenPermuteShapeDispatchedV2Implementation = 8;
 
 // Evidence-selected SM86 candidate. The high-repeat L2 selection suite ranks
 // token-owned Top-2 first in two independent runs. Generic top-k continues to
@@ -28,8 +27,7 @@ inline bool is_token_permute_optimized_implementation(std::uint32_t implementati
          implementation_id == kTokenPermuteTokenOwnedTop2Implementation ||
          implementation_id == kTokenPermuteBlockPartialImplementation ||
          implementation_id == kTokenPermuteTokenTile4DirectImplementation ||
-         implementation_id == kTokenPermuteTokenTile4WarpAggregatedImplementation ||
-         implementation_id == kTokenPermuteShapeDispatchedV2Implementation;
+         implementation_id == kTokenPermuteTokenTile4WarpAggregatedImplementation;
 }
 
 cudaError_t launch_token_permute_prepare_offsets_fused(

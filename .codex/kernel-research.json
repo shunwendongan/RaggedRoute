@@ -3,13 +3,13 @@
   "commands": {
     "build": ["cmd /c scripts\\configure_windows.bat rtx3080-sm86-release", "cmd /c scripts\\build_windows.bat rtx3080-sm86-release"],
     "correctness": ["ctest --preset test-rtx3080-sm86-release --output-on-failure"],
-    "smoke": ["python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\permute\\benchmark\\candidate_v2_prefilter.json --output out\\benchmark\\permute-v2-smoke.jsonl"],
-    "release": ["python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\permute\\benchmark\\candidate_v2_release.json --output out\\benchmark\\permute-v2-release.jsonl", "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\permute\\benchmark\\candidate_v2_library_release.json --output out\\benchmark\\permute-v2-library-release.jsonl"]
+    "smoke": ["python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\permute\\benchmark\\candidate_smoke.json --output out\\benchmark\\permute-v2-baseline-smoke.jsonl"],
+    "release": ["python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\permute\\benchmark\\candidate_selection_release.json --output out\\benchmark\\permute-v2-baseline-selection.jsonl", "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\permute\\benchmark\\selected_library_release.json --output out\\benchmark\\permute-v2-baseline-library.jsonl"]
   },
   "benchmark": {
     "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
     "profile_cases": [
-      {"name": "permute.large.uniform", "arguments": ["--operator", "token_permute", "--variant", "cuda_candidate_v2", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=2048", "--param", "E=64", "--param", "K=256", "--param", "top_k=2", "--param", "distribution=uniform", "--param", "zipf_s=0.0"], "kernel_regex": "token_permute_token_tile4_top2_kernel"}
+      {"name": "permute.anchor.zipf14", "arguments": ["--operator", "token_permute", "--variant", "cuda_candidate", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=512", "--param", "E=64", "--param", "K=256", "--param", "top_k=2", "--param", "distribution=zipf", "--param", "zipf_s=1.4"], "kernel_regex": "token_permute_token_owned_top2_kernel"}
     ],
     "kernel_regex": "token_permute_.*kernel"
   },

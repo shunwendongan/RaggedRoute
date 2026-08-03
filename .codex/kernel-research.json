@@ -21,9 +21,9 @@
     "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
     "profile_cases": [
       {"name": "permute.naive.anchor", "arguments": ["--operator", "token_permute", "--variant", "cuda_naive", "--level", "l1", "--profile-once", "--warmup", "5", "--seed", "20260729", "--param", "T=512", "--param", "E=64", "--param", "top_k=2", "--param", "K=256", "--param", "distribution=zipf", "--param", "zipf_s=1.4", "--param", "materialize_sorted_route=true"], "kernel_regex": "token_permute_naive_kernel"},
-      {"name": "permute.candidate.anchor", "arguments": ["--operator", "token_permute", "--variant", "cuda_candidate", "--level", "l1", "--profile-once", "--warmup", "5", "--seed", "20260729", "--param", "T=512", "--param", "E=64", "--param", "top_k=2", "--param", "K=256", "--param", "distribution=zipf", "--param", "zipf_s=1.4", "--param", "materialize_sorted_route=true"], "kernel_regex": "token_permute_atomic_vectorized_kernel"}
+      {"name": "permute.candidate.anchor", "arguments": ["--operator", "token_permute", "--variant", "cuda_candidate", "--level", "l1", "--profile-once", "--warmup", "5", "--seed", "20260729", "--param", "T=512", "--param", "E=64", "--param", "top_k=2", "--param", "K=256", "--param", "distribution=zipf", "--param", "zipf_s=1.4", "--param", "materialize_sorted_route=true"], "kernel_regex": "token_permute_token_owned_top2_kernel"}
     ],
-    "kernel_regex": "token_permute_atomic_vectorized_kernel"
+    "kernel_regex": "token_permute_token_owned_top2_kernel"
   },
   "variants": {"baseline": "cuda_naive", "candidate": "cuda_candidate"},
   "output": {

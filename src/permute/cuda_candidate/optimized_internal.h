@@ -12,10 +12,11 @@ constexpr std::uint32_t kTokenPermuteAtomicVectorized256Implementation = 3;
 constexpr std::uint32_t kTokenPermuteTokenOwnedTop2Implementation = 4;
 constexpr std::uint32_t kTokenPermuteBlockPartialImplementation = 5;
 
-// This alias is intentionally evidence-controlled. It remains the simplest
-// vectorized candidate until release A/B data justifies changing it.
+// Evidence-selected SM86 candidate. The high-repeat L2 selection suite ranks
+// token-owned Top-2 first in two independent runs. Generic top-k continues to
+// use its atomic-vectorized-128 fallback inside the implementation.
 constexpr std::uint32_t kTokenPermuteCandidateImplementation =
-    kTokenPermuteAtomicVectorized128Implementation;
+    kTokenPermuteTokenOwnedTop2Implementation;
 
 inline bool is_token_permute_optimized_implementation(std::uint32_t implementation_id) noexcept {
   return implementation_id == kTokenPermuteAtomicVectorized128Implementation ||

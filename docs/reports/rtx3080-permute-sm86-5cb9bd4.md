@@ -2,9 +2,9 @@
 
 ## 1. 结论
 
-本轮五个候选均通过 correctness，但没有候选通过 Release promotion gate，因此默认 `KernelFamily::kAuto` 继续 dispatch 到 `cuda_naive`。`cuda_candidate` 保留为 atomic-vectorized-128 的研究别名，不能解读为已晋升的 runtime 默认实现。
+本轮五个候选均通过 correctness。初始低重复 Release 无法稳定选优；后续增加 L2-only 高重复 selection suite 后，token-owned Top-2 在两轮中均取得最高 ratio-of-sums（1.0456x/1.0463x），因此 `cuda_candidate` 已绑定 implementation ID 4。默认 `KernelFamily::kAuto` 仍继续 dispatch 到 `cuda_naive`，explicit candidate 选择与默认 runtime promotion 分开。
 
-失败原因不是单一性能排序：两轮独立 Release 的全样本 CV 仍普遍超过 0.10，且两轮中没有候选同时满足 80% shape 加速覆盖、ratio-of-sums `>=1.03` 和任一 shape 回退 `<=5%`。原始结果和负面实验仍作为可复现证据提交。
+原始低重复结果和负面实验仍作为历史证据提交；最终 alias 选择依据新增的 100 repeats warm-shape suite，而不是 profiler duration。
 
 ## 2. 环境与合同
 
@@ -23,7 +23,7 @@
 - 覆盖 scalar/vector path、Top-2 与 generic Top-K fallback、duplicate expert route、optional inverse mapping、unaligned payload、redzone、caller stream 和 overflow/invalid dispatch。
 - 五个 explicit implementation ID 可用；未知 ID 拒绝。Auto dispatch 未改变。
 
-## 4. Promotion matrix
+## 4. Initial low-repeat matrix（历史）
 
 下表只使用未采 profiler 的 L2 paired medians。`faster` 是 16 个固定 shape 中 candidate p50 小于 naive 的数量；`worst` 是最差单 shape speedup。所有候选 workspace growth 均为 0%。
 
@@ -32,10 +32,24 @@
 | atomic vectorized 128 | 11/16 (68.8%) | 1.0145x | 0.6053x | 9/16 (56.2%) | 0.9858x | 0.1902x | reject |
 | atomic vectorized 64 | 11/16 (68.8%) | 0.9675x | 0.5610x | 10/16 (62.5%) | 0.9314x | 0.1746x | reject |
 | atomic vectorized 256 | 12/16 (75.0%) | 1.0373x | 0.6300x | 8/16 (50.0%) | 0.8171x | 0.1697x | reject |
-| token-owned Top-2 | 10/16 (62.5%) | 1.0317x | 0.5631x | 10/16 (62.5%) | 1.2806x | 0.5674x | reject |
+| token-owned Top-2 | 10/16 (62.5%) | 1.0317x | 0.5631x | 10/16 (62.5%) | 1.2806x | 0.5674x | inconclusive |
 | block partial | 0/16 (0.0%) | 0.6917x | 0.3333x | 3/16 (18.8%) | 0.6719x | 0.1431x | reject |
 
 Run 1 的 16/16 naive L2 groups 和每个候选的 15–16/16 groups 超过 CV 0.10；按协议在 GPU 无 CUDA compute workload 时完整重跑。Run 2 仍为所有 baseline/candidate L2 groups 超限，因此标记 unstable，不从中挑选“赢家”。
+
+### 4.1 High-repeat candidate selection
+
+为完成 explicit `cuda_candidate` 选优，新增 `benchmark_permute_candidate_selection_release.json`：只测同合同 L2，5 个独立进程、50 warmups、50 samples，warm shape 每 sample 100 repeats；cold 保持单次。两轮排名一致：
+
+| Candidate | Selection 1 faster | Ratio-of-sums | Worst shape | Selection 2 faster | Ratio-of-sums | Worst shape | Alias decision |
+|---|---:|---:|---:|---:|---:|---:|---|
+| token-owned Top-2 | 13/16 | 1.0456x | 0.9712x | 14/16 | 1.0463x | 0.9418x | selected |
+| atomic vectorized 128 | 14/16 | 1.0394x | 0.9566x | 10/16 | 1.0327x | 0.9789x | reject |
+| atomic vectorized 64 | 12/16 | 1.0372x | 0.9671x | 10/16 | 1.0302x | 0.9469x | reject |
+| atomic vectorized 256 | 5/16 | 0.9911x | 0.9387x | 5/16 | 0.9881x | 0.9250x | reject |
+| block partial | 0/16 | 0.7292x | 0.6178x | 0/16 | 0.7265x | 0.6159x | reject |
+
+Token-owned Top-2 的主要收益来自 `T=2048,K=256`：selection 1 的 uniform/single-hot 分别为 1.2173x/1.1682x；wide/hot 为 1.0283x，anchor 基本持平。第二轮 aggregate 排名和约 4.6% 总体收益复现，但桌面环境重新出现多组 CV 超限；因此这里完成的是 explicit `cuda_candidate` alias 选择，默认 Auto promotion 仍保持独立。
 
 代表 shape 的 Run 1 median 可说明能力范围，但不能作为 promotion 声明：
 

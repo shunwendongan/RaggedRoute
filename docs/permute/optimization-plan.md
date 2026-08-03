@@ -69,8 +69,8 @@
 
 | 日期 | 版本/唯一变化 | 当前状态 | 保留/淘汰依据 |
 |---|---|---|---|
-| 2026-08-03 | atomic vectorized 128 | reject；保留 explicit research ID | 两轮未满足 CV/coverage/worst-regression；仅作 provisional diagnostic alias |
+| 2026-08-03 | atomic vectorized 128 | reject；保留 explicit research ID | 高重复 selection 两轮均落后 token-owned Top-2 |
 | 2026-08-03 | atomic vectorized 64 | reject；保留 explicit research ID | anchor occupancy 40.5%，两轮 gate 失败 |
 | 2026-08-03 | atomic vectorized 256 | reject；保留 explicit research ID | Run 1 ratio 1.0373x，但 coverage 75%、worst 0.6300x，Run 2 也失败 |
-| 2026-08-03 | token-owned Top-2 | reject；保留 explicit research ID | 输入复用未转化为稳定全矩阵收益；generic fallback 正确 |
+| 2026-08-03 | token-owned Top-2 | selected as `cuda_candidate` | 高重复 L2 selection 两轮 ratio-of-sums 1.0456x/1.0463x，排名均为第一；generic top-k fallback 正确 |
 | 2026-08-03 | block partial | reject；保留负面实验 | 第二个 launch 和低-wave placement 成本超过 atomic reduction 收益 |

@@ -21,9 +21,10 @@
 
 - 分支基线：`927c585e031b`；目标 RTX 3080 / SM86 / strict FP32。
 - 已实现并注册五个独立候选：atomic vectorized 128/64/256、token-owned Top-2、block-partial。
-- API、caller stream、`4*E` workspace 与默认 naive dispatch 均保持不变；`cuda_candidate` 当前只是 provisional research alias。
+- API、caller stream、`4*E` workspace 与默认 naive dispatch 均保持不变；`cuda_candidate` 是经 high-repeat selection 选出的 explicit research/对照 alias。
 - CTest 8/8 与 Compute Sanitizer memcheck/initcheck/racecheck/synccheck 全通过；两轮 candidate Release 和 library/chain Release 全部 `validation.ok=true`。
 - 两轮 Release 均未满足稳定性与 promotion gate。Run 1 最好 ratio-of-sums 为 atomic-256 的 1.0373x，但只有 75% shapes 加速且 worst speedup 0.6300x；Run 2 没有候选同时满足 gate。所有候选 reject，默认 dispatch 保持 `cuda_naive`。
-- `cuda_candidate` 仅保留 atomic-128 研究别名；vLLM full-from-ids、prepared mapping、L3、NSYS 与 NCU 结果不用于推翻 promotion 结论。
+- 后续增加 L2-only 高重复 selection suite（50 warmups、50 samples、warm-case repeats=100）。token-owned Top-2 在两轮中均排名第一，ratio-of-sums 为 1.0456x/1.0463x，因此 `cuda_candidate` alias 已绑定 implementation ID 4；generic top-k 仍由该实现内部回退 atomic-128。
+- vLLM full-from-ids、prepared mapping、L3、NSYS 与 NCU 只用于 selected candidate 的能力定位；`KernelFamily::kAuto` 是否晋升仍与 explicit `cuda_candidate` alias 分开处理。
 
 完整数据、能力矩阵和 profiler 摘要：[中央报告](../reports/rtx3080-permute-sm86-5cb9bd4.md)；[artifact bundle](../reports/artifacts/20260802T185236Z-5cb9bd4-permute-sm86-candidates-v1/)。

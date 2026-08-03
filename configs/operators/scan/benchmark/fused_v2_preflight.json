@@ -1,0 +1,701 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_histogram_scan_v2_preflight",
+  "protocol": "release",
+  "process_runs": 3,
+  "common": {
+    "warmup": 20,
+    "samples": 30,
+    "kernel_repeats": 100,
+    "seed": 20260804,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "histogram_scan.r0_e1_uniform",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_warp_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 0,
+        "E": 1,
+        "distribution": "uniform",
+        "zipf_s": 0
+      }
+    },
+    {
+      "id": "histogram_scan.r1_e8_zipf",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_warp_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 1,
+        "E": 8,
+        "distribution": "zipf",
+        "zipf_s": 1.4
+      }
+    },
+    {
+      "id": "histogram_scan.r64_e16_single_hot",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_warp_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 64,
+        "E": 16,
+        "distribution": "single_hot",
+        "zipf_s": 0
+      }
+    },
+    {
+      "id": "histogram_scan.r128_e31_uniform",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_warp_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 128,
+        "E": 31,
+        "distribution": "uniform",
+        "zipf_s": 0
+      }
+    },
+    {
+      "id": "histogram_scan.r256_e32_zipf",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_warp_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 256,
+        "E": 32,
+        "distribution": "zipf",
+        "zipf_s": 1.4
+      }
+    },
+    {
+      "id": "histogram_scan.r1024_e33_single_hot",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 1024,
+        "E": 33,
+        "distribution": "single_hot",
+        "zipf_s": 0
+      }
+    },
+    {
+      "id": "histogram_scan.r2048_e64_uniform",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 2048,
+        "E": 64,
+        "distribution": "uniform",
+        "zipf_s": 0
+      }
+    },
+    {
+      "id": "histogram_scan.r4096_e1_zipf",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_warp_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 4096,
+        "E": 1,
+        "distribution": "zipf",
+        "zipf_s": 1.4
+      }
+    },
+    {
+      "id": "histogram_scan.r4097_e8_single_hot",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_warp_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 4097,
+        "E": 8,
+        "distribution": "single_hot",
+        "zipf_s": 0
+      }
+    },
+    {
+      "id": "histogram_scan.r8192_e16_uniform",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_warp_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 8192,
+        "E": 16,
+        "distribution": "uniform",
+        "zipf_s": 0
+      }
+    },
+    {
+      "id": "histogram_scan.r32768_e31_zipf",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_warp_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 32768,
+        "E": 31,
+        "distribution": "zipf",
+        "zipf_s": 1.4
+      }
+    },
+    {
+      "id": "histogram_scan.r1024_e1_zipf",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_warp_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 1024,
+        "E": 1,
+        "distribution": "zipf",
+        "zipf_s": 1.4
+      }
+    },
+    {
+      "id": "histogram_scan.r1024_e8_zipf",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_warp_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 1024,
+        "E": 8,
+        "distribution": "zipf",
+        "zipf_s": 1.4
+      }
+    },
+    {
+      "id": "histogram_scan.r1024_e16_zipf",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_warp_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 1024,
+        "E": 16,
+        "distribution": "zipf",
+        "zipf_s": 1.4
+      }
+    },
+    {
+      "id": "histogram_scan.r1024_e31_zipf",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_warp_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 1024,
+        "E": 31,
+        "distribution": "zipf",
+        "zipf_s": 1.4
+      }
+    },
+    {
+      "id": "histogram_scan.r1024_e32_zipf",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_warp_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 1024,
+        "E": 32,
+        "distribution": "zipf",
+        "zipf_s": 1.4
+      }
+    },
+    {
+      "id": "histogram_scan.r1024_e33_zipf",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 1024,
+        "E": 33,
+        "distribution": "zipf",
+        "zipf_s": 1.4
+      }
+    },
+    {
+      "id": "histogram_scan.r1024_e64_zipf",
+      "operator": "histogram_exclusive_scan",
+      "levels": [
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_separate_current",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_fused_scalar",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cuda_fused_subwarp",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_block_scan",
+          "promotion_baseline": false
+        },
+        {
+          "name": "cub_histogram_device_scan",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "R": 1024,
+        "E": 64,
+        "distribution": "zipf",
+        "zipf_s": 1.4
+      }
+    }
+  ]
+}

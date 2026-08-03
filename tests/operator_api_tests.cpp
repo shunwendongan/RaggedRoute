@@ -7,6 +7,7 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "../src/runtime/operator_internal.h"
@@ -53,6 +54,7 @@ raggedroute::OperatorSignature fp32_signature(raggedroute::OperatorKind kind) {
       break;
     case OperatorKind::kHistogram:
     case OperatorKind::kExclusiveScan:
+    case OperatorKind::kHistogramExclusiveScan:
       break;
   }
   return signature;
@@ -70,7 +72,7 @@ void test_pure_dispatch() {
   const std::vector<OperatorKind> operators = {
       OperatorKind::kDenseGemm,     OperatorKind::kTopKGate,     OperatorKind::kHistogram,
       OperatorKind::kExclusiveScan, OperatorKind::kTokenPermute, OperatorKind::kGroupedGemm,
-      OperatorKind::kUnpermute};
+      OperatorKind::kUnpermute, OperatorKind::kHistogramExclusiveScan};
   for (const OperatorKind kind : operators) {
     DispatchRequest request;
     request.operator_kind = kind;
@@ -306,6 +308,7 @@ void test_argument_and_workspace_contracts(const raggedroute::RuntimeContext& co
 void test_exclusive_scan(const raggedroute::RuntimeContext& context) {
   using raggedroute::ExclusiveScanArgs;
   using raggedroute::KernelFamily;
+  using raggedroute::KernelSelection;
   using raggedroute::StatusCode;
 
   for (const int experts : {1, 31, 32, 33, 63, 64}) {
@@ -332,16 +335,31 @@ void test_exclusive_scan(const raggedroute::RuntimeContext& context) {
                 device_offsets.canaries_intact(context.stream),
             "default exclusive_scan changed a redzone");
 
+    for (const std::uint32_t implementation : {2U, 4U, 5U}) {
+      args.kernel = {KernelFamily::kCudaOptimized, implementation};
+      require_status(raggedroute::exclusive_scan(args, context),
+                     "explicit optimized exclusive_scan");
+      require(device_offsets.copy_to_host(context.stream) == expected,
+              "optimized exclusive_scan produced incorrect offsets");
+    }
+
     std::vector<std::int32_t> in_place_input = counts;
     in_place_input.push_back(-1);
     rc::GuardedDeviceBuffer<std::int32_t> in_place(in_place_input.size(), context.stream);
     in_place.copy_from_host(in_place_input, context.stream);
     args.counts = in_place.data();
     args.offsets = in_place.data();
-    args.kernel = {KernelFamily::kCudaNaive, 0};
-    require_status(raggedroute::exclusive_scan(args, context), "in-place exclusive_scan");
-    require(in_place.copy_to_host(context.stream) == expected,
-            "in-place exclusive_scan produced incorrect offsets");
+    for (const KernelSelection kernel :
+         {KernelSelection{KernelFamily::kCudaNaive, 0},
+          KernelSelection{KernelFamily::kCudaOptimized, 2},
+          KernelSelection{KernelFamily::kCudaOptimized, 4},
+          KernelSelection{KernelFamily::kCudaOptimized, 5}}) {
+      in_place.copy_from_host(in_place_input, context.stream);
+      args.kernel = kernel;
+      require_status(raggedroute::exclusive_scan(args, context), "in-place exclusive_scan");
+      require(in_place.copy_to_host(context.stream) == expected,
+              "in-place exclusive_scan produced incorrect offsets");
+    }
     require(in_place.canaries_intact(context.stream), "in-place exclusive_scan changed a redzone");
   }
 
@@ -364,6 +382,7 @@ void test_exclusive_scan(const raggedroute::RuntimeContext& context) {
   four_byte_args.counts = four_byte_counts_device.data() + 1;
   four_byte_args.offsets = four_byte_offsets_device.data() + 1;
   four_byte_args.experts = kFourByteAlignedExperts;
+  four_byte_args.kernel = {KernelFamily::kCudaOptimized, 5};
   require(reinterpret_cast<std::uintptr_t>(four_byte_args.counts) % 8 == 4 &&
               reinterpret_cast<std::uintptr_t>(four_byte_args.offsets) % 8 == 4,
           "test setup must exercise pointers that are 4-byte but not 8-byte aligned");
@@ -422,6 +441,81 @@ void test_exclusive_scan(const raggedroute::RuntimeContext& context) {
   invalid.offsets = reinterpret_cast<std::int32_t*>(misaligned_storage + 1);
   require(raggedroute::exclusive_scan(invalid, context).code == StatusCode::kInvalidArgument,
           "exclusive_scan must reject pointers that are not 4-byte aligned");
+}
+
+void test_histogram_exclusive_scan(const raggedroute::RuntimeContext& context) {
+  using raggedroute::HistogramExclusiveScanArgs;
+  using raggedroute::KernelFamily;
+  using raggedroute::KernelSelection;
+  using raggedroute::StatusCode;
+
+  for (const auto [route_pairs, experts] :
+       {std::pair{0, 1}, std::pair{1, 8}, std::pair{257, 33}, std::pair{4096, 64},
+        std::pair{4097, 64}}) {
+    std::vector<std::int32_t> ids(static_cast<std::size_t>(route_pairs));
+    std::vector<std::int32_t> expected_counts(static_cast<std::size_t>(experts), 0);
+    for (int route = 0; route < route_pairs; ++route) {
+      ids[static_cast<std::size_t>(route)] = route % experts;
+      ++expected_counts[static_cast<std::size_t>(route % experts)];
+    }
+    std::vector<std::int32_t> expected_offsets(static_cast<std::size_t>(experts + 1), 0);
+    for (int expert = 0; expert < experts; ++expert) {
+      expected_offsets[static_cast<std::size_t>(expert + 1)] =
+          expected_offsets[static_cast<std::size_t>(expert)] +
+          expected_counts[static_cast<std::size_t>(expert)];
+    }
+
+    rc::GuardedDeviceBuffer<std::int32_t> device_ids(ids.size(), context.stream);
+    rc::GuardedDeviceBuffer<std::int32_t> device_counts(expected_counts.size(), context.stream);
+    rc::GuardedDeviceBuffer<std::int32_t> device_offsets(expected_offsets.size(), context.stream);
+    if (!ids.empty()) device_ids.copy_from_host(ids, context.stream);
+
+    HistogramExclusiveScanArgs args;
+    args.expert_ids = ids.empty() ? nullptr : device_ids.data();
+    args.counts = device_counts.data();
+    args.offsets = device_offsets.data();
+    args.route_pairs = route_pairs;
+    args.experts = experts;
+    require(raggedroute::get_histogram_exclusive_scan_workspace_size(args) == 0,
+            "fused metadata API must remain workspace-free");
+
+    std::vector<KernelSelection> kernels = {{KernelFamily::kCudaNaive, 0}};
+    kernels.push_back({KernelFamily::kCudaOptimized, 1});
+    kernels.push_back({KernelFamily::kCudaOptimized, 2});
+    for (const KernelSelection kernel : kernels) {
+      args.kernel = kernel;
+      require_status(raggedroute::histogram_exclusive_scan(args, context),
+                     "histogram_exclusive_scan");
+      require(device_counts.copy_to_host(context.stream) == expected_counts,
+              "histogram_exclusive_scan produced incorrect counts");
+      require(device_offsets.copy_to_host(context.stream) == expected_offsets,
+              "histogram_exclusive_scan produced incorrect offsets");
+    }
+    require(device_counts.canaries_intact(context.stream) &&
+                device_offsets.canaries_intact(context.stream),
+            "histogram_exclusive_scan changed a redzone");
+  }
+
+  rc::GuardedDeviceBuffer<std::int32_t> storage(66, context.stream);
+  HistogramExclusiveScanArgs invalid;
+  invalid.expert_ids = storage.data();
+  invalid.counts = storage.data();
+  invalid.offsets = storage.data();
+  invalid.route_pairs = 1;
+  invalid.experts = 1;
+  require(raggedroute::histogram_exclusive_scan(invalid, context).code ==
+              StatusCode::kInvalidArgument,
+          "histogram_exclusive_scan must reject overlapping outputs");
+  invalid.counts = nullptr;
+  require(raggedroute::histogram_exclusive_scan(invalid, context).code ==
+              StatusCode::kInvalidArgument,
+          "histogram_exclusive_scan must reject null outputs");
+  invalid.counts = storage.data() + 2;
+  invalid.offsets = storage.data() + 4;
+  invalid.kernel = {KernelFamily::kCudaOptimized, 99};
+  require(raggedroute::histogram_exclusive_scan(invalid, context).code ==
+              StatusCode::kUnsupportedKernelVariant,
+          "histogram_exclusive_scan must reject unknown implementation ids");
 }
 
 void test_dense_gemm(const raggedroute::RuntimeContext& context) {
@@ -810,6 +904,7 @@ int main() {
       test_dense_gemm_vector_alignment_fallback(context);
       test_topk_gate(context);
       test_exclusive_scan(context);
+      test_histogram_exclusive_scan(context);
       test_histogram_reset(context);
       test_permute_workspace_reset(context);
       test_permute_optimized_unaligned_duplicate_top2(context);

@@ -10,6 +10,7 @@
 #include "raggedroute/benchmark/adapter_utils.h"
 #include "raggedroute/benchmark/registry.h"
 #include "permute/cuda_candidate/optimized_internal.h"
+#include "scan/cuda_candidate/optimized_internal.h"
 #include "unpermute/cuda_candidate/optimized_internal.h"
 
 namespace raggedroute::benchmark {
@@ -36,6 +37,12 @@ class ChainAdapter final : public BenchmarkAdapter {
     }
     if (variant_name_ == "cuda_unpermute_candidate") {
       return prefix + " with optimized Unpermute";
+    }
+    if (variant_name_ == "cuda_fused_histogram_scan_scalar") {
+      return prefix + " with scalar-finalized fused Histogram-Scan";
+    }
+    if (variant_name_ == "cuda_fused_histogram_scan_subwarp") {
+      return prefix + " with subwarp-finalized fused Histogram-Scan";
     }
     return prefix + " baseline";
   }
@@ -126,18 +133,35 @@ class ChainAdapter final : public BenchmarkAdapter {
     topk_args.experts = experts_;
     operator_check(topk_gate(topk_args, context), "chain topk_gate operator");
 
-    HistogramArgs histogram_args;
-    histogram_args.expert_ids = ids_.data();
-    histogram_args.counts = counts_.data();
-    histogram_args.route_pairs = route_pairs_;
-    histogram_args.experts = experts_;
-    operator_check(histogram(histogram_args, context), "chain histogram operator");
+    if (variant_name_ == "cuda_fused_histogram_scan_scalar" ||
+        variant_name_ == "cuda_fused_histogram_scan_subwarp") {
+      HistogramExclusiveScanArgs fused_args;
+      fused_args.expert_ids = ids_.data();
+      fused_args.counts = counts_.data();
+      fused_args.offsets = offsets_.data();
+      fused_args.route_pairs = route_pairs_;
+      fused_args.experts = experts_;
+      fused_args.kernel = {
+          KernelFamily::kCudaOptimized,
+          variant_name_ == "cuda_fused_histogram_scan_scalar"
+              ? ops::kHistogramExclusiveScanFusedScalarImplementation
+              : ops::kHistogramExclusiveScanFusedSubwarpImplementation};
+      operator_check(histogram_exclusive_scan(fused_args, context),
+                     "chain fused histogram_exclusive_scan operator");
+    } else {
+      HistogramArgs histogram_args;
+      histogram_args.expert_ids = ids_.data();
+      histogram_args.counts = counts_.data();
+      histogram_args.route_pairs = route_pairs_;
+      histogram_args.experts = experts_;
+      operator_check(histogram(histogram_args, context), "chain histogram operator");
 
-    ExclusiveScanArgs scan_args;
-    scan_args.counts = counts_.data();
-    scan_args.offsets = offsets_.data();
-    scan_args.experts = experts_;
-    operator_check(exclusive_scan(scan_args, context), "chain exclusive_scan operator");
+      ExclusiveScanArgs scan_args;
+      scan_args.counts = counts_.data();
+      scan_args.offsets = offsets_.data();
+      scan_args.experts = experts_;
+      operator_check(exclusive_scan(scan_args, context), "chain exclusive_scan operator");
+    }
 
     TokenPermuteArgs permute_args;
     permute_args.x.data = x_.data();
@@ -252,8 +276,12 @@ class ChainAdapter final : public BenchmarkAdapter {
                  ? std::string("cuda_naive_except_token_permute_candidate")
                  : variant_name_ == "cuda_grouped_sm86_fp32_v1"
                        ? std::string("cuda_naive_except_benchmark_only_grouped_sm86_fp32_v1")
-                       : variant_name_ == "cuda_unpermute_candidate" ? std::string("mixed")
-                                                                        : std::string("cuda_naive")},
+                 : variant_name_ == "cuda_unpermute_candidate"
+                       ? std::string("mixed")
+                       : (variant_name_ == "cuda_fused_histogram_scan_scalar" ||
+                          variant_name_ == "cuda_fused_histogram_scan_subwarp")
+                             ? std::string("cuda_naive_except_fused_histogram_scan")
+                             : std::string("cuda_naive")},
             {"permute_variant",
              variant_name_ == "cuda_permute_candidate"
                  ? std::string("cuda_token_owned_top2")
@@ -267,6 +295,12 @@ class ChainAdapter final : public BenchmarkAdapter {
                  ? std::string("cuda_warp_token_vec4")
                  : std::string("cuda_naive")},
             {"grouped_max_m_policy", std::string("worst_case_R")},
+            {"histogram_scan_variant",
+             variant_name_ == "cuda_fused_histogram_scan_scalar"
+                 ? std::string("cuda_fused_scalar")
+                 : variant_name_ == "cuda_fused_histogram_scan_subwarp"
+                       ? std::string("cuda_fused_subwarp")
+                       : std::string("separate")},
             {"materialize_sorted_route", false}};
   }
 
@@ -291,8 +325,11 @@ class ChainAdapter final : public BenchmarkAdapter {
          static_cast<double>(active_experts_) * hidden_ * output_);
     work.logical_bytes += sizeof(float) * (static_cast<double>(route_pairs_) * output_ +
                                            static_cast<double>(tokens_) * output_);
-    work.operator_metrics["kernel_launches"] =
-        static_cast<std::int64_t>(include_router_projection_ ? 9 : 8);
+    const bool fused_histogram_scan =
+        variant_name_ == "cuda_fused_histogram_scan_scalar" ||
+        variant_name_ == "cuda_fused_histogram_scan_subwarp";
+    work.operator_metrics["kernel_launches"] = static_cast<std::int64_t>(
+        (include_router_projection_ ? 9 : 8) - (fused_histogram_scan ? 1 : 0));
     work.operator_metrics["counts_reset_bytes"] =
         static_cast<std::int64_t>(sizeof(std::int32_t) * experts_);
     work.operator_metrics["cursor_reset_bytes"] = static_cast<std::int64_t>(cursors_.bytes());

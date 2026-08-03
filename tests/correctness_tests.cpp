@@ -195,7 +195,7 @@ int main() {
 
   try {
     const auto operators = rr::available_operators();
-    require(operators.size() == 7, "registry must expose exactly seven operators");
+    require(operators.size() == 8, "registry must expose seven stages plus fused metadata API");
     require(rr::available_suites().size() == 2,
             "registry must expose the two non-overlapping chain suites");
     const auto summary = rr::summarize_samples({1.0, 2.0, 3.0, 4.0, 5.0});
@@ -263,6 +263,9 @@ int main() {
            {{"T", "4096"}, {"E", "8"}, {"top_k", "1"}, {"distribution", "single_hot"}}},
           {"histogram", {{"T", "65536"}, {"E", "16"}, {"top_k", "1"}, {"distribution", "uniform"}}},
           {"exclusive_scan", {{"E", "7"}, {"R", "23"}, {"distribution", "single_hot"}}},
+          {"histogram_exclusive_scan",
+           {{"R", "23"}, {"E", "7"}, {"distribution", "single_hot"}},
+           "cuda_separate_current"},
           {"token_permute",
            {{"T", "5"},
             {"E", "4"},
@@ -332,6 +335,19 @@ int main() {
           {"exclusive_scan", {{"E", "7"}, {"R", "23"}}, "cub_device_scan"},
           {"exclusive_scan", {{"E", "33"}, {"R", "67"}}, "cub_block_scan"},
           {"exclusive_scan", {{"E", "31"}, {"R", "67"}}, "cub_warp_scan"},
+          {"exclusive_scan", {{"E", "64"}, {"R", "4096"}},
+           "cuda_warp_blocked_scalar_legacy"},
+          {"exclusive_scan", {{"E", "63"}, {"R", "4096"}}, "cuda_subwarp4_scalar"},
+          {"exclusive_scan", {{"E", "64"}, {"R", "4096"}}, "cuda_subwarp4_vector"},
+          {"histogram_exclusive_scan",
+           {{"R", "1024"}, {"E", "64"}, {"distribution", "uniform"}},
+           "cuda_fused_scalar"},
+          {"histogram_exclusive_scan",
+           {{"R", "1024"}, {"E", "64"}, {"distribution", "zipf"}, {"zipf_s", "1.4"}},
+           "cuda_fused_subwarp"},
+          {"histogram_exclusive_scan",
+           {{"R", "4097"}, {"E", "64"}, {"distribution", "single_hot"}},
+           "cuda_fused_scalar"},
           {"token_permute",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}},
            "cuda_naive_from_ids"},

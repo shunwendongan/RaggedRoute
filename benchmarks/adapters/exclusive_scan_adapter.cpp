@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "scan/cuda_candidate/optimized_internal.h"
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/benchmark/adapter_utils.h"
 #include "raggedroute/benchmark/library_baselines.h"
@@ -12,12 +13,40 @@
 namespace raggedroute::benchmark {
 namespace {
 
+bool is_optimized_scan_variant(const std::string& variant_name) {
+  return variant_name == "cuda_warp_blocked_scalar_legacy" ||
+         variant_name == "cuda_subwarp4_scalar" ||
+         variant_name == "cuda_subwarp4_vector";
+}
+
+std::uint32_t optimized_scan_implementation(const std::string& variant_name) {
+  if (variant_name == "cuda_warp_blocked_scalar_legacy") {
+    return ops::kExclusiveScanWarpBlockedScalarLegacyImplementation;
+  }
+  if (variant_name == "cuda_subwarp4_scalar") {
+    return ops::kExclusiveScanSubwarp4ScalarImplementation;
+  }
+  if (variant_name == "cuda_subwarp4_vector") {
+    return ops::kExclusiveScanSubwarp4VectorImplementation;
+  }
+  throw std::invalid_argument("unsupported optimized scan variant: " + variant_name);
+}
+
 class ExclusiveScanAdapter final : public BenchmarkAdapter {
  public:
   explicit ExclusiveScanAdapter(const std::string& variant_name) : variant_name_(variant_name) {}
   std::string operator_name() const override { return "exclusive_scan"; }
   std::string variant_name() const override { return variant_name_; }
   std::string description() const override {
+    if (variant_name_ == "cuda_warp_blocked_scalar_legacy") {
+      return "Historical 32-lane two-items-per-lane scan research baseline";
+    }
+    if (variant_name_ == "cuda_subwarp4_scalar") {
+      return "SM86 16-lane four-items-per-lane scalar scan candidate";
+    }
+    if (variant_name_ == "cuda_subwarp4_vector") {
+      return "SM86 16-lane four-items-per-lane int4 scan candidate";
+    }
     return "Single-thread int32 exclusive scan for tiny expert counts";
   }
   bool supports(MeasurementLevel level) const override {
@@ -77,6 +106,23 @@ class ExclusiveScanAdapter final : public BenchmarkAdapter {
       return;
     }
 #endif
+    if (is_optimized_scan_variant(variant_name_)) {
+      const std::uint32_t implementation = optimized_scan_implementation(variant_name_);
+      if (level == MeasurementLevel::kKernelBody) {
+        cuda_check(ops::launch_exclusive_scan_optimized(counts_.data(), offsets_.data(), experts_,
+                                                        implementation, stream),
+                   "launch_exclusive_scan_optimized");
+        return;
+      }
+      ExclusiveScanArgs args;
+      args.counts = counts_.data();
+      args.offsets = offsets_.data();
+      args.experts = experts_;
+      args.kernel = {KernelFamily::kCudaOptimized, implementation};
+      operator_check(exclusive_scan(args, make_runtime_context(stream, architecture_)),
+                     "optimized exclusive_scan operator");
+      return;
+    }
     if (level == MeasurementLevel::kKernelBody) {
       cuda_check(
           ops::launch_exclusive_scan_naive(counts_.data(), offsets_.data(), experts_, stream),
@@ -115,6 +161,22 @@ class ExclusiveScanAdapter final : public BenchmarkAdapter {
     if (variant_name_ == "cub_warp_scan") {
       return {{"api", std::string("cub::WarpScan::ExclusiveSum")},
               {"threads", static_cast<std::int64_t>(32)}};
+    }
+    if (variant_name_ == "cuda_warp_blocked_scalar_legacy") {
+      return {{"threads", static_cast<std::int64_t>(32)},
+              {"items_per_thread", static_cast<std::int64_t>(2)},
+              {"algorithm", std::string("historical_warp_blocked_scalar")},
+              {"promotion_eligible", false}};
+    }
+    if (variant_name_ == "cuda_subwarp4_scalar" ||
+        variant_name_ == "cuda_subwarp4_vector") {
+      const bool vector_path =
+          variant_name_ == "cuda_subwarp4_vector" && experts_ % 4 == 0;
+      return {{"threads", static_cast<std::int64_t>(16)},
+              {"items_per_thread", static_cast<std::int64_t>(4)},
+              {"algorithm", std::string("subwarp4_blocked_scan")},
+              {"memory_path", vector_path ? std::string("int4_when_aligned")
+                                           : std::string("scalar")}};
     }
     return {{"threads", static_cast<std::int64_t>(1)}, {"algorithm", std::string("sequential")}};
   }

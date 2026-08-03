@@ -1,4 +1,5 @@
 #include "../runtime/operator_internal.h"
+#include "cuda_candidate/optimized_internal.h"
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/operators.h"
 
@@ -18,8 +19,6 @@ Status exclusive_scan(const ExclusiveScanArgs& args, const RuntimeContext& conte
   Status status = detail::dispatch_operator(OperatorKind::kExclusiveScan, {}, args.kernel,
                                             context.architecture, &decision);
   if (!status.ok()) return status;
-  status = detail::require_naive_implementation(decision);
-  if (!status.ok()) return status;
   if (args.counts == nullptr || args.offsets == nullptr) {
     return detail::invalid_argument("exclusive_scan received a null device pointer");
   }
@@ -27,9 +26,19 @@ Status exclusive_scan(const ExclusiveScanArgs& args, const RuntimeContext& conte
       !detail::is_aligned(args.offsets, alignof(std::int32_t))) {
     return detail::invalid_argument("exclusive_scan buffers must be 4-byte aligned");
   }
-  return detail::cuda_status(
-      ops::launch_exclusive_scan_naive(args.counts, args.offsets, args.experts, context.stream),
-      "exclusive_scan kernel launch failed");
+  if (decision.kernel.family == KernelFamily::kCudaNaive) {
+    return detail::cuda_status(
+        ops::launch_exclusive_scan_naive(args.counts, args.offsets, args.experts, context.stream),
+        "exclusive_scan naive kernel launch failed");
+  }
+  if (decision.kernel.family == KernelFamily::kCudaOptimized) {
+    return detail::cuda_status(
+        ops::launch_exclusive_scan_optimized(args.counts, args.offsets, args.experts,
+                                             decision.kernel.implementation_id, context.stream),
+        "exclusive_scan optimized kernel launch failed");
+  }
+  return detail::make_status(StatusCode::kUnsupportedKernelVariant,
+                             "exclusive_scan dispatch selected an unknown kernel");
 }
 
 }  // namespace raggedroute

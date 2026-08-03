@@ -130,7 +130,7 @@ std::vector<std::string> descriptor_names(const std::vector<VariantDescriptor>& 
 
 std::vector<std::string> available_operators() {
   return {"dense_gemm",    "topk_gate",    "histogram", "exclusive_scan",
-          "token_permute", "grouped_gemm", "unpermute"};
+          "histogram_exclusive_scan", "token_permute", "grouped_gemm", "unpermute"};
 }
 
 std::vector<VariantDescriptor> available_variant_descriptors(const std::string& operator_name) {
@@ -196,6 +196,15 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     std::vector<VariantDescriptor> variants = {{"cuda_naive", "in_tree_cuda",
                                                 "raggedroute.cuda_naive.v1", "not_applicable",
                                                 "single_thread_exclusive", "exact_int32"}};
+    variants.push_back(descriptor("cuda_warp_blocked_scalar_legacy", "in_tree_cuda_research",
+                                  "raggedroute.scan.historical_c2.v1", "not_applicable",
+                                  "warp32_blocked2_scalar"));
+    variants.push_back(descriptor("cuda_subwarp4_scalar", "in_tree_cuda_research",
+                                  "raggedroute.scan.subwarp4_scalar.v1", "not_applicable",
+                                  "subwarp16_blocked4_scalar"));
+    variants.push_back(descriptor("cuda_subwarp4_vector", "in_tree_cuda_research",
+                                  "raggedroute.scan.subwarp4_vector.v1", "not_applicable",
+                                  "subwarp16_blocked4_int4"));
 #if RAGGEDROUTE_HAS_CCCL
     variants.push_back(descriptor("cub_device_scan", "nvidia_cccl", "cub::DeviceScan::ExclusiveSum",
                                   cccl_revision(), "device_scan_plus_terminal_offset"));
@@ -203,6 +212,31 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
                                   cccl_revision(), "block_scan_128_threads"));
     variants.push_back(descriptor("cub_warp_scan", "nvidia_cccl", "cub::WarpScan::ExclusiveSum",
                                   cccl_revision(), "warp_scan_32_threads"));
+#endif
+    for (VariantDescriptor& variant : variants) variant.math_mode = "exact_int32";
+    return variants;
+  }
+  if (operator_name == "histogram_exclusive_scan") {
+    std::vector<VariantDescriptor> variants = {
+        descriptor("cuda_separate_current", "in_tree_cuda",
+                   "raggedroute.histogram_scan.separate.v1", "not_applicable",
+                   "promoted_histogram_then_scan"),
+        descriptor("cuda_fused_scalar", "in_tree_cuda_research",
+                   "raggedroute.histogram_scan.fused_scalar.v1", "not_applicable",
+                   "single_cta_shared_scalar_finalize"),
+        descriptor("cuda_fused_subwarp", "in_tree_cuda_research",
+                   "raggedroute.histogram_scan.fused_subwarp.v1", "not_applicable",
+                   "single_cta_shared_subwarp_finalize")};
+#if RAGGEDROUTE_HAS_CCCL
+    variants.push_back(descriptor("cub_histogram_warp_scan", "nvidia_cccl",
+                                  "cub::DeviceHistogram+WarpScan", cccl_revision(),
+                                  "device_histogram_then_warp_scan"));
+    variants.push_back(descriptor("cub_histogram_block_scan", "nvidia_cccl",
+                                  "cub::DeviceHistogram+BlockScan", cccl_revision(),
+                                  "device_histogram_then_block_scan"));
+    variants.push_back(descriptor("cub_histogram_device_scan", "nvidia_cccl",
+                                  "cub::DeviceHistogram+DeviceScan", cccl_revision(),
+                                  "device_histogram_then_device_scan"));
 #endif
     for (VariantDescriptor& variant : variants) variant.math_mode = "exact_int32";
     return variants;
@@ -305,6 +339,9 @@ AdapterPtr make_adapter(const std::string& operator_name, const std::string& var
   if (operator_name == "topk_gate") adapter = make_topk_gate_adapter(variant_name);
   if (operator_name == "histogram") adapter = make_histogram_adapter(variant_name);
   if (operator_name == "exclusive_scan") adapter = make_exclusive_scan_adapter(variant_name);
+  if (operator_name == "histogram_exclusive_scan") {
+    adapter = make_histogram_exclusive_scan_adapter(variant_name);
+  }
   if (operator_name == "token_permute") adapter = make_token_permute_adapter(variant_name);
   if (operator_name == "grouped_gemm") adapter = make_grouped_gemm_adapter(variant_name);
   if (operator_name == "unpermute") adapter = make_unpermute_adapter(variant_name);
@@ -325,7 +362,13 @@ std::vector<VariantDescriptor> available_suite_variant_descriptors(const std::st
                        "naive_chain_with_benchmark_only_grouped_sm86_fp32_v1"),
             descriptor("cuda_unpermute_candidate", "in_tree_cuda_research",
                        "raggedroute.chain.unpermute_candidate.v1", "not_applicable",
-                       "naive_chain_with_warp_token_vec4_unpermute")};
+                       "naive_chain_with_warp_token_vec4_unpermute"),
+            descriptor("cuda_fused_histogram_scan_scalar", "in_tree_cuda_research",
+                       "raggedroute.chain.fused_histogram_scan_scalar.v1", "not_applicable",
+                       "chain_with_single_cta_fused_histogram_scan_scalar"),
+            descriptor("cuda_fused_histogram_scan_subwarp", "in_tree_cuda_research",
+                       "raggedroute.chain.fused_histogram_scan_subwarp.v1", "not_applicable",
+                       "chain_with_single_cta_fused_histogram_scan_subwarp")};
   }
   return {};
 }

@@ -13,6 +13,7 @@ enum class OperatorKind {
   kTokenPermute,
   kGroupedGemm,
   kUnpermute,
+  kHistogramExclusiveScan,
 };
 
 // kOther is intentional: an architecture is not advertised as supported until

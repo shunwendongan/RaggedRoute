@@ -1,0 +1,15 @@
+{
+  "schema_version": "raggedroute.triton_topk_suite.v1",
+  "suite_id": "rtx3080_topk_gate_triton_wsl_release_v1",
+  "process_runs": 5,
+  "warmup": 20,
+  "samples": 20,
+  "kernel_repeats": 1000,
+  "seed": 20260803,
+  "tokens": [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
+  "experts": [2, 3, 4, 7, 8, 9, 15, 16, 17, 31, 32, 33, 48, 63, 64],
+  "input_mode": "random",
+  "dtype": "fp32",
+  "measurement_level": "L1_kernel_body",
+  "cache_mode": "warm"
+}

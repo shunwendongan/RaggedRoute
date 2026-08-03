@@ -1,0 +1,14 @@
+{
+  "schema_version": "raggedroute.triton_profile_suite.v1",
+  "suite_id": "rtx3080_topk_gate_triton_wsl_profile_v1",
+  "cases": [
+    {"id": "triton.t2048_e8", "T": 2048, "E": 8},
+    {"id": "triton.t2048_e33", "T": 2048, "E": 33},
+    {"id": "triton.t2048_e64", "T": 2048, "E": 64},
+    {"id": "triton.t32_e64", "T": 32, "E": 64}
+  ],
+  "warmup": 20,
+  "seed": 20260803,
+  "input_mode": "random",
+  "kernel_pattern": "topk_gate_triton_kernel"
+}

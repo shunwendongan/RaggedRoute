@@ -35,6 +35,10 @@ profile_benchmarks = load_module(
 freeze_results = load_module(
     "freeze_results", ROOT / "scripts" / "freeze_results.py"
 )
+analyze_triton_topk_results = load_module(
+    "analyze_triton_topk_results",
+    ROOT / "scripts" / "analyze_triton_topk_results.py",
+)
 
 
 def make_suite_v2() -> dict:
@@ -67,6 +71,26 @@ def make_suite_v2() -> dict:
 
 
 class SuiteTests(unittest.TestCase):
+    def test_triton_topk_suite_matches_reviewed_matrix_and_boundary(self) -> None:
+        suite = json.loads(
+            (ROOT / "configs" / "benchmark_topk_gate_triton_wsl_release.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(suite["process_runs"], 5)
+        self.assertEqual(suite["kernel_repeats"], 1000)
+        self.assertEqual(suite["measurement_level"], "L1_kernel_body")
+        self.assertEqual(suite["experts"], [2, 3, 4, 7, 8, 9, 15, 16, 17, 31, 32, 33, 48, 63, 64])
+        source = (ROOT / "benchmarks" / "triton" / "topk_gate.py").read_text(encoding="utf-8")
+        self.assertIn("tie_break_left=True", source)
+        self.assertIn('"wsl2_triton_auxiliary"', source)
+        self.assertNotIn("KernelFamily", source)
+
+    def test_triton_percentile_interpolates(self) -> None:
+        self.assertEqual(
+            analyze_triton_topk_results.percentile([1.0, 2.0, 3.0], 0.5), 2.0
+        )
+
     def test_windows_entrypoints_share_dynamic_msvc_discovery(self) -> None:
         setup = (ROOT / "scripts" / "setup_msvc_env.bat").read_text(encoding="utf-8")
         configure = (ROOT / "scripts" / "configure_windows.bat").read_text(

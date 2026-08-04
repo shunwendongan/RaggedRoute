@@ -46,7 +46,12 @@ def normalize_text_file(path: pathlib.Path) -> None:
 def is_raw(relative: str) -> bool:
     lower = relative.lower()
     name = pathlib.PurePosixPath(lower).name
-    return lower.endswith(RAW_SUFFIXES) or name.endswith("aggregate.json") or "manifest" in name
+    return (
+        lower.endswith(RAW_SUFFIXES)
+        or name.endswith("aggregate.json")
+        or name.endswith(".aggregate-v2.json")
+        or "manifest" in name
+    )
 
 
 def role_for(relative: str) -> str:

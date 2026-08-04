@@ -1,0 +1,18 @@
+[
+  {
+    "name": "void raggedroute::benchmark::library_baseline::<unnamed>::vllm_row_packed_top2_kernel<(int)64>(const float *, int *, float *, int)",
+    "total_time": 53663.0,
+    "time_pct": 100.0,
+    "raw": {
+      "Time (%)": "100.0",
+      "Total Time (ns)": "53663",
+      "Instances": "21",
+      "Avg (ns)": "2555.4",
+      "Med (ns)": "2528.0",
+      "Min (ns)": "2527",
+      "Max (ns)": "2848",
+      "StdDev (ns)": "68.9",
+      "Name": "void raggedroute::benchmark::library_baseline::<unnamed>::vllm_row_packed_top2_kernel<(int)64>(const float *, int *, float *, int)"
+    }
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "gpu_name": "NVIDIA GeForce RTX 3080",
+  "gpu_uuid": "7c5e95c0e5a415d824a0c8c8b58d6f39",
+  "compute_capability": "8.6",
+  "sm_count": 68,
+  "global_memory_bytes": 10736893952,
+  "cuda_compiler": "13.3.73",
+  "cuda_driver": 13010,
+  "cuda_runtime": 13010,
+  "build_type": "Release",
+  "build_git_sha": "86cfbe2a805d",
+  "build_git_dirty": false,
+  "run_id": "20260803T181855Z-86cfbe2a805d-rtx3080_topk_gate_release_v2"
+}

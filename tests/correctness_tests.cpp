@@ -436,7 +436,7 @@ int main() {
       }
       const std::vector<std::string> topk_candidates = {
           "cuda_warp_pair_top2_v1", "cuda_subwarp_pair_top2_v2", "cuda_vector_pair_top2_v3",
-          "cub_block_radix_top2"};
+          "cuda_local_pair_two_reduce_top2_v4", "cub_block_radix_top2"};
       const std::vector<int> topk_tokens = {1, 7, 65};
       const std::vector<std::uint64_t> topk_seeds = {101, 202, 303};
       for (int experts = 2; experts <= 64; ++experts) {

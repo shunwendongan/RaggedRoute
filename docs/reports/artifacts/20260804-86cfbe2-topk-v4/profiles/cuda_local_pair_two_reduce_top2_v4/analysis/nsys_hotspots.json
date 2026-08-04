@@ -1,0 +1,18 @@
+[
+  {
+    "name": "void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)64, (int)4>(const float *, int *, float *, int)",
+    "total_time": 48448.0,
+    "time_pct": 100.0,
+    "raw": {
+      "Time (%)": "100.0",
+      "Total Time (ns)": "48448",
+      "Instances": "21",
+      "Avg (ns)": "2307.0",
+      "Med (ns)": "2304.0",
+      "Min (ns)": "2272",
+      "Max (ns)": "2592",
+      "StdDev (ns)": "67.8",
+      "Name": "void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)64, (int)4>(const float *, int *, float *, int)"
+    }
+  }
+]

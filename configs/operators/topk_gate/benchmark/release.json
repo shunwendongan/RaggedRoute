@@ -1,6 +1,6 @@
 {
   "schema_version": "raggedroute.suite.v2",
-  "suite_id": "rtx3080_topk_gate_release_v1",
+  "suite_id": "rtx3080_topk_gate_release_v2",
   "protocol": "release",
   "process_runs": 5,
   "common": {
@@ -19,7 +19,8 @@
         {"name": "cuda_naive", "promotion_baseline": true},
         {"name": "cuda_warp_pair_top2_v1", "promotion_baseline": false},
         {"name": "cuda_subwarp_pair_top2_v2", "promotion_baseline": false},
-        {"name": "cuda_vector_pair_top2_v3", "promotion_baseline": false}
+        {"name": "cuda_vector_pair_top2_v3", "promotion_baseline": false},
+        {"name": "cuda_local_pair_two_reduce_top2_v4", "promotion_baseline": false}
       ],
       "matrix": {
         "T": [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
@@ -35,6 +36,7 @@
         {"name": "cuda_naive", "promotion_baseline": true},
         {"name": "cuda_subwarp_pair_top2_v2", "promotion_baseline": false},
         {"name": "cuda_vector_pair_top2_v3", "promotion_baseline": false},
+        {"name": "cuda_local_pair_two_reduce_top2_v4", "promotion_baseline": false},
         {"name": "cub_block_radix_top2", "promotion_baseline": false}
       ],
       "matrix": {
@@ -51,6 +53,7 @@
         {"name": "cuda_naive", "promotion_baseline": true},
         {"name": "cuda_subwarp_pair_top2_v2", "promotion_baseline": false},
         {"name": "cuda_vector_pair_top2_v3", "promotion_baseline": false},
+        {"name": "cuda_local_pair_two_reduce_top2_v4", "promotion_baseline": false},
         {"name": "vllm_row_packed_top2", "promotion_baseline": false}
       ],
       "matrix": {
@@ -69,7 +72,8 @@
         {"name": "cuda_naive", "promotion_baseline": true},
         {"name": "cuda_warp_pair_top2_v1", "promotion_baseline": false},
         {"name": "cuda_subwarp_pair_top2_v2", "promotion_baseline": false},
-        {"name": "cuda_vector_pair_top2_v3", "promotion_baseline": false}
+        {"name": "cuda_vector_pair_top2_v3", "promotion_baseline": false},
+        {"name": "cuda_local_pair_two_reduce_top2_v4", "promotion_baseline": false}
       ],
       "params": {"T": 2048, "E": 64, "input_mode": "random", "input_alignment": 16}
     },
@@ -81,6 +85,7 @@
       "cache_scrub_bytes": 67108864,
       "variants": [
         {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cuda_local_pair_two_reduce_top2_v4", "promotion_baseline": false},
         {"name": "cub_block_radix_top2", "promotion_baseline": false},
         {"name": "vllm_row_packed_top2", "promotion_baseline": false}
       ],
@@ -95,6 +100,7 @@
         {"name": "cuda_warp_pair_top2_v1", "promotion_baseline": false},
         {"name": "cuda_subwarp_pair_top2_v2", "promotion_baseline": false},
         {"name": "cuda_vector_pair_top2_v3", "promotion_baseline": false},
+        {"name": "cuda_local_pair_two_reduce_top2_v4", "promotion_baseline": false},
         {"name": "cub_block_radix_top2", "promotion_baseline": false},
         {"name": "vllm_row_packed_top2", "promotion_baseline": false}
       ],
@@ -109,6 +115,7 @@
         {"name": "cuda_warp_pair_top2_v1", "promotion_baseline": false},
         {"name": "cuda_subwarp_pair_top2_v2", "promotion_baseline": false},
         {"name": "cuda_vector_pair_top2_v3", "promotion_baseline": false},
+        {"name": "cuda_local_pair_two_reduce_top2_v4", "promotion_baseline": false},
         {"name": "cub_block_radix_top2", "promotion_baseline": false}
       ],
       "params": {"T": 2048, "E": 64, "input_mode": "random", "input_alignment": 4}

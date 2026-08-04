@@ -55,3 +55,20 @@ entered Auto. These NSYS numbers are diagnostic and are not Release latency.
 Full report: [RTX 3080 Top-K Gate campaign](../reports/rtx3080-topk-gate-1ce3398.md).
 Normalized bundle:
 [20260803T0705Z-1ce3398-topk-gate-v4](../reports/artifacts/20260803T0705Z-1ce3398-topk-gate-v4/).
+
+## 2026-08-04 / SM86 two-reduction v4 follow-up
+
+- Implementation commit: `86cfbe2a805d8880b73896dece2c77031768245d`.
+- Candidate: `cuda_local_pair_two_reduce_top2_v4`; explicit implementation id 4,
+  four warps/CTA, float2/float4 row packing, register-local pair plus two
+  subgroup reductions.
+- Release evidence: 16,710 records, 3,342 aggregate groups, five independent
+  process runs/group, one GPU UUID. CTest and all four Compute Sanitizer modes
+  passed.
+- Strict exact-E shape evaluation produced zero promoted intervals. The v4
+  candidate is retained for explicit benchmarking in the PR, while `Auto`
+  remains `cuda_naive`; this is not a production speedup claim.
+
+Detailed decision and normalized NSYS/NCU/sanitizer evidence:
+[20260804-86cfbe2-topk-v4](../reports/artifacts/20260804-86cfbe2-topk-v4/), with
+raw benchmark/profiler files referenced by its immutable release asset.

@@ -5,7 +5,7 @@
   "minimum_independent_process_runs": 5,
   "maximum_all_samples_cv": 0.10,
   "minimum_ratio_of_sums_p50_speedup": 1.05,
-  "maximum_single_shape_p50_regression_fraction": 0.03,
+  "maximum_single_shape_p50_regression_fraction": 0.0,
   "maximum_single_shape_p95_regression_fraction": 0.05,
   "minimum_external_ratio_of_sums_speedup": 1.03,
   "maximum_external_single_shape_regression_fraction": 0.05,
@@ -15,7 +15,8 @@
   "require_zero_workspace": true,
   "require_single_launch": true,
   "require_no_local_memory_spill": true,
-  "buckets": ["E=2", "E=3-8", "E=9-16", "E=17-32", "E=33-64"],
-  "special_paths": ["v3 aligned E={8,16,32,64}"],
-  "decision": "A candidate is enabled only from a T threshold where every larger tested shape in the bucket passes every gate at both L1 and L2."
+  "buckets": ["E=2", "E=4", "E=8", "E=16", "E=32", "E=64"],
+  "special_paths": ["v4 aligned float2/float4"],
+  "strong_library_envelope": ["cub_block_radix_top2", "vllm_row_packed_top2"],
+  "decision": "V4 is enabled per exact E from the smallest T threshold where every larger tested shape has no p50 regression, reaches 1.05x ratio-of-sums versus the fastest old in-tree implementation at both L1 and L2, and reaches 1.03x versus the fastest contract-equivalent library baseline at L1."
 }

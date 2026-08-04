@@ -1,0 +1,66 @@
+{
+  "schema_version": "raggedroute.profile_suite.v1",
+  "suite_id": "rtx3080_topk_gate_v4_diagnostic_v1",
+  "cases": [
+    {
+      "id": "topk.v2.t2048_e64",
+      "operator": "topk_gate",
+      "variant": "cuda_subwarp_pair_top2_v2",
+      "level": "l1",
+      "warmup": 20,
+      "seed": 20260804,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "topk_gate_scalar_pair_kernel",
+      "params": {"T": 2048, "E": 64, "input_alignment": 16}
+    },
+    {
+      "id": "topk.v3.t2048_e64",
+      "operator": "topk_gate",
+      "variant": "cuda_vector_pair_top2_v3",
+      "level": "l1",
+      "warmup": 20,
+      "seed": 20260804,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "topk_gate_vector_pair_kernel",
+      "params": {"T": 2048, "E": 64, "input_alignment": 16}
+    },
+    {
+      "id": "topk.v4.t2048_e64",
+      "operator": "topk_gate",
+      "variant": "cuda_local_pair_two_reduce_top2_v4",
+      "level": "l1",
+      "warmup": 20,
+      "seed": 20260804,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "topk_gate_local_pair_two_reduce_kernel",
+      "params": {"T": 2048, "E": 64, "input_alignment": 16}
+    },
+    {
+      "id": "topk.vllm.t2048_e64",
+      "operator": "topk_gate",
+      "variant": "vllm_row_packed_top2",
+      "level": "l1",
+      "warmup": 20,
+      "seed": 20260804,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "vllm_row_packed_top2_kernel",
+      "params": {"T": 2048, "E": 64, "input_alignment": 16}
+    },
+    {
+      "id": "topk.cub.t2048_e64",
+      "operator": "topk_gate",
+      "variant": "cub_block_radix_top2",
+      "level": "l1",
+      "warmup": 20,
+      "seed": 20260804,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "cub_block_radix_top2_kernel",
+      "params": {"T": 2048, "E": 64, "input_alignment": 16}
+    }
+  ]
+}

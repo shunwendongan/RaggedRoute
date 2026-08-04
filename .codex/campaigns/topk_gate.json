@@ -2,12 +2,38 @@
   "schema_version": "codex.kernel-research.v1",
   "commands": {
     "build": ["cmd /c scripts\\configure_windows.bat rtx3080-sm86-release", "cmd /c scripts\\build_windows.bat rtx3080-sm86-release"],
-    "correctness": ["ctest --preset test-rtx3080-sm86-release --output-on-failure"],
-    "smoke": ["python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\topk_gate\\benchmark\\smoke.json --output out\\benchmark\\topk-smoke.jsonl"],
-    "release": ["python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\topk_gate\\benchmark\\release.json --output out\\benchmark\\topk-release.jsonl"]
+    "correctness": ["ctest --preset test-rtx3080-sm86-release --output-on-failure", "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\research\\topk_gate\\sanitizer-v4"],
+    "smoke": ["python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\topk_gate\\benchmark\\smoke.json --output out\\research\\topk_gate\\topk-v4-smoke.jsonl"],
+    "release": ["python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\topk_gate\\benchmark\\release.json --output out\\research\\topk_gate\\topk-v4-release.jsonl"]
   },
-  "benchmark": {"binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe", "profile_cases": [{"name": "topk.t2048_e64", "arguments": ["--operator", "topk_gate", "--variant", "cuda_subwarp_pair_top2_v2", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=2048", "--param", "E=64"], "kernel_regex": "topk_gate_subwarp_pair_kernel"}], "kernel_regex": "topk_gate_(naive|warp|subwarp|vector).*kernel"},
-  "variants": {"baseline": "cuda_naive", "candidate": "cuda_subwarp_pair_top2_v2"},
-  "output": {"root": "out\\profile", "retention": {"keep_raw_for": ["baseline", "promoted", "final"], "rejected_candidate": "metrics-and-reason"}},
-  "promotion_policy": {"version": "topk-continuous-bucket-v1", "min_processes": 5, "median_speedup": 1.05, "p95_regression_tolerance": 0.05, "max_shape_regression": 0.03, "max_workspace_growth": 0.0}
+  "benchmark": {
+    "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
+    "profile_cases": [
+      {
+        "name": "topk.t2048_e64.v4",
+        "arguments": ["--operator", "topk_gate", "--variant", "cuda_local_pair_two_reduce_top2_v4", "--level", "l1", "--profile-once", "--warmup", "20", "--seed", "20260804", "--param", "T=2048", "--param", "E=64", "--param", "input_alignment=16"],
+        "kernel_regex": "topk_gate_local_pair_two_reduce_kernel"
+      }
+    ],
+    "kernel_regex": "topk_gate_(naive|scalar_pair|vector_pair|local_pair_two_reduce).*kernel|vllm_row_packed_top2_kernel|cub_block_radix_top2_kernel"
+  },
+  "variants": {
+    "baseline": "vllm_row_packed_top2",
+    "candidate": "cuda_local_pair_two_reduce_top2_v4"
+  },
+  "output": {
+    "root": "out\\research\\topk_gate",
+    "retention": {
+      "keep_raw_for": ["baseline", "promoted", "final"],
+      "rejected_candidate": "metrics-and-reason"
+    }
+  },
+  "promotion_policy": {
+    "version": "topk-shape-envelope-v2",
+    "min_processes": 5,
+    "median_speedup": 1.05,
+    "p95_regression_tolerance": 0.05,
+    "max_shape_regression": 0.0,
+    "max_workspace_growth": 0.0
+  }
 }

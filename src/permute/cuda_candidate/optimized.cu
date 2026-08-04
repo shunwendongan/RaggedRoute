@@ -432,6 +432,15 @@ cudaError_t launch_token_permute_optimized(
       return launch_token_tile4_top2<true>(x, expert_ids, offsets, cursors, x_permuted,
                                            route_pos, sorted_route, tokens, top_k, hidden,
                                            caller_stream);
+    case kTokenPermuteShapeDispatchedV2Implementation:
+      if (top_k == 2 && tokens >= 1024 && hidden >= 128 && hidden % 4 == 0 &&
+          is_aligned_16(x) && is_aligned_16(x_permuted)) {
+        return launch_token_tile4_top2<false>(x, expert_ids, offsets, cursors, x_permuted,
+                                              route_pos, sorted_route, tokens, top_k, hidden,
+                                              caller_stream);
+      }
+      return launch_token_owned_top2(x, expert_ids, offsets, cursors, x_permuted, route_pos,
+                                     sorted_route, tokens, top_k, hidden, caller_stream);
     default:
       return cudaErrorInvalidValue;
   }

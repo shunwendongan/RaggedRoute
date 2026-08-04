@@ -1,0 +1,1304 @@
+[
+  {
+    "case_id": "permute.v2.direct.large_uniform",
+    "profile_set": "basic",
+    "kernel": "token_permute_token_tile4_top2_kernel",
+    "metrics": {
+      "device_name": {
+        "status": "collected",
+        "metric": "device__attribute_display_name",
+        "value": "NVIDIA GeForce RTX 3080",
+        "unit": ""
+      },
+      "cc_major": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_major",
+        "value": 8,
+        "unit": ""
+      },
+      "cc_minor": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_minor",
+        "value": 6,
+        "unit": ""
+      },
+      "sm_count": {
+        "status": "collected",
+        "metric": "device__attribute_multiprocessor_count",
+        "value": 68,
+        "unit": ""
+      },
+      "duration_ns": {
+        "status": "collected",
+        "metric": "gpu__time_duration.sum",
+        "value": 15584.0,
+        "unit": "ns"
+      },
+      "grid_size": {
+        "status": "collected",
+        "metric": "launch__grid_size",
+        "value": 512,
+        "unit": ""
+      },
+      "block_size": {
+        "status": "collected",
+        "metric": "launch__block_size",
+        "value": 128,
+        "unit": ""
+      },
+      "waves_per_sm": {
+        "status": "collected",
+        "metric": "launch__waves_per_multiprocessor",
+        "value": 0.6274509803921569,
+        "unit": ""
+      },
+      "registers_per_thread": {
+        "status": "collected",
+        "metric": "launch__registers_per_thread",
+        "value": 34,
+        "unit": "register/thread"
+      },
+      "shared_mem_per_block": {
+        "status": "collected",
+        "metric": "launch__shared_mem_per_block",
+        "value": 1056,
+        "unit": "byte/block"
+      },
+      "occupancy_theoretical_pct": {
+        "status": "collected",
+        "metric": "sm__maximum_warps_per_active_cycle_pct",
+        "value": 100.0,
+        "unit": "%"
+      },
+      "occupancy_achieved_pct": {
+        "status": "collected",
+        "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+        "value": 41.66647254800689,
+        "unit": "%"
+      },
+      "sm_throughput_pct": {
+        "status": "collected",
+        "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 5.09929667228115,
+        "unit": "%"
+      },
+      "memory_throughput_pct": {
+        "status": "collected",
+        "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 53.19056721194879,
+        "unit": "%"
+      },
+      "dram_throughput_pct": {
+        "status": "collected",
+        "metric": "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 53.19056721194879,
+        "unit": "%"
+      },
+      "dram_read_bytes": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "dram_write_bytes": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "l1_throughput_pct": {
+        "status": "collected",
+        "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+        "value": 23.338340844600236,
+        "unit": "%"
+      },
+      "l1_hit_rate_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "l2_hit_rate_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_load_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_load_requests": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_store_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_store_requests": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "local_load_instructions": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "local_store_instructions": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "tensor_active_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "eligible_warps_per_scheduler": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "issue_active_pct": {
+        "status": "collected",
+        "metric": "sm__issue_active.avg.pct_of_peak_sustained_elapsed",
+        "value": 5.09929667228115,
+        "unit": "%"
+      },
+      "stall_long_scoreboard": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_short_scoreboard": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_wait": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_barrier": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_math_pipe": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_memory_throttle": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      }
+    }
+  },
+  {
+    "case_id": "permute.v2.old.large_uniform",
+    "profile_set": "basic",
+    "kernel": "token_permute_token_owned_top2_kernel",
+    "metrics": {
+      "device_name": {
+        "status": "collected",
+        "metric": "device__attribute_display_name",
+        "value": "NVIDIA GeForce RTX 3080",
+        "unit": ""
+      },
+      "cc_major": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_major",
+        "value": 8,
+        "unit": ""
+      },
+      "cc_minor": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_minor",
+        "value": 6,
+        "unit": ""
+      },
+      "sm_count": {
+        "status": "collected",
+        "metric": "device__attribute_multiprocessor_count",
+        "value": 68,
+        "unit": ""
+      },
+      "duration_ns": {
+        "status": "collected",
+        "metric": "gpu__time_duration.sum",
+        "value": 14432.0,
+        "unit": "ns"
+      },
+      "grid_size": {
+        "status": "collected",
+        "metric": "launch__grid_size",
+        "value": 2048,
+        "unit": ""
+      },
+      "block_size": {
+        "status": "collected",
+        "metric": "launch__block_size",
+        "value": 128,
+        "unit": ""
+      },
+      "waves_per_sm": {
+        "status": "collected",
+        "metric": "launch__waves_per_multiprocessor",
+        "value": 2.5098039215686274,
+        "unit": ""
+      },
+      "registers_per_thread": {
+        "status": "collected",
+        "metric": "launch__registers_per_thread",
+        "value": 34,
+        "unit": "register/thread"
+      },
+      "shared_mem_per_block": {
+        "status": "collected",
+        "metric": "launch__shared_mem_per_block",
+        "value": 1032,
+        "unit": "byte/block"
+      },
+      "occupancy_theoretical_pct": {
+        "status": "collected",
+        "metric": "sm__maximum_warps_per_active_cycle_pct",
+        "value": 100.0,
+        "unit": "%"
+      },
+      "occupancy_achieved_pct": {
+        "status": "collected",
+        "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+        "value": 66.9375460671646,
+        "unit": "%"
+      },
+      "sm_throughput_pct": {
+        "status": "collected",
+        "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 5.030258275063556,
+        "unit": "%"
+      },
+      "memory_throughput_pct": {
+        "status": "collected",
+        "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 58.03331413210445,
+        "unit": "%"
+      },
+      "dram_throughput_pct": {
+        "status": "collected",
+        "metric": "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 58.03331413210445,
+        "unit": "%"
+      },
+      "dram_read_bytes": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "dram_write_bytes": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "l1_throughput_pct": {
+        "status": "collected",
+        "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+        "value": 14.881190072283786,
+        "unit": "%"
+      },
+      "l1_hit_rate_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "l2_hit_rate_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_load_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_load_requests": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_store_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_store_requests": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "local_load_instructions": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "local_store_instructions": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "tensor_active_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "eligible_warps_per_scheduler": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "issue_active_pct": {
+        "status": "collected",
+        "metric": "sm__issue_active.avg.pct_of_peak_sustained_elapsed",
+        "value": 5.030258275063556,
+        "unit": "%"
+      },
+      "stall_long_scoreboard": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_short_scoreboard": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_wait": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_barrier": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_math_pipe": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_memory_throttle": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      }
+    }
+  },
+  {
+    "case_id": "permute.v2.prepare.large_uniform",
+    "profile_set": "basic",
+    "kernel": "token_permute_prepare_offsets_fused_kernel",
+    "metrics": {
+      "device_name": {
+        "status": "collected",
+        "metric": "device__attribute_display_name",
+        "value": "NVIDIA GeForce RTX 3080",
+        "unit": ""
+      },
+      "cc_major": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_major",
+        "value": 8,
+        "unit": ""
+      },
+      "cc_minor": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_minor",
+        "value": 6,
+        "unit": ""
+      },
+      "sm_count": {
+        "status": "collected",
+        "metric": "device__attribute_multiprocessor_count",
+        "value": 68,
+        "unit": ""
+      },
+      "duration_ns": {
+        "status": "collected",
+        "metric": "gpu__time_duration.sum",
+        "value": 11200.0,
+        "unit": "ns"
+      },
+      "grid_size": {
+        "status": "collected",
+        "metric": "launch__grid_size",
+        "value": 1,
+        "unit": ""
+      },
+      "block_size": {
+        "status": "collected",
+        "metric": "launch__block_size",
+        "value": 256,
+        "unit": ""
+      },
+      "waves_per_sm": {
+        "status": "collected",
+        "metric": "launch__waves_per_multiprocessor",
+        "value": 0.0024509803921568627,
+        "unit": ""
+      },
+      "registers_per_thread": {
+        "status": "collected",
+        "metric": "launch__registers_per_thread",
+        "value": 40,
+        "unit": "register/thread"
+      },
+      "shared_mem_per_block": {
+        "status": "collected",
+        "metric": "launch__shared_mem_per_block",
+        "value": 1280,
+        "unit": "byte/block"
+      },
+      "occupancy_theoretical_pct": {
+        "status": "collected",
+        "metric": "sm__maximum_warps_per_active_cycle_pct",
+        "value": 100.0,
+        "unit": "%"
+      },
+      "occupancy_achieved_pct": {
+        "status": "collected",
+        "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+        "value": 15.465806981164679,
+        "unit": "%"
+      },
+      "sm_throughput_pct": {
+        "status": "collected",
+        "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 0.47793621059209246,
+        "unit": "%"
+      },
+      "memory_throughput_pct": {
+        "status": "collected",
+        "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 0.3735548430972506,
+        "unit": "%"
+      },
+      "dram_throughput_pct": {
+        "status": "collected",
+        "metric": "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 0.33360228401191655,
+        "unit": "%"
+      },
+      "dram_read_bytes": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "dram_write_bytes": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "l1_throughput_pct": {
+        "status": "collected",
+        "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+        "value": 4.987039917055469,
+        "unit": "%"
+      },
+      "l1_hit_rate_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "l2_hit_rate_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_load_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_load_requests": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_store_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_store_requests": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "local_load_instructions": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "local_store_instructions": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "tensor_active_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "eligible_warps_per_scheduler": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "issue_active_pct": {
+        "status": "collected",
+        "metric": "sm__issue_active.avg.pct_of_peak_sustained_elapsed",
+        "value": 0.07104918117779964,
+        "unit": "%"
+      },
+      "stall_long_scoreboard": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_short_scoreboard": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_wait": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_barrier": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_math_pipe": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_memory_throttle": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      }
+    }
+  },
+  {
+    "case_id": "permute.v2.vllm.expand.large_uniform",
+    "profile_set": "basic",
+    "kernel": "expand_rows",
+    "metrics": {
+      "device_name": {
+        "status": "collected",
+        "metric": "device__attribute_display_name",
+        "value": "NVIDIA GeForce RTX 3080",
+        "unit": ""
+      },
+      "cc_major": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_major",
+        "value": 8,
+        "unit": ""
+      },
+      "cc_minor": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_minor",
+        "value": 6,
+        "unit": ""
+      },
+      "sm_count": {
+        "status": "collected",
+        "metric": "device__attribute_multiprocessor_count",
+        "value": 68,
+        "unit": ""
+      },
+      "duration_ns": {
+        "status": "collected",
+        "metric": "gpu__time_duration.sum",
+        "value": 16608.0,
+        "unit": "ns"
+      },
+      "grid_size": {
+        "status": "collected",
+        "metric": "launch__grid_size",
+        "value": 4096,
+        "unit": ""
+      },
+      "block_size": {
+        "status": "collected",
+        "metric": "launch__block_size",
+        "value": 256,
+        "unit": ""
+      },
+      "waves_per_sm": {
+        "status": "collected",
+        "metric": "launch__waves_per_multiprocessor",
+        "value": 10.03921568627451,
+        "unit": ""
+      },
+      "registers_per_thread": {
+        "status": "collected",
+        "metric": "launch__registers_per_thread",
+        "value": 18,
+        "unit": "register/thread"
+      },
+      "shared_mem_per_block": {
+        "status": "collected",
+        "metric": "launch__shared_mem_per_block",
+        "value": 1024,
+        "unit": "byte/block"
+      },
+      "occupancy_theoretical_pct": {
+        "status": "collected",
+        "metric": "sm__maximum_warps_per_active_cycle_pct",
+        "value": 100.0,
+        "unit": "%"
+      },
+      "occupancy_achieved_pct": {
+        "status": "collected",
+        "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+        "value": 66.30688090736362,
+        "unit": "%"
+      },
+      "sm_throughput_pct": {
+        "status": "collected",
+        "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 13.745940241851587,
+        "unit": "%"
+      },
+      "memory_throughput_pct": {
+        "status": "collected",
+        "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 50.357920294708634,
+        "unit": "%"
+      },
+      "dram_throughput_pct": {
+        "status": "collected",
+        "metric": "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 50.357920294708634,
+        "unit": "%"
+      },
+      "dram_read_bytes": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "dram_write_bytes": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "l1_throughput_pct": {
+        "status": "collected",
+        "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+        "value": 20.545259734740767,
+        "unit": "%"
+      },
+      "l1_hit_rate_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "l2_hit_rate_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_load_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_load_requests": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_store_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_store_requests": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "local_load_instructions": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "local_store_instructions": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "tensor_active_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "eligible_warps_per_scheduler": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "issue_active_pct": {
+        "status": "collected",
+        "metric": "sm__issue_active.avg.pct_of_peak_sustained_elapsed",
+        "value": 11.933032168572717,
+        "unit": "%"
+      },
+      "stall_long_scoreboard": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_short_scoreboard": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_wait": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_barrier": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_math_pipe": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_memory_throttle": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      }
+    }
+  },
+  {
+    "case_id": "permute.v2.vllm.sort.large_uniform",
+    "profile_set": "basic",
+    "kernel": "DeviceRadixSortSingleTileKernel",
+    "metrics": {
+      "device_name": {
+        "status": "collected",
+        "metric": "device__attribute_display_name",
+        "value": "NVIDIA GeForce RTX 3080",
+        "unit": ""
+      },
+      "cc_major": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_major",
+        "value": 8,
+        "unit": ""
+      },
+      "cc_minor": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_minor",
+        "value": 6,
+        "unit": ""
+      },
+      "sm_count": {
+        "status": "collected",
+        "metric": "device__attribute_multiprocessor_count",
+        "value": 68,
+        "unit": ""
+      },
+      "duration_ns": {
+        "status": "collected",
+        "metric": "gpu__time_duration.sum",
+        "value": 8032.0,
+        "unit": "ns"
+      },
+      "grid_size": {
+        "status": "collected",
+        "metric": "launch__grid_size",
+        "value": 1,
+        "unit": ""
+      },
+      "block_size": {
+        "status": "collected",
+        "metric": "launch__block_size",
+        "value": 256,
+        "unit": ""
+      },
+      "waves_per_sm": {
+        "status": "collected",
+        "metric": "launch__waves_per_multiprocessor",
+        "value": 0.007352941176470588,
+        "unit": ""
+      },
+      "registers_per_thread": {
+        "status": "collected",
+        "metric": "launch__registers_per_thread",
+        "value": 128,
+        "unit": "register/thread"
+      },
+      "shared_mem_per_block": {
+        "status": "collected",
+        "metric": "launch__shared_mem_per_block",
+        "value": 34880,
+        "unit": "byte/block"
+      },
+      "occupancy_theoretical_pct": {
+        "status": "collected",
+        "metric": "sm__maximum_warps_per_active_cycle_pct",
+        "value": 33.33333333333333,
+        "unit": "%"
+      },
+      "occupancy_achieved_pct": {
+        "status": "collected",
+        "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+        "value": 16.574591600039483,
+        "unit": "%"
+      },
+      "sm_throughput_pct": {
+        "status": "collected",
+        "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 0.8478256764667007,
+        "unit": "%"
+      },
+      "memory_throughput_pct": {
+        "status": "collected",
+        "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 1.0055478502080446,
+        "unit": "%"
+      },
+      "dram_throughput_pct": {
+        "status": "collected",
+        "metric": "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 1.0055478502080446,
+        "unit": "%"
+      },
+      "dram_read_bytes": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "dram_write_bytes": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "l1_throughput_pct": {
+        "status": "collected",
+        "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+        "value": 66.47912348238081,
+        "unit": "%"
+      },
+      "l1_hit_rate_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "l2_hit_rate_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_load_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_load_requests": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_store_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_store_requests": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "local_load_instructions": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "local_store_instructions": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "tensor_active_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "eligible_warps_per_scheduler": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "issue_active_pct": {
+        "status": "collected",
+        "metric": "sm__issue_active.avg.pct_of_peak_sustained_elapsed",
+        "value": 0.2508072282331615,
+        "unit": "%"
+      },
+      "stall_long_scoreboard": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_short_scoreboard": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_wait": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_barrier": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_math_pipe": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_memory_throttle": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      }
+    }
+  },
+  {
+    "case_id": "permute.v2.warp.large_uniform",
+    "profile_set": "basic",
+    "kernel": "token_permute_token_tile4_top2_kernel",
+    "metrics": {
+      "device_name": {
+        "status": "collected",
+        "metric": "device__attribute_display_name",
+        "value": "NVIDIA GeForce RTX 3080",
+        "unit": ""
+      },
+      "cc_major": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_major",
+        "value": 8,
+        "unit": ""
+      },
+      "cc_minor": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_minor",
+        "value": 6,
+        "unit": ""
+      },
+      "sm_count": {
+        "status": "collected",
+        "metric": "device__attribute_multiprocessor_count",
+        "value": 68,
+        "unit": ""
+      },
+      "duration_ns": {
+        "status": "collected",
+        "metric": "gpu__time_duration.sum",
+        "value": 17152.0,
+        "unit": "ns"
+      },
+      "grid_size": {
+        "status": "collected",
+        "metric": "launch__grid_size",
+        "value": 512,
+        "unit": ""
+      },
+      "block_size": {
+        "status": "collected",
+        "metric": "launch__block_size",
+        "value": 128,
+        "unit": ""
+      },
+      "waves_per_sm": {
+        "status": "collected",
+        "metric": "launch__waves_per_multiprocessor",
+        "value": 0.6274509803921569,
+        "unit": ""
+      },
+      "registers_per_thread": {
+        "status": "collected",
+        "metric": "launch__registers_per_thread",
+        "value": 34,
+        "unit": "register/thread"
+      },
+      "shared_mem_per_block": {
+        "status": "collected",
+        "metric": "launch__shared_mem_per_block",
+        "value": 1056,
+        "unit": "byte/block"
+      },
+      "occupancy_theoretical_pct": {
+        "status": "collected",
+        "metric": "sm__maximum_warps_per_active_cycle_pct",
+        "value": 100.0,
+        "unit": "%"
+      },
+      "occupancy_achieved_pct": {
+        "status": "collected",
+        "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+        "value": 42.275475601155485,
+        "unit": "%"
+      },
+      "sm_throughput_pct": {
+        "status": "collected",
+        "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 3.3010955710955714,
+        "unit": "%"
+      },
+      "memory_throughput_pct": {
+        "status": "collected",
+        "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 48.559712346477056,
+        "unit": "%"
+      },
+      "dram_throughput_pct": {
+        "status": "collected",
+        "metric": "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 48.559712346477056,
+        "unit": "%"
+      },
+      "dram_read_bytes": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "dram_write_bytes": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "l1_throughput_pct": {
+        "status": "collected",
+        "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+        "value": 14.292680652680653,
+        "unit": "%"
+      },
+      "l1_hit_rate_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "l2_hit_rate_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_load_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_load_requests": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_store_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_store_requests": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "local_load_instructions": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "local_store_instructions": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "tensor_active_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "eligible_warps_per_scheduler": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "issue_active_pct": {
+        "status": "collected",
+        "metric": "sm__issue_active.avg.pct_of_peak_sustained_elapsed",
+        "value": 3.3010955710955714,
+        "unit": "%"
+      },
+      "stall_long_scoreboard": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_short_scoreboard": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_wait": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_barrier": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_math_pipe": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "stall_memory_throttle": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      }
+    }
+  }
+]

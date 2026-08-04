@@ -17,9 +17,9 @@
 | `cuda_token_owned_top2` | 一个 CTA 处理 token 的两个 route | `top_k=2` 时 X 只读取一次并写两个 destination | `top_k!=2` 回退 128-thread variant；仍需两次 cursor atomic |
 | `cuda_block_partial` | 256 routes/CTA 在 shared memory 求 local rank，每个 active expert/CTA 一次 global reserve，再单独 copy | single-hot/Zipf 热点下减少 global atomic serialization | 两个 kernel；shared `counts[64]`/`bases[64]`；不增加外部 workspace |
 
-`cuda_candidate` 是经证据选择的别名；`cuda_candidate_from_ids` 明确包含 histogram、exclusive scan 和 candidate permute。L3 `cuda_permute_candidate` 只替换 chain 中的 permute，其他算子保持 naive。
+`cuda_candidate` 是 SM86 v2 shape-dispatch alias：仅在 `top_k=2`、`T>=1024`、`K>=128`、`K%4==0` 且 X/输出均 16B 对齐时使用 tile4-direct；其余输入回退 token-owned Top-2。`cuda_candidate_from_ids` 明确包含 histogram、exclusive scan 和 candidate permute；`cuda_candidate_v2_from_ids` 使用融合的 counts/scan/reset 后再调用同一 selector。L3 `cuda_permute_candidate` 只替换 chain 中的 permute，其他算子保持 naive。
 
-本轮不做 shape/skew 自动调度、`cp.async`、Permute+GEMM fusion、新 dtype，也不采用 SM90/SM100 专属的 TMA/WGMMA。
+本轮不做 `cp.async`、Permute+GEMM fusion、新 dtype，也不采用 SM90/SM100 专属的 TMA/WGMMA。shape dispatch 只依据可复现的 payload 形状与对齐条件，不依据运行时 skew 猜测。
 
 ## 3. Correctness 与安全性
 
@@ -74,3 +74,4 @@
 | 2026-08-03 | atomic vectorized 256 | reject；保留 explicit research ID | Run 1 ratio 1.0373x，但 coverage 75%、worst 0.6300x，Run 2 也失败 |
 | 2026-08-03 | token-owned Top-2 | selected as `cuda_candidate` | 高重复 L2 selection 两轮 ratio-of-sums 1.0456x/1.0463x，排名均为第一；generic top-k fallback 正确 |
 | 2026-08-03 | block partial | reject；保留负面实验 | 第二个 launch 和低-wave placement 成本超过 atomic reduction 收益 |
+| 2026-08-03 | tile4-direct + shape dispatch + fused prepare | explicit candidate retained by user request | large aligned Top-2 的 tile4 copy 在诊断和部分 release cases 更快；full-from-ids 相对 pinned vLLM 的 5 个 case 均快。纯 permute formal suite 在 WDDM 上 CV 过高且未通过 coverage/worst-shape gate，因此不进入 `Auto`。 |

@@ -15,11 +15,12 @@ constexpr std::uint32_t kTokenPermuteTokenTile4DirectImplementation = 6;
 constexpr std::uint32_t kTokenPermuteTokenTile4WarpAggregatedImplementation = 7;
 constexpr std::uint32_t kTokenPermuteShapeDispatchedV2Implementation = 8;
 
-// Evidence-selected SM86 candidate. The high-repeat L2 selection suite ranks
-// token-owned Top-2 first in two independent runs. Generic top-k continues to
-// use its atomic-vectorized-128 fallback inside the implementation.
+// SM86 v2 candidate. It uses the tile4 direct path only for large, aligned
+// Top-2 rows and keeps the proven token-owned path as its conservative
+// fallback. Generic top-k continues to use the existing fallback inside the
+// token-owned implementation. KernelFamily::kAuto deliberately remains naive.
 constexpr std::uint32_t kTokenPermuteCandidateImplementation =
-    kTokenPermuteTokenOwnedTop2Implementation;
+    kTokenPermuteShapeDispatchedV2Implementation;
 
 inline bool is_token_permute_optimized_implementation(std::uint32_t implementation_id) noexcept {
   return implementation_id == kTokenPermuteAtomicVectorized128Implementation ||

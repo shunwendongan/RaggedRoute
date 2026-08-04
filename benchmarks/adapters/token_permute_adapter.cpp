@@ -111,7 +111,7 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
       return "Fused counts/scan/reset followed by the shape-dispatched SM86 v2 candidate";
     }
     if (variant_name_ == "cuda_candidate") {
-      return "Evidence-selected CUDA token permute candidate";
+      return "SM86 v2 shape-dispatched candidate: tile4 direct for large aligned Top-2, token-owned fallback";
     }
     if (variant_name_ == "vllm_moe_permute") {
       return "Adapted vLLM radix-sort mapping and vectorized row expansion";

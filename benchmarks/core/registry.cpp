@@ -238,8 +238,8 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
                                   "raggedroute.permute.shape_dispatched.v2", "not_applicable",
                                   "shape_dispatch_tile4_direct_or_token_owned"));
     variants.push_back(descriptor("cuda_candidate", "in_tree_cuda_candidate",
-                                  "raggedroute.permute.candidate.v1", "not_applicable",
-                                  "evidence_selected_candidate"));
+                                  "raggedroute.permute.candidate.v2", "not_applicable",
+                                  "shape_dispatch_tile4_direct_or_token_owned"));
     variants.push_back(descriptor("cuda_candidate_from_ids", "in_tree_cuda_candidate",
                                   "raggedroute.permute.candidate_from_ids.v1",
                                   "not_applicable", "histogram_scan_candidate"));

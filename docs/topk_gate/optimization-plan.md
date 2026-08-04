@@ -72,6 +72,10 @@ p50 speedup >=1.05 vs naive, per-shape p50 regression <=3%, p95 regression
 <=5%, all-sample CV<=0.10, no spill, no extra launch, and zero workspace.
 Otherwise Auto remains naive and the rejection evidence is retained.
 
+## PR packaging status (2026-08-04)
+
+This PR intentionally retains v4 as an explicit implementation id for reproducibility and follow-up experiments, while keeping `Auto` on `cuda_naive`. The completed Release campaign found no interval that simultaneously passed the in-tree L1/L2 and strong-library gates. v4 must therefore not be selected by automatic dispatch in this revision; the attached reports are evidence of the candidate and its rejection, not a production speedup claim.
+
 ## 2026-08-04 v4 campaign: local pair plus two reductions
 
 The new candidate is `cuda_local_pair_two_reduce_top2_v4`. It keeps four

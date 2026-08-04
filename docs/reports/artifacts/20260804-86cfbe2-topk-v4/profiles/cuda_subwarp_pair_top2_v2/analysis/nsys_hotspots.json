@@ -1,0 +1,18 @@
+[
+  {
+    "name": "void raggedroute::ops::<unnamed>::topk_gate_scalar_pair_kernel<(int)32>(const float *, int *, float *, int, int)",
+    "total_time": 90623.0,
+    "time_pct": 100.0,
+    "raw": {
+      "Time (%)": "100.0",
+      "Total Time (ns)": "90623",
+      "Instances": "21",
+      "Avg (ns)": "4315.4",
+      "Med (ns)": "4288.0",
+      "Min (ns)": "4255",
+      "Max (ns)": "4640",
+      "StdDev (ns)": "82.4",
+      "Name": "void raggedroute::ops::<unnamed>::topk_gate_scalar_pair_kernel<(int)32>(const float *, int *, float *, int, int)"
+    }
+  }
+]

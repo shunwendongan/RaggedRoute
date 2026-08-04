@@ -268,6 +268,11 @@ cudaError_t launch_grouped_gemm_optimized(
         x_permuted, expert_weights, offsets, y_permuted, experts, hidden, output,
         max_expert_tokens, caller_stream);
   }
+  if (implementation_id == kGroupedGemmSm86Fp32V2Implementation) {
+    return launch_grouped_gemm_sm86_fp32_v2(x_permuted, expert_weights, offsets, y_permuted,
+                                             experts, hidden, output, max_expert_tokens,
+                                             caller_stream);
+  }
   return cudaErrorInvalidValue;
 }
 

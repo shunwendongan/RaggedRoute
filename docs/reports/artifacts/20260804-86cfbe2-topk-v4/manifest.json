@@ -40,13 +40,6 @@
       "storage": "git"
     },
     {
-      "bytes": 22036302,
-      "path": "aggregate/topk-v4-release.aggregate-v2.json",
-      "role": "full_benchmark_aggregate",
-      "sha256": "a90ca9bcfab4d821a4c3e202e1c3d7e2946bfdfb8291fd07c01a329a1d16838c",
-      "storage": "git"
-    },
-    {
       "bytes": 2528631,
       "path": "aggregate/topk-v4-release.comparison.json",
       "role": "full_benchmark_aggregate",
@@ -306,6 +299,14 @@
       "storage": "git"
     },
     {
+      "archive_path": "raw/aggregate/topk-v4-release.aggregate-v2.json",
+      "bytes": 22036302,
+      "path": "aggregate/topk-v4-release.aggregate-v2.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "a90ca9bcfab4d821a4c3e202e1c3d7e2946bfdfb8291fd07c01a329a1d16838c",
+      "storage": "release"
+    },
+    {
       "archive_path": "raw/legacy/manifest.json",
       "bytes": 1608,
       "path": "legacy/manifest.json",
@@ -485,12 +486,12 @@
     "source_git_sha": "86cfbe2a805d8880b73896dece2c77031768245d"
   },
   "release_asset": {
-    "bytes": 685764,
+    "bytes": 1289492,
     "immutable": true,
     "name": "20260804-86cfbe2-topk-v4-raw.zip",
-    "sha256": "3f2930628f20554dc297960cc47c66e9b7e43fcdcf20e3a57a7bdf454dffe17f",
-    "tag": "evidence-2026-08-04-topk-v4",
-    "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-04-topk-v4/20260804-86cfbe2-topk-v4-raw.zip"
+    "sha256": "8456e9b8e3fae147a6bdb3d8b72bab873bb89debad8d75fe2ea447023d5f099b",
+    "tag": "evidence-2026-08-04-topk-v4-v3",
+    "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-04-topk-v4-v3/20260804-86cfbe2-topk-v4-raw.zip"
   },
   "run_id": "20260804-86cfbe2-topk-v4",
   "schema_version": "raggedroute.evidence_bundle.v2",

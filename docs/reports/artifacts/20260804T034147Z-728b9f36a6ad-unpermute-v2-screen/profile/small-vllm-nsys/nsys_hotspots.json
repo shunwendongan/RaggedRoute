@@ -1,0 +1,18 @@
+[
+  {
+    "name": "void raggedroute::benchmark::library_baseline::<unnamed>::finalize_routing<(bool)1>(const float *, float *, const float *, const int *, int, int, int)",
+    "total_time": 37503.0,
+    "time_pct": 100.0,
+    "raw": {
+      "Time (%)": "100.0",
+      "Total Time (ns)": "37503",
+      "Instances": "21",
+      "Avg (ns)": "1785.9",
+      "Med (ns)": "1792.0",
+      "Min (ns)": "1759",
+      "Max (ns)": "1888",
+      "StdDev (ns)": "28.0",
+      "Name": "void raggedroute::benchmark::library_baseline::<unnamed>::finalize_routing<(bool)1>(const float *, float *, const float *, const int *, int, int, int)"
+    }
+  }
+]

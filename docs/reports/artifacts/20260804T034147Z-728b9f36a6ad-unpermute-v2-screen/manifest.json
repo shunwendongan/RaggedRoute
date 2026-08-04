@@ -1,0 +1,285 @@
+{
+  "commands": [
+    {
+      "command": "ctest --test-dir out/build/rtx3080-sm86-release -C Release --output-on-failure",
+      "role": "correctness",
+      "status": "recorded"
+    },
+    {
+      "command": "python scripts/run_benchmarks.py --binary out/build/rtx3080-sm86-release/raggedroute_benchmark.exe --config out/configs/unpermute-v2d-screen.json --output out/runs/unpermute-v2d-screen-bg.jsonl --run-id unpermute-v2d-screen-bg",
+      "role": "v2d_rejection_screen",
+      "status": "recorded"
+    },
+    {
+      "command": "scripts/profile_benchmarks.py with T=64 E=64 top_k=2 N=256, post-warmup filtered v1 and vLLM launches",
+      "role": "small_n_nsys_ncu",
+      "status": "recorded"
+    }
+  ],
+  "decision": {
+    "reason": "No V2 candidate cleared the 1.05x dual-baseline, per-shape p50/p95, and CV gates.",
+    "status": "recorded",
+    "value": "rejected_not_promoted"
+  },
+  "files": [
+    {
+      "bytes": 32508,
+      "path": "benchmark/v2d-screen.aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "8133e831698b61629ddb230ad72ca70c74185b3635fe9f661cdc9e5b8c7e8f37",
+      "storage": "git"
+    },
+    {
+      "bytes": 89724,
+      "path": "benchmark/v2d-screen.comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "4237e75373217a5b649c5cdc38958b223561f5c162cb3503256585faf19ec708",
+      "storage": "git"
+    },
+    {
+      "bytes": 31538,
+      "path": "profile/small-v1-ncu/ncu_basic_raw.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "8e937f34cfd66681f9371fc1586c0010f0bc4a487413414e1d098def2ff4eea7",
+      "storage": "git"
+    },
+    {
+      "bytes": 8323,
+      "path": "profile/small-v1-ncu/ncu_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "709d3cda791a5f214830e7cc9c9ad15f3b02259b4ee6092224e644006edfed79",
+      "storage": "git"
+    },
+    {
+      "bytes": 2871,
+      "path": "profile/small-v1-ncu/REPORT.md",
+      "role": "report",
+      "sha256": "394a6e96853c773790a65e49bae29fab0ccd59c4609e3e55f188be8d96207742",
+      "storage": "git"
+    },
+    {
+      "bytes": 1752,
+      "path": "profile/small-v1-ncu/supported_key_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "eaeb9ab00d56e6e0fd26472ab36bebb48423944447092018af1f99a2d0d8b87b",
+      "storage": "git"
+    },
+    {
+      "bytes": 258,
+      "path": "profile/small-v1-nsys/nsys_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "e303a74b068260ebe26a36e275958403d4b9f5bfbde9bdf5a741ab68642c0c8b",
+      "storage": "git"
+    },
+    {
+      "bytes": 583,
+      "path": "profile/small-v1-nsys/nsys_hotspots.json",
+      "role": "supporting_evidence",
+      "sha256": "3cd887dc072be0a99f91a8b6288f807f380d0469cb621bc39c830b8db2601942",
+      "storage": "git"
+    },
+    {
+      "bytes": 31536,
+      "path": "profile/small-vllm-ncu/ncu_basic_raw.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "deed4a3e0ff9924493cb164bf1bc11751f318eb89e8a47a32edf81ad5fbed5cc",
+      "storage": "git"
+    },
+    {
+      "bytes": 7405,
+      "path": "profile/small-vllm-ncu/ncu_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "cf46f09ed03fb118789e3cdbe0c5e2ea9490aa62d890ad774c99d0b0988f51d0",
+      "storage": "git"
+    },
+    {
+      "bytes": 2858,
+      "path": "profile/small-vllm-ncu/REPORT.md",
+      "role": "report",
+      "sha256": "907a0ae290a7a5388bd7b206cd12ff8a12c475f2394f1acbd3ffc81dabc80925",
+      "storage": "git"
+    },
+    {
+      "bytes": 1752,
+      "path": "profile/small-vllm-ncu/supported_key_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "eaeb9ab00d56e6e0fd26472ab36bebb48423944447092018af1f99a2d0d8b87b",
+      "storage": "git"
+    },
+    {
+      "bytes": 285,
+      "path": "profile/small-vllm-nsys/nsys_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "8f84a4af79dcd3b25092b34986596191b1b7afcac86e2bee72c0055703e19fb1",
+      "storage": "git"
+    },
+    {
+      "bytes": 637,
+      "path": "profile/small-vllm-nsys/nsys_hotspots.json",
+      "role": "supporting_evidence",
+      "sha256": "1730fa31fa47fe4087147765b58b12d343582efed3c00bbcef29beea0e30a4b7",
+      "storage": "git"
+    },
+    {
+      "bytes": 871,
+      "path": "REPORT.md",
+      "role": "report",
+      "sha256": "d9a264da2bcb901ed6ac64f1fa3cb2bccc21babba6171abbac9006de9666544a",
+      "storage": "git"
+    },
+    {
+      "archive_path": "raw/benchmark/unpermute-v2d-screen-bg.aggregate.json",
+      "bytes": 772010,
+      "path": "benchmark/unpermute-v2d-screen-bg.aggregate.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "a6d2b6cc818fe2b6abb2fd0eac4eeef9c61b8467917690beed07b5a7c0f769b1",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/unpermute-v2d-screen-bg.jsonl",
+      "bytes": 1179730,
+      "path": "benchmark/unpermute-v2d-screen-bg.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "810434680645661e863ef1784071cba1f094efd2d9ce7ad71ffd0da67ec70777",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/unpermute-v2d-screen-bg.jsonl.manifest.json",
+      "bytes": 440672,
+      "path": "benchmark/unpermute-v2d-screen-bg.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "a29c7764193e27c472b377e5ba6c9ff94a80b8fcd1acec33cbf6c4dc7a71a2c8",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/small-v1-ncu/manifest.json",
+      "bytes": 4411,
+      "path": "profile/small-v1-ncu/manifest.json",
+      "role": "run_manifest",
+      "sha256": "bd41a0eb261b7a59a820e118d558df2d029e4e55b943978ada23aa51e266c8c8",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/small-v1-ncu/ncu_basic.ncu-rep",
+      "bytes": 113961,
+      "path": "profile/small-v1-ncu/ncu_basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "a611fa041340d127f146e6f785512ebb4a238d4cfc1b68f0525dc0a8df4923c6",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/small-vllm-ncu/manifest.json",
+      "bytes": 4383,
+      "path": "profile/small-vllm-ncu/manifest.json",
+      "role": "run_manifest",
+      "sha256": "6b2b3d2e204114931cea88751f4567fb44db301c6a8ec6b21978dbca53f2cfef",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/small-vllm-ncu/ncu_basic.ncu-rep",
+      "bytes": 110542,
+      "path": "profile/small-vllm-ncu/ncu_basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "eb5fe482aee6974682e2a1a2c7fda2359cf8d3b4b5b24f95d426d730f7a6bc58",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/small-v1-nsys/manifest.json",
+      "bytes": 5390,
+      "path": "profile/small-v1-nsys/manifest.json",
+      "role": "run_manifest",
+      "sha256": "3264b4bdcb355ec374799a811d3c42c19316a2d71dc55ad95f4769b0614d3420",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/small-v1-nsys/system.nsys-rep",
+      "bytes": 62900,
+      "path": "profile/small-v1-nsys/system.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "c0b79160dc1ab028f3de152a2d83b9bcabe1a78da6680669a851957a94b0222f",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/small-v1-nsys/system.sqlite",
+      "bytes": 274432,
+      "path": "profile/small-v1-nsys/system.sqlite",
+      "role": "profiler_database",
+      "sha256": "d61ff9c05404bb380327bece0b9b0f75b479f28c2ab7ac5140f214f150b600f6",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/small-vllm-nsys/manifest.json",
+      "bytes": 5399,
+      "path": "profile/small-vllm-nsys/manifest.json",
+      "role": "run_manifest",
+      "sha256": "66e38e66a48c2bc2e0ad1fcf4c865104ef1a1f374fff8e9653acb9b2876cf9f8",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/small-vllm-nsys/system.nsys-rep",
+      "bytes": 62926,
+      "path": "profile/small-vllm-nsys/system.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "63a68f59896fee9c9cdc62c4306bc923ae1608d54a7f823d4f93eb94d878cbf4",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/small-vllm-nsys/system.sqlite",
+      "bytes": 274432,
+      "path": "profile/small-vllm-nsys/system.sqlite",
+      "role": "profiler_database",
+      "sha256": "3898811c483ab2ba5075dc523658cacf927e84a3c5ee661151de2492377e487e",
+      "storage": "release"
+    }
+  ],
+  "hardware": {
+    "compute_capability": "8.6",
+    "gpu_name": "NVIDIA GeForce RTX 3080",
+    "sm_count": 68,
+    "status": "recorded"
+  },
+  "kind": "unpermute_performance_evidence",
+  "migration": {
+    "raw_archive_state": "created_locally; upload to the declared immutable Release after merge",
+    "screening_scope": "three-process rejection screen; not a promotion result"
+  },
+  "provenance": {
+    "git_clean": false,
+    "git_clean_status": "recorded",
+    "source_git_sha": "728b9f36a6ad"
+  },
+  "release_asset": {
+    "bytes": 283748,
+    "immutable": true,
+    "name": "20260804T034147Z-728b9f36a6ad-unpermute-v2-screen-raw.zip",
+    "sha256": "1e7852e2dd43f1da9303318c39a10a9e9896550b6879be980fd29469fcaaaca4",
+    "tag": "evidence-unpermute-v2-screen-2026-08-04",
+    "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-unpermute-v2-screen-2026-08-04/20260804T034147Z-728b9f36a6ad-unpermute-v2-screen-raw.zip"
+  },
+  "run_id": "20260804T034147Z-728b9f36a6ad-unpermute-v2-screen",
+  "schema_version": "raggedroute.evidence_bundle.v2",
+  "semantic_contract": {
+    "accumulator_dtype": "fp32",
+    "dtype": "fp32",
+    "math_mode": "strict_fp32",
+    "measurement_levels": [
+      "L1_kernel_body",
+      "L2_operator_steady"
+    ],
+    "measurement_rule": "Profiler duration is diagnostic only; promotion uses unprofiled release timing.",
+    "operator": "unpermute",
+    "status": "recorded"
+  },
+  "toolchain": {
+    "build_type": "Release",
+    "cuda": "13.3.73",
+    "driver": 13010,
+    "ncu": "2026.2.1",
+    "nsys": "2026.1.3",
+    "status": "recorded"
+  },
+  "validation": {
+    "reason": "Experimental candidates passed CTest before screening; the restored V1 tree rebuilt and passed CTest 8/8.",
+    "status": "passed"
+  }
+}

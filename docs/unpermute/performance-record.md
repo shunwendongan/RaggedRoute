@@ -45,3 +45,12 @@
 结论：candidate 不晋升。已合并的代码保留 benchmark-only 实现、完整 raw/aggregate/profile 证据和
 拒绝记录，不进入 public optimized dispatch。完整报告见
 [SM86 candidate evidence report](../reports/unpermute-sm86-candidate-eba8f02.md)。
+
+## 2026-08-04 / SM86 v2 screening follow-up
+
+- `cuda_warp_token_vec4` 仍是当前源码中最强的 retained candidate；本轮没有新增可保留的 V2
+  kernel。
+- token/feature-tiled 和 one-warp CTA 实验均未同时超过 V1 与 vLLM；最终 V2D 相对 V1 的
+  L1/L2 几何平均为 `0.9834x/0.9801x`，因此不进入 dispatch。
+- compact comparison、NSYS/NCU 指标、hash manifest 和 raw archive 清单见
+  [v2 screening evidence](../reports/artifacts/20260804T034147Z-728b9f36a6ad-unpermute-v2-screen/)。

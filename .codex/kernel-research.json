@@ -9,12 +9,12 @@
   "benchmark": {
     "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
     "profile_cases": [
-      {"name": "grouped.uniform.t2048_e64_k128_n128", "arguments": ["--operator", "grouped_gemm", "--variant", "cuda_grouped_sm86_fp32_v1", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=2048", "--param", "E=64", "--param", "top_k=2", "--param", "K=128", "--param", "N=128", "--param", "distribution=uniform"], "kernel_regex": "grouped_gemm_register16x32_async_v3_kernel"},
-      {"name": "grouped.zipf14.t2048_e64_k128_n128", "arguments": ["--operator", "grouped_gemm", "--variant", "cuda_grouped_sm86_fp32_v1", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=2048", "--param", "E=64", "--param", "top_k=2", "--param", "K=128", "--param", "N=128", "--param", "distribution=zipf", "--param", "zipf_s=1.4"], "kernel_regex": "grouped_gemm_register16x32_async_v3_kernel"}
+      {"name": "grouped.uniform.t2048_e64_k128_n128", "arguments": ["--operator", "grouped_gemm", "--variant", "cuda_grouped_sm86_fp32_v2", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=2048", "--param", "E=64", "--param", "top_k=2", "--param", "K=128", "--param", "N=128", "--param", "distribution=uniform"], "kernel_regex": "grouped_gemm_register16x32_sm86_v2_kernel"},
+      {"name": "grouped.zipf14.t2048_e64_k128_n128", "arguments": ["--operator", "grouped_gemm", "--variant", "cuda_grouped_sm86_fp32_v2", "--level", "l2", "--profile-once", "--warmup", "20", "--seed", "20260729", "--param", "T=2048", "--param", "E=64", "--param", "top_k=2", "--param", "K=128", "--param", "N=128", "--param", "distribution=zipf", "--param", "zipf_s=1.4"], "kernel_regex": "grouped_gemm_register16x32_sm86_v2_kernel"}
     ],
-    "kernel_regex": "grouped_gemm_(register16x32_async_v3|naive)_kernel"
+    "kernel_regex": "grouped_gemm_(register16x32_sm86_v2|naive)_kernel"
   },
-  "variants": {"baseline": "cutlass_grouped", "candidate": "cuda_grouped_sm86_fp32_v1"},
+  "variants": {"baseline": "cutlass_grouped", "candidate": "cuda_grouped_sm86_fp32_v2"},
   "output": {"root": "out\\profile", "retention": {"keep_raw_for": ["baseline", "promoted", "final"], "rejected_candidate": "metrics-and-reason"}},
-  "promotion_policy": {"version": "grouped-gemm-cutlass-v2", "min_processes": 3, "median_speedup": 1.05, "p95_regression_tolerance": 0.03, "max_shape_regression": 0.05, "max_workspace_growth": 0.0}
+  "promotion_policy": {"version": "grouped-gemm-cutlass-v2", "min_processes": 3, "median_speedup": 1.03, "p95_regression_tolerance": 0.03, "max_shape_regression": 0.05, "max_workspace_growth": 0.0}
 }

@@ -1,0 +1,21 @@
+# Clean implementation SHA
+845e176a9960c974eeab14bb012a6249db7bb8e4
+
+# Build / correctness
+cmd /c scripts\configure_windows.bat rtx3080-sm86-release
+cmake --build --preset build-rtx3080-sm86-release --parallel
+ctest --preset test-rtx3080-sm86-release --output-on-failure
+
+# Clean Release A/B (config is local ignored copy with v1 replaced by v2)
+python scripts\run_benchmarks.py --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config out\benchmark\grouped-gemm-v2-pr\candidate_release_v2.json --output out\benchmark\grouped-gemm-v2-pr\release.jsonl
+python scripts\aggregate_results.py out\benchmark\grouped-gemm-v2-pr\release.jsonl --manifest out\benchmark\grouped-gemm-v2-pr\release.jsonl.manifest.json --json out\benchmark\grouped-gemm-v2-pr\release-v2.aggregate.json --csv out\benchmark\grouped-gemm-v2-pr\release-v2.aggregate.csv
+python scripts\compare_results.py out\benchmark\grouped-gemm-v2-pr\release-v2.aggregate.json --output out\benchmark\grouped-gemm-v2-pr\release-v2.comparison.json
+
+# NCU detailed
+python scripts\profile_benchmarks.py compute --binary out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --config out\profile\grouped-gemm-v2-pr\profile.json --run-dir out\profile\grouped-gemm-v2-pr\ncu --set detailed
+python scripts\profile_benchmarks.py analyze --run-dir out\profile\grouped-gemm-v2-pr\ncu
+
+# NSYS representative
+nsys profile --trace=cuda,nvtx --sample=none --cpuctxsw=none --force-overwrite=false --output=out\profile\grouped-gemm-v2-pr\nsys\v2-uniform-t2048 out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --operator grouped_gemm --variant cuda_grouped_sm86_fp32_v2 --level l2 --profile-once --warmup 20 --seed 20260729 --param T=2048 --param E=64 --param top_k=2 --param K=128 --param N=128 --param distribution=uniform --param zipf_s=0.0
+nsys stats --force-export=true --report cuda_gpu_kern_sum --format csv --output out\profile\grouped-gemm-v2-pr\nsys\v2-uniform-t2048 out\profile\grouped-gemm-v2-pr\nsys\v2-uniform-t2048.nsys-rep
+nsys stats --force-export=true --report cuda_api_sum --format csv --output out\profile\grouped-gemm-v2-pr\nsys\v2-uniform-t2048-api out\profile\grouped-gemm-v2-pr\nsys\v2-uniform-t2048.nsys-rep

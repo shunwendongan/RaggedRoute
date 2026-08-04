@@ -1,0 +1,219 @@
+[
+  {
+    "case_id": "v2.uniform.t2048",
+    "profile_set": "detailed",
+    "kernel": "grouped_gemm_register16x32_sm86_v2_kernel",
+    "metrics": {
+      "device_name": {
+        "status": "collected",
+        "metric": "device__attribute_display_name",
+        "value": "NVIDIA GeForce RTX 3080",
+        "unit": ""
+      },
+      "cc_major": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_major",
+        "value": 8,
+        "unit": ""
+      },
+      "cc_minor": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_minor",
+        "value": 6,
+        "unit": ""
+      },
+      "sm_count": {
+        "status": "collected",
+        "metric": "device__attribute_multiprocessor_count",
+        "value": 68,
+        "unit": ""
+      },
+      "duration_ns": {
+        "status": "collected",
+        "metric": "gpu__time_duration.sum",
+        "value": 42816.0,
+        "unit": "ns"
+      },
+      "grid_size": {
+        "status": "collected",
+        "metric": "launch__grid_size",
+        "value": 340,
+        "unit": ""
+      },
+      "block_size": {
+        "status": "collected",
+        "metric": "launch__block_size",
+        "value": 128,
+        "unit": ""
+      },
+      "waves_per_sm": {
+        "status": "collected",
+        "metric": "launch__waves_per_multiprocessor",
+        "value": 1.0,
+        "unit": ""
+      },
+      "registers_per_thread": {
+        "status": "collected",
+        "metric": "launch__registers_per_thread",
+        "value": 86,
+        "unit": "register/thread"
+      },
+      "shared_mem_per_block": {
+        "status": "collected",
+        "metric": "launch__shared_mem_per_block",
+        "value": 7952,
+        "unit": "byte/block"
+      },
+      "occupancy_theoretical_pct": {
+        "status": "collected",
+        "metric": "sm__maximum_warps_per_active_cycle_pct",
+        "value": 41.66666666666667,
+        "unit": "%"
+      },
+      "occupancy_achieved_pct": {
+        "status": "collected",
+        "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+        "value": 36.24187491473067,
+        "unit": "%"
+      },
+      "sm_throughput_pct": {
+        "status": "collected",
+        "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 53.12212872887277,
+        "unit": "%"
+      },
+      "memory_throughput_pct": {
+        "status": "collected",
+        "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 54.71303714493809,
+        "unit": "%"
+      },
+      "dram_throughput_pct": {
+        "status": "collected",
+        "metric": "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 29.995547279792746,
+        "unit": "%"
+      },
+      "dram_read_bytes": {
+        "status": "collected",
+        "metric": "dram__bytes_read.sum",
+        "value": 6297472.0,
+        "unit": "byte"
+      },
+      "dram_write_bytes": {
+        "status": "collected",
+        "metric": "dram__bytes_write.sum",
+        "value": 3187456.0,
+        "unit": "byte"
+      },
+      "l1_throughput_pct": {
+        "status": "collected",
+        "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+        "value": 64.84012128098459,
+        "unit": "%"
+      },
+      "l1_hit_rate_pct": {
+        "status": "collected",
+        "metric": "l1tex__t_sector_hit_rate.pct",
+        "value": 9.670578581624541,
+        "unit": "%"
+      },
+      "l2_hit_rate_pct": {
+        "status": "collected",
+        "metric": "lts__t_sector_hit_rate.pct",
+        "value": 86.7777984851107,
+        "unit": "%"
+      },
+      "global_load_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_load_requests": {
+        "status": "collected",
+        "metric": "l1tex__t_requests_pipe_lsu_mem_global_op_ld.sum",
+        "value": 91056.0,
+        "unit": ""
+      },
+      "global_store_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "global_store_requests": {
+        "status": "collected",
+        "metric": "l1tex__t_requests_pipe_lsu_mem_global_op_st.sum",
+        "value": 16720.0,
+        "unit": ""
+      },
+      "local_load_instructions": {
+        "status": "collected",
+        "metric": "smsp__sass_inst_executed_op_local_ld.sum",
+        "value": 0.0,
+        "unit": "inst"
+      },
+      "local_store_instructions": {
+        "status": "collected",
+        "metric": "smsp__sass_inst_executed_op_local_st.sum",
+        "value": 0.0,
+        "unit": "inst"
+      },
+      "tensor_active_pct": {
+        "status": "collected",
+        "metric": "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active",
+        "value": 0.0,
+        "unit": "%"
+      },
+      "eligible_warps_per_scheduler": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null,
+        "unit": null
+      },
+      "issue_active_pct": {
+        "status": "collected",
+        "metric": "sm__issue_active.avg.pct_of_peak_sustained_elapsed",
+        "value": 35.08785594377887,
+        "unit": "%"
+      },
+      "stall_long_scoreboard": {
+        "status": "collected",
+        "metric": "smsp__pcsamp_warps_issue_stalled_long_scoreboard",
+        "value": 564,
+        "unit": "warp"
+      },
+      "stall_short_scoreboard": {
+        "status": "collected",
+        "metric": "smsp__pcsamp_warps_issue_stalled_short_scoreboard",
+        "value": 142,
+        "unit": "warp"
+      },
+      "stall_wait": {
+        "status": "collected",
+        "metric": "smsp__pcsamp_warps_issue_stalled_wait",
+        "value": 248,
+        "unit": "warp"
+      },
+      "stall_barrier": {
+        "status": "collected",
+        "metric": "smsp__pcsamp_warps_issue_stalled_barrier",
+        "value": 321,
+        "unit": "warp"
+      },
+      "stall_math_pipe": {
+        "status": "collected",
+        "metric": "smsp__pcsamp_warps_issue_stalled_math_pipe_throttle",
+        "value": 18,
+        "unit": "warp"
+      },
+      "stall_memory_throttle": {
+        "status": "collected",
+        "metric": "smsp__pcsamp_warps_issue_stalled_mio_throttle",
+        "value": 225,
+        "unit": "warp"
+      }
+    }
+  }
+]

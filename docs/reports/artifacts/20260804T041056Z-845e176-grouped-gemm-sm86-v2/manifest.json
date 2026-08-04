@@ -1,0 +1,70 @@
+{
+  "schema_version": "raggedroute.evidence_bundle.v2",
+  "run_id": "20260804T041056Z-845e176-grouped-gemm-sm86-v2",
+  "kind": "grouped_gemm_performance_evidence",
+  "commands": [
+    {"role": "build", "status": "recorded", "value": "see commands.txt"},
+    {"role": "release_benchmark", "status": "recorded", "value": "see commands.txt"},
+    {"role": "ncu_nsys", "status": "recorded", "value": "see commands.txt"}
+  ],
+  "provenance": {
+    "source_git_sha": "845e176a9960c974eeab14bb012a6249db7bb8e4",
+    "git_clean": true,
+    "git_clean_status": "clean implementation SHA"
+  },
+  "hardware": {
+    "gpu_name": "NVIDIA GeForce RTX 3080",
+    "gpu_uuid": "GPU-7c5e95c0-e5a4-15d8-24a0-c8c8b58d6f39",
+    "compute_capability": "8.6",
+    "sm_count": 68,
+    "status": "recorded"
+  },
+  "toolchain": {
+    "cuda": "13.3.73",
+    "driver": "591.86",
+    "ncu": "2026.2.1",
+    "nsys": "2026.1.3",
+    "build_type": "Release",
+    "status": "recorded"
+  },
+  "semantic_contract": {
+    "operator": "grouped_gemm",
+    "dtype": "fp32",
+    "accumulator_dtype": "fp32",
+    "math_mode": "strict_fp32",
+    "measurement_rule": "Release A/B timings and profiler durations are separate evidence classes.",
+    "measurement_levels": ["L2_operator_steady"],
+    "status": "recorded"
+  },
+  "validation": {
+    "status": "passed",
+    "reason": "CTest 8/8 and v2 profile-once validation passed; baseline sanitizer logs are retained in the prior artifact."
+  },
+  "decision": {
+    "status": "explicit_research_candidate",
+    "value": "relative to old v1 improved; CUTLASS promotion gate not passed",
+    "profiler_duration_used_as_speedup": false
+  },
+  "release_asset": {
+    "tag": "local-evidence-2026-08-04",
+    "name": "20260804T041056Z-845e176-grouped-gemm-sm86-v2-raw.zip",
+    "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/local-evidence-2026-08-04/20260804T041056Z-845e176-grouped-gemm-sm86-v2-raw.zip",
+    "bytes": 0,
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "immutable": true
+  },
+  "files": [
+    {"path": "README.md", "role": "comparison_or_decision", "bytes": 3025, "sha256": "1a1d33f4b2f9e2d8894eda8cf12e6ac4444811f83265daeb30fbd2d698dd4f8a", "storage": "git"},
+    {"path": "commands.txt", "role": "supporting_evidence", "bytes": 2196, "sha256": "b28e235fac8722032f86f27f7d2b82892bcebcd8a01fcaac7b28f30f0ff339b3", "storage": "git"},
+    {"path": "benchmark/release.aggregate.csv", "role": "compact_benchmark_summary", "bytes": 11522, "sha256": "22562bc126bee6afc990e67228aaf4289c962729e591f4cd1bfda07c32a57de1", "storage": "git"},
+    {"path": "benchmark/release.aggregate.json", "role": "full_benchmark_aggregate", "bytes": 217888, "sha256": "633d22ae70ed28966f049afff30cb44f09509a21b360dcda53ed17647c585abf", "storage": "git"},
+    {"path": "benchmark/release.comparison.json", "role": "comparison_or_decision", "bytes": 30372, "sha256": "ef529ff7210b3ee55a2e9d8ead3325518a68c429428b503dbf71195ff9ce068e", "storage": "git"},
+    {"path": "benchmark/release.manifest.json", "role": "run_manifest", "bytes": 150109, "sha256": "ed116f726c18a91e7e7e7bb6cb794439fe81ed305eca47f70ee58c0da88156ce", "storage": "git"},
+    {"path": "profile/environment.json", "role": "environment_snapshot", "bytes": 1406, "sha256": "6678ed4fc314e294ce6d44e88f724d15c73e854f44ee94158a0a1ea3fd6d0db3", "storage": "git"},
+    {"path": "profile/ncu/REPORT.md", "role": "normalized_profiler_metrics", "bytes": 864, "sha256": "5c292ae9a7edfc451e96fec3af50274f23bd4911479156c520f72c73085df823", "storage": "git"},
+    {"path": "profile/ncu/ncu_metrics.csv", "role": "normalized_profiler_metrics", "bytes": 5155, "sha256": "8300b1d64e64c4bfd871ef47906adbcbfecf1a025691f875fd0a5bcb0538d8e0", "storage": "git"},
+    {"path": "profile/ncu/ncu_metrics.json", "role": "supporting_evidence", "bytes": 6513, "sha256": "4356186ec25b318f20f02a9dcb5024dbc3878d4cc5c728c9d383f98c8376a359", "storage": "git"},
+    {"path": "profile/nsys/cuda_api_sum.csv", "role": "normalized_profiler_metrics", "bytes": 935, "sha256": "45e012cf2f5da8365e67e57fb2aed8f92a4bf18ae02fe97966c7cff00a67fc14", "storage": "git"},
+    {"path": "profile/nsys/cuda_gpu_kern_sum.csv", "role": "normalized_profiler_metrics", "bytes": 280, "sha256": "24d68f0b76738bfe281b368cecbad43d686aacd747549ffff54371784dcad731", "storage": "git"}
+  ]
+}

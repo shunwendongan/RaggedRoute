@@ -77,3 +77,16 @@ Grouped GEMM 的 `kAuto` 与 L3 chain 继续使用 naive。正式三进程 clean
 
 最终报告：[RTX 3080 Grouped GEMM SM86 strict-FP32](../reports/rtx3080-grouped-gemm-sm86-a5df6eb.md)；
 [可提交 artifact 摘要](../reports/artifacts/20260802T190625Z-7fb8f43-grouped-gemm-sm86/)。
+
+## 2026-08-04 / explicit `cuda_grouped_sm86_fp32_v2`
+
+commit `845e176a9960` 在 clean Git worktree 上重新构建并跑完三进程 Release suite。v2 是
+两 warp prefix + `__launch_bounds__(128,5)` 的 `16x32` strict-FP32 kernel，仅由显式
+optimized variant 调用，`kAuto` 保持不变。
+
+- 相对 CUTLASS ratio-of-sums：`0.9849x`；6/10 shapes 获益；`T2048 uniform` 最差为 `0.5318x`。
+- 相对旧 v1 的历史等价 kernel ratio-of-sums：`1.121x`、8/10 shapes 获益，但 p95/CV 与 CUTLASS promotion gate 仍不满足。
+- CTest 8/8；v2 aligned、non-aligned profile-once correctness 通过；workspace 仍为 0。
+- NCU detailed：86 registers/thread、36.24% achieved occupancy、53.12% SM、54.71% memory、无 local spill。
+
+完整 evidence：[SM86 v2 artifact](../reports/artifacts/20260804T041056Z-845e176-grouped-gemm-sm86-v2/)。

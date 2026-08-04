@@ -50,7 +50,8 @@
 `0.951x`，并在 `T=2048` uniform/Zipf 上分别只有 `0.539x/0.676x`。因此最终候选
 **未晋级**：保留 benchmark-only 代码与证据，public runtime 继续明确拒绝 Grouped GEMM optimized ID。
 
-完整逐 shape 结果与 profiler 指标见 [performance-record](performance-record.md)。
+完整逐 shape 结果与 profiler 指标见 [performance-record](performance-record.md)。当前显式
+`cuda_grouped_sm86_fp32_v2` 的 clean-Git 证据见 [2026-08-04 artifact](../reports/artifacts/20260804T041056Z-845e176-grouped-gemm-sm86-v2/)。
 
 ## 5. 后续路线
 

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="180" viewBox="0 0 1000 180">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="20" y="28" font-family="Arial" font-size="18">chunked_prefill: vLLM semantic</text>
+<line x1="120" y1="105" x2="970" y2="105" stroke="#64748b"/>
+<rect x="120.0" y="74" width="5.3" height="25" rx="3" fill="#0f766e"><title>ampere_sgemm_32x32_sliced1x4_nn</title></rect>
+<rect x="127.3" y="112" width="2.0" height="25" rx="3" fill="#94a3b8"><title>void cublasLt::splitKreduce_kernel<(int)32, (int)16, int, float, float, float, float, (bool)0, float, float, float, (bool)1, (bool)0, (bool)0, (bool)0>(cublasLt::cublasSplitKParams<T6>, const T4 *, const T10 *, T9 *, T5 *, const T6 *, const T6 *, const T11 *, const T4 *, T11 *, void *, long, T6 *, int *, T6 *, T6 *, const T6 *, const T6 *, const T6 *, const T6 *, const T6 *)</title></rect>
+<rect x="206.9" y="74" width="2.0" height="25" rx="3" fill="#7c3aed"><title>void vllm::moe::topkGating<(int)4, (int)8, (int)4, (int)16, (int)32, int, float, (vllm::moe::ScoringFunc)0>(const T7 *, const bool *, float *, int, T6 *, int *, int, int, int, bool, const float *, double)</title></rect>
+<rect x="235.8" y="112" width="3.0" height="25" rx="3" fill="#059669"><title>void vllm::moe::moe_align_block_size_kernel<int>(const T1 *, int *, int *, int *, int *, int, int, int, int, unsigned long, int *, int, int, bool)</title></rect>
+<rect x="240.6" y="74" width="2.0" height="25" rx="3" fill="#94a3b8"><title>void vllm::moe::count_and_sort_expert_tokens_kernel<int>(const T1 *, int *, int *, int *, unsigned long, int, int, int, bool)</title></rect>
+<rect x="345.6" y="112" width="489.4" height="25" rx="3" fill="#ea580c"><title>fused_moe_kernel</title></rect>
+<rect x="836.8" y="74" width="13.2" height="25" rx="3" fill="#94a3b8"><title>void at::native::reduce_kernel<(int)128, (int)4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator ()(at::TensorIterator &)::[lambda(float, float) (instance 1)]>, unsigned int, float, (int)4, (int)4>>(T3)</title></rect>
+<text x="20" y="160" font-family="Arial" font-size="12" fill="#475569">last post-warmup CUDA events; widths are NSYS durations (diagnostic only)</text></svg>

@@ -9,3 +9,8 @@
 *.py text eol=lf
 CMakeLists.txt text eol=lf
 docs/reports/artifacts/** text eol=lf
+docs/reports/vllm_semantic_moe_20260806_final/**/*.csv text eol=lf
+docs/reports/vllm_semantic_moe_20260806_final/**/*.json text eol=lf
+docs/reports/vllm_semantic_moe_20260806_final/**/*.jsonl text eol=lf
+docs/reports/vllm_semantic_moe_20260806_final/**/*.md text eol=lf
+docs/reports/vllm_semantic_moe_20260806_final/**/*.svg text eol=lf

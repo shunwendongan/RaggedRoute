@@ -1,0 +1,7 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+89.3,8636271,21,411251.0,411543.0,408760,413464,1334.2,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+5.8,560434,21,26687.3,26656.0,25855,27263,271.0,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+3.3,317020,21,15096.2,15136.0,14880,15264,128.4,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+0.7,68734,21,3273.0,3232.0,3168,3808,165.4,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+0.5,46304,21,2205.0,2208.0,2176,2240,17.2,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+0.4,41504,21,1976.4,1952.0,1952,2080,37.7,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"

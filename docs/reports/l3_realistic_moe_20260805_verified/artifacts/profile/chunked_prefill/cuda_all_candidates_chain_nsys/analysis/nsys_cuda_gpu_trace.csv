@@ -1,0 +1,156 @@
+Start (ns),Duration (ns),CorrId,GrdX,GrdY,GrdZ,BlkX,BlkY,BlkZ,Reg/Trd,StcSMem (MB),DymSMem (MB),Bytes (MB),Throughput (MB/s),SrcMemKd,DstMemKd,Device,Ctx,GreenCtx,Strm,Name
+1401081427,1278470,135,,,,,,,,,,1.049,819.986,Pageable,Device,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memcpy Host-to-Device]
+1402362393,35835585,136,,,,,,,,,,29.360,792.723,Pageable,Device,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memcpy Host-to-Device]
+1438269497,8448,137,,,,,,,,,,0.016,1939.390,Pageable,Device,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memcpy Host-to-Device]
+1438669745,25855,142,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1439284164,2080,147,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1439373698,2240,152,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1439393090,416,154,,,,,,,,,,0.000,76.923,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1439809113,3232,158,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1440105619,408760,167,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1440621289,15167,172,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1440638952,26912,175,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1440668488,2080,178,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1440674120,2240,181,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1440679432,2464,183,,,,,,,,,,0.000,12.987,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1440684295,3168,185,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1440690599,410872,190,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1441109247,15263,193,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1441128158,26656,196,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1441157470,1952,199,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1441162014,2208,202,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1441166302,1760,204,,,,,,,,,,0.000,18.182,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1441170462,3231,206,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1441177629,411544,211,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1441597045,14943,214,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1441614580,26592,217,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1441643764,1952,220,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1441649972,2208,223,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1441654164,1664,225,,,,,,,,,,0.000,19.231,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1441658196,3199,227,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1441663987,410040,232,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1442081899,15200,235,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1442101162,26944,238,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1442130730,1952,241,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1442135210,2208,244,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1442139370,1888,246,,,,,,,,,,0.000,16.949,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1442143690,3200,248,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1442151017,408792,253,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1442567553,14912,256,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1442585249,26815,259,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1442614912,1984,262,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1442621312,2208,265,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1442625504,1728,267,,,,,,,,,,0.000,18.518,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1442629600,3200,269,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1442635295,411256,274,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1443054295,15072,277,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1443073495,26655,280,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1443106486,1952,283,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1443111030,2208,286,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1443115286,1664,288,,,,,,,,,,0.000,19.231,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1443119350,3264,290,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1443126517,410232,295,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1443544493,14976,298,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1443562221,26623,301,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1443591532,1984,304,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1443597356,2176,307,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1443601612,1920,309,,,,,,,,,,0.000,16.667,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1443605964,3200,311,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1443612331,412152,316,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1444032323,15200,319,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1444051170,26432,322,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1444080162,1984,325,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1444084994,2176,328,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1444089186,1696,330,,,,,,,,,,0.000,18.868,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1444093250,3264,332,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1444100193,413400,337,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1444521337,15136,340,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1444539096,26624,343,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1444568216,1952,346,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1444574008,2208,349,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1444578264,1728,351,,,,,,,,,,0.000,18.518,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1444582328,3264,353,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1444588215,412152,358,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1445008175,15136,361,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1445027055,26527,364,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1445056142,1952,367,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1445060718,2208,370,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1445065038,1984,372,,,,,,,,,,0.000,16.129,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1445069454,3232,374,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1445076141,410072,379,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1445493957,14976,382,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1445511461,26847,385,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1445540900,1952,388,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1445546660,2208,391,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1445550852,1664,393,,,,,,,,,,0.000,19.231,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1445554852,3232,395,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1445560804,411703,400,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1445980283,15168,403,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1445999067,26591,406,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1446028314,1952,409,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1446033018,2208,412,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1446037178,1792,414,,,,,,,,,,0.000,17.857,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1446041306,3232,416,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1446048250,410871,421,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1446466897,15104,424,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1446484529,26559,427,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1446513840,1984,430,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1446519600,2208,433,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1446523856,1664,435,,,,,,,,,,0.000,19.231,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1446527824,3232,437,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1446533616,411543,442,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1446952935,15232,445,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1446972071,26975,448,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1447001670,1984,451,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1447006214,2208,454,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1447010534,1760,456,,,,,,,,,,0.000,18.182,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1447014694,3264,458,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1447021830,412343,463,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1447442173,15040,466,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1447459773,26559,469,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1447489340,1952,472,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1447495068,2208,475,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1447499324,1696,477,,,,,,,,,,0.000,18.868,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1447503356,3168,479,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1447510428,411543,484,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1447929715,15232,487,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1447948883,26687,490,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1447978322,1984,493,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1447982802,2176,496,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1447987090,1856,498,,,,,,,,,,0.000,17.241,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1447991378,3232,500,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1447998226,412887,505,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1448418857,15232,508,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1448436745,26911,511,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1448466216,1984,514,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1448472296,2208,517,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1448476520,1696,519,,,,,,,,,,0.000,18.868,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1448480552,3808,521,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1448486984,411223,526,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1448906175,15264,529,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1448925023,26687,532,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1448954398,1952,535,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1448958974,2208,538,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1448963262,1792,540,,,,,,,,,,0.000,17.857,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1448967486,3232,542,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1448974910,411959,547,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1449394741,14944,550,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1449412245,27263,553,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1449442132,1952,556,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1449447668,2208,559,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1449451796,1664,561,,,,,,,,,,0.000,19.231,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1449455796,3712,563,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1449462068,409463,568,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1449879275,14880,571,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1449967369,26720,576,32,1,1,256,1,1,38,0.002,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+1449996841,1984,579,8,1,1,128,1,1,18,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+1450001833,2176,582,1,1,1,256,1,1,22,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+1450007016,1664,584,,,,,,,,,,0.000,19.231,Device,,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memset]
+1450012744,3168,586,512,1,1,128,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+1450021000,413464,591,272,1,1,128,1,1,106,0.007,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+1450442176,14943,594,512,1,1,256,1,1,34,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,13,"raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+1450503230,2816,597,,,,,,,,,,0.004,1454.543,Device,Pageable,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memcpy Device-to-Host]
+1450540414,2240,599,,,,,,,,,,0.000,14.286,Device,Pageable,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memcpy Device-to-Host]
+1450555517,2048,601,,,,,,,,,,0.000,17.578,Device,Pageable,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memcpy Device-to-Host]
+1450573085,2528,603,,,,,,,,,,0.004,1620.251,Device,Pageable,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memcpy Device-to-Host]
+1451339661,4466277,605,,,,,,,,,,3.670,818.414,Device,Pageable,NVIDIA GeForce RTX 3080 (0),1,,13,[CUDA memcpy Device-to-Host]

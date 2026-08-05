@@ -1,0 +1,98 @@
+[
+  {
+    "name": "raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)",
+    "total_time": 71877033.0,
+    "time_pct": 94.9,
+    "raw": {
+      "Time (%)": "94.9",
+      "Total Time (ns)": "71877033",
+      "Instances": "21",
+      "Avg (ns)": "3422715.9",
+      "Med (ns)": "3414618.0",
+      "Min (ns)": "3405339",
+      "Max (ns)": "3443706",
+      "StdDev (ns)": "15093.8",
+      "Name": "raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)"
+    }
+  },
+  {
+    "name": "raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)",
+    "total_time": 3617721.0,
+    "time_pct": 4.8,
+    "raw": {
+      "Time (%)": "4.8",
+      "Total Time (ns)": "3617721",
+      "Instances": "21",
+      "Avg (ns)": "172272.4",
+      "Med (ns)": "171965.0",
+      "Min (ns)": "170269",
+      "Max (ns)": "173628",
+      "StdDev (ns)": "1027.8",
+      "Name": "raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)"
+    }
+  },
+  {
+    "name": "raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)",
+    "total_time": 142428.0,
+    "time_pct": 0.2,
+    "raw": {
+      "Time (%)": "0.2",
+      "Total Time (ns)": "142428",
+      "Instances": "21",
+      "Avg (ns)": "6782.3",
+      "Med (ns)": "6783.0",
+      "Min (ns)": "6624",
+      "Max (ns)": "6912",
+      "StdDev (ns)": "81.8",
+      "Name": "raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)"
+    }
+  },
+  {
+    "name": "void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)",
+    "total_time": 61472.0,
+    "time_pct": 0.1,
+    "raw": {
+      "Time (%)": "0.1",
+      "Total Time (ns)": "61472",
+      "Instances": "21",
+      "Avg (ns)": "2927.2",
+      "Med (ns)": "2912.0",
+      "Min (ns)": "2848",
+      "Max (ns)": "3168",
+      "StdDev (ns)": "69.1",
+      "Name": "void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)"
+    }
+  },
+  {
+    "name": "void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)",
+    "total_time": 36704.0,
+    "time_pct": 0.0,
+    "raw": {
+      "Time (%)": "0.0",
+      "Total Time (ns)": "36704",
+      "Instances": "21",
+      "Avg (ns)": "1747.8",
+      "Med (ns)": "1760.0",
+      "Min (ns)": "1728",
+      "Max (ns)": "1760",
+      "StdDev (ns)": "15.9",
+      "Name": "void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)"
+    }
+  },
+  {
+    "name": "raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)",
+    "total_time": 30464.0,
+    "time_pct": 0.0,
+    "raw": {
+      "Time (%)": "0.0",
+      "Total Time (ns)": "30464",
+      "Instances": "21",
+      "Avg (ns)": "1450.7",
+      "Med (ns)": "1440.0",
+      "Min (ns)": "1408",
+      "Max (ns)": "1472",
+      "StdDev (ns)": "18.5",
+      "Name": "raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)"
+    }
+  }
+]

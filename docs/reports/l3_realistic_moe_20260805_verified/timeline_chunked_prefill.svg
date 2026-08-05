@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="302" viewBox="0 0 1200 302">
+<rect width="1200" height="100%" fill="white"/>
+<text x="20" y="26" font-family="Segoe UI,Arial" font-size="19" font-weight="bold">NSYS steady-chain swimlanes — Chunked prefill 代理</text>
+<text x="20" y="48" font-family="Segoe UI,Arial" font-size="12" fill="#555">Last captured GPU kernels; rectangle width is NSYS duration. Profiler timeline is diagnostic only.</text>
+<rect x="20" y="58" width="11" height="11" fill="#4E79A7"/>
+<text x="35" y="68" font-family="Segoe UI,Arial" font-size="10">Dense GEMM</text>
+<rect x="96.0" y="58" width="11" height="11" fill="#F28E2B"/>
+<text x="111.0" y="68" font-family="Segoe UI,Arial" font-size="10">Top-K gate</text>
+<rect x="172.0" y="58" width="11" height="11" fill="#E15759"/>
+<text x="187.0" y="68" font-family="Segoe UI,Arial" font-size="10">Histogram</text>
+<rect x="241.9" y="58" width="11" height="11" fill="#E15759"/>
+<text x="256.9" y="68" font-family="Segoe UI,Arial" font-size="10">Histogram + scan (fused)</text>
+<rect x="403.29999999999995" y="58" width="11" height="11" fill="#76B7B2"/>
+<text x="418.29999999999995" y="68" font-family="Segoe UI,Arial" font-size="10">Exclusive scan</text>
+<rect x="503.69999999999993" y="58" width="11" height="11" fill="#59A14F"/>
+<text x="518.6999999999999" y="68" font-family="Segoe UI,Arial" font-size="10">Token permute</text>
+<rect x="597.9999999999999" y="58" width="11" height="11" fill="#B07AA1"/>
+<text x="612.9999999999999" y="68" font-family="Segoe UI,Arial" font-size="10">Grouped GEMM</text>
+<rect x="686.1999999999998" y="58" width="11" height="11" fill="#EDC948"/>
+<text x="701.1999999999998" y="68" font-family="Segoe UI,Arial" font-size="10">Unpermute</text>
+<rect x="756.0999999999998" y="58" width="11" height="11" fill="#9C9C9C"/>
+<text x="771.0999999999998" y="68" font-family="Segoe UI,Arial" font-size="10">Other / runtime</text>
+<text x="20" y="118" font-family="Segoe UI,Arial" font-size="14" font-weight="bold">CUDA candidate</text>
+<line x1="190" y1="113" x2="1170" y2="113" stroke="#d0d0d0"/>
+<rect x="190.00" y="94" width="25.57" height="38" rx="2" fill="#4E79A7"><title>raggedroute::ops::&lt;unnamed&gt;::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int) — 27.263 µs</title></rect>
+<rect x="218.03" y="94" width="1.83" height="38" rx="2" fill="#F28E2B"><title>void raggedroute::ops::&lt;unnamed&gt;::topk_gate_local_pair_two_reduce_kernel&lt;(int)8, (int)4&gt;(const float *, int *, float *, int) — 1.952 µs</title></rect>
+<rect x="223.22" y="94" width="2.07" height="38" rx="2" fill="#E15759"><title>raggedroute::ops::&lt;unnamed&gt;::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int) — 2.208 µs</title></rect>
+<rect x="230.85" y="94" width="3.48" height="38" rx="2" fill="#F28E2B"><title>void raggedroute::ops::&lt;unnamed&gt;::token_permute_token_owned_top2_kernel&lt;(int)128, (bool)1&gt;(const float *, const int *, const int *, int *, float *, int *, int *, int, int) — 3.712 µs</title></rect>
+<rect x="236.73" y="94" width="384.04" height="38" rx="2" fill="#B07AA1"><title>raggedroute::ops::&lt;unnamed&gt;::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int) — 409.463 µs</title></rect>
+<text x="239.73" y="117" font-family="Segoe UI,Arial" font-size="10" fill="white">Grouped GEMM</text>
+<rect x="628.03" y="94" width="13.96" height="38" rx="2" fill="#59A14F"><title>raggedroute::ops::&lt;unnamed&gt;::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int) — 14.880 µs</title></rect>
+<rect x="710.66" y="94" width="25.06" height="38" rx="2" fill="#4E79A7"><title>raggedroute::ops::&lt;unnamed&gt;::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int) — 26.720 µs</title></rect>
+<rect x="738.30" y="94" width="1.86" height="38" rx="2" fill="#F28E2B"><title>void raggedroute::ops::&lt;unnamed&gt;::topk_gate_local_pair_two_reduce_kernel&lt;(int)8, (int)4&gt;(const float *, int *, float *, int) — 1.984 µs</title></rect>
+<rect x="742.98" y="94" width="2.04" height="38" rx="2" fill="#E15759"><title>raggedroute::ops::&lt;unnamed&gt;::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int) — 2.176 µs</title></rect>
+<rect x="753.22" y="94" width="2.97" height="38" rx="2" fill="#F28E2B"><title>void raggedroute::ops::&lt;unnamed&gt;::token_permute_token_owned_top2_kernel&lt;(int)128, (bool)1&gt;(const float *, const int *, const int *, int *, float *, int *, int *, int, int) — 3.168 µs</title></rect>
+<rect x="760.96" y="94" width="387.79" height="38" rx="2" fill="#B07AA1"><title>raggedroute::ops::&lt;unnamed&gt;::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int) — 413.464 µs</title></rect>
+<text x="763.96" y="117" font-family="Segoe UI,Arial" font-size="10" fill="white">Grouped GEMM</text>
+<rect x="1155.98" y="94" width="14.02" height="38" rx="2" fill="#59A14F"><title>raggedroute::ops::&lt;unnamed&gt;::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int) — 14.943 µs</title></rect>
+<text x="190" y="151" font-family="Segoe UI,Arial" font-size="10" fill="#555">trace span 1044.87 µs</text>
+<text x="20" y="190" font-family="Segoe UI,Arial" font-size="14" font-weight="bold">Library baseline</text>
+<line x1="190" y1="185" x2="1170" y2="185" stroke="#d0d0d0"/>
+<rect x="190.00" y="166" width="46.83" height="38" rx="2" fill="#EDC948"><title>void raggedroute::benchmark::library_baseline::&lt;unnamed&gt;::finalize_routing&lt;(bool)1&gt;(const float *, float *, const float *, const int *, int, int, int) — 16.159 µs</title></rect>
+<rect x="351.83" y="166" width="23.28" height="38" rx="2" fill="#9C9C9C"><title>ampere_sgemm_32x32_sliced1x4_nn — 8.031 µs</title></rect>
+<rect x="382.99" y="166" width="5.66" height="38" rx="2" fill="#9C9C9C"><title>void cublasLt::splitKreduce_kernel&lt;(int)32, (int)16, int, float, float, float, float, (bool)0, float, float, float, (bool)1, (bool)0, (bool)0, (bool)0&gt;(cublasLt::cublasSplitKParam… — 1.952 µs</title></rect>
+<rect x="398.67" y="166" width="32.09" height="38" rx="2" fill="#F28E2B"><title>raggedroute::benchmark::library_baseline::&lt;unnamed&gt;::cub_block_radix_top2_kernel(const float *, int *, float *, int, int) — 11.072 µs</title></rect>
+<rect x="442.91" y="166" width="3.34" height="38" rx="2" fill="#E15759"><title>void cub::_V_300304_SM_860::detail::histogram::DeviceHistogramInitKernel&lt;cub::_V_300304_SM_860::detail::histogram::policy_hub&lt;int, int, (int)1, (int)1, (bool)1&gt;::Policy1000, (int)… — 1.152 µs</title></rect>
+<rect x="453.76" y="166" width="15.95" height="38" rx="2" fill="#E15759"><title>void cub::_V_300304_SM_860::detail::histogram::DeviceHistogramSweepKernel&lt;cub::_V_300304_SM_860::detail::histogram::policy_hub&lt;int, int, (int)1, (int)1, (bool)1&gt;::Policy1000, (int… — 5.504 µs</title></rect>
+<rect x="477.50" y="166" width="4.27" height="38" rx="2" fill="#76B7B2"><title>void raggedroute::benchmark::library_baseline::&lt;unnamed&gt;::block_scan_kernel&lt;(int)128&gt;(const int *, int *, int) — 1.472 µs</title></rect>
+<rect x="490.67" y="166" width="13.54" height="38" rx="2" fill="#59A14F"><title>void cub::_V_300304_SM_860::detail::radix_sort::DeviceRadixSortSingleTileKernel&lt;cub::_V_300304_SM_860::detail::radix_sort::policy_selector_from_types&lt;int, int, unsigned int&gt;, (cub… — 4.672 µs</title></rect>
+<rect x="511.81" y="166" width="8.44" height="38" rx="2" fill="#76B7B2"><title>raggedroute::benchmark::library_baseline::&lt;unnamed&gt;::compute_expert_offsets(const int *, int, int, long long *) — 2.912 µs</title></rect>
+<rect x="527.58" y="166" width="10.48" height="38" rx="2" fill="#59A14F"><title>void raggedroute::benchmark::library_baseline::&lt;unnamed&gt;::expand_rows&lt;(bool)1&gt;(const float *, float *, const int *, int *, int *, int, int, int) — 3.616 µs</title></rect>
+<rect x="547.98" y="166" width="567.39" height="38" rx="2" fill="#B07AA1"><title>void cutlass::Kernel&lt;cutlass::gemm::kernel::GemmGrouped&lt;cutlass::gemm::threadblock::MmaPipelined&lt;cutlass::gemm::GemmShape&lt;(int)128, (int)128, (int)8&gt;, cutlass::transform::threadbl… — 195.772 µs</title></rect>
+<text x="550.98" y="189" font-family="Segoe UI,Arial" font-size="10" fill="white">Grouped GEMM</text>
+<rect x="1122.79" y="166" width="47.21" height="38" rx="2" fill="#EDC948"><title>void raggedroute::benchmark::library_baseline::&lt;unnamed&gt;::finalize_routing&lt;(bool)1&gt;(const float *, float *, const float *, const int *, int, int, int) — 16.288 µs</title></rect>
+<text x="190" y="223" font-family="Segoe UI,Arial" font-size="10" fill="#555">trace span 338.14 µs</text>
+<text x="20" y="262" font-family="Segoe UI,Arial" font-size="14" font-weight="bold">Triton reference</text>
+<line x1="190" y1="257" x2="1170" y2="257" stroke="#d0d0d0"/>
+<rect x="190.00" y="238" width="9.10" height="38" rx="2" fill="#4E79A7"><title>_dense_gemm_kernel — 13.032 µs</title></rect>
+<rect x="200.99" y="238" width="1.16" height="38" rx="2" fill="#F28E2B"><title>_top2_selected_softmax_kernel — 1.661 µs</title></rect>
+<rect x="204.47" y="238" width="1.00" height="38" rx="2" fill="#9C9C9C"><title>void at::native::vectorized_elementwise_kernel&lt;(int)4, at::native::FillFunctor&lt;int&gt;, std::array&lt;char *, (unsigned long)1&gt;&gt;(int, T2, T3) — 1.086 µs</title></rect>
+<rect x="232.71" y="238" width="1.34" height="38" rx="2" fill="#E15759"><title>_histogram_kernel — 1.917 µs</title></rect>
+<rect x="257.37" y="238" width="1.00" height="38" rx="2" fill="#76B7B2"><title>_exclusive_scan_kernel — 1.214 µs</title></rect>
+<rect x="292.83" y="238" width="1.07" height="38" rx="2" fill="#59A14F"><title>_route_map_kernel — 1.534 µs</title></rect>
+<rect x="295.71" y="238" width="1.83" height="38" rx="2" fill="#59A14F"><title>_permute_rows_kernel — 2.619 µs</title></rect>
+<rect x="327.80" y="238" width="825.30" height="38" rx="2" fill="#B07AA1"><title>_grouped_gemm_kernel — 1182.088 µs</title></rect>
+<text x="330.80" y="261" font-family="Segoe UI,Arial" font-size="10" fill="white">Grouped GEMM</text>
+<rect x="1159.54" y="238" width="10.46" height="38" rx="2" fill="#59A14F"><title>_unpermute_kernel — 14.981 µs</title></rect>
+<text x="190" y="295" font-family="Segoe UI,Arial" font-size="10" fill="#555">trace span 1403.67 µs</text>
+</svg>

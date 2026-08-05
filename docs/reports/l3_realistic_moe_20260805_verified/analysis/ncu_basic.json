@@ -1,0 +1,764 @@
+{
+  "mixtral_exact": {
+    "cuda_all_candidates_chain": {
+      "kernel": "grouped_gemm_register16x32_async_v3_kernel",
+      "metrics": {
+        "duration_us": {
+          "status": "collected",
+          "metric": "gpu__time_duration.sum",
+          "value": 3412928.0,
+          "unit": "ns"
+        },
+        "sm_pct": {
+          "status": "collected",
+          "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 50.46105673827647,
+          "unit": "%"
+        },
+        "memory_pct": {
+          "status": "collected",
+          "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 65.29362116539522,
+          "unit": "%"
+        },
+        "dram_pct": {
+          "status": "collected",
+          "metric": "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 65.29362116539522,
+          "unit": "%"
+        },
+        "l1_pct": {
+          "status": "collected",
+          "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+          "value": 50.564965872316314,
+          "unit": "%"
+        },
+        "l2_pct": {
+          "status": "collected",
+          "metric": "lts__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 20.942634610632798,
+          "unit": "%"
+        },
+        "registers_per_thread": {
+          "status": "collected",
+          "metric": "launch__registers_per_thread",
+          "value": 106,
+          "unit": "register/thread"
+        },
+        "shared_mem_per_block": {
+          "status": "collected",
+          "metric": "launch__shared_mem_per_block",
+          "value": 7952,
+          "unit": "byte/block"
+        },
+        "waves_per_sm": {
+          "status": "collected",
+          "metric": "launch__waves_per_multiprocessor",
+          "value": 1.0,
+          "unit": ""
+        },
+        "theoretical_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__maximum_warps_per_active_cycle_pct",
+          "value": 33.33333333333333,
+          "unit": "%"
+        },
+        "achieved_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+          "value": 32.25659620617431,
+          "unit": "%"
+        },
+        "grid_size": {
+          "status": "collected",
+          "metric": "launch__grid_size",
+          "value": 272,
+          "unit": ""
+        },
+        "block_size": {
+          "status": "collected",
+          "metric": "launch__block_size",
+          "value": 128,
+          "unit": ""
+        }
+      },
+      "report": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-l3-eval-8d4c281\\out\\research\\l3_realistic_20260805\\profile\\mixtral_exact\\cuda_all_candidates_chain_ncu\\reports\\ncu_basic.ncu-rep"
+    },
+    "library_all_baselines_chain": {
+      "kernel": "Kernel",
+      "metrics": {
+        "duration_us": {
+          "status": "collected",
+          "metric": "gpu__time_duration.sum",
+          "value": 4989824.0,
+          "unit": "ns"
+        },
+        "sm_pct": {
+          "status": "collected",
+          "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 77.32827233234634,
+          "unit": "%"
+        },
+        "memory_pct": {
+          "status": "collected",
+          "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 47.594586708858024,
+          "unit": "%"
+        },
+        "dram_pct": {
+          "status": "collected",
+          "metric": "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 44.649963197989265,
+          "unit": "%"
+        },
+        "l1_pct": {
+          "status": "collected",
+          "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+          "value": 49.61854543408349,
+          "unit": "%"
+        },
+        "l2_pct": {
+          "status": "collected",
+          "metric": "lts__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 14.17438440172274,
+          "unit": "%"
+        },
+        "registers_per_thread": {
+          "status": "collected",
+          "metric": "launch__registers_per_thread",
+          "value": 144,
+          "unit": "register/thread"
+        },
+        "shared_mem_per_block": {
+          "status": "collected",
+          "metric": "launch__shared_mem_per_block",
+          "value": 17680,
+          "unit": "byte/block"
+        },
+        "waves_per_sm": {
+          "status": "collected",
+          "metric": "launch__waves_per_multiprocessor",
+          "value": 1.0,
+          "unit": ""
+        },
+        "theoretical_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__maximum_warps_per_active_cycle_pct",
+          "value": 16.666666666666664,
+          "unit": "%"
+        },
+        "achieved_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+          "value": 16.66663701361951,
+          "unit": "%"
+        },
+        "grid_size": {
+          "status": "collected",
+          "metric": "launch__grid_size",
+          "value": 68,
+          "unit": ""
+        },
+        "block_size": {
+          "status": "collected",
+          "metric": "launch__block_size",
+          "value": 256,
+          "unit": ""
+        }
+      },
+      "report": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-l3-eval-8d4c281\\out\\research\\l3_realistic_20260805\\profile\\mixtral_exact\\library_all_baselines_chain_ncu\\reports\\ncu_basic.ncu-rep"
+    },
+    "triton_reference": {
+      "kernel": "_grouped_gemm_kernel",
+      "metrics": {
+        "duration_us": {
+          "status": "collected",
+          "metric": "gpu__time_duration.sum",
+          "value": 6701920.0,
+          "unit": "ns"
+        },
+        "sm_pct": {
+          "status": "collected",
+          "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 86.1531548530467,
+          "unit": "%"
+        },
+        "memory_pct": {
+          "status": "collected",
+          "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 86.1531548530467,
+          "unit": "%"
+        },
+        "dram_pct": {
+          "status": "collected",
+          "metric": "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 70.28456024895809,
+          "unit": "%"
+        },
+        "l1_pct": {
+          "status": "collected",
+          "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+          "value": 88.31274581552256,
+          "unit": "%"
+        },
+        "l2_pct": {
+          "status": "collected",
+          "metric": "lts__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 21.529168649057915,
+          "unit": "%"
+        },
+        "registers_per_thread": {
+          "status": "collected",
+          "metric": "launch__registers_per_thread",
+          "value": 52,
+          "unit": "register/thread"
+        },
+        "shared_mem_per_block": {
+          "status": "collected",
+          "metric": "launch__shared_mem_per_block",
+          "value": 25600,
+          "unit": "byte/block"
+        },
+        "waves_per_sm": {
+          "status": "collected",
+          "metric": "launch__waves_per_multiprocessor",
+          "value": 6.588235294117647,
+          "unit": ""
+        },
+        "theoretical_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__maximum_warps_per_active_cycle_pct",
+          "value": 66.66666666666666,
+          "unit": "%"
+        },
+        "achieved_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+          "value": 63.45943251869656,
+          "unit": "%"
+        },
+        "grid_size": {
+          "status": "collected",
+          "metric": "launch__grid_size",
+          "value": 1792,
+          "unit": ""
+        },
+        "block_size": {
+          "status": "collected",
+          "metric": "launch__block_size",
+          "value": 256,
+          "unit": ""
+        }
+      },
+      "report": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-l3-eval-8d4c281\\out\\research\\l3_realistic_20260805\\profile\\mixtral_exact\\triton_reference_ncu\\reports\\ncu_basic.ncu-rep"
+    }
+  },
+  "chunked_prefill": {
+    "cuda_all_candidates_chain": {
+      "kernel": "grouped_gemm_register16x32_async_v3_kernel",
+      "metrics": {
+        "duration_us": {
+          "status": "collected",
+          "metric": "gpu__time_duration.sum",
+          "value": 407328.0,
+          "unit": "ns"
+        },
+        "sm_pct": {
+          "status": "collected",
+          "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 66.25734165675259,
+          "unit": "%"
+        },
+        "memory_pct": {
+          "status": "collected",
+          "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 77.5974894347556,
+          "unit": "%"
+        },
+        "dram_pct": {
+          "status": "collected",
+          "metric": "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 35.825507303538885,
+          "unit": "%"
+        },
+        "l1_pct": {
+          "status": "collected",
+          "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+          "value": 70.54888462890497,
+          "unit": "%"
+        },
+        "l2_pct": {
+          "status": "collected",
+          "metric": "lts__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 77.5974894347556,
+          "unit": "%"
+        },
+        "registers_per_thread": {
+          "status": "collected",
+          "metric": "launch__registers_per_thread",
+          "value": 106,
+          "unit": "register/thread"
+        },
+        "shared_mem_per_block": {
+          "status": "collected",
+          "metric": "launch__shared_mem_per_block",
+          "value": 7952,
+          "unit": "byte/block"
+        },
+        "waves_per_sm": {
+          "status": "collected",
+          "metric": "launch__waves_per_multiprocessor",
+          "value": 1.0,
+          "unit": ""
+        },
+        "theoretical_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__maximum_warps_per_active_cycle_pct",
+          "value": 33.33333333333333,
+          "unit": "%"
+        },
+        "achieved_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+          "value": 30.90280885473433,
+          "unit": "%"
+        },
+        "grid_size": {
+          "status": "collected",
+          "metric": "launch__grid_size",
+          "value": 272,
+          "unit": ""
+        },
+        "block_size": {
+          "status": "collected",
+          "metric": "launch__block_size",
+          "value": 128,
+          "unit": ""
+        }
+      },
+      "report": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-l3-eval-8d4c281\\out\\research\\l3_realistic_20260805\\profile\\chunked_prefill\\cuda_all_candidates_chain_ncu\\reports\\ncu_basic.ncu-rep"
+    },
+    "library_all_baselines_chain": {
+      "kernel": "Kernel",
+      "metrics": {
+        "duration_us": {
+          "status": "collected",
+          "metric": "gpu__time_duration.sum",
+          "value": 193920.0,
+          "unit": "ns"
+        },
+        "sm_pct": {
+          "status": "collected",
+          "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 67.81987281524505,
+          "unit": "%"
+        },
+        "memory_pct": {
+          "status": "collected",
+          "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 43.62098402421679,
+          "unit": "%"
+        },
+        "dram_pct": {
+          "status": "collected",
+          "metric": "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 27.80455357142857,
+          "unit": "%"
+        },
+        "l1_pct": {
+          "status": "collected",
+          "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+          "value": 49.50737928642251,
+          "unit": "%"
+        },
+        "l2_pct": {
+          "status": "collected",
+          "metric": "lts__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 21.151147897921934,
+          "unit": "%"
+        },
+        "registers_per_thread": {
+          "status": "collected",
+          "metric": "launch__registers_per_thread",
+          "value": 144,
+          "unit": "register/thread"
+        },
+        "shared_mem_per_block": {
+          "status": "collected",
+          "metric": "launch__shared_mem_per_block",
+          "value": 17680,
+          "unit": "byte/block"
+        },
+        "waves_per_sm": {
+          "status": "collected",
+          "metric": "launch__waves_per_multiprocessor",
+          "value": 1.0,
+          "unit": ""
+        },
+        "theoretical_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__maximum_warps_per_active_cycle_pct",
+          "value": 16.666666666666664,
+          "unit": "%"
+        },
+        "achieved_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+          "value": 16.66520205785238,
+          "unit": "%"
+        },
+        "grid_size": {
+          "status": "collected",
+          "metric": "launch__grid_size",
+          "value": 68,
+          "unit": ""
+        },
+        "block_size": {
+          "status": "collected",
+          "metric": "launch__block_size",
+          "value": 256,
+          "unit": ""
+        }
+      },
+      "report": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-l3-eval-8d4c281\\out\\research\\l3_realistic_20260805\\profile\\chunked_prefill\\library_all_baselines_chain_ncu\\reports\\ncu_basic.ncu-rep"
+    },
+    "triton_reference": {
+      "kernel": "_grouped_gemm_kernel",
+      "metrics": {
+        "duration_us": {
+          "status": "collected",
+          "metric": "gpu__time_duration.sum",
+          "value": 1351360.0,
+          "unit": "ns"
+        },
+        "sm_pct": {
+          "status": "collected",
+          "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 87.67485397305192,
+          "unit": "%"
+        },
+        "memory_pct": {
+          "status": "collected",
+          "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 87.67485397305192,
+          "unit": "%"
+        },
+        "dram_pct": {
+          "status": "collected",
+          "metric": "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 4.283171275610176,
+          "unit": "%"
+        },
+        "l1_pct": {
+          "status": "collected",
+          "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+          "value": 88.19681387323837,
+          "unit": "%"
+        },
+        "l2_pct": {
+          "status": "collected",
+          "metric": "lts__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 36.0139007848836,
+          "unit": "%"
+        },
+        "registers_per_thread": {
+          "status": "collected",
+          "metric": "launch__registers_per_thread",
+          "value": 52,
+          "unit": "register/thread"
+        },
+        "shared_mem_per_block": {
+          "status": "collected",
+          "metric": "launch__shared_mem_per_block",
+          "value": 25600,
+          "unit": "byte/block"
+        },
+        "waves_per_sm": {
+          "status": "collected",
+          "metric": "launch__waves_per_multiprocessor",
+          "value": 26.352941176470587,
+          "unit": ""
+        },
+        "theoretical_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__maximum_warps_per_active_cycle_pct",
+          "value": 66.66666666666666,
+          "unit": "%"
+        },
+        "achieved_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+          "value": 65.66256505854658,
+          "unit": "%"
+        },
+        "grid_size": {
+          "status": "collected",
+          "metric": "launch__grid_size",
+          "value": 7168,
+          "unit": ""
+        },
+        "block_size": {
+          "status": "collected",
+          "metric": "launch__block_size",
+          "value": 256,
+          "unit": ""
+        }
+      },
+      "report": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-l3-eval-8d4c281\\out\\research\\l3_realistic_20260805\\profile\\chunked_prefill\\triton_reference_ncu\\reports\\ncu_basic.ncu-rep"
+    }
+  },
+  "finegrained_prefill": {
+    "cuda_all_candidates_chain": {
+      "kernel": "grouped_gemm_register16x32_async_v3_kernel",
+      "metrics": {
+        "duration_us": {
+          "status": "collected",
+          "metric": "gpu__time_duration.sum",
+          "value": 183328.0,
+          "unit": "ns"
+        },
+        "sm_pct": {
+          "status": "collected",
+          "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 51.893369027315,
+          "unit": "%"
+        },
+        "memory_pct": {
+          "status": "collected",
+          "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 51.893369027315,
+          "unit": "%"
+        },
+        "dram_pct": {
+          "status": "collected",
+          "metric": "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 45.723505229429904,
+          "unit": "%"
+        },
+        "l1_pct": {
+          "status": "collected",
+          "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+          "value": 57.113393776883015,
+          "unit": "%"
+        },
+        "l2_pct": {
+          "status": "collected",
+          "metric": "lts__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 47.61936467762292,
+          "unit": "%"
+        },
+        "registers_per_thread": {
+          "status": "collected",
+          "metric": "launch__registers_per_thread",
+          "value": 106,
+          "unit": "register/thread"
+        },
+        "shared_mem_per_block": {
+          "status": "collected",
+          "metric": "launch__shared_mem_per_block",
+          "value": 7952,
+          "unit": "byte/block"
+        },
+        "waves_per_sm": {
+          "status": "collected",
+          "metric": "launch__waves_per_multiprocessor",
+          "value": 1.0,
+          "unit": ""
+        },
+        "theoretical_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__maximum_warps_per_active_cycle_pct",
+          "value": 33.33333333333333,
+          "unit": "%"
+        },
+        "achieved_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+          "value": 29.763339978959213,
+          "unit": "%"
+        },
+        "grid_size": {
+          "status": "collected",
+          "metric": "launch__grid_size",
+          "value": 272,
+          "unit": ""
+        },
+        "block_size": {
+          "status": "collected",
+          "metric": "launch__block_size",
+          "value": 128,
+          "unit": ""
+        }
+      },
+      "report": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-l3-eval-8d4c281\\out\\research\\l3_realistic_20260805\\profile\\finegrained_prefill\\cuda_all_candidates_chain_ncu\\reports\\ncu_basic.ncu-rep"
+    },
+    "library_all_baselines_chain": {
+      "kernel": "Kernel",
+      "metrics": {
+        "duration_us": {
+          "status": "collected",
+          "metric": "gpu__time_duration.sum",
+          "value": 137376.0,
+          "unit": "ns"
+        },
+        "sm_pct": {
+          "status": "collected",
+          "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 68.90137540812866,
+          "unit": "%"
+        },
+        "memory_pct": {
+          "status": "collected",
+          "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 46.4597110365215,
+          "unit": "%"
+        },
+        "dram_pct": {
+          "status": "collected",
+          "metric": "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 40.00637909472325,
+          "unit": "%"
+        },
+        "l1_pct": {
+          "status": "collected",
+          "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+          "value": 49.89915210967097,
+          "unit": "%"
+        },
+        "l2_pct": {
+          "status": "collected",
+          "metric": "lts__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 16.365944420831788,
+          "unit": "%"
+        },
+        "registers_per_thread": {
+          "status": "collected",
+          "metric": "launch__registers_per_thread",
+          "value": 144,
+          "unit": "register/thread"
+        },
+        "shared_mem_per_block": {
+          "status": "collected",
+          "metric": "launch__shared_mem_per_block",
+          "value": 17680,
+          "unit": "byte/block"
+        },
+        "waves_per_sm": {
+          "status": "collected",
+          "metric": "launch__waves_per_multiprocessor",
+          "value": 1.0,
+          "unit": ""
+        },
+        "theoretical_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__maximum_warps_per_active_cycle_pct",
+          "value": 16.666666666666664,
+          "unit": "%"
+        },
+        "achieved_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+          "value": 16.66381673104823,
+          "unit": "%"
+        },
+        "grid_size": {
+          "status": "collected",
+          "metric": "launch__grid_size",
+          "value": 68,
+          "unit": ""
+        },
+        "block_size": {
+          "status": "collected",
+          "metric": "launch__block_size",
+          "value": 256,
+          "unit": ""
+        }
+      },
+      "report": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-l3-eval-8d4c281\\out\\research\\l3_realistic_20260805\\profile\\finegrained_prefill\\library_all_baselines_chain_ncu\\reports\\ncu_basic.ncu-rep"
+    },
+    "triton_reference": {
+      "kernel": "_grouped_gemm_kernel",
+      "metrics": {
+        "duration_us": {
+          "status": "collected",
+          "metric": "gpu__time_duration.sum",
+          "value": 3157440.0,
+          "unit": "ns"
+        },
+        "sm_pct": {
+          "status": "collected",
+          "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 88.16552197394326,
+          "unit": "%"
+        },
+        "memory_pct": {
+          "status": "collected",
+          "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 88.16552197394326,
+          "unit": "%"
+        },
+        "dram_pct": {
+          "status": "collected",
+          "metric": "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 1.7665970735815293,
+          "unit": "%"
+        },
+        "l1_pct": {
+          "status": "collected",
+          "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+          "value": 88.29625452396036,
+          "unit": "%"
+        },
+        "l2_pct": {
+          "status": "collected",
+          "metric": "lts__throughput.avg.pct_of_peak_sustained_elapsed",
+          "value": 33.21767872919193,
+          "unit": "%"
+        },
+        "registers_per_thread": {
+          "status": "collected",
+          "metric": "launch__registers_per_thread",
+          "value": 52,
+          "unit": "register/thread"
+        },
+        "shared_mem_per_block": {
+          "status": "collected",
+          "metric": "launch__shared_mem_per_block",
+          "value": 25600,
+          "unit": "byte/block"
+        },
+        "waves_per_sm": {
+          "status": "collected",
+          "metric": "launch__waves_per_multiprocessor",
+          "value": 120.47058823529412,
+          "unit": ""
+        },
+        "theoretical_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__maximum_warps_per_active_cycle_pct",
+          "value": 66.66666666666666,
+          "unit": "%"
+        },
+        "achieved_occupancy_pct": {
+          "status": "collected",
+          "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+          "value": 66.07137892620884,
+          "unit": "%"
+        },
+        "grid_size": {
+          "status": "collected",
+          "metric": "launch__grid_size",
+          "value": 32768,
+          "unit": ""
+        },
+        "block_size": {
+          "status": "collected",
+          "metric": "launch__block_size",
+          "value": 256,
+          "unit": ""
+        }
+      },
+      "report": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-l3-eval-8d4c281\\out\\research\\l3_realistic_20260805\\profile\\finegrained_prefill\\triton_reference_ncu\\reports\\ncu_basic.ncu-rep"
+    }
+  }
+}

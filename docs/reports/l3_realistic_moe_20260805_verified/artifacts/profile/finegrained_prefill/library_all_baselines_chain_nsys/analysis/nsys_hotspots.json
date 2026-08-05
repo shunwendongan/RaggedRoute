@@ -1,0 +1,194 @@
+[
+  {
+    "name": "void cutlass::Kernel<cutlass::gemm::kernel::GemmGrouped<cutlass::gemm::threadblock::MmaPipelined<cutlass::gemm::GemmShape<(int)128, (int)128, (int)8>, cutlass::transform::threadblock::PredicatedTileIterator<cutlass::MatrixShape<(int)128, (int)8>, float, cutlass::layout::RowMajor, (int)1, cutlass::transform::PitchLinearStripminedThreadMap<cutlass::PitchLinearShape<(int)8, (int)128>, (int)256, (int)1>, (int)1, (bool)0, cutlass::layout::NoPermute>, cutlass::transform::threadblock::RegularTileIterator<cutlass::MatrixShape<(int)128, (int)8>, float, cutlass::layout::ColumnMajor, (int)1, cutlass::transform::TransposePitchLinearThreadMapSimt<cutlass::transform::PitchLinearStripminedThreadMap<cutlass::PitchLinearShape<(int)8, (int)128>, (int)256, (int)1>>, (int)4>, cutlass::transform::threadblock::PredicatedTileIterator<cutlass::MatrixShape<(int)8, (int)128>, float, cutlass::layout::RowMajor, (int)0, cutlass::transform::PitchLinearStripminedThreadMap<cutlass::PitchLinearShape<(int)128, (int)8>, (int)256, (int)1>, (int)1, (bool)0, cutlass::layout::NoPermute>, cutlass::transform::threadblock::RegularTileIterator<cutlass::MatrixShape<(int)8, (int)128>, float, cutlass::layout::RowMajor, (int)0, cutlass::transform::PitchLinearStripminedThreadMap<cutlass::PitchLinearShape<(int)128, (int)8>, (int)256, (int)1>, (int)4>, float, cutlass::layout::RowMajor, cutlass::gemm::threadblock::MmaPolicy<cutlass::gemm::warp::MmaSimt<cutlass::gemm::GemmShape<(int)32, (int)64, (int)8>, float, cutlass::layout::ColumnMajor, float, cutlass::layout::RowMajor, float, cutlass::layout::RowMajor, cutlass::gemm::warp::MmaSimtPolicy<cutlass::MatrixShape<(int)4, (int)8>, cutlass::layout::RowMajorInterleaved<(int)2>, cutlass::gemm::GemmShape<(int)4, (int)4, (int)1>>, (int)1, (cutlass::ComplexTransform)0, (cutlass::ComplexTransform)0, bool>, cutlass::MatrixShape<(int)4, (int)0>, cutlass::MatrixShape<(int)0, (int)0>, (int)1>, cutlass::NumericArrayConverter<float, float, (int)4, (cutlass::FloatRoundStyle)2, cutlass::transform::thread::UnaryTransform::Identity>, cutlass::NumericArrayConverter<float, float, (int)4, (cutlass::FloatRoundStyle)2, cutlass::transform::thread::UnaryTransform::Identity>, bool>, cutlass::epilogue::threadblock::Epilogue<cutlass::gemm::GemmShape<(int)128, (int)128, (int)8>, cutlass::gemm::warp::MmaSimt<cutlass::gemm::GemmShape<(int)32, (int)64, (int)8>, float, cutlass::layout::ColumnMajor, float, cutlass::layout::RowMajor, float, cutlass::layout::RowMajor, cutlass::gemm::warp::MmaSimtPolicy<cutlass::MatrixShape<(int)4, (int)8>, cutlass::layout::RowMajorInterleaved<(int)2>, cutlass::gemm::GemmShape<(int)4, (int)4, (int)1>>, (int)1, (cutlass::ComplexTransform)0, (cutlass::ComplexTransform)0, bool>, (int)1, cutlass::epilogue::threadblock::PredicatedTileIterator<cutlass::epilogue::threadblock::OutputTileOptimalThreadMap<cutlass::epilogue::threadblock::OutputTileShape<(int)128, (int)1, (int)4, (int)4, (int)1>, cutlass::epilogue::threadblock::OutputTileShape<(int)1, (int)4, (int)2, (int)1, (int)8>, (int)256, (int)1, (int)32>, float, (bool)0, cutlass::layout::NoPermute, (bool)0>, cutlass::epilogue::warp::FragmentIteratorSimt<cutlass::gemm::GemmShape<(int)32, (int)64, (int)8>, cutlass::gemm::thread::Mma<cutlass::gemm::GemmShape<(int)8, (int)8, (int)1>, float, cutlass::layout::ColumnMajor, float, cutlass::layout::RowMajor, float, cutlass::layout::RowMajor, cutlass::arch::OpMultiplyAdd, bool>, cutlass::layout::RowMajor, cutlass::gemm::warp::MmaSimtPolicy<cutlass::MatrixShape<(int)4, (int)8>, cutlass::layout::RowMajorInterleaved<(int)2>, cutlass::gemm::GemmShape<(int)4, (int)4, (int)1>>>, cutlass::epilogue::warp::TileIteratorSimt<cutlass::gemm::GemmShape<(int)32, (int)64, (int)8>, cutlass::gemm::thread::Mma<cutlass::gemm::GemmShape<(int)8, (int)8, (int)1>, float, cutlass::layout::ColumnMajor, float, cutlass::layout::RowMajor, float, cutlass::layout::RowMajor, cutlass::arch::OpMultiplyAdd, bool>, float, cutlass::layout::RowMajor, cutlass::gemm::warp::MmaSimtPolicy<cutlass::MatrixShape<(int)4, (int)8>, cutlass::layout::RowMajorInterleaved<(int)2>, cutlass::gemm::GemmShape<(int)4, (int)4, (int)1>>>, cutlass::epilogue::threadblock::SharedLoadIterator<cutlass::epilogue::threadblock::OutputTileOptimalThreadMap<cutlass::epilogue::threadblock::OutputTileShape<(int)128, (int)1, (int)4, (int)4, (int)1>, cutlass::epilogue::threadblock::OutputTileShape<(int)1, (int)4, (int)2, (int)1, (int)8>, (int)256, (int)1, (int)32>::CompactedThreadMap, float, (int)4>, cutlass::epilogue::thread::LinearCombination<float, (int)1, float, float, (cutlass::epilogue::thread::ScaleType::Kind)0, (cutlass::FloatRoundStyle)2, float>, cutlass::MatrixShape<(int)0, (int)17>, (int)1, (int)1>, cutlass::gemm::threadblock::GemmBatchedIdentityThreadblockSwizzle, (cutlass::gemm::kernel::GroupScheduleMode)0, (bool)0>>(T1::Params)",
+    "total_time": 2896899.0,
+    "time_pct": 69.1,
+    "raw": {
+      "Time (%)": "69.1",
+      "Total Time (ns)": "2896899",
+      "Instances": "21",
+      "Avg (ns)": "137947.6",
+      "Med (ns)": "137949.0",
+      "Min (ns)": "137469",
+      "Max (ns)": "138269",
+      "StdDev (ns)": "171.6",
+      "Name": "void cutlass::Kernel<cutlass::gemm::kernel::GemmGrouped<cutlass::gemm::threadblock::MmaPipelined<cutlass::gemm::GemmShape<(int)128, (int)128, (int)8>, cutlass::transform::threadblock::PredicatedTileIterator<cutlass::MatrixShape<(int)128, (int)8>, float, cutlass::layout::RowMajor, (int)1, cutlass::transform::PitchLinearStripminedThreadMap<cutlass::PitchLinearShape<(int)8, (int)128>, (int)256, (int)1>, (int)1, (bool)0, cutlass::layout::NoPermute>, cutlass::transform::threadblock::RegularTileIterator<cutlass::MatrixShape<(int)128, (int)8>, float, cutlass::layout::ColumnMajor, (int)1, cutlass::transform::TransposePitchLinearThreadMapSimt<cutlass::transform::PitchLinearStripminedThreadMap<cutlass::PitchLinearShape<(int)8, (int)128>, (int)256, (int)1>>, (int)4>, cutlass::transform::threadblock::PredicatedTileIterator<cutlass::MatrixShape<(int)8, (int)128>, float, cutlass::layout::RowMajor, (int)0, cutlass::transform::PitchLinearStripminedThreadMap<cutlass::PitchLinearShape<(int)128, (int)8>, (int)256, (int)1>, (int)1, (bool)0, cutlass::layout::NoPermute>, cutlass::transform::threadblock::RegularTileIterator<cutlass::MatrixShape<(int)8, (int)128>, float, cutlass::layout::RowMajor, (int)0, cutlass::transform::PitchLinearStripminedThreadMap<cutlass::PitchLinearShape<(int)128, (int)8>, (int)256, (int)1>, (int)4>, float, cutlass::layout::RowMajor, cutlass::gemm::threadblock::MmaPolicy<cutlass::gemm::warp::MmaSimt<cutlass::gemm::GemmShape<(int)32, (int)64, (int)8>, float, cutlass::layout::ColumnMajor, float, cutlass::layout::RowMajor, float, cutlass::layout::RowMajor, cutlass::gemm::warp::MmaSimtPolicy<cutlass::MatrixShape<(int)4, (int)8>, cutlass::layout::RowMajorInterleaved<(int)2>, cutlass::gemm::GemmShape<(int)4, (int)4, (int)1>>, (int)1, (cutlass::ComplexTransform)0, (cutlass::ComplexTransform)0, bool>, cutlass::MatrixShape<(int)4, (int)0>, cutlass::MatrixShape<(int)0, (int)0>, (int)1>, cutlass::NumericArrayConverter<float, float, (int)4, (cutlass::FloatRoundStyle)2, cutlass::transform::thread::UnaryTransform::Identity>, cutlass::NumericArrayConverter<float, float, (int)4, (cutlass::FloatRoundStyle)2, cutlass::transform::thread::UnaryTransform::Identity>, bool>, cutlass::epilogue::threadblock::Epilogue<cutlass::gemm::GemmShape<(int)128, (int)128, (int)8>, cutlass::gemm::warp::MmaSimt<cutlass::gemm::GemmShape<(int)32, (int)64, (int)8>, float, cutlass::layout::ColumnMajor, float, cutlass::layout::RowMajor, float, cutlass::layout::RowMajor, cutlass::gemm::warp::MmaSimtPolicy<cutlass::MatrixShape<(int)4, (int)8>, cutlass::layout::RowMajorInterleaved<(int)2>, cutlass::gemm::GemmShape<(int)4, (int)4, (int)1>>, (int)1, (cutlass::ComplexTransform)0, (cutlass::ComplexTransform)0, bool>, (int)1, cutlass::epilogue::threadblock::PredicatedTileIterator<cutlass::epilogue::threadblock::OutputTileOptimalThreadMap<cutlass::epilogue::threadblock::OutputTileShape<(int)128, (int)1, (int)4, (int)4, (int)1>, cutlass::epilogue::threadblock::OutputTileShape<(int)1, (int)4, (int)2, (int)1, (int)8>, (int)256, (int)1, (int)32>, float, (bool)0, cutlass::layout::NoPermute, (bool)0>, cutlass::epilogue::warp::FragmentIteratorSimt<cutlass::gemm::GemmShape<(int)32, (int)64, (int)8>, cutlass::gemm::thread::Mma<cutlass::gemm::GemmShape<(int)8, (int)8, (int)1>, float, cutlass::layout::ColumnMajor, float, cutlass::layout::RowMajor, float, cutlass::layout::RowMajor, cutlass::arch::OpMultiplyAdd, bool>, cutlass::layout::RowMajor, cutlass::gemm::warp::MmaSimtPolicy<cutlass::MatrixShape<(int)4, (int)8>, cutlass::layout::RowMajorInterleaved<(int)2>, cutlass::gemm::GemmShape<(int)4, (int)4, (int)1>>>, cutlass::epilogue::warp::TileIteratorSimt<cutlass::gemm::GemmShape<(int)32, (int)64, (int)8>, cutlass::gemm::thread::Mma<cutlass::gemm::GemmShape<(int)8, (int)8, (int)1>, float, cutlass::layout::ColumnMajor, float, cutlass::layout::RowMajor, float, cutlass::layout::RowMajor, cutlass::arch::OpMultiplyAdd, bool>, float, cutlass::layout::RowMajor, cutlass::gemm::warp::MmaSimtPolicy<cutlass::MatrixShape<(int)4, (int)8>, cutlass::layout::RowMajorInterleaved<(int)2>, cutlass::gemm::GemmShape<(int)4, (int)4, (int)1>>>, cutlass::epilogue::threadblock::SharedLoadIterator<cutlass::epilogue::threadblock::OutputTileOptimalThreadMap<cutlass::epilogue::threadblock::OutputTileShape<(int)128, (int)1, (int)4, (int)4, (int)1>, cutlass::epilogue::threadblock::OutputTileShape<(int)1, (int)4, (int)2, (int)1, (int)8>, (int)256, (int)1, (int)32>::CompactedThreadMap, float, (int)4>, cutlass::epilogue::thread::LinearCombination<float, (int)1, float, float, (cutlass::epilogue::thread::ScaleType::Kind)0, (cutlass::FloatRoundStyle)2, float>, cutlass::MatrixShape<(int)0, (int)17>, (int)1, (int)1>, cutlass::gemm::threadblock::GemmBatchedIdentityThreadblockSwizzle, (cutlass::gemm::kernel::GroupScheduleMode)0, (bool)0>>(T1::Params)"
+    }
+  },
+  {
+    "name": "raggedroute::benchmark::library_baseline::<unnamed>::cub_block_radix_top2_kernel(const float *, int *, float *, int, int)",
+    "total_time": 398771.0,
+    "time_pct": 9.5,
+    "raw": {
+      "Time (%)": "9.5",
+      "Total Time (ns)": "398771",
+      "Instances": "21",
+      "Avg (ns)": "18989.1",
+      "Med (ns)": "18975.0",
+      "Min (ns)": "18911",
+      "Max (ns)": "19103",
+      "StdDev (ns)": "57.6",
+      "Name": "raggedroute::benchmark::library_baseline::<unnamed>::cub_block_radix_top2_kernel(const float *, int *, float *, int, int)"
+    }
+  },
+  {
+    "name": "ampere_sgemm_32x32_sliced1x4_nn",
+    "total_time": 182270.0,
+    "time_pct": 4.3,
+    "raw": {
+      "Time (%)": "4.3",
+      "Total Time (ns)": "182270",
+      "Instances": "21",
+      "Avg (ns)": "8679.5",
+      "Med (ns)": "8704.0",
+      "Min (ns)": "8064",
+      "Max (ns)": "8864",
+      "StdDev (ns)": "153.1",
+      "Name": "ampere_sgemm_32x32_sliced1x4_nn"
+    }
+  },
+  {
+    "name": "void raggedroute::benchmark::library_baseline::<unnamed>::finalize_routing<(bool)1>(const float *, float *, const float *, const int *, int, int, int)",
+    "total_time": 164734.0,
+    "time_pct": 3.9,
+    "raw": {
+      "Time (%)": "3.9",
+      "Total Time (ns)": "164734",
+      "Instances": "21",
+      "Avg (ns)": "7844.5",
+      "Med (ns)": "7840.0",
+      "Min (ns)": "7680",
+      "Max (ns)": "8064",
+      "StdDev (ns)": "92.3",
+      "Name": "void raggedroute::benchmark::library_baseline::<unnamed>::finalize_routing<(bool)1>(const float *, float *, const float *, const int *, int, int, int)"
+    }
+  },
+  {
+    "name": "void cub::_V_300304_SM_860::detail::radix_sort::DeviceRadixSortSingleTileKernel<cub::_V_300304_SM_860::detail::radix_sort::policy_selector_from_types<int, int, unsigned int>, (cub::_V_300304_SM_860::SortOrder)0, int, int, unsigned int, cub::_V_300304_SM_860::detail::identity_decomposer_t>(const T3 *, T3 *, const T4 *, T4 *, T5, int, int, T6)",
+    "total_time": 157822.0,
+    "time_pct": 3.8,
+    "raw": {
+      "Time (%)": "3.8",
+      "Total Time (ns)": "157822",
+      "Instances": "21",
+      "Avg (ns)": "7515.3",
+      "Med (ns)": "7520.0",
+      "Min (ns)": "7488",
+      "Max (ns)": "7552",
+      "StdDev (ns)": "20.9",
+      "Name": "void cub::_V_300304_SM_860::detail::radix_sort::DeviceRadixSortSingleTileKernel<cub::_V_300304_SM_860::detail::radix_sort::policy_selector_from_types<int, int, unsigned int>, (cub::_V_300304_SM_860::SortOrder)0, int, int, unsigned int, cub::_V_300304_SM_860::detail::identity_decomposer_t>(const T3 *, T3 *, const T4 *, T4 *, T5, int, int, T6)"
+    }
+  },
+  {
+    "name": "void cub::_V_300304_SM_860::detail::histogram::DeviceHistogramSweepKernel<cub::_V_300304_SM_860::detail::histogram::policy_hub<int, int, (int)1, (int)1, (bool)1>::Policy1000, (int)256, (int)1, (int)1, const int *, int, cub::_V_300304_SM_860::detail::histogram::Transforms<int, int, int>::ScaleTransform, cub::_V_300304_SM_860::detail::histogram::Transforms<int, int, int>::PassThruTransform, int>(T5, cuda::std::__4::array<int, T4>, cuda::std::__4::array<int, T4>, cuda::std::__4::array<T6 *, T4>, cuda::std::__4::array<T6 *, T4>, cuda::std::__4::array<T8, T4>, cuda::std::__4::array<T7, T4>, T9, T9, T9, int, cub::_V_300304_SM_860::GridQueue<int>)",
+    "total_time": 119421.0,
+    "time_pct": 2.8,
+    "raw": {
+      "Time (%)": "2.8",
+      "Total Time (ns)": "119421",
+      "Instances": "21",
+      "Avg (ns)": "5686.7",
+      "Med (ns)": "5696.0",
+      "Min (ns)": "5536",
+      "Max (ns)": "5792",
+      "StdDev (ns)": "51.7",
+      "Name": "void cub::_V_300304_SM_860::detail::histogram::DeviceHistogramSweepKernel<cub::_V_300304_SM_860::detail::histogram::policy_hub<int, int, (int)1, (int)1, (bool)1>::Policy1000, (int)256, (int)1, (int)1, const int *, int, cub::_V_300304_SM_860::detail::histogram::Transforms<int, int, int>::ScaleTransform, cub::_V_300304_SM_860::detail::histogram::Transforms<int, int, int>::PassThruTransform, int>(T5, cuda::std::__4::array<int, T4>, cuda::std::__4::array<int, T4>, cuda::std::__4::array<T6 *, T4>, cuda::std::__4::array<T6 *, T4>, cuda::std::__4::array<T8, T4>, cuda::std::__4::array<T7, T4>, T9, T9, T9, int, cub::_V_300304_SM_860::GridQueue<int>)"
+    }
+  },
+  {
+    "name": "void raggedroute::benchmark::library_baseline::<unnamed>::expand_rows<(bool)1>(const float *, float *, const int *, int *, int *, int, int, int)",
+    "total_time": 108542.0,
+    "time_pct": 2.6,
+    "raw": {
+      "Time (%)": "2.6",
+      "Total Time (ns)": "108542",
+      "Instances": "21",
+      "Avg (ns)": "5168.7",
+      "Med (ns)": "5152.0",
+      "Min (ns)": "5120",
+      "Max (ns)": "5248",
+      "StdDev (ns)": "26.1",
+      "Name": "void raggedroute::benchmark::library_baseline::<unnamed>::expand_rows<(bool)1>(const float *, float *, const int *, int *, int *, int, int, int)"
+    }
+  },
+  {
+    "name": "raggedroute::benchmark::library_baseline::<unnamed>::compute_expert_offsets(const int *, int, int, long long *)",
+    "total_time": 65151.0,
+    "time_pct": 1.6,
+    "raw": {
+      "Time (%)": "1.6",
+      "Total Time (ns)": "65151",
+      "Instances": "21",
+      "Avg (ns)": "3102.4",
+      "Med (ns)": "3104.0",
+      "Min (ns)": "3072",
+      "Max (ns)": "3136",
+      "StdDev (ns)": "12.3",
+      "Name": "raggedroute::benchmark::library_baseline::<unnamed>::compute_expert_offsets(const int *, int, int, long long *)"
+    }
+  },
+  {
+    "name": "void cublasLt::splitKreduce_kernel<(int)32, (int)16, int, float, float, float, float, (bool)0, float, float, float, (bool)1, (bool)0, (bool)0, (bool)0>(cublasLt::cublasSplitKParams<T6>, const T4 *, const T10 *, T9 *, T5 *, const T6 *, const T6 *, const T11 *, const T4 *, T11 *, void *, long long, T6 *, int *, T6 *, T6 *, const T6 *, const T6 *, const T6 *, const T6 *, const T6 *)",
+    "total_time": 44191.0,
+    "time_pct": 1.1,
+    "raw": {
+      "Time (%)": "1.1",
+      "Total Time (ns)": "44191",
+      "Instances": "21",
+      "Avg (ns)": "2104.3",
+      "Med (ns)": "2112.0",
+      "Min (ns)": "1984",
+      "Max (ns)": "2176",
+      "StdDev (ns)": "53.4",
+      "Name": "void cublasLt::splitKreduce_kernel<(int)32, (int)16, int, float, float, float, float, (bool)0, float, float, float, (bool)1, (bool)0, (bool)0, (bool)0>(cublasLt::cublasSplitKParams<T6>, const T4 *, const T10 *, T9 *, T5 *, const T6 *, const T6 *, const T11 *, const T4 *, T11 *, void *, long long, T6 *, int *, T6 *, T6 *, const T6 *, const T6 *, const T6 *, const T6 *, const T6 *)"
+    }
+  },
+  {
+    "name": "void raggedroute::benchmark::library_baseline::<unnamed>::block_scan_kernel<(int)128>(const int *, int *, int)",
+    "total_time": 30944.0,
+    "time_pct": 0.7,
+    "raw": {
+      "Time (%)": "0.7",
+      "Total Time (ns)": "30944",
+      "Instances": "21",
+      "Avg (ns)": "1473.5",
+      "Med (ns)": "1472.0",
+      "Min (ns)": "1440",
+      "Max (ns)": "1504",
+      "StdDev (ns)": "12.3",
+      "Name": "void raggedroute::benchmark::library_baseline::<unnamed>::block_scan_kernel<(int)128>(const int *, int *, int)"
+    }
+  },
+  {
+    "name": "void cub::_V_300304_SM_860::detail::histogram::DeviceHistogramInitKernel<cub::_V_300304_SM_860::detail::histogram::policy_hub<int, int, (int)1, (int)1, (bool)1>::Policy1000, (int)1, int, int>(cuda::std::__4::array<int, T2>, cuda::std::__4::array<T3 *, T2>, cub::_V_300304_SM_860::GridQueue<int>)",
+    "total_time": 23904.0,
+    "time_pct": 0.6,
+    "raw": {
+      "Time (%)": "0.6",
+      "Total Time (ns)": "23904",
+      "Instances": "21",
+      "Avg (ns)": "1138.3",
+      "Med (ns)": "1152.0",
+      "Min (ns)": "1120",
+      "Max (ns)": "1152",
+      "StdDev (ns)": "16.2",
+      "Name": "void cub::_V_300304_SM_860::detail::histogram::DeviceHistogramInitKernel<cub::_V_300304_SM_860::detail::histogram::policy_hub<int, int, (int)1, (int)1, (bool)1>::Policy1000, (int)1, int, int>(cuda::std::__4::array<int, T2>, cuda::std::__4::array<T3 *, T2>, cub::_V_300304_SM_860::GridQueue<int>)"
+    }
+  },
+  {
+    "name": "raggedroute::benchmark::library_baseline::<unnamed>::initialize_source_rows(int *, int)",
+    "total_time": 1344.0,
+    "time_pct": 0.0,
+    "raw": {
+      "Time (%)": "0.0",
+      "Total Time (ns)": "1344",
+      "Instances": "1",
+      "Avg (ns)": "1344.0",
+      "Med (ns)": "1344.0",
+      "Min (ns)": "1344",
+      "Max (ns)": "1344",
+      "StdDev (ns)": "0.0",
+      "Name": "raggedroute::benchmark::library_baseline::<unnamed>::initialize_source_rows(int *, int)"
+    }
+  }
+]

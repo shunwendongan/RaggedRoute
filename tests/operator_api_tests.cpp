@@ -84,6 +84,10 @@ void test_pure_dispatch() {
       require(decision.kernel.family == KernelFamily::kCudaOptimized &&
                   decision.kernel.implementation_id == 101,
               "SM86 Histogram auto dispatch must select the promoted candidate");
+    } else if (kind == OperatorKind::kHistogramExclusiveScan) {
+      require(decision.kernel.family == KernelFamily::kCudaOptimized &&
+                  decision.kernel.implementation_id == 2,
+              "SM86 fused Histogram-Scan auto dispatch must select F2");
     } else {
       require(decision.kernel.family == KernelFamily::kCudaNaive &&
                   decision.kernel.implementation_id == 0,
@@ -335,25 +339,13 @@ void test_exclusive_scan(const raggedroute::RuntimeContext& context) {
                 device_offsets.canaries_intact(context.stream),
             "default exclusive_scan changed a redzone");
 
-    for (const std::uint32_t implementation : {2U, 4U, 5U}) {
-      args.kernel = {KernelFamily::kCudaOptimized, implementation};
-      require_status(raggedroute::exclusive_scan(args, context),
-                     "explicit optimized exclusive_scan");
-      require(device_offsets.copy_to_host(context.stream) == expected,
-              "optimized exclusive_scan produced incorrect offsets");
-    }
-
     std::vector<std::int32_t> in_place_input = counts;
     in_place_input.push_back(-1);
     rc::GuardedDeviceBuffer<std::int32_t> in_place(in_place_input.size(), context.stream);
     in_place.copy_from_host(in_place_input, context.stream);
     args.counts = in_place.data();
     args.offsets = in_place.data();
-    for (const KernelSelection kernel :
-         {KernelSelection{KernelFamily::kCudaNaive, 0},
-          KernelSelection{KernelFamily::kCudaOptimized, 2},
-          KernelSelection{KernelFamily::kCudaOptimized, 4},
-          KernelSelection{KernelFamily::kCudaOptimized, 5}}) {
+    for (const KernelSelection kernel : {KernelSelection{KernelFamily::kCudaNaive, 0}}) {
       in_place.copy_from_host(in_place_input, context.stream);
       args.kernel = kernel;
       require_status(raggedroute::exclusive_scan(args, context), "in-place exclusive_scan");
@@ -382,7 +374,6 @@ void test_exclusive_scan(const raggedroute::RuntimeContext& context) {
   four_byte_args.counts = four_byte_counts_device.data() + 1;
   four_byte_args.offsets = four_byte_offsets_device.data() + 1;
   four_byte_args.experts = kFourByteAlignedExperts;
-  four_byte_args.kernel = {KernelFamily::kCudaOptimized, 5};
   require(reinterpret_cast<std::uintptr_t>(four_byte_args.counts) % 8 == 4 &&
               reinterpret_cast<std::uintptr_t>(four_byte_args.offsets) % 8 == 4,
           "test setup must exercise pointers that are 4-byte but not 8-byte aligned");
@@ -479,9 +470,8 @@ void test_histogram_exclusive_scan(const raggedroute::RuntimeContext& context) {
     require(raggedroute::get_histogram_exclusive_scan_workspace_size(args) == 0,
             "fused metadata API must remain workspace-free");
 
-    std::vector<KernelSelection> kernels = {{KernelFamily::kCudaNaive, 0}};
-    kernels.push_back({KernelFamily::kCudaOptimized, 1});
-    kernels.push_back({KernelFamily::kCudaOptimized, 2});
+    std::vector<KernelSelection> kernels = {{KernelFamily::kCudaNaive, 0},
+                                            {KernelFamily::kCudaOptimized, 2}};
     for (const KernelSelection kernel : kernels) {
       args.kernel = kernel;
       require_status(raggedroute::histogram_exclusive_scan(args, context),

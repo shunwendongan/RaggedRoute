@@ -36,6 +36,10 @@
 - commit `a9489ab` 的 clean-Git RTX 3080 Release evidence 已完成：naive 78 条 raw/26 组、library reference 45 条 raw/15 组/9 个严格 pair，全部 validation 通过；完整 7 算子 NSYS、7 条 basic NCU、3 条 detailed hotspot NCU、normalized JSON/CSV 与 SHA256 bundle 见 [当前报告](reports/rtx3080-naive-profile-a9489ab.md)；
 - profile v2 固定一个完整 7 算子 system case 与每算子一个 compute case；metric alias 对当前 NCU 实际名字解析，缺失值保留 `not_collected`/`unsupported_or_unknown`，原始 Nsight 二进制不进入 Git；
 - H100 SM90 与 SM90a Debug/Release 均已完成本机交叉编译，分别检查为 `sm_90` 与 `sm_90a` cubin。
+- 2026-08-04：新增 exact-int32 `HistogramExclusiveScanArgs` 公共 API；F2 单 CTA
+  SM86 fused Histogram→Scan 放入 `src/scan/cuda_candidate`，`R<=4096` 由 Auto
+  dispatch 选择，较大 R 回退现有两阶段路径。该实现以 draft candidate 提交，
+  受干扰正式性能门禁状态见 F2 报告，不能将当前数字视为 release speedup。
 
 ## 尚未实现，禁止据此宣称
 

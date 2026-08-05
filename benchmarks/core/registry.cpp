@@ -196,15 +196,6 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     std::vector<VariantDescriptor> variants = {{"cuda_naive", "in_tree_cuda",
                                                 "raggedroute.cuda_naive.v1", "not_applicable",
                                                 "single_thread_exclusive", "exact_int32"}};
-    variants.push_back(descriptor("cuda_warp_blocked_scalar_legacy", "in_tree_cuda_research",
-                                  "raggedroute.scan.historical_c2.v1", "not_applicable",
-                                  "warp32_blocked2_scalar"));
-    variants.push_back(descriptor("cuda_subwarp4_scalar", "in_tree_cuda_research",
-                                  "raggedroute.scan.subwarp4_scalar.v1", "not_applicable",
-                                  "subwarp16_blocked4_scalar"));
-    variants.push_back(descriptor("cuda_subwarp4_vector", "in_tree_cuda_research",
-                                  "raggedroute.scan.subwarp4_vector.v1", "not_applicable",
-                                  "subwarp16_blocked4_int4"));
 #if RAGGEDROUTE_HAS_CCCL
     variants.push_back(descriptor("cub_device_scan", "nvidia_cccl", "cub::DeviceScan::ExclusiveSum",
                                   cccl_revision(), "device_scan_plus_terminal_offset"));
@@ -221,11 +212,8 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
         descriptor("cuda_separate_current", "in_tree_cuda",
                    "raggedroute.histogram_scan.separate.v1", "not_applicable",
                    "promoted_histogram_then_scan"),
-        descriptor("cuda_fused_scalar", "in_tree_cuda_research",
-                   "raggedroute.histogram_scan.fused_scalar.v1", "not_applicable",
-                   "single_cta_shared_scalar_finalize"),
-        descriptor("cuda_fused_subwarp", "in_tree_cuda_research",
-                   "raggedroute.histogram_scan.fused_subwarp.v1", "not_applicable",
+        descriptor("cuda_fused_histogram_scan", "in_tree_cuda_candidate",
+                   "raggedroute.histogram_scan.fused_subwarp.v2", "not_applicable",
                    "single_cta_shared_subwarp_finalize")};
 #if RAGGEDROUTE_HAS_CCCL
     variants.push_back(descriptor("cub_histogram_warp_scan", "nvidia_cccl",
@@ -363,11 +351,8 @@ std::vector<VariantDescriptor> available_suite_variant_descriptors(const std::st
             descriptor("cuda_unpermute_candidate", "in_tree_cuda_research",
                        "raggedroute.chain.unpermute_candidate.v1", "not_applicable",
                        "naive_chain_with_warp_token_vec4_unpermute"),
-            descriptor("cuda_fused_histogram_scan_scalar", "in_tree_cuda_research",
-                       "raggedroute.chain.fused_histogram_scan_scalar.v1", "not_applicable",
-                       "chain_with_single_cta_fused_histogram_scan_scalar"),
-            descriptor("cuda_fused_histogram_scan_subwarp", "in_tree_cuda_research",
-                       "raggedroute.chain.fused_histogram_scan_subwarp.v1", "not_applicable",
+            descriptor("cuda_fused_histogram_scan", "in_tree_cuda_candidate",
+                       "raggedroute.chain.fused_histogram_scan_subwarp.v2", "not_applicable",
                        "chain_with_single_cta_fused_histogram_scan_subwarp")};
   }
   return {};

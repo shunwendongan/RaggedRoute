@@ -185,8 +185,6 @@ Status select_kernel(const DispatchRequest& request, DispatchDecision* decision)
          ops::is_topk_gate_optimized_implementation(requested.implementation_id)) ||
         (request.operator_kind == OperatorKind::kHistogram &&
          ops::is_histogram_optimized_implementation(requested.implementation_id)) ||
-        (request.operator_kind == OperatorKind::kExclusiveScan &&
-         ops::is_exclusive_scan_optimized_implementation(requested.implementation_id)) ||
         (request.operator_kind == OperatorKind::kHistogramExclusiveScan &&
          ops::is_histogram_exclusive_scan_optimized_implementation(
              requested.implementation_id)) ||
@@ -208,10 +206,15 @@ Status select_kernel(const DispatchRequest& request, DispatchDecision* decision)
 
   decision->operator_kind = request.operator_kind;
   decision->architecture = DeviceArchitecture::kSm86;
-  decision->kernel =
-      requested.family == KernelFamily::kAuto && request.operator_kind == OperatorKind::kHistogram
-          ? KernelSelection{KernelFamily::kCudaOptimized, ops::kHistogramCandidateImplementation}
-          : KernelSelection{KernelFamily::kCudaNaive, 0};
+  if (requested.family == KernelFamily::kAuto && request.operator_kind == OperatorKind::kHistogram) {
+    decision->kernel = {KernelFamily::kCudaOptimized, ops::kHistogramCandidateImplementation};
+  } else if (requested.family == KernelFamily::kAuto &&
+             request.operator_kind == OperatorKind::kHistogramExclusiveScan) {
+    decision->kernel = {KernelFamily::kCudaOptimized,
+                        ops::kHistogramExclusiveScanFusedSubwarpImplementation};
+  } else {
+    decision->kernel = {KernelFamily::kCudaNaive, 0};
+  }
   return success_status();
 }
 

@@ -14,17 +14,7 @@ namespace raggedroute::benchmark {
 namespace {
 
 bool is_fused_candidate(const std::string& variant) {
-  return variant == "cuda_fused_scalar" || variant == "cuda_fused_subwarp";
-}
-
-std::uint32_t fused_implementation(const std::string& variant) {
-  if (variant == "cuda_fused_scalar") {
-    return ops::kHistogramExclusiveScanFusedScalarImplementation;
-  }
-  if (variant == "cuda_fused_subwarp") {
-    return ops::kHistogramExclusiveScanFusedSubwarpImplementation;
-  }
-  throw std::invalid_argument("unsupported fused histogram-scan variant: " + variant);
+  return variant == "cuda_fused_histogram_scan";
 }
 
 class HistogramExclusiveScanAdapter final : public BenchmarkAdapter {
@@ -38,10 +28,7 @@ class HistogramExclusiveScanAdapter final : public BenchmarkAdapter {
     if (variant_ == "cuda_separate_current") {
       return "Current promoted Histogram followed by current Exclusive Scan";
     }
-    if (variant_ == "cuda_fused_scalar") {
-      return "Single-CTA shared histogram with scalar scan finalization";
-    }
-    if (variant_ == "cuda_fused_subwarp") {
+    if (variant_ == "cuda_fused_histogram_scan") {
       return "Single-CTA shared histogram with 16-lane scan finalization";
     }
     return "CUB DeviceHistogram followed by a CUB scan primitive";
@@ -122,7 +109,8 @@ class HistogramExclusiveScanAdapter final : public BenchmarkAdapter {
       args.offsets = offsets_.data();
       args.route_pairs = route_pairs_;
       args.experts = experts_;
-      args.kernel = {KernelFamily::kCudaOptimized, fused_implementation(variant_)};
+      args.kernel = {KernelFamily::kCudaOptimized,
+                     ops::kHistogramExclusiveScanFusedSubwarpImplementation};
       operator_check(histogram_exclusive_scan(args,
                                               make_runtime_context(stream, architecture_)),
                      "fused histogram_exclusive_scan operator");
@@ -181,9 +169,7 @@ class HistogramExclusiveScanAdapter final : public BenchmarkAdapter {
               {"kernel_launches", static_cast<std::int64_t>(2)}};
     }
     if (is_fused_candidate(variant_)) {
-      return {{"algorithm", variant_ == "cuda_fused_scalar"
-                                ? std::string("single_cta_shared_scalar_finalize")
-                                : std::string("single_cta_shared_subwarp_finalize")},
+      return {{"algorithm", std::string("single_cta_shared_subwarp_finalize")},
               {"fused_max_route_pairs",
                static_cast<std::int64_t>(ops::kHistogramExclusiveScanFusedMaxRoutePairs)},
               {"kernel_launches", static_cast<std::int64_t>(route_pairs_ <=

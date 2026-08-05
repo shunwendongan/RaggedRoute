@@ -158,7 +158,6 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     src/topk_gate/operator.cpp
     src/histogram/operator.cpp
     src/scan/operator.cpp
-    src/scan/histogram_exclusive_scan.cpp
     src/permute/operator.cpp
     src/grouped_gemm/operator.cpp
     src/unpermute/operator.cpp)

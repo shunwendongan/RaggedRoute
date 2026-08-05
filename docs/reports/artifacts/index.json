@@ -253,6 +253,24 @@
       "unavailable_files": 0
     },
     {
+      "decision": "rejected_not_promoted",
+      "git_clean": false,
+      "git_files": 15,
+      "kind": "unpermute_performance_evidence",
+      "release_asset": {
+        "bytes": 283748,
+        "immutable": true,
+        "name": "20260804T034147Z-728b9f36a6ad-unpermute-v2-screen-raw.zip",
+        "sha256": "1e7852e2dd43f1da9303318c39a10a9e9896550b6879be980fd29469fcaaaca4",
+        "tag": "evidence-unpermute-v2-screen-2026-08-04",
+        "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-unpermute-v2-screen-2026-08-04/20260804T034147Z-728b9f36a6ad-unpermute-v2-screen-raw.zip"
+      },
+      "release_files": 13,
+      "run_id": "20260804T034147Z-728b9f36a6ad-unpermute-v2-screen",
+      "source_git_sha": "728b9f36a6ad",
+      "unavailable_files": 0
+    },
+    {
       "decision": "baseline_only",
       "git_clean": true,
       "git_files": 5,

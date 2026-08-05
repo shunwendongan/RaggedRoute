@@ -314,7 +314,13 @@ def copy_artifacts(root: Path, report_dir: Path) -> list[dict[str, Any]]:
             relative = Path("prior_single_operator_report") / source.name
         target = artifact_root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source, target)
+        if source.name == "verification_ctest.txt":
+            raw = source.read_bytes()
+            encoding = "utf-16" if raw.startswith((b"\xff\xfe", b"\xfe\xff")) else "utf-8-sig"
+            normalized = raw.decode(encoding).replace("\r\n", "\n").replace("\r", "\n")
+            target.write_bytes(normalized.encode("utf-8"))
+        else:
+            shutil.copy2(source, target)
         copied.append({"path": target.relative_to(report_dir).as_posix(), "bytes": target.stat().st_size, "sha256": sha256(target)})
     return copied
 

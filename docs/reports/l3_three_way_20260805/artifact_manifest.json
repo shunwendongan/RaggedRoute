@@ -18,8 +18,8 @@
     },
     {
       "path": "artifacts/verification_ctest.txt",
-      "bytes": 3298,
-      "sha256": "e37d49b770575cd0a2dad4e814e2eadedde5278d349c14ccce3c97c2224b881f"
+      "bytes": 1616,
+      "sha256": "7bf9c77bf4cd768c7bdb28d358dbb88f5986b65f8d14324f769502501821f58f"
     },
     {
       "path": "artifacts/prior_single_operator_report/RaggedRoute_7ops_library_comparison_20260805_193637.md",
@@ -164,7 +164,7 @@
     {
       "path": "report_data.json",
       "bytes": 12972,
-      "sha256": "fc0d59611473a4412dfa049491bcedd077907d7b919a48626a1147f3d87864c0"
+      "sha256": "40717fc75f88a1a5877ebf07d6b6ae196f59e9dc8c0f2a0e8c58e1fdd305eb70"
     }
   ]
 }

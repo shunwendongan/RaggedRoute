@@ -195,7 +195,7 @@ int main() {
 
   try {
     const auto operators = rr::available_operators();
-    require(operators.size() == 7, "registry must expose exactly seven operators");
+    require(operators.size() == 8, "registry must expose seven stages plus fused metadata API");
     require(rr::available_suites().size() == 2,
             "registry must expose the two non-overlapping chain suites");
     const auto summary = rr::summarize_samples({1.0, 2.0, 3.0, 4.0, 5.0});
@@ -263,6 +263,9 @@ int main() {
            {{"T", "4096"}, {"E", "8"}, {"top_k", "1"}, {"distribution", "single_hot"}}},
           {"histogram", {{"T", "65536"}, {"E", "16"}, {"top_k", "1"}, {"distribution", "uniform"}}},
           {"exclusive_scan", {{"E", "7"}, {"R", "23"}, {"distribution", "single_hot"}}},
+          {"histogram_exclusive_scan",
+           {{"R", "23"}, {"E", "7"}, {"distribution", "single_hot"}},
+           "cuda_separate_current"},
           {"token_permute",
            {{"T", "5"},
             {"E", "4"},
@@ -332,6 +335,12 @@ int main() {
           {"exclusive_scan", {{"E", "7"}, {"R", "23"}}, "cub_device_scan"},
           {"exclusive_scan", {{"E", "33"}, {"R", "67"}}, "cub_block_scan"},
           {"exclusive_scan", {{"E", "31"}, {"R", "67"}}, "cub_warp_scan"},
+          {"histogram_exclusive_scan",
+           {{"R", "1024"}, {"E", "64"}, {"distribution", "uniform"}},
+           "cuda_fused_histogram_scan"},
+          {"histogram_exclusive_scan",
+           {{"R", "4097"}, {"E", "64"}, {"distribution", "single_hot"}},
+           "cuda_fused_histogram_scan"},
           {"token_permute",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}},
            "cuda_naive_from_ids"},
@@ -454,7 +463,7 @@ int main() {
       }
       const std::vector<std::string> topk_candidates = {
           "cuda_warp_pair_top2_v1", "cuda_subwarp_pair_top2_v2", "cuda_vector_pair_top2_v3",
-          "cub_block_radix_top2"};
+          "cuda_local_pair_two_reduce_top2_v4", "cub_block_radix_top2"};
       const std::vector<int> topk_tokens = {1, 7, 65};
       const std::vector<std::uint64_t> topk_seeds = {101, 202, 303};
       for (int experts = 2; experts <= 64; ++experts) {

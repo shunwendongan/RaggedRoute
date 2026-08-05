@@ -16,7 +16,11 @@ CANDIDATES = (
     "cuda_warp_pair_top2_v1",
     "cuda_subwarp_pair_top2_v2",
     "cuda_vector_pair_top2_v3",
+    "cuda_local_pair_two_reduce_top2_v4",
 )
+OLD_IN_TREE = ("cuda_naive", *CANDIDATES[:-1])
+V4 = "cuda_local_pair_two_reduce_top2_v4"
+POWER_EXPERTS = (2, 4, 8, 16, 32, 64)
 LEVELS = ("L1_kernel_body", "L2_operator_steady")
 THRESHOLDS = (1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096)
 BUCKETS: tuple[tuple[str, Callable[[int], bool]], ...] = (
@@ -105,6 +109,136 @@ def arbitrary_pair_summary(
     }
 
 
+def shape_groups(
+    groups: list[dict[str, Any]], prefix: str
+) -> dict[tuple[str, int, int], dict[str, dict[str, Any]]]:
+    result: dict[tuple[str, int, int], dict[str, dict[str, Any]]] = defaultdict(dict)
+    for group in groups:
+        if not group["case_id"].startswith(prefix):
+            continue
+        key = (
+            group["measurement_level"],
+            int(group["case_config"]["E"]),
+            int(group["case_config"]["T"]),
+        )
+        result[key][group["variant"]] = group
+    return result
+
+
+def paired_gate(candidate: dict[str, Any], baseline: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "candidate_p50_us": candidate["all_samples_p50_us"],
+        "baseline_p50_us": baseline["all_samples_p50_us"],
+        "candidate_p95_us": candidate["all_samples_p95_us"],
+        "baseline_p95_us": baseline["all_samples_p95_us"],
+        "candidate_cv": candidate["all_samples_cv"],
+        "baseline_cv": baseline["all_samples_cv"],
+        "process_runs": min(candidate["process_runs"], baseline["process_runs"]),
+        "workspace_ok": candidate["variant_config"].get("workspace_bytes") == 0,
+        "launch_ok": candidate["variant_config"].get("launch_count") == 1,
+    }
+
+
+def evaluate_v4_shape_dispatch(groups: list[dict[str, Any]]) -> dict[str, Any]:
+    main = shape_groups(groups, "topk_gate.release.main.")
+    cub = shape_groups(groups, "topk_gate.release.cub_pair.")
+    vllm = shape_groups(groups, "topk_gate.release.vllm_pair.")
+    attempts: list[dict[str, Any]] = []
+    promoted: list[dict[str, Any]] = []
+
+    for experts in POWER_EXPERTS:
+        selected_promotion = None
+        for threshold in THRESHOLDS:
+            old_pairs: dict[str, list[dict[str, Any]]] = {level: [] for level in LEVELS}
+            external_pairs: list[dict[str, Any]] = []
+            selected_t = [value for value in THRESHOLDS if value >= threshold]
+            complete = True
+            for tokens in selected_t:
+                for level in LEVELS:
+                    variants = main.get((level, experts, tokens), {})
+                    if V4 not in variants or not all(name in variants for name in OLD_IN_TREE):
+                        complete = False
+                        continue
+                    best_old = min(
+                        (variants[name] for name in OLD_IN_TREE),
+                        key=lambda item: item["all_samples_p50_us"],
+                    )
+                    old_pairs[level].append(paired_gate(variants[V4], best_old))
+
+                library_options: list[tuple[dict[str, Any], dict[str, Any], str]] = []
+                cub_variants = cub.get(("L1_kernel_body", experts, tokens), {})
+                if V4 in cub_variants and "cub_block_radix_top2" in cub_variants:
+                    library_options.append(
+                        (cub_variants[V4], cub_variants["cub_block_radix_top2"], "cub_block_radix_top2")
+                    )
+                vllm_variants = vllm.get(("L1_kernel_body", experts, tokens), {})
+                if V4 in vllm_variants and "vllm_row_packed_top2" in vllm_variants:
+                    library_options.append(
+                        (vllm_variants[V4], vllm_variants["vllm_row_packed_top2"], "vllm_row_packed_top2")
+                    )
+                if not library_options:
+                    complete = False
+                else:
+                    candidate, baseline, name = min(
+                        library_options, key=lambda item: item[1]["all_samples_p50_us"]
+                    )
+                    external_pairs.append({**paired_gate(candidate, baseline), "baseline": name})
+
+            def summarize(pairs: list[dict[str, Any]], minimum_speedup: float) -> dict[str, Any]:
+                if not pairs:
+                    return {"passed": False, "pairs": 0}
+                ratio = sum(pair["baseline_p50_us"] for pair in pairs) / sum(
+                    pair["candidate_p50_us"] for pair in pairs
+                )
+                no_p50_regression = all(
+                    pair["candidate_p50_us"] <= pair["baseline_p50_us"] for pair in pairs
+                )
+                max_p95_regression = max(
+                    pair["candidate_p95_us"] / pair["baseline_p95_us"] - 1.0 for pair in pairs
+                )
+                max_cv = max(
+                    max(pair["candidate_cv"], pair["baseline_cv"]) for pair in pairs
+                )
+                min_runs = min(pair["process_runs"] for pair in pairs)
+                passed = (
+                    ratio >= minimum_speedup
+                    and no_p50_regression
+                    and max_p95_regression <= 0.05
+                    and max_cv <= 0.10
+                    and min_runs >= 5
+                    and all(pair["workspace_ok"] and pair["launch_ok"] for pair in pairs)
+                )
+                return {
+                    "passed": passed,
+                    "pairs": len(pairs),
+                    "ratio_of_sums_p50_speedup": ratio,
+                    "no_single_shape_p50_regression": no_p50_regression,
+                    "max_single_shape_p95_regression": max_p95_regression,
+                    "max_all_samples_cv": max_cv,
+                    "minimum_process_runs": min_runs,
+                }
+
+            l1 = summarize(old_pairs["L1_kernel_body"], 1.05)
+            l2 = summarize(old_pairs["L2_operator_steady"], 1.05)
+            library = summarize(external_pairs, 1.03)
+            passed = complete and l1["passed"] and l2["passed"] and library["passed"]
+            attempt = {
+                "E": experts,
+                "T_min": threshold,
+                "complete": complete,
+                "in_tree_l1": l1,
+                "in_tree_l2": l2,
+                "library_envelope_l1": library,
+                "passed": passed,
+            }
+            attempts.append(attempt)
+            if selected_promotion is None and passed:
+                selected_promotion = attempt
+        if selected_promotion is not None:
+            promoted.append({"candidate": V4, "E": experts, "T_min": selected_promotion["T_min"]})
+    return {"attempts": attempts, "promoted_intervals": promoted}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--aggregate", required=True, type=pathlib.Path)
@@ -173,7 +307,7 @@ def main() -> int:
                         ),
                     }
                 )
-            if candidate == "cuda_vector_pair_top2_v3":
+            if candidate in ("cuda_vector_pair_top2_v3", V4):
                 attempts = []
                 promoted_interval = None
                 for threshold in THRESHOLDS:
@@ -206,7 +340,7 @@ def main() -> int:
     promoted = []
     for candidate in CANDIDATES:
         bucket_names = [bucket for bucket, _ in BUCKETS]
-        if candidate == "cuda_vector_pair_top2_v3":
+        if candidate in ("cuda_vector_pair_top2_v3", V4):
             bucket_names.append("aligned E={8,16,32,64}")
         for bucket in bucket_names:
             matching = [
@@ -220,12 +354,13 @@ def main() -> int:
 
     external = [
         arbitrary_pair_summary(groups, "topk_gate.release.cub_pair.", candidate, "cub_block_radix_top2")
-        for candidate in ("cuda_subwarp_pair_top2_v2", "cuda_vector_pair_top2_v3")
+        for candidate in ("cuda_subwarp_pair_top2_v2", "cuda_vector_pair_top2_v3", V4)
     ]
     external.extend(
         arbitrary_pair_summary(groups, "topk_gate.release.vllm_pair.", candidate, "vllm_row_packed_top2")
-        for candidate in ("cuda_subwarp_pair_top2_v2", "cuda_vector_pair_top2_v3")
+        for candidate in ("cuda_subwarp_pair_top2_v2", "cuda_vector_pair_top2_v3", V4)
     )
+    shape_dispatch = evaluate_v4_shape_dispatch(groups)
 
     representative = []
     wanted = {(32, 64), (2048, 8), (2048, 33), (2048, 64)}
@@ -280,8 +415,10 @@ def main() -> int:
             "launch_count": 1,
         },
         "intervals": intervals,
-        "promoted_intervals": promoted,
-        "auto_policy": "measured_dispatch" if promoted else "cuda_naive",
+        "legacy_bucket_promotions": promoted,
+        "shape_dispatch": shape_dispatch,
+        "promoted_intervals": shape_dispatch["promoted_intervals"],
+        "auto_policy": "shape_dispatched_v4" if shape_dispatch["promoted_intervals"] else "cuda_naive",
         "external_baseline_comparisons": external,
         "representative_release_metrics": representative,
     }
@@ -304,11 +441,15 @@ def main() -> int:
         "",
         f"- Raw records: {result['records']}; aggregate groups: {len(groups)}; independent process runs/group: 5.",
         f"- GPU UUIDs: {', '.join(result['gpu_uuids'])}.",
-        f"- Auto decision: **{result['auto_policy']}**; promoted intervals: {len(promoted)}.",
+        f"- Auto decision: **{result['auto_policy']}**; promoted intervals: {len(shape_dispatch['promoted_intervals'])}.",
         "",
         "## Promotion result",
         "",
-        "No candidate passed a continuous E-bucket/T interval at both L1 and L2. Auto therefore remains `cuda_naive`.",
+        (
+            "V4 passed the shape-specific in-tree and strong-library envelope gates."
+            if shape_dispatch["promoted_intervals"]
+            else "V4 passed no shape-specific interval at both L1/L2 and the strong-library envelope; Auto remains `cuda_naive`."
+        ),
         "",
         "| Level | Candidate | Bucket | Best T min | Ratio-of-sums | Max p50 regression | Max p95 regression | Max CV | Passed |",
         "|---|---|---|---:|---:|---:|---:|---:|---|",

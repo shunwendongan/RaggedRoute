@@ -8,6 +8,7 @@ import ctypes
 import datetime as dt
 import json
 import math
+import os
 import pathlib
 import statistics
 import subprocess
@@ -52,6 +53,14 @@ ALGORITHMS = {
 
 
 def git_output(*args: str) -> str:
+    if args == ("rev-parse", "--short=12", "HEAD") and os.environ.get(
+        "RAGGEDROUTE_BUILD_GIT_SHA"
+    ):
+        return os.environ["RAGGEDROUTE_BUILD_GIT_SHA"][:12]
+    if args == ("status", "--porcelain") and os.environ.get(
+        "RAGGEDROUTE_BUILD_GIT_DIRTY"
+    ) is not None:
+        return "container-mounted-worktree" if os.environ["RAGGEDROUTE_BUILD_GIT_DIRTY"] == "true" else ""
     return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
 
 
@@ -592,9 +601,13 @@ def run(args: argparse.Namespace) -> dict[str, Any] | None:
         prepared.launch(args.level)
     torch.cuda.synchronize()
     if args.profile_once:
+        if args.profiler_api_capture:
+            torch.cuda.cudart().cudaProfilerStart()
         prepared.prepare_sample(args.level)
         prepared.launch(args.level)
         torch.cuda.synchronize()
+        if args.profiler_api_capture:
+            torch.cuda.cudart().cudaProfilerStop()
         return None
 
     samples: list[float] = []
@@ -669,6 +682,7 @@ def main() -> int:
     parser.add_argument("--output", type=pathlib.Path)
     parser.add_argument("--param", action="append", default=[])
     parser.add_argument("--profile-once", action="store_true")
+    parser.add_argument("--profiler-api-capture", action="store_true")
     args = parser.parse_args()
     if args.suite is not None:
         args.operator = args.suite

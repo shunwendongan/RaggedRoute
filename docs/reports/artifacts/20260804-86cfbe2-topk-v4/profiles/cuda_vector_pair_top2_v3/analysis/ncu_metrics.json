@@ -1,0 +1,229 @@
+[
+  {
+    "report": "C:\\Users\\Administrator\\Documents\\Playground\\RaggedRoute-topk-v4\\out\\research\\topk_gate\\profile-v4-system\\cuda_vector_pair_top2_v3\\reports\\ncu_basic.ncu-rep",
+    "action_index": 0,
+    "kernel": "topk_gate_vector_pair_kernel",
+    "architecture": {
+      "device_name": "NVIDIA GeForce RTX 3080",
+      "compute_capability": "8.6",
+      "architecture": "sm86",
+      "family": "Ampere",
+      "sm_count": 68,
+      "notes": "Use Ampere Tensor Cores/WMMA and cp.async; do not recommend TMA, WGMMA, TMEM, or tcgen05."
+    },
+    "metrics": {
+      "device_name": {
+        "status": "collected",
+        "metric": "device__attribute_display_name",
+        "value": "NVIDIA GeForce RTX 3080"
+      },
+      "cc_major": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_major",
+        "value": 8
+      },
+      "cc_minor": {
+        "status": "collected",
+        "metric": "device__attribute_compute_capability_minor",
+        "value": 6
+      },
+      "sm_count": {
+        "status": "collected",
+        "metric": "device__attribute_multiprocessor_count",
+        "value": 68
+      },
+      "max_warps_per_sm": {
+        "status": "collected",
+        "metric": "device__attribute_max_warps_per_multiprocessor",
+        "value": 48
+      },
+      "duration_ns": {
+        "status": "collected",
+        "metric": "gpu__time_duration.sum",
+        "value": 8768.0
+      },
+      "grid_size": {
+        "status": "collected",
+        "metric": "launch__grid_size",
+        "value": 128
+      },
+      "block_size": {
+        "status": "collected",
+        "metric": "launch__block_size",
+        "value": 256
+      },
+      "waves_per_sm": {
+        "status": "collected",
+        "metric": "launch__waves_per_multiprocessor",
+        "value": 0.3137254901960784
+      },
+      "registers_per_thread": {
+        "status": "collected",
+        "metric": "launch__registers_per_thread",
+        "value": 20
+      },
+      "shared_mem_per_block": {
+        "status": "collected",
+        "metric": "launch__shared_mem_per_block",
+        "value": 1024
+      },
+      "occupancy_theoretical_pct": {
+        "status": "collected",
+        "metric": "sm__maximum_warps_per_active_cycle_pct",
+        "value": 100.0
+      },
+      "occupancy_achieved_pct": {
+        "status": "collected",
+        "metric": "sm__warps_active.avg.pct_of_peak_sustained_active",
+        "value": 28.732476676280562
+      },
+      "sm_throughput_pct": {
+        "status": "collected",
+        "metric": "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 12.949090707063224
+      },
+      "memory_throughput_pct": {
+        "status": "collected",
+        "metric": "gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed",
+        "value": 8.282439720812183
+      },
+      "dram_throughput_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "dram_read_bytes": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "dram_write_bytes": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "l1_throughput_pct": {
+        "status": "collected",
+        "metric": "l1tex__throughput.avg.pct_of_peak_sustained_active",
+        "value": 11.792109629769215
+      },
+      "l1_hit_rate_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "l2_hit_rate_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "global_load_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "global_load_requests": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "global_store_sectors": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "global_store_requests": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "local_load_instructions": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "local_store_instructions": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "tensor_active_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "eligible_warps_per_scheduler": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "issue_active_pct": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "stall_long_scoreboard": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "stall_short_scoreboard": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "stall_wait": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "stall_barrier": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "stall_math_pipe": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      },
+      "stall_memory_throttle": {
+        "status": "not_collected",
+        "metric": null,
+        "value": null
+      }
+    },
+    "findings": [
+      {
+        "kind": "latency-or-underfill",
+        "evidence": "sm=12.9%, memory=8.3%"
+      },
+      {
+        "kind": "low-occupancy",
+        "evidence": "achieved occupancy=28.7%"
+      }
+    ],
+    "rules": [
+      [
+        71.26752332371944,
+        "Achieved Occupancy",
+        "The difference between calculated theoretical (100.0%) and measured achieved occupancy (28.7%) can be the result of warp scheduling overheads or workload imbalances during the kernel execution. Load imbalances can occur between warps within a block as well as across blocks of the same kernel. See the @url:CUDA Best Practices Guide:https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#occupancy@ for more details on optimizing occupancy."
+      ],
+      [
+        6.950329726547889,
+        "Workload Imbalance",
+        "One or more L2 Slices have a much higher number of active cycles than the average number of active cycles. Maximum instance value is 40.48% above the average, while the minimum instance value is 23.00% below the average."
+      ],
+      [
+        null,
+        "Bottleneck",
+        "This kernel grid is too small to fill the available resources on this device, resulting in only 0.31 full waves across all SMs. Look at @section:LaunchStats:Launch Statistics@ for more details."
+      ],
+      [
+        null,
+        "Launch Configuration",
+        "If you execute __syncthreads() to synchronize the threads of a block, it is recommended to have at least two blocks per multiprocessor (compared to the currently executed 1.9 blocks) This way, blocks that aren't waiting for __syncthreads() can keep the hardware busy."
+      ]
+    ]
+  }
+]

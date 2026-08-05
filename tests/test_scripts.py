@@ -247,7 +247,7 @@ class SuiteTests(unittest.TestCase):
         commands = profile_benchmarks.compute_commands(
             pathlib.Path("bench.exe"), config, pathlib.Path("reports"), "ncu"
         )
-        self.assertEqual(len(commands), 7)
+        self.assertEqual(len(commands), 8)
         for case_id, command, report in commands:
             self.assertIn("--clock-control", command)
             self.assertEqual(command[command.index("--clock-control") + 1], "none")

@@ -71,3 +71,44 @@ measured T threshold where every larger tested shape passes: ratio-of-sums
 p50 speedup >=1.05 vs naive, per-shape p50 regression <=3%, p95 regression
 <=5%, all-sample CV<=0.10, no spill, no extra launch, and zero workspace.
 Otherwise Auto remains naive and the rejection evidence is retained.
+
+## PR packaging status (2026-08-04)
+
+This PR intentionally retains v4 as an explicit implementation id for reproducibility and follow-up experiments, while keeping `Auto` on `cuda_naive`. The completed Release campaign found no interval that simultaneously passed the in-tree L1/L2 and strong-library gates. v4 must therefore not be selected by automatic dispatch in this revision; the attached reports are evidence of the candidate and its rejection, not a production speedup claim.
+
+## 2026-08-04 v4 campaign: local pair plus two reductions
+
+The new candidate is `cuda_local_pair_two_reduce_top2_v4`. It keeps four
+warps per CTA while changing only the selection mechanism: every lane builds a
+register-local Top-2, one subgroup reduction selects the global winner, and a
+second reduction selects the best of the winning lane's local runner-up and
+the other lanes' local winners. FP32 values are converted to sortable bits and
+paired with the complemented expert id, preserving lower-id ties without a
+64-bit SM100 `redux` dependency. Aligned power-of-two rows use float2/float4;
+all other inputs fall back to v2. Public API, one-launch behavior, and zero
+workspace are unchanged.
+
+The experiment compares 2, 4, and 8 warps per CTA as a separate launch-geometry
+variable. Only four warps are retained because the multi-process geometry sweep
+did not establish a stable alternative winner under the CV gate. The final
+promotion evaluator is shape-specific for E={2,4,8,16,32,64}: every selected
+T interval must have no p50 regression, at least 1.05x ratio-of-sums versus the
+fastest of naive/v1/v2/v3 at both L1 and L2, and at least 1.03x versus the
+fastest contract-equivalent CUB/vLLM baseline at L1. Per-shape p95 regression
+is limited to 5%, CV to 0.10, and five independent processes are mandatory.
+
+Production references were rechecked at fixed upstream revisions:
+
+- [vLLM row-packed gating](https://github.com/vllm-project/vllm/blob/f0de1a604cad003379e5bb4dfc3cc5d2a1f25fa8/csrc/libtorch_stable/moe/topk_softmax_kernels.cu)
+  and [packed Top-K reducer](https://github.com/vllm-project/vllm/blob/f0de1a604cad003379e5bb4dfc3cc5d2a1f25fa8/csrc/libtorch_stable/moe/moeTopKFuncs.cuh):
+  row packing, local candidate ownership, deterministic packed keys, and
+  architecture-gated fast reductions.
+- [TensorRT-LLM Top-K reducer](https://github.com/NVIDIA/TensorRT-LLM/blob/624521576f44517c7cabb0f09ed9444adafb7093/cpp/tensorrt_llm/kernels/moeTopKFuncs.cuh)
+  and [FlashInfer Top-K reducer](https://github.com/flashinfer-ai/flashinfer/blob/76c583655cf789051fca5870fef2adb8e544b576/csrc/fused_moe/moeTopKFuncs.cuh):
+  packed value/index comparison and local-candidate sorting; SM100-only redux
+  paths are deliberately not transferred to SM86.
+- [RTop-K](https://proceedings.iclr.cc/paper_files/paper/2025/hash/ca1b93fc0f3560ba84eb0bc8de6d8f91-Abstract-Conference.html),
+  [RadiK](https://arxiv.org/abs/2501.14336), and
+  [Qrita](https://arxiv.org/abs/2602.01518) inform distribution and
+  determinism tests. Their pivot/radix regimes target much longer arrays or
+  larger k and remain rejected for exact E<=64, k=2 routing.

@@ -68,3 +68,14 @@ NSYS 中独立 Scan 占固定 L3 链 GPU kernel 时间 3.0%，高于 2% 观察�
 | 工业基线 | [CUB WarpScan](https://nvidia.github.io/cccl/unstable/cub/api/classcub_1_1WarpScan.html)、[BlockScan](https://nvidia.github.io/cccl/unstable/cub/api/classcub_1_1BlockScan.html)、[DeviceScan](https://nvidia.github.io/cccl/unstable/cub/api/structcub_1_1DeviceScan.html) | 对照 warp/block/device 层级、TempStorage、completion kernel | 库 primitive 必须在相同 L1/L2 边界实测，不能凭 API 层级推断胜负 |
 
 可复现搜索词：`GPU prefix scan warp shuffle`、`parallel prefix scan CUDA intra-warp`、`single-pass scan decoupled look-back`、`histogram scan fusion GPU`。完整实测结论见 [RTX 3080 Scan 研究报告](../reports/rtx3080-scan-sm86-research-32bf6c9.md)。
+
+## 8. F2 融合提交（2026-08-04）
+
+按新一轮提交要求，最终源码只保留 F2 `cuda_fused_histogram_scan`：单 CTA
+shared histogram 后由 16-lane/4-items shuffle scan 生成 counts/offsets。`R<=4096`
+使用 F2，较大 R 回退生产两阶段路径；standalone Scan 继续使用 naive。
+
+F2 是本轮候选中中心趋势最强的版本，但已有正式测量受到并行 GPU campaign 和
+Intel Graphics Overlay 干扰，CV 和 L3 非回退门禁未通过。因此代码以 draft
+candidate 形式提交，报告明确禁止将 NSYS/NCU 或受干扰 A/B 数字当作 release
+speedup；独占 GPU 复测仍是后续发布前置条件。

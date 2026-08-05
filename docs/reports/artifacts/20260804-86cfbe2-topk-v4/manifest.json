@@ -1,0 +1,525 @@
+{
+  "commands": [
+    {
+      "command": "cmd /c scripts\\configure_windows.bat rtx3080-sm86-release && cmd /c scripts\\build_windows.bat rtx3080-sm86-release",
+      "role": "build",
+      "status": "recorded"
+    },
+    {
+      "command": "python scripts\\compare_results.py topk-v4-release.aggregate-v2.json --output topk-v4-release.comparison.json",
+      "role": "comparison",
+      "status": "recorded"
+    },
+    {
+      "command": "ctest --preset test-rtx3080-sm86-release --output-on-failure",
+      "role": "correctness",
+      "status": "recorded"
+    },
+    {
+      "command": "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\topk_gate\\benchmark\\release.json --output out\\research\\topk_gate\\topk-v4-release.jsonl",
+      "role": "release",
+      "status": "recorded"
+    },
+    {
+      "command": "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\research\\topk_gate\\sanitizer-v4",
+      "role": "sanitizers",
+      "status": "recorded"
+    }
+  ],
+  "decision": {
+    "profiler_duration_used_as_speedup": false,
+    "status": "recorded",
+    "value": "rejected_not_promoted"
+  },
+  "files": [
+    {
+      "bytes": 874444,
+      "path": "aggregate/topk-v4-release.aggregate-v2.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "f4d17b11b7770f348b412dba7731b4f0a02b140a86dc14e68f6febc7254d6104",
+      "storage": "git"
+    },
+    {
+      "bytes": 2528631,
+      "path": "aggregate/topk-v4-release.comparison.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "57048b33db0793a896b8793d741805b7fa823e96e03efa0f1db6bc41a6255bda",
+      "storage": "git"
+    },
+    {
+      "bytes": 1610,
+      "path": "commands.md",
+      "role": "report",
+      "sha256": "58cf27a23d405ffa80f778a5e6e1aa2edeb1dbaf6550bd2478cb52d41b44d37c",
+      "storage": "git"
+    },
+    {
+      "bytes": 424,
+      "path": "environment.json",
+      "role": "supporting_evidence",
+      "sha256": "b77a5c8d838229a285a56a70cdb88084297bd76ddb88c3ca80ec5e739476dda7",
+      "storage": "git"
+    },
+    {
+      "bytes": 262,
+      "path": "profiles/cub_block_radix_top2/analysis/nsys_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "f13f9c4101fc70ccd0eccf9738d3bdb859df2779f88a8c897763c960c1b16352",
+      "storage": "git"
+    },
+    {
+      "bytes": 586,
+      "path": "profiles/cub_block_radix_top2/analysis/nsys_hotspots.json",
+      "role": "supporting_evidence",
+      "sha256": "8d7e4fc9a4d201d7438d3ddb4ab8be022ed01fae2091736f528bda90dbb5af2c",
+      "storage": "git"
+    },
+    {
+      "bytes": 5490,
+      "path": "profiles/cuda_local_pair_two_reduce_top2_v4/analysis/ncu_basic_details.txt",
+      "role": "supporting_evidence",
+      "sha256": "19bece075a24dd79761ff7722e89cc7fd32a47c9d4ea701d0877caef89084c7a",
+      "storage": "git"
+    },
+    {
+      "bytes": 31771,
+      "path": "profiles/cuda_local_pair_two_reduce_top2_v4/analysis/ncu_basic_raw.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "1afdeb8de8df47fa1823a7c092136151fd2b1e6bc68b9155ac79afdaf73d1b3b",
+      "storage": "git"
+    },
+    {
+      "bytes": 6799,
+      "path": "profiles/cuda_local_pair_two_reduce_top2_v4/analysis/ncu_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "3b437a760c4aad79b0703c2e28cc7051bf7f88c2b13f259a8583a27ed88ce0d3",
+      "storage": "git"
+    },
+    {
+      "bytes": 260,
+      "path": "profiles/cuda_local_pair_two_reduce_top2_v4/analysis/nsys_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "b826c24f54b3586c3835e61b982ad07a32d6f343ed9f92de16ee9b2e2738b359",
+      "storage": "git"
+    },
+    {
+      "bytes": 587,
+      "path": "profiles/cuda_local_pair_two_reduce_top2_v4/analysis/nsys_hotspots.json",
+      "role": "supporting_evidence",
+      "sha256": "9856a6635a58b77f8a8df9c096a7245434b9752fa5ea40b293467679e0cbc2ba",
+      "storage": "git"
+    },
+    {
+      "bytes": 1752,
+      "path": "profiles/cuda_local_pair_two_reduce_top2_v4/analysis/supported_key_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "eaeb9ab00d56e6e0fd26472ab36bebb48423944447092018af1f99a2d0d8b87b",
+      "storage": "git"
+    },
+    {
+      "bytes": 2713,
+      "path": "profiles/cuda_local_pair_two_reduce_top2_v4/REPORT.md",
+      "role": "report",
+      "sha256": "a331a018c2142553bbb1ff7c18da5eef8fcb107f4f8672fe7e8fa570952fc7dc",
+      "storage": "git"
+    },
+    {
+      "bytes": 247,
+      "path": "profiles/cuda_subwarp_pair_top2_v2/analysis/nsys_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "90285ffa708c98608233088c858a193262edde0417eb4993ab345ed4ad7364b4",
+      "storage": "git"
+    },
+    {
+      "bytes": 561,
+      "path": "profiles/cuda_subwarp_pair_top2_v2/analysis/nsys_hotspots.json",
+      "role": "supporting_evidence",
+      "sha256": "85f981f4d91e3f836fba00a41b16d5fa108e0e5fd9aeb61e8c2c93cc2128eec5",
+      "storage": "git"
+    },
+    {
+      "bytes": 5844,
+      "path": "profiles/cuda_vector_pair_top2_v3/analysis/ncu_basic_details.txt",
+      "role": "supporting_evidence",
+      "sha256": "2d4b9f7f259c0baff1f9ccd9920c214e7fe72aa565289473296c50e83304e785",
+      "storage": "git"
+    },
+    {
+      "bytes": 31763,
+      "path": "profiles/cuda_vector_pair_top2_v3/analysis/ncu_basic_raw.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "d79734f786ed7e4781699017d1e07960cf09fb2132c5422cb7ceddb3871a6f12",
+      "storage": "git"
+    },
+    {
+      "bytes": 7121,
+      "path": "profiles/cuda_vector_pair_top2_v3/analysis/ncu_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "0cd6c6d5b4e9c8ddaa24b7c897d1e55d484a83f267aac39c2546390c0a4e3100",
+      "storage": "git"
+    },
+    {
+      "bytes": 251,
+      "path": "profiles/cuda_vector_pair_top2_v3/analysis/nsys_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "aa0ec527e3ccde1efd7344bc09c0145bf9a03673d300323759865875b292378e",
+      "storage": "git"
+    },
+    {
+      "bytes": 568,
+      "path": "profiles/cuda_vector_pair_top2_v3/analysis/nsys_hotspots.json",
+      "role": "supporting_evidence",
+      "sha256": "3fa447e91069521bb5a23d5a0da382347b1cab9559e556d6077f6349aec92735",
+      "storage": "git"
+    },
+    {
+      "bytes": 1752,
+      "path": "profiles/cuda_vector_pair_top2_v3/analysis/supported_key_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "eaeb9ab00d56e6e0fd26472ab36bebb48423944447092018af1f99a2d0d8b87b",
+      "storage": "git"
+    },
+    {
+      "bytes": 2674,
+      "path": "profiles/cuda_vector_pair_top2_v3/REPORT.md",
+      "role": "report",
+      "sha256": "a7ce46072ebbc7bec47aca34d76519e1678e252cbccb0621e8667bd1e9b37ac1",
+      "storage": "git"
+    },
+    {
+      "bytes": 5476,
+      "path": "profiles/vllm_row_packed_top2/analysis/ncu_basic_details.txt",
+      "role": "supporting_evidence",
+      "sha256": "5db69c587981f12eb54cabc5bdf22b6d3a8ace5f2dec7f5ee29cbfb733dbf3e6",
+      "storage": "git"
+    },
+    {
+      "bytes": 31760,
+      "path": "profiles/vllm_row_packed_top2/analysis/ncu_basic_raw.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "1c4a1d5f67dea4d4ca5a04118c012770d280767aa0702552dd143140e5ac50d7",
+      "storage": "git"
+    },
+    {
+      "bytes": 6774,
+      "path": "profiles/vllm_row_packed_top2/analysis/ncu_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "d8a38283f747d25ae8b8a62ce31fa15efd55d13f7599e8bb4485b5a8ff9844c1",
+      "storage": "git"
+    },
+    {
+      "bytes": 265,
+      "path": "profiles/vllm_row_packed_top2/analysis/nsys_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "d6288e791880da92b06bed73a20520ef3f7c1944057134263e3d9752fac5cb44",
+      "storage": "git"
+    },
+    {
+      "bytes": 597,
+      "path": "profiles/vllm_row_packed_top2/analysis/nsys_hotspots.json",
+      "role": "supporting_evidence",
+      "sha256": "a914b44c95f0e909b8e5700d5d0e277946b9e19dfe8a105dfbdb3a492b627106",
+      "storage": "git"
+    },
+    {
+      "bytes": 1752,
+      "path": "profiles/vllm_row_packed_top2/analysis/supported_key_metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "eaeb9ab00d56e6e0fd26472ab36bebb48423944447092018af1f99a2d0d8b87b",
+      "storage": "git"
+    },
+    {
+      "bytes": 2681,
+      "path": "profiles/vllm_row_packed_top2/REPORT.md",
+      "role": "report",
+      "sha256": "8abbd169c9836b253f0131263d79c3ecbf5aae0144b25d482778784daca3b7ee",
+      "storage": "git"
+    },
+    {
+      "bytes": 138764,
+      "path": "promotion/promotion.json",
+      "role": "comparison_or_decision",
+      "sha256": "f5f6c91a9bee5d6c343eecb561791086253373ce890b5a6e677adc3f50810b36",
+      "storage": "git"
+    },
+    {
+      "bytes": 8022,
+      "path": "promotion/REPORT.md",
+      "role": "comparison_or_decision",
+      "sha256": "9135ea38c4fcbb82ad0b5b0161fdb8c14d1546d703a9ad64dbc65721330359ae",
+      "storage": "git"
+    },
+    {
+      "bytes": 2769,
+      "path": "promotion/representative_metrics.csv",
+      "role": "comparison_or_decision",
+      "sha256": "074d3a75f17b02ed7a29fc27f1457db059673e5e54a759a68e4901a99aed496d",
+      "storage": "git"
+    },
+    {
+      "bytes": 5805,
+      "path": "REJECTION.md",
+      "role": "report",
+      "sha256": "dc8d0988657f7067bef5db7e9fe070c0808181bda2ed764c95298fc2445cf64f",
+      "storage": "git"
+    },
+    {
+      "bytes": 11681,
+      "path": "sanitizer/initcheck.log",
+      "role": "correctness_validation",
+      "sha256": "1185d5116b13cdb2dfa37b6399b31d957499466ad0474bf63e8bc3b3d1072660",
+      "storage": "git"
+    },
+    {
+      "bytes": 11680,
+      "path": "sanitizer/memcheck.log",
+      "role": "correctness_validation",
+      "sha256": "653b5ed14b4ab74715b75794bcf68ddca70f7c726ce477442673f15eb1194d6a",
+      "storage": "git"
+    },
+    {
+      "bytes": 11719,
+      "path": "sanitizer/racecheck.log",
+      "role": "correctness_validation",
+      "sha256": "af700d52901b33d775aa1fcc53e4ceb736648630711ac1e3adb8df0b7eb55262",
+      "storage": "git"
+    },
+    {
+      "bytes": 11681,
+      "path": "sanitizer/synccheck.log",
+      "role": "correctness_validation",
+      "sha256": "5cf89d6c9f65f5577e4b34e8087069661f0f0b53eb63b9efa15e819611e1092f",
+      "storage": "git"
+    },
+    {
+      "bytes": 6733,
+      "path": "SHA256SUMS.txt",
+      "role": "supporting_evidence",
+      "sha256": "9e45c75c8082d639d69777ab662a28a457a212aafb341cef7b91c689f7167f2b",
+      "storage": "git"
+    },
+    {
+      "archive_path": "raw/aggregate/topk-v4-release.aggregate-v2.json",
+      "bytes": 22036302,
+      "path": "aggregate/topk-v4-release.aggregate-v2.json",
+      "role": "full_benchmark_aggregate",
+      "sha256": "a90ca9bcfab4d821a4c3e202e1c3d7e2946bfdfb8291fd07c01a329a1d16838c",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/legacy/manifest.json",
+      "bytes": 1608,
+      "path": "legacy/manifest.json",
+      "role": "run_manifest",
+      "sha256": "dbcb6a0e686de3faef5458cb20e2bba403d89a89d99cab5ac36123241c35f0c1",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/cub_block_radix_top2/manifest.json",
+      "bytes": 5363,
+      "path": "profiles/cub_block_radix_top2/manifest.json",
+      "role": "run_manifest",
+      "sha256": "64b37b0edb64f1d184e68926b2892e74478fd33384f46db2232627e00fd691f9",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/cub_block_radix_top2/reports/system.nsys-rep",
+      "bytes": 62886,
+      "path": "profiles/cub_block_radix_top2/reports/system.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "fecac683b1e72ccd7d94e694f4fb0c544874c73d5bf063fed883c7f94a699667",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/cub_block_radix_top2/reports/system.sqlite",
+      "bytes": 270336,
+      "path": "profiles/cub_block_radix_top2/reports/system.sqlite",
+      "role": "profiler_database",
+      "sha256": "42a9327625e7bbb4dd1ab5bb4b5e88d0b353141065ff6cb8095a061637dfff15",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/cuda_local_pair_two_reduce_top2_v4/manifest.json",
+      "bytes": 7350,
+      "path": "profiles/cuda_local_pair_two_reduce_top2_v4/manifest.json",
+      "role": "run_manifest",
+      "sha256": "ee16b218b56c44bdcc6d1e099ee59e49f28f5747fc94ca41d7ba3645a655af67",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/cuda_local_pair_two_reduce_top2_v4/reports/ncu_basic.ncu-rep",
+      "bytes": 419875,
+      "path": "profiles/cuda_local_pair_two_reduce_top2_v4/reports/ncu_basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "79e89a6172c9559ff680d3279d27135080942063820a8bb4ab0dd957b1e6fda1",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/cuda_local_pair_two_reduce_top2_v4/reports/system.nsys-rep",
+      "bytes": 62982,
+      "path": "profiles/cuda_local_pair_two_reduce_top2_v4/reports/system.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "a99f6f8050a7132d41b56aba917bb873c4b725799352b4e8a2a4d94a44dc5d6d",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/cuda_local_pair_two_reduce_top2_v4/reports/system.sqlite",
+      "bytes": 270336,
+      "path": "profiles/cuda_local_pair_two_reduce_top2_v4/reports/system.sqlite",
+      "role": "profiler_database",
+      "sha256": "3fdf2306050ce9f2d9783069c3219191880fd44b2183195e9b01d9fa6f1558fd",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/cuda_subwarp_pair_top2_v2/manifest.json",
+      "bytes": 5408,
+      "path": "profiles/cuda_subwarp_pair_top2_v2/manifest.json",
+      "role": "run_manifest",
+      "sha256": "a6732ee722eff2b8dbab237c28febe02f2c4494b6285c3445b436847ce656b63",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/cuda_subwarp_pair_top2_v2/reports/system.nsys-rep",
+      "bytes": 62934,
+      "path": "profiles/cuda_subwarp_pair_top2_v2/reports/system.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "43e7644b18938b0282ca37aa5797bf72aeee00880d0165c616c0c14e66d95bf5",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/cuda_subwarp_pair_top2_v2/reports/system.sqlite",
+      "bytes": 270336,
+      "path": "profiles/cuda_subwarp_pair_top2_v2/reports/system.sqlite",
+      "role": "profiler_database",
+      "sha256": "19b4f39999b38a64e5d95af6d10a21f49e01ba73382dfe4a9d085a4f3e1627e0",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/cuda_vector_pair_top2_v3/manifest.json",
+      "bytes": 7210,
+      "path": "profiles/cuda_vector_pair_top2_v3/manifest.json",
+      "role": "run_manifest",
+      "sha256": "31bf53141ca610fed8442f0e09d6be2d48567fdce09845156e641b790c217bae",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/cuda_vector_pair_top2_v3/reports/ncu_basic.ncu-rep",
+      "bytes": 420211,
+      "path": "profiles/cuda_vector_pair_top2_v3/reports/ncu_basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "b69374d189b12b8c1f106681b592f2afe32b36342ec18de34df55a982d456535",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/cuda_vector_pair_top2_v3/reports/system.nsys-rep",
+      "bytes": 62898,
+      "path": "profiles/cuda_vector_pair_top2_v3/reports/system.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "e952c66f7dc5577f80e8bb3919d8f4b05c1836e1abdf34b59523ae436bcd8581",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/cuda_vector_pair_top2_v3/reports/system.sqlite",
+      "bytes": 270336,
+      "path": "profiles/cuda_vector_pair_top2_v3/reports/system.sqlite",
+      "role": "profiler_database",
+      "sha256": "d7673c4b0aecaf8725f1ba539c479753081d8da992060a7ff03504c79518db10",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/vllm_row_packed_top2/manifest.json",
+      "bytes": 7160,
+      "path": "profiles/vllm_row_packed_top2/manifest.json",
+      "role": "run_manifest",
+      "sha256": "f2809b679e738dd6e4a4919fd73069a6133d1c23af8c80b479bf943210727fec",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/vllm_row_packed_top2/reports/ncu_basic.ncu-rep",
+      "bytes": 174943,
+      "path": "profiles/vllm_row_packed_top2/reports/ncu_basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "081bbb547368d52658aee4336e4a857b22c8a30ddaf20b6197fb50bc4d9d0a5d",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/vllm_row_packed_top2/reports/system.nsys-rep",
+      "bytes": 62863,
+      "path": "profiles/vllm_row_packed_top2/reports/system.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "c89cbe88eba9e23f8fcfd59172030ba5080268462de36f531c73faf0c4670ebb",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profiles/vllm_row_packed_top2/reports/system.sqlite",
+      "bytes": 270336,
+      "path": "profiles/vllm_row_packed_top2/reports/system.sqlite",
+      "role": "profiler_database",
+      "sha256": "bd7f0623c9d13745a657d592e754f02eadb34f773ce4a95f84381425d17f3af3",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/release-manifest.json",
+      "bytes": 17674961,
+      "path": "release-manifest.json",
+      "role": "run_manifest",
+      "sha256": "22c716e7bdf952f12f6aa852b679260dcf768077af66a8ebfb29531d6d112ff1",
+      "storage": "release"
+    }
+  ],
+  "hardware": {
+    "compute_capability": "8.6",
+    "gpu_name": "NVIDIA GeForce RTX 3080",
+    "gpu_uuid": "7c5e95c0e5a415d824a0c8c8b58d6f39",
+    "sm_count": 68,
+    "status": "recorded"
+  },
+  "kind": "topk_gate_performance_evidence",
+  "migration": {
+    "checksum_repairs": [],
+    "legacy_manifest_archive_path": "raw/legacy/manifest.json",
+    "legacy_schema": "raggedroute.evidence_bundle.v1"
+  },
+  "provenance": {
+    "git_clean": true,
+    "git_clean_status": "recorded",
+    "source_git_sha": "86cfbe2a805d8880b73896dece2c77031768245d"
+  },
+  "release_asset": {
+    "bytes": 1289492,
+    "immutable": true,
+    "name": "20260804-86cfbe2-topk-v4-raw.zip",
+    "sha256": "8456e9b8e3fae147a6bdb3d8b72bab873bb89debad8d75fe2ea447023d5f099b",
+    "tag": "evidence-2026-08-04-topk-v4-v3",
+    "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-04-topk-v4-v3/20260804-86cfbe2-topk-v4-raw.zip"
+  },
+  "run_id": "20260804-86cfbe2-topk-v4",
+  "schema_version": "raggedroute.evidence_bundle.v2",
+  "semantic_contract": {
+    "accumulator_dtype": null,
+    "dtype": "fp32",
+    "math_mode": "strict_fp32",
+    "measurement_levels": [
+      "L1_kernel_body",
+      "L2_operator_steady"
+    ],
+    "measurement_rule": "Release A/B timings and profiler durations are separate evidence classes.",
+    "operator": "topk_gate",
+    "status": "recorded"
+  },
+  "toolchain": {
+    "build_type": "Release",
+    "cuda": "13.3.73",
+    "driver": 13010,
+    "ncu": null,
+    "nsys": null,
+    "status": "recorded"
+  },
+  "validation": {
+    "details": {
+      "all_passed": true,
+      "details": "CTest 8/8 and memcheck/initcheck/racecheck/synccheck passed"
+    },
+    "status": "passed"
+  }
+}

@@ -12,7 +12,8 @@
       "params": {"T": 512, "E": 64, "K": 128, "N": 128},
       "variants": [
         {"name": "triton_reference", "backend": "triton", "reference_baseline": true},
-        {"name": "cuda_naive", "backend": "cpp", "reference_baseline": false}
+        {"name": "cuda_all_candidates_chain", "backend": "cpp", "reference_baseline": false},
+        {"name": "library_all_baselines_chain", "backend": "cpp", "reference_baseline": false}
       ]
     }
   ]

@@ -29,6 +29,7 @@ AdapterPtr make_dense_gemm_adapter(const std::string& variant_name);
 AdapterPtr make_topk_gate_adapter(const std::string& variant_name);
 AdapterPtr make_histogram_adapter(const std::string& variant_name);
 AdapterPtr make_exclusive_scan_adapter(const std::string& variant_name);
+AdapterPtr make_histogram_exclusive_scan_adapter(const std::string& variant_name);
 AdapterPtr make_token_permute_adapter(const std::string& variant_name);
 AdapterPtr make_grouped_gemm_adapter(const std::string& variant_name);
 AdapterPtr make_unpermute_adapter(const std::string& variant_name);

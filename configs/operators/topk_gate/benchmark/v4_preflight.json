@@ -1,0 +1,47 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_topk_gate_v4_preflight_v1",
+  "protocol": "smoke",
+  "process_runs": 1,
+  "common": {
+    "warmup": 20,
+    "samples": 15,
+    "kernel_repeats": 100,
+    "seed": 20260804,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "topk_gate.v4_preflight.in_tree",
+      "operator": "topk_gate",
+      "levels": ["l1", "l2"],
+      "variants": [
+        {"name": "cuda_naive", "promotion_baseline": true},
+        {"name": "cuda_warp_pair_top2_v1", "promotion_baseline": false},
+        {"name": "cuda_subwarp_pair_top2_v2", "promotion_baseline": false},
+        {"name": "cuda_vector_pair_top2_v3", "promotion_baseline": false},
+        {"name": "cuda_local_pair_two_reduce_top2_v4", "promotion_baseline": false}
+      ],
+      "matrix": {
+        "T": [32, 128, 512, 2048, 4096],
+        "E": [2, 4, 8, 16, 32, 64]
+      },
+      "params": {"input_mode": "random", "input_alignment": 16}
+    },
+    {
+      "id": "topk_gate.v4_preflight.library",
+      "operator": "topk_gate",
+      "levels": ["l1"],
+      "variants": [
+        {"name": "cuda_local_pair_two_reduce_top2_v4", "promotion_baseline": true},
+        {"name": "vllm_row_packed_top2", "promotion_baseline": false},
+        {"name": "cub_block_radix_top2", "promotion_baseline": false}
+      ],
+      "matrix": {
+        "T": [32, 128, 512, 2048, 4096],
+        "E": [2, 4, 8, 16, 32, 64]
+      },
+      "params": {"input_mode": "random", "input_alignment": 16}
+    }
+  ]
+}

@@ -18,7 +18,7 @@ namespace {
 
 bool is_optimized_variant(const std::string& name) {
   return name == "cuda_warp_pair_top2_v1" || name == "cuda_subwarp_pair_top2_v2" ||
-         name == "cuda_vector_pair_top2_v3";
+         name == "cuda_vector_pair_top2_v3" || name == "cuda_local_pair_two_reduce_top2_v4";
 }
 
 bool is_library_variant(const std::string& name) {
@@ -29,6 +29,8 @@ std::uint32_t implementation_id(const std::string& name) {
   if (name == "cuda_warp_pair_top2_v1") return ops::kTopKGateWarpPairV1Implementation;
   if (name == "cuda_subwarp_pair_top2_v2") return ops::kTopKGateSubwarpPairV2Implementation;
   if (name == "cuda_vector_pair_top2_v3") return ops::kTopKGateVectorPairV3Implementation;
+  if (name == "cuda_local_pair_two_reduce_top2_v4")
+    return ops::kTopKGateLocalPairTwoReduceV4Implementation;
   throw std::invalid_argument("unsupported optimized topk_gate variant: " + name);
 }
 
@@ -43,6 +45,8 @@ class TopKGateAdapter final : public BenchmarkAdapter {
       return "Shape-specialized subwarp Top-2 pair merge";
     if (variant_name_ == "cuda_vector_pair_top2_v3")
       return "Aligned float4 subwarp Top-2 pair merge with scalar fallback";
+    if (variant_name_ == "cuda_local_pair_two_reduce_top2_v4")
+      return "Row-packed local Top-2 with two deterministic subgroup reductions";
     if (variant_name_ == "cub_block_radix_top2")
       return "CUB BlockRadixSort composite-key strict Top-2";
     if (variant_name_ == "vllm_row_packed_top2") return "Adapted vLLM row-packed vector Top-2";
@@ -167,9 +171,17 @@ class TopKGateAdapter final : public BenchmarkAdapter {
 
   FieldMap variant_config() const override {
     std::string load_path = "scalar";
-    if (variant_name_ == "cuda_vector_pair_top2_v3") {
+    if (variant_name_ == "cuda_vector_pair_top2_v3" ||
+        variant_name_ == "cuda_local_pair_two_reduce_top2_v4") {
       const bool vector_shape = experts_ == 8 || experts_ == 16 || experts_ == 32 || experts_ == 64;
-      load_path = input_alignment_ == 16 && vector_shape ? "float4" : "v2_fallback";
+      const bool v4_vector_shape =
+          experts_ == 2 || experts_ == 4 || experts_ == 8 || experts_ == 16 || experts_ == 32 ||
+          experts_ == 64;
+      const bool selected_shape = variant_name_ == "cuda_vector_pair_top2_v3" ? vector_shape
+                                                                                : v4_vector_shape;
+      load_path = input_alignment_ == 16 && selected_shape
+                      ? (experts_ == 2 ? "float2" : "float4")
+                      : "v2_fallback";
     } else if (variant_name_ == "vllm_row_packed_top2") {
       load_path = experts_ == 2 ? "float2" : "float4";
     }

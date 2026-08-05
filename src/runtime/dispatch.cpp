@@ -6,6 +6,7 @@
 #include "../topk_gate/cuda_candidate/optimized_internal.h"
 #include "../histogram/cuda_candidate/optimized_internal.h"
 #include "../permute/cuda_candidate/optimized_internal.h"
+#include "../scan/cuda_candidate/optimized_internal.h"
 #include "operator_internal.h"
 
 namespace raggedroute {
@@ -46,6 +47,7 @@ bool is_valid_dtype_signature(OperatorKind kind, const OperatorSignature& signat
              signature.output->dtype == ScalarType::kFp32;
     case OperatorKind::kHistogram:
     case OperatorKind::kExclusiveScan:
+    case OperatorKind::kHistogramExclusiveScan:
       return has_roles(signature, false, false, false, false);
     case OperatorKind::kTokenPermute:
       return has_roles(signature, true, false, false, true) &&
@@ -122,6 +124,7 @@ Status select_kernel(const DispatchRequest& request, DispatchDecision* decision)
     case OperatorKind::kTokenPermute:
     case OperatorKind::kGroupedGemm:
     case OperatorKind::kUnpermute:
+    case OperatorKind::kHistogramExclusiveScan:
       break;
     default:
       return detail::invalid_argument("unknown operator kind");
@@ -142,6 +145,7 @@ Status select_kernel(const DispatchRequest& request, DispatchDecision* decision)
       break;
     case OperatorKind::kHistogram:
     case OperatorKind::kExclusiveScan:
+    case OperatorKind::kHistogramExclusiveScan:
       roles_valid = has_roles(signature, false, false, false, false);
       break;
   }
@@ -181,6 +185,9 @@ Status select_kernel(const DispatchRequest& request, DispatchDecision* decision)
          ops::is_topk_gate_optimized_implementation(requested.implementation_id)) ||
         (request.operator_kind == OperatorKind::kHistogram &&
          ops::is_histogram_optimized_implementation(requested.implementation_id)) ||
+        (request.operator_kind == OperatorKind::kHistogramExclusiveScan &&
+         ops::is_histogram_exclusive_scan_optimized_implementation(
+             requested.implementation_id)) ||
         (request.operator_kind == OperatorKind::kTokenPermute &&
          ops::is_token_permute_optimized_implementation(requested.implementation_id));
     if (!implemented) {
@@ -199,10 +206,15 @@ Status select_kernel(const DispatchRequest& request, DispatchDecision* decision)
 
   decision->operator_kind = request.operator_kind;
   decision->architecture = DeviceArchitecture::kSm86;
-  decision->kernel =
-      requested.family == KernelFamily::kAuto && request.operator_kind == OperatorKind::kHistogram
-          ? KernelSelection{KernelFamily::kCudaOptimized, ops::kHistogramCandidateImplementation}
-          : KernelSelection{KernelFamily::kCudaNaive, 0};
+  if (requested.family == KernelFamily::kAuto && request.operator_kind == OperatorKind::kHistogram) {
+    decision->kernel = {KernelFamily::kCudaOptimized, ops::kHistogramCandidateImplementation};
+  } else if (requested.family == KernelFamily::kAuto &&
+             request.operator_kind == OperatorKind::kHistogramExclusiveScan) {
+    decision->kernel = {KernelFamily::kCudaOptimized,
+                        ops::kHistogramExclusiveScanFusedSubwarpImplementation};
+  } else {
+    decision->kernel = {KernelFamily::kCudaNaive, 0};
+  }
   return success_status();
 }
 

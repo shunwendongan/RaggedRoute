@@ -1,0 +1,2 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+100.0,658998,21,31380.9,31359.0,30880,31935,196.2,"raggedroute::benchmark::library_baseline::<unnamed>::cub_block_radix_top2_kernel(const float *, int *, float *, int, int)"

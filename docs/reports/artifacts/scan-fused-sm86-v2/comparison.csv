@@ -1,0 +1,4 @@
+run_id,region,variant,paired_shapes,ratio_of_sums,coverage,min_speedup,max_p95_ratio,max_candidate_cv,decision
+histogram-scan-v2-formal,fused_l2,cuda_fused_histogram_scan,11,2.0044802212,1.0,1.6958065611,0.9747991345,1.1395859278,diagnostic_only_cv_fail
+histogram-scan-v2-formal,fallback_l2,cuda_fused_histogram_scan,2,0.9872290193,0.0,0.9798629093,1.1618763397,0.6039200793,reject_fallback
+histogram-scan-f2-l3-formal,l3_chain,cuda_fused_histogram_scan,12,0.9398204407,0.6666666667,0.4970662217,1.0990110414,0.5670550291,reject_l3

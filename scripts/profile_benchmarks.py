@@ -30,6 +30,7 @@ KERNEL_PATTERNS = {
     "topk_gate": "topk_gate_naive_kernel",
     "histogram": "histogram_naive_kernel",
     "exclusive_scan": "exclusive_scan_naive_kernel",
+    "histogram_exclusive_scan": "histogram_exclusive_scan_fused_subwarp_kernel",
     "token_permute": "token_permute_naive_kernel",
     "grouped_gemm": "grouped_gemm_naive_kernel",
     "unpermute": "unpermute_naive_kernel",

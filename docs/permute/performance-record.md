@@ -30,3 +30,13 @@
 最终 high-repeat library 对照中，`cuda_candidate_from_ids` 相对 `cuda_naive_from_ids` ratio-of-sums 为 1.0182x（4/5 case 加速）；相对 vLLM full-from-ids 为 0.7484x，即 aggregate latency 约高 33.6%。
 
 完整数据、能力矩阵和 profiler 摘要：[中央报告](../reports/rtx3080-permute-sm86-5cb9bd4.md)；[initial bundle](../reports/artifacts/20260802T185236Z-5cb9bd4-permute-sm86-candidates-v1/)；[selected token-owned bundle](../reports/artifacts/20260803T071455Z-af4947f-permute-selected-token-owned-v1/)。
+
+## 2026-08-03 / SM86 v2 tile4 + fused preparation
+
+- 代码证据 SHA：`bdc77c276878ea2d0198e69a1fbcb4f9bd4355b1`；RTX 3080 / CUDA 13.3 / strict FP32。`cuda_candidate` 现在显式指向 shape-dispatched v2；`KernelFamily::kAuto` 仍是 naive。
+- v2 在 large/aligned Top-2 使用 128-thread、4-token CTA 的 direct cursor path；其余 shape 回退 implementation ID 4。full-from-ids 的 v2 先以单 CTA 融合 counts、exclusive scan 与 cursor reset，再执行该 selector；外部 workspace 不增长。
+- CTest 8/8，以及 Compute Sanitizer memcheck/initcheck/racecheck/synccheck 均通过。full-from-ids 5 个同边界 case 相对旧 candidate-from-ids 的 ratio-of-sums 为 **1.7302x**，相对 pinned vLLM 为 **1.4110x**；vLLM 对照逐 case 为 1.5387x、1.4439x、1.0262x、1.6177x、1.5239x。
+- 纯 permute 28-case v2 rerun ratio-of-sums 为 1.0755x（18/28 快），但全部配对的 CV 超过 0.10，且最差 shape 为 0.2487x。因此它不满足原严格 promotion policy；这次保留是用户明确要求的 explicit candidate 决定，不应被表述为稳定的默认升级。
+- NSYS large-uniform 的诊断中，token-owned copy median 10.400 us，tile4-direct 9.568 us；v2 full path 由 10.432 us fused prepare + 9.632 us copy 构成。NCU detailed 显示 direct 的 0.627 waves/SM、34 registers/thread、41.7% achieved occupancy、48.6% DRAM throughput（ID4：2.510、34、63.6%、66.3%）。这些是 profiler 诊断值，非 Release latency。
+
+完整报告与可审计 compact artifacts：[SM86 v2 report](../reports/rtx3080-permute-sm86-v2-bdc77c2.md)；[v2 artifact bundle](../reports/artifacts/20260803T181954Z-bdc77c2-permute-sm86-v2/)。

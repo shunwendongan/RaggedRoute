@@ -1,0 +1,455 @@
+{
+  "commands": [
+    {
+      "command": "cmd /c scripts\\configure_windows.bat rtx3080-sm86-release; cmd /c scripts\\build_windows.bat rtx3080-sm86-release",
+      "role": "build",
+      "status": "recorded"
+    },
+    {
+      "command": "ctest --preset test-rtx3080-sm86-release --output-on-failure",
+      "role": "correctness",
+      "status": "recorded"
+    },
+    {
+      "command": "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\permute-v2-bdc77c2",
+      "role": "sanitizer",
+      "status": "recorded"
+    },
+    {
+      "command": "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\permute\\benchmark\\candidate_v2_release.json",
+      "role": "release",
+      "status": "recorded"
+    },
+    {
+      "command": "NSYS system trace followed by NCU basic and detailed; profiler durations excluded from release claims.",
+      "role": "profile",
+      "status": "recorded"
+    }
+  ],
+  "decision": {
+    "reason": "Explicit v2 candidate retained; automatic dispatch stays naive because the strict pure-permute gate did not pass.",
+    "status": "recorded"
+  },
+  "files": [
+    {
+      "bytes": 4377,
+      "path": "benchmark/full-from-ids-library-aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "a1520ca149b8bffca5143f6754dd4863850773bfc90a78647395dd7f22b8bd57",
+      "storage": "git"
+    },
+    {
+      "bytes": 10890,
+      "path": "benchmark/full-from-ids-library-comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "056c256d944341c83d2bd2b872551609e70c30312021cb6867197bbedf6cbd14",
+      "storage": "git"
+    },
+    {
+      "bytes": 15758,
+      "path": "benchmark/pure-permute-rerun-aggregate.csv",
+      "role": "compact_benchmark_summary",
+      "sha256": "421cc622a5ce91d61a9e37a227d7e8d16b30b8710ac95bb79b42856be8e11b3d",
+      "storage": "git"
+    },
+    {
+      "bytes": 28228,
+      "path": "benchmark/pure-permute-rerun-comparison.json",
+      "role": "comparison_or_decision",
+      "sha256": "48917345d72f32fe524b376bb4978b72b4cc02ed0cffdeebec6f9bc8214421b2",
+      "storage": "git"
+    },
+    {
+      "bytes": 1408,
+      "path": "profile/environment.json",
+      "role": "supporting_evidence",
+      "sha256": "a67ae45df98b0a6fe3c2cbe3449a67ceb3d6d75c4d4a542e054e7e77ef255b06",
+      "storage": "git"
+    },
+    {
+      "bytes": 27289,
+      "path": "profile/ncu-basic/metrics.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "6f7a47f993664768668bd6691077884f27d47eee4f9aaf8436929c25bad3005a",
+      "storage": "git"
+    },
+    {
+      "bytes": 34494,
+      "path": "profile/ncu-basic/metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "a2494ac04a9b29862dfbcca2bfd9de0e79e8e0758a7804dcd725214695fad4a1",
+      "storage": "git"
+    },
+    {
+      "bytes": 1829,
+      "path": "profile/ncu-basic/REPORT.md",
+      "role": "report",
+      "sha256": "f47953fc25273178181c7a067b3dd05dc7e3c1ad3ec67b179b32f8d49393ddb1",
+      "storage": "git"
+    },
+    {
+      "bytes": 26548,
+      "path": "profile/ncu-detailed/metrics.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "8622466b6b88b1a114c28c5051747751bd205db1495809b57fe94b0dedfce077",
+      "storage": "git"
+    },
+    {
+      "bytes": 31461,
+      "path": "profile/ncu-detailed/metrics.json",
+      "role": "supporting_evidence",
+      "sha256": "8fa83781977431934d9006f606b5344a0d2a890ba693645337c824610c7a5660",
+      "storage": "git"
+    },
+    {
+      "bytes": 1638,
+      "path": "profile/ncu-detailed/REPORT.md",
+      "role": "report",
+      "sha256": "370fe972c2467327fd64f19308ff26b0c19d9a24ba81870a6981f3ec8b31a850",
+      "storage": "git"
+    },
+    {
+      "bytes": 1107,
+      "path": "profile/nsys/direct-large-uniform-stats_cuda_api_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "cfd51b279703045322fa07f31003cfa55fce2696a773056e9d23b03bfe06ebf4",
+      "storage": "git"
+    },
+    {
+      "bytes": 308,
+      "path": "profile/nsys/direct-large-uniform-stats_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "9f0bb775b662bc2404f98cf7df65d9a01c4400791f311f9f13adbe590ae880f5",
+      "storage": "git"
+    },
+    {
+      "bytes": 1113,
+      "path": "profile/nsys/old-large-uniform-stats_cuda_api_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "91d0556ce65ba5e794ddc8feddf0ad94d8da2eb694006adfee8d0511eab7d00a",
+      "storage": "git"
+    },
+    {
+      "bytes": 311,
+      "path": "profile/nsys/old-large-uniform-stats_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "0caed98bce7ce9e7fb153f87cae2a3073b61a53894349879a69aef385d104ca7",
+      "storage": "git"
+    },
+    {
+      "bytes": 1098,
+      "path": "profile/nsys/v2-full-large-uniform-stats_cuda_api_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "d0299199e1c46c277ecd74b2b6ea088af7812fb3ca6cbf004458bcbbf69fe906",
+      "storage": "git"
+    },
+    {
+      "bytes": 473,
+      "path": "profile/nsys/v2-full-large-uniform-stats_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "d928a2c90bb6bba7be07f066d863c7a43eba11ee6ac8c11584852e9c3d2b3c29",
+      "storage": "git"
+    },
+    {
+      "bytes": 1115,
+      "path": "profile/nsys/vllm-full-large-uniform-stats_cuda_api_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "e306fec4ccddae171ae76de81c9e99774df95f49549de3a000ec09e11c15cae7",
+      "storage": "git"
+    },
+    {
+      "bytes": 957,
+      "path": "profile/nsys/vllm-full-large-uniform-stats_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "6c6972f16052a379faebb4c4a0fad038fa125aa7aafaa2edc1a68cb6aa72052f",
+      "storage": "git"
+    },
+    {
+      "bytes": 1098,
+      "path": "profile/nsys/warp-large-uniform-stats_cuda_api_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "d11fb9a1bfc1729f842871991695432227b0db95729440bd98ae9994e1927ebb",
+      "storage": "git"
+    },
+    {
+      "bytes": 309,
+      "path": "profile/nsys/warp-large-uniform-stats_cuda_gpu_kern_sum.csv",
+      "role": "normalized_profiler_metrics",
+      "sha256": "738165c6979db525a5273ddf1d4c07545fdadff666e7c9f1ae5701d81344348f",
+      "storage": "git"
+    },
+    {
+      "bytes": 12259,
+      "path": "sanitizer/initcheck.log",
+      "role": "correctness_validation",
+      "sha256": "db3bf9906718478ec06e9a3aa587be535912313b1a7fad5f743197ca576cf5a0",
+      "storage": "git"
+    },
+    {
+      "bytes": 12258,
+      "path": "sanitizer/memcheck.log",
+      "role": "correctness_validation",
+      "sha256": "87a06f01132bf53d7e2cc0ba258e8ed0983d7061d91442db855c345ffee11103",
+      "storage": "git"
+    },
+    {
+      "bytes": 12297,
+      "path": "sanitizer/racecheck.log",
+      "role": "correctness_validation",
+      "sha256": "d88a6aa96e7a42f3d46b14e93d00b7b6012b50ddfa8f149ce3fd65d174d394f1",
+      "storage": "git"
+    },
+    {
+      "bytes": 12259,
+      "path": "sanitizer/synccheck.log",
+      "role": "correctness_validation",
+      "sha256": "2ffe00f35c43aa4ea82f4ad31965b81c7b782495786e6973795bd49c068c0485",
+      "storage": "git"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-v2-release-rerun.jsonl",
+      "bytes": 829635,
+      "path": "benchmark/permute-v2-release-rerun.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "6021e88dca332035d5e08673729ac15485bdca89221e77915830a11eeccc9562",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-v2-release-rerun.jsonl.manifest.json",
+      "bytes": 350380,
+      "path": "benchmark/permute-v2-release-rerun.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "2e5316d89e432b9eaab8fd201f8182813639bcb49bd2b6cabb93bf9f08c38e9f",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-v2-library-release.jsonl",
+      "bytes": 231500,
+      "path": "benchmark/permute-v2-library-release.jsonl",
+      "role": "raw_benchmark_records",
+      "sha256": "676911041b158205bf419b55bf7a156ab34e92c5bfefa26dfbc92b7f95386576",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/benchmark/permute-v2-library-release.jsonl.manifest.json",
+      "bytes": 94866,
+      "path": "benchmark/permute-v2-library-release.jsonl.manifest.json",
+      "role": "run_manifest",
+      "sha256": "0e0c7ab192d4bd2adffe6a249d76c7ded6db13eee309ca06c4c4eeb158b84cc9",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/ncu-basic/reports/permute.v2.direct.large_uniform.basic.ncu-rep",
+      "bytes": 307520,
+      "path": "profile/permute-v2/ncu-basic/reports/permute.v2.direct.large_uniform.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "80e908d502f3880f5754983a26637fa8676657ea79f21dc91100298adb9fa096",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/ncu-basic/reports/permute.v2.old.large_uniform.basic.ncu-rep",
+      "bytes": 307931,
+      "path": "profile/permute-v2/ncu-basic/reports/permute.v2.old.large_uniform.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "7b86a967020e586387556c37231c528a7564a2ebb2c71c2c2814bdacabf8a089",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/ncu-basic/reports/permute.v2.prepare.large_uniform.basic.ncu-rep",
+      "bytes": 306681,
+      "path": "profile/permute-v2/ncu-basic/reports/permute.v2.prepare.large_uniform.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "e4ce41e453b7fbac9b3faa698122563473a8d36293bb5d53e1f5af3746a45042",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/ncu-basic/reports/permute.v2.vllm.expand.large_uniform.basic.ncu-rep",
+      "bytes": 826374,
+      "path": "profile/permute-v2/ncu-basic/reports/permute.v2.vllm.expand.large_uniform.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "1453ddcb649aca70fcbcd8ab79b2c902e5babacf45fde0a7358afd6fed25318b",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/ncu-basic/reports/permute.v2.vllm.sort.large_uniform.basic.ncu-rep",
+      "bytes": 827246,
+      "path": "profile/permute-v2/ncu-basic/reports/permute.v2.vllm.sort.large_uniform.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "67552d560fa7be5bd2cc4e52d13f7fc246b0204b1098249301ff543d72f22253",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/ncu-basic/reports/permute.v2.warp.large_uniform.basic.ncu-rep",
+      "bytes": 307526,
+      "path": "profile/permute-v2/ncu-basic/reports/permute.v2.warp.large_uniform.basic.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "ac7a664e9ad8f9148a43b37506bafb5ee258ae12783fd4400b3ac4d4f0a69a3a",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/ncu-detailed/reports/permute.v2.direct.large_uniform.detailed.ncu-rep",
+      "bytes": 426519,
+      "path": "profile/permute-v2/ncu-detailed/reports/permute.v2.direct.large_uniform.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "19875096d256f6bfe65e185e5f9588ad4ff15c1a2f141a40d296be5350fb7b79",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/ncu-detailed/reports/permute.v2.old.large_uniform.detailed.ncu-rep",
+      "bytes": 449579,
+      "path": "profile/permute-v2/ncu-detailed/reports/permute.v2.old.large_uniform.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "7d0acf48f640885d85c136d14a8d6898172a3a0e740666c874366248e115c310",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/ncu-detailed/reports/permute.v2.prepare.large_uniform.detailed.ncu-rep",
+      "bytes": 463066,
+      "path": "profile/permute-v2/ncu-detailed/reports/permute.v2.prepare.large_uniform.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "4c35e514c556bd81a0fb2557696eb28deeec47c7cce345b14a164e4608638272",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/ncu-detailed/reports/permute.v2.vllm.expand.large_uniform.detailed.ncu-rep",
+      "bytes": 943469,
+      "path": "profile/permute-v2/ncu-detailed/reports/permute.v2.vllm.expand.large_uniform.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "15d5ad4c502e51ee4982a0f780c84400cedb1757018fd5a237f8135154bccdb8",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/ncu-detailed/reports/permute.v2.warp.large_uniform.detailed.ncu-rep",
+      "bytes": 429262,
+      "path": "profile/permute-v2/ncu-detailed/reports/permute.v2.warp.large_uniform.detailed.ncu-rep",
+      "role": "ncu_report",
+      "sha256": "1027ebde6cba28ee9a88f6f937f29f788354da1c2041d85eb2a3437eed5682e6",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/nsys/direct-large-uniform.nsys-rep",
+      "bytes": 64610,
+      "path": "profile/permute-v2/nsys/direct-large-uniform.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "8cb63dc2fb83f3527b624cb979adf12c1a6333daf0c9b6882ce3d8bf66b83225",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/nsys/old-large-uniform.nsys-rep",
+      "bytes": 64577,
+      "path": "profile/permute-v2/nsys/old-large-uniform.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "80cca7c50e9acca540ea53385da0ae20b693ebc247323f418345c071a4cd10a7",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/nsys/v2-full-large-uniform.nsys-rep",
+      "bytes": 65169,
+      "path": "profile/permute-v2/nsys/v2-full-large-uniform.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "e5c37d5e111c960c177c033b840338a2d379792e6e0c46e49d8a81afffe4f69e",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/nsys/vllm-full-large-uniform.nsys-rep",
+      "bytes": 67244,
+      "path": "profile/permute-v2/nsys/vllm-full-large-uniform.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "8856107a95b298b1942788f62bd8b6eef7807d5ed9a70df58649189b4d0ce981",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/nsys/warp-large-uniform.nsys-rep",
+      "bytes": 64653,
+      "path": "profile/permute-v2/nsys/warp-large-uniform.nsys-rep",
+      "role": "nsys_report",
+      "sha256": "29b54e0dceacb0cf3d4dcf95e898306e6a4723e057814b14b6c7e797d622b30a",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/nsys/direct-large-uniform.sqlite",
+      "bytes": 274432,
+      "path": "profile/permute-v2/nsys/direct-large-uniform.sqlite",
+      "role": "profiler_database",
+      "sha256": "d7d0262752adc6674918e95305071b67a6154ce174c6065836d0eaf04194ddaf",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/nsys/old-large-uniform.sqlite",
+      "bytes": 274432,
+      "path": "profile/permute-v2/nsys/old-large-uniform.sqlite",
+      "role": "profiler_database",
+      "sha256": "a2add5443738ad5d23e11daeaea21cdb8af708915ed5d2406e864838975c379d",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/nsys/v2-full-large-uniform.sqlite",
+      "bytes": 274432,
+      "path": "profile/permute-v2/nsys/v2-full-large-uniform.sqlite",
+      "role": "profiler_database",
+      "sha256": "17e64dcf91fa25ce4e2cfe7a69d1ce727a7c482ce0508baa717a7767dbc81bb5",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/nsys/vllm-full-large-uniform.sqlite",
+      "bytes": 303104,
+      "path": "profile/permute-v2/nsys/vllm-full-large-uniform.sqlite",
+      "role": "profiler_database",
+      "sha256": "395eccbdd90ff270f9cc9b7bff6e2313b63dc201d8fb93458e8c440dd0cd0a34",
+      "storage": "release"
+    },
+    {
+      "archive_path": "raw/profile/permute-v2/nsys/warp-large-uniform.sqlite",
+      "bytes": 274432,
+      "path": "profile/permute-v2/nsys/warp-large-uniform.sqlite",
+      "role": "profiler_database",
+      "sha256": "9262f3c5b488ab9e8fbdc7b27fa56c86b82cee9a598e263d049a54c88ecffb91",
+      "storage": "release"
+    }
+  ],
+  "hardware": {
+    "compute_capability": "8.6",
+    "gpu_name": "NVIDIA GeForce RTX 3080",
+    "gpu_uuid": "GPU-7c5e95c0-e5a4-15d8-24a0-c8c8b58d6f39",
+    "sm_count": 68,
+    "status": "recorded"
+  },
+  "kind": "permute_performance_evidence",
+  "provenance": {
+    "git_clean": true,
+    "git_clean_status": "recorded",
+    "source_git_sha": "bdc77c276878ea2d0198e69a1fbcb4f9bd4355b1"
+  },
+  "release_asset": {
+    "bytes": 1377334,
+    "immutable": true,
+    "name": "20260803T181954Z-bdc77c2-permute-sm86-v2-raw.zip",
+    "sha256": "f89713a7c1737d80f477049915f5c614e549fd308dae0235605226d161eb5813",
+    "tag": "evidence-2026-08-04-permute-v2",
+    "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/evidence-2026-08-04-permute-v2/20260803T181954Z-bdc77c2-permute-sm86-v2-raw.zip"
+  },
+  "run_id": "20260803T181954Z-bdc77c2-permute-sm86-v2",
+  "schema_version": "raggedroute.evidence_bundle.v2",
+  "semantic_contract": {
+    "dtype": "fp32",
+    "math_mode": "strict_fp32",
+    "measurement_levels": [
+      "L2_operator_steady"
+    ],
+    "measurement_rule": "Release A/B timings and profiler durations are separate evidence classes.",
+    "operator": "token_permute",
+    "status": "recorded"
+  },
+  "toolchain": {
+    "build_type": "Release",
+    "cuda": "13.3.73",
+    "driver": "591.86",
+    "ncu": "2026.2.1",
+    "nsys": "2026.1.3",
+    "status": "recorded"
+  },
+  "validation": {
+    "reason": "Final alias CTest 8/8 and Compute Sanitizer memcheck/initcheck/racecheck/synccheck passed; performance evidence source SHA is bdc77c2.",
+    "status": "passed"
+  }
+}

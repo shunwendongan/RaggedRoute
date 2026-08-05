@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="180" viewBox="0 0 1000 180">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="20" y="28" font-family="Arial" font-size="18">continuous_decode: CUDA candidate</text>
+<line x1="120" y1="105" x2="970" y2="105" stroke="#64748b"/>
+<rect x="120.0" y="74" width="28.6" height="25" rx="3" fill="#0f766e"><title>raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)</title></rect>
+<rect x="153.1" y="112" width="2.0" height="25" rx="3" fill="#7c3aed"><title>void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)</title></rect>
+<rect x="156.5" y="74" width="2.0" height="25" rx="3" fill="#ea580c"><title>raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)</title></rect>
+<rect x="161.0" y="112" width="2.0" height="25" rx="3" fill="#db2777"><title>void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)</title></rect>
+<rect x="164.3" y="74" width="295.1" height="25" rx="3" fill="#2563eb"><title>raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)</title></rect>
+<rect x="466.8" y="112" width="4.3" height="25" rx="3" fill="#db2777"><title>raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)</title></rect>
+<rect x="498.2" y="74" width="28.7" height="25" rx="3" fill="#0f766e"><title>raggedroute::ops::<unnamed>::dense_gemm_tiled_scalar_kernel(const float *, const float *, float *, int, int, int)</title></rect>
+<rect x="531.4" y="112" width="2.0" height="25" rx="3" fill="#7c3aed"><title>void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)8, (int)4>(const float *, int *, float *, int)</title></rect>
+<rect x="534.1" y="74" width="2.0" height="25" rx="3" fill="#ea580c"><title>raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)</title></rect>
+<rect x="538.6" y="112" width="2.0" height="25" rx="3" fill="#db2777"><title>void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)</title></rect>
+<rect x="542.6" y="74" width="296.0" height="25" rx="3" fill="#2563eb"><title>raggedroute::ops::<unnamed>::grouped_gemm_register16x32_async_v3_kernel(const float *, const float *, const int *, float *, int, int, int)</title></rect>
+<rect x="845.8" y="112" width="4.2" height="25" rx="3" fill="#db2777"><title>raggedroute::ops::<unnamed>::unpermute_cta_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)</title></rect>
+<text x="20" y="160" font-family="Arial" font-size="12" fill="#475569">last post-warmup CUDA events; widths are NSYS durations (diagnostic only)</text></svg>

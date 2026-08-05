@@ -1,0 +1,6 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+95.2,875731,1,875731.0,875731.0,875731,875731,0.0,fused_moe_kernel
+2.7,24878,1,24878.0,24878.0,24878,24878,0.0,ampere_sgemm_32x32_sliced1x4_nn
+1.3,11979,1,11979.0,11979.0,11979,11979,0.0,"void at::native::reduce_kernel<(int)128, (int)4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator ()(at::TensorIterator &)::[lambda(float, float) (instance 1)]>, unsigned int, float, (int)4, (int)4>>(T3)"
+0.6,5609,1,5609.0,5609.0,5609,5609,0.0,"void vllm::moe::moe_align_block_size_small_batch_expert_kernel<int, (int)256>(const T1 *, int *, int *, int *, int *, int, int, unsigned long, int, int, bool)"
+0.2,2123,1,2123.0,2123.0,2123,2123,0.0,"void vllm::moe::topkGating<(int)4, (int)8, (int)4, (int)16, (int)32, int, float, (vllm::moe::ScoringFunc)0>(const T7 *, const bool *, float *, int, T6 *, int *, int, int, int, bool, const float *, double)"

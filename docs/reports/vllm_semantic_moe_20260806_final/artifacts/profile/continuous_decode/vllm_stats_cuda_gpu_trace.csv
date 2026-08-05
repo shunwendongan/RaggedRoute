@@ -1,0 +1,7 @@
+Start (ns),Duration (ns),CorrId,GrdX,GrdY,GrdZ,BlkX,BlkY,BlkZ,Reg/Trd,StcSMem (MB),DymSMem (MB),Bytes (MB),Throughput (MB/s),SrcMemKd,DstMemKd,Device,Ctx,GreenCtx,Strm,Name
+5670758,24878,145,1,4,1,128,1,1,86,0.033,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,7,ampere_sgemm_32x32_sliced1x4_nn
+5707203,1268,151,,,,,,,,,,0.004,3230.282,Device,Device,NVIDIA GeForce RTX 3080 (0),1,,7,[CUDA memcpy Device-to-Device]
+5777622,2123,166,2,1,1,32,4,1,36,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,7,"void vllm::moe::topkGating<(int)4, (int)8, (int)4, (int)16, (int)32, int, float, (vllm::moe::ScoringFunc)0>(const T7 *, const bool *, float *, int, T6 *, int *, int, int, int, bool, const float *, double)"
+5788809,5609,178,1,1,1,288,1,1,28,0.000,0.001,,,,,NVIDIA GeForce RTX 3080 (0),1,,7,"void vllm::moe::moe_align_block_size_small_batch_expert_kernel<int, (int)256>(const T1 *, int *, int *, int *, int *, int, int, unsigned long, int, int, bool)"
+5960672,875731,190,1792,1,1,128,1,1,72,0.000,0.008,,,,,NVIDIA GeForce RTX 3080 (0),1,,7,fused_moe_kernel
+6838875,11979,197,896,1,1,64,2,1,48,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,7,"void at::native::reduce_kernel<(int)128, (int)4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator ()(at::TensorIterator &)::[lambda(float, float) (instance 1)]>, unsigned int, float, (int)4, (int)4>>(T3)"

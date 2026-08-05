@@ -5,12 +5,15 @@
 #include <string>
 #include <vector>
 
+#include "dense_gemm/cuda_candidate/optimized_internal.h"
 #include "grouped_gemm/cuda_candidate/grouped_optimized_internal.h"
+#include "permute/cuda_candidate/optimized_internal.h"
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/benchmark/adapter_utils.h"
+#include "raggedroute/benchmark/library_baselines.h"
 #include "raggedroute/benchmark/registry.h"
-#include "permute/cuda_candidate/optimized_internal.h"
 #include "scan/cuda_candidate/optimized_internal.h"
+#include "topk_gate/cuda_candidate/optimized_internal.h"
 #include "unpermute/cuda_candidate/optimized_internal.h"
 
 namespace raggedroute::benchmark {
@@ -20,15 +23,22 @@ class ChainAdapter final : public BenchmarkAdapter {
  public:
   ChainAdapter(bool include_router_projection, const std::string& variant_name)
       : include_router_projection_(include_router_projection), variant_name_(variant_name) {}
+  ~ChainAdapter() override {
+#if RAGGEDROUTE_HAS_CUBLAS
+    library_baseline::destroy_dense_cublaslt_plan(dense_cublaslt_plan_);
+#endif
+#if RAGGEDROUTE_HAS_CUTLASS
+    library_baseline::destroy_grouped_cutlass_plan(grouped_cutlass_plan_);
+#endif
+  }
 
   std::string operator_name() const override {
     return include_router_projection_ ? "chain_from_tokens" : "chain_from_logits";
   }
   std::string variant_name() const override { return variant_name_; }
   std::string description() const override {
-    const std::string prefix = include_router_projection_
-                                   ? "Seven-operator token-to-output chain"
-                                   : "Six-operator logits-to-output chain";
+    const std::string prefix = include_router_projection_ ? "Seven-operator token-to-output chain"
+                                                          : "Six-operator logits-to-output chain";
     if (variant_name_ == "cuda_permute_candidate") {
       return prefix + " with the selected optimized Permute";
     }
@@ -40,6 +50,12 @@ class ChainAdapter final : public BenchmarkAdapter {
     }
     if (variant_name_ == "cuda_fused_histogram_scan") {
       return prefix + " with subwarp-finalized fused Histogram-Scan";
+    }
+    if (variant_name_ == "cuda_all_candidates_chain") {
+      return prefix + " with every selected CUDA candidate";
+    }
+    if (variant_name_ == "library_all_baselines_chain") {
+      return prefix + " with repository library baselines (diagnostic contract)";
     }
     return prefix + " baseline";
   }
@@ -103,6 +119,7 @@ class ChainAdapter final : public BenchmarkAdapter {
                                        [](std::int32_t count) { return count > 0; }));
     build_output_reference();
     allocate_and_copy(stream);
+    if (variant_name_ == "library_all_baselines_chain") setup_library_chain(stream);
   }
 
   void prepare_sample(MeasurementLevel, cudaStream_t) override {}
@@ -112,7 +129,17 @@ class ChainAdapter final : public BenchmarkAdapter {
       throw std::invalid_argument("chain adapter only supports L3");
     }
     const RuntimeContext context = make_runtime_context(stream, architecture_);
-    if (include_router_projection_) {
+    const bool all_candidates = variant_name_ == "cuda_all_candidates_chain";
+    const bool all_libraries = variant_name_ == "library_all_baselines_chain";
+    if (include_router_projection_ && all_libraries) {
+#if RAGGEDROUTE_HAS_CUBLAS
+      library_baseline::launch_dense_cublaslt(
+          dense_cublaslt_plan_, x_.data(), router_weights_.data(), logits_.data(),
+          dense_library_workspace_.data(), dense_library_workspace_bytes_, stream);
+#else
+      throw std::runtime_error("library chain requires cuBLASLt support");
+#endif
+    } else if (include_router_projection_) {
       DenseGemmArgs args;
       args.a.data = x_.data();
       args.b.data = router_weights_.data();
@@ -120,17 +147,48 @@ class ChainAdapter final : public BenchmarkAdapter {
       args.m = tokens_;
       args.n = experts_;
       args.k = hidden_;
+      if (all_candidates) {
+        args.kernel = {KernelFamily::kCudaOptimized,
+                       ops::kDenseGemmRegisterTiledV3_64x32AsyncImplementation};
+      }
       operator_check(dense_gemm(args, context), "chain dense_gemm operator");
     }
-    TopKGateArgs topk_args;
-    topk_args.logits.data = logits_.data();
-    topk_args.expert_ids = ids_.data();
-    topk_args.weights.data = route_weights_.data();
-    topk_args.tokens = tokens_;
-    topk_args.experts = experts_;
-    operator_check(topk_gate(topk_args, context), "chain topk_gate operator");
+    if (all_libraries) {
+#if RAGGEDROUTE_HAS_CCCL
+      cuda_check(library_baseline::launch_cub_block_radix_top2(
+                     logits_.data(), ids_.data(), route_weights_.data(), tokens_, experts_, stream),
+                 "chain CUB BlockRadixSort Top-2");
+#else
+      throw std::runtime_error("library chain requires CCCL support");
+#endif
+    } else {
+      TopKGateArgs topk_args;
+      topk_args.logits.data = logits_.data();
+      topk_args.expert_ids = ids_.data();
+      topk_args.weights.data = route_weights_.data();
+      topk_args.tokens = tokens_;
+      topk_args.experts = experts_;
+      if (all_candidates) {
+        topk_args.kernel = {KernelFamily::kCudaOptimized,
+                            ops::kTopKGateLocalPairTwoReduceV4Implementation};
+      }
+      operator_check(topk_gate(topk_args, context), "chain topk_gate operator");
+    }
 
-    if (variant_name_ == "cuda_fused_histogram_scan") {
+    if (all_libraries) {
+#if RAGGEDROUTE_HAS_CCCL
+      cuda_check(
+          library_baseline::launch_cub_histogram(
+              ids_.data(), counts_.data(), static_cast<std::size_t>(route_pairs_), experts_,
+              histogram_library_workspace_.data(), histogram_library_workspace_bytes_, stream),
+          "chain CUB DeviceHistogram");
+      cuda_check(library_baseline::launch_cub_block_scan(counts_.data(), offsets_.data(), experts_,
+                                                         stream),
+                 "chain CUB BlockScan");
+#else
+      throw std::runtime_error("library chain requires CCCL support");
+#endif
+    } else if (variant_name_ == "cuda_fused_histogram_scan" || all_candidates) {
       HistogramExclusiveScanArgs fused_args;
       fused_args.expert_ids = ids_.data();
       fused_args.counts = counts_.data();
@@ -166,14 +224,26 @@ class ChainAdapter final : public BenchmarkAdapter {
     permute_args.experts = experts_;
     permute_args.top_k = 2;
     permute_args.hidden = hidden_;
-    if (variant_name_ == "cuda_permute_candidate") {
+    if (variant_name_ == "cuda_permute_candidate" || all_candidates) {
       permute_args.kernel = {KernelFamily::kCudaOptimized,
                              ops::kTokenPermuteCandidateImplementation};
     }
-    operator_check(
-        token_permute(permute_args, make_runtime_context(stream, architecture_, cursors_.data(),
-                                                         cursors_.bytes())),
-        "chain token_permute operator");
+    if (all_libraries) {
+#if RAGGEDROUTE_HAS_CCCL
+      cuda_check(library_baseline::launch_vllm_moe_permute(
+                     x_.data(), ids_.data(), x_permuted_.data(), route_pos_.data(), nullptr,
+                     permute_library_workspace_.data(), permute_library_workspace_bytes_, tokens_,
+                     experts_, 2, hidden_, stream),
+                 "chain vLLM moe_permute");
+#else
+      throw std::runtime_error("library chain requires CCCL support");
+#endif
+    } else {
+      operator_check(
+          token_permute(permute_args, make_runtime_context(stream, architecture_, cursors_.data(),
+                                                           cursors_.bytes())),
+          "chain token_permute operator");
+    }
 
     // Passing R is a truthful worst-case launch bound. No input-dependent host
     // max-M computation is hidden outside the L3 interval.
@@ -186,15 +256,23 @@ class ChainAdapter final : public BenchmarkAdapter {
     grouped_args.hidden = hidden_;
     grouped_args.output = output_;
     grouped_args.max_expert_tokens = route_pairs_;
-    if (variant_name_ == "cuda_grouped_sm86_fp32_v1") {
-      cuda_check(ops::launch_grouped_gemm_optimized(
-                     static_cast<const float*>(grouped_args.x_permuted.data),
-                     static_cast<const float*>(grouped_args.expert_weights.data),
-                     grouped_args.offsets, static_cast<float*>(grouped_args.y_permuted.data),
-                     grouped_args.experts, grouped_args.hidden, grouped_args.output,
-                     grouped_args.max_expert_tokens, ops::kGroupedGemmSm86Fp32V1Implementation,
-                     stream),
-                 "chain benchmark-only grouped_gemm candidate");
+    if (all_libraries) {
+#if RAGGEDROUTE_HAS_CUTLASS
+      library_baseline::launch_grouped_cutlass(grouped_cutlass_plan_,
+                                               grouped_library_workspace_.data(),
+                                               grouped_library_workspace_bytes_, stream);
+#else
+      throw std::runtime_error("library chain requires CUTLASS support");
+#endif
+    } else if (variant_name_ == "cuda_grouped_sm86_fp32_v1" || all_candidates) {
+      cuda_check(
+          ops::launch_grouped_gemm_optimized(
+              static_cast<const float*>(grouped_args.x_permuted.data),
+              static_cast<const float*>(grouped_args.expert_weights.data), grouped_args.offsets,
+              static_cast<float*>(grouped_args.y_permuted.data), grouped_args.experts,
+              grouped_args.hidden, grouped_args.output, grouped_args.max_expert_tokens,
+              ops::kGroupedGemmSm86Fp32V1Implementation, stream),
+          "chain benchmark-only grouped_gemm candidate");
     } else {
       operator_check(grouped_gemm(grouped_args, context), "chain grouped_gemm operator");
     }
@@ -207,14 +285,25 @@ class ChainAdapter final : public BenchmarkAdapter {
     unpermute_args.tokens = tokens_;
     unpermute_args.top_k = 2;
     unpermute_args.output = output_;
-    if (variant_name_ == "cuda_unpermute_candidate") {
-      cuda_check(ops::launch_unpermute_optimized(
-                     static_cast<const float*>(unpermute_args.y_permuted.data),
-                     unpermute_args.route_pos,
-                     static_cast<const float*>(unpermute_args.route_weights.data),
-                     static_cast<float*>(unpermute_args.y.data), unpermute_args.tokens,
-                     unpermute_args.top_k, unpermute_args.output, stream),
-                 "chain research unpermute candidate");
+    if (all_libraries) {
+#if RAGGEDROUTE_HAS_VLLM_UNPERMUTE
+      cuda_check(library_baseline::launch_vllm_finalize_routing(
+                     y_permuted_.data(), y_.data(), route_weights_.data(), route_pos_.data(),
+                     tokens_, 2, output_, stream),
+                 "chain vLLM finalize routing");
+      return;
+#else
+      throw std::runtime_error("library chain requires vLLM unpermute support");
+#endif
+    }
+    if (variant_name_ == "cuda_unpermute_candidate" || all_candidates) {
+      cuda_check(
+          ops::launch_unpermute_optimized(
+              static_cast<const float*>(unpermute_args.y_permuted.data), unpermute_args.route_pos,
+              static_cast<const float*>(unpermute_args.route_weights.data),
+              static_cast<float*>(unpermute_args.y.data), unpermute_args.tokens,
+              unpermute_args.top_k, unpermute_args.output, stream),
+          "chain research unpermute candidate");
       return;
     }
     operator_check(unpermute(unpermute_args, context), "chain unpermute operator");
@@ -234,10 +323,18 @@ class ChainAdapter final : public BenchmarkAdapter {
       return {false, "chain offsets differ from reference", {}, {}};
     }
     const auto route_weights = route_weights_.copy_to_host(stream);
-    const auto weight_result =
-        compare_floats(route_weights, route_weights_expected_, 1.0e-6, 1.0e-6);
-    if (!weight_result.ok) return weight_result;
-    return compare_floats(y_.copy_to_host(stream), expected_output_, 1.0e-4, 4.0e-5 * hidden_);
+    const double weight_tolerance =
+        variant_name_ == "library_all_baselines_chain" ? 2.0e-5 : 1.0e-6;
+    auto weight_result =
+        compare_floats(route_weights, route_weights_expected_, weight_tolerance, weight_tolerance);
+    if (!weight_result.ok) {
+      weight_result.message = "chain route weights: " + weight_result.message;
+      return weight_result;
+    }
+    auto output_result =
+        compare_floats(y_.copy_to_host(stream), expected_output_, 1.0e-4, 4.0e-5 * hidden_);
+    if (!output_result.ok) output_result.message = "chain final output: " + output_result.message;
+    return output_result;
   }
 
   FieldMap case_config() const override {
@@ -258,40 +355,68 @@ class ChainAdapter final : public BenchmarkAdapter {
   }
 
   FieldMap variant_config() const override {
-    return {{"components",
-             include_router_projection_
-                 ? std::string("dense_gemm,topk_gate,histogram,exclusive_scan,token_permute,"
-                               "grouped_gemm,unpermute")
-                 : std::string(
-                       "topk_gate,histogram,exclusive_scan,token_permute,grouped_gemm,unpermute")},
-            {"component_variant",
-             variant_name_ == "cuda_permute_candidate"
-                 ? std::string("cuda_naive_except_token_permute_candidate")
-                 : variant_name_ == "cuda_grouped_sm86_fp32_v1"
-                       ? std::string("cuda_naive_except_benchmark_only_grouped_sm86_fp32_v1")
-                 : variant_name_ == "cuda_unpermute_candidate"
-                       ? std::string("mixed")
-                       : variant_name_ == "cuda_fused_histogram_scan"
-                             ? std::string("cuda_naive_except_fused_histogram_scan")
+    return {
+        {"components",
+         include_router_projection_
+             ? std::string("dense_gemm,topk_gate,histogram,exclusive_scan,token_permute,"
+                           "grouped_gemm,unpermute")
+             : std::string(
+                   "topk_gate,histogram,exclusive_scan,token_permute,grouped_gemm,unpermute")},
+        {"component_variant",
+         variant_name_ == "cuda_all_candidates_chain" ? std::string("all_selected_cuda_candidates")
+         : variant_name_ == "library_all_baselines_chain"
+             ? std::string("all_repository_library_baselines_diagnostic")
+         : variant_name_ == "cuda_permute_candidate"
+             ? std::string("cuda_naive_except_token_permute_candidate")
+         : variant_name_ == "cuda_grouped_sm86_fp32_v1"
+             ? std::string("cuda_naive_except_benchmark_only_grouped_sm86_fp32_v1")
+         : variant_name_ == "cuda_unpermute_candidate" ? std::string("mixed")
+         : variant_name_ == "cuda_fused_histogram_scan"
+             ? std::string("cuda_naive_except_fused_histogram_scan")
+             : std::string("cuda_naive")},
+        {"permute_variant",
+         variant_name_ == "cuda_all_candidates_chain"
+             ? std::string("cuda_candidate_from_ids_equivalent")
+         : variant_name_ == "library_all_baselines_chain" ? std::string("vllm_moe_permute")
+         : variant_name_ == "cuda_permute_candidate"      ? std::string("cuda_token_owned_top2")
+                                                          : std::string("cuda_naive")},
+        {"runtime_status", variant_name_ == "library_all_baselines_chain"
+                               ? std::string("diagnostic_not_strictly_comparable")
+                           : variant_name_ == "cuda_grouped_sm86_fp32_v1" ||
+                                   variant_name_ == "cuda_all_candidates_chain"
+                               ? std::string("benchmark_only_not_promoted")
+                               : std::string("public_runtime")},
+        {"unpermute_variant",
+         variant_name_ == "cuda_all_candidates_chain"     ? std::string("cuda_warp_token_vec4")
+         : variant_name_ == "library_all_baselines_chain" ? std::string("vllm_finalize_routing")
+         : variant_name_ == "cuda_unpermute_candidate"    ? std::string("cuda_warp_token_vec4")
+                                                          : std::string("cuda_naive")},
+        {"grouped_variant", variant_name_ == "cuda_all_candidates_chain"
+                                ? std::string("cuda_grouped_sm86_fp32_v1")
+                            : variant_name_ == "library_all_baselines_chain"
+                                ? std::string("cutlass_grouped_fixed_problem_metadata")
+                                : std::string("cuda_naive")},
+        {"grouped_max_m_policy", variant_name_ == "library_all_baselines_chain"
+                                     ? std::string("fixed_host_offsets_from_deterministic_oracle")
+                                     : std::string("worst_case_R")},
+        {"histogram_scan_variant",
+         variant_name_ == "cuda_all_candidates_chain" ? std::string("cuda_fused_histogram_scan")
+         : variant_name_ == "library_all_baselines_chain"
+             ? std::string("cub_device_histogram_plus_cub_block_scan")
+         : variant_name_ == "cuda_fused_histogram_scan" ? std::string("cuda_fused_histogram_scan")
+                                                        : std::string("separate")},
+        {"dense_variant", variant_name_ == "cuda_all_candidates_chain"
+                              ? std::string("cuda_register_tiled_v3_64x32_async")
+                          : variant_name_ == "library_all_baselines_chain"
+                              ? std::string("cublaslt")
+                              : std::string("cuda_naive")},
+        {"topk_variant", variant_name_ == "cuda_all_candidates_chain"
+                             ? std::string("cuda_local_pair_two_reduce_top2_v4")
+                         : variant_name_ == "library_all_baselines_chain"
+                             ? std::string("cub_block_radix_top2_benchmark_only")
                              : std::string("cuda_naive")},
-            {"permute_variant",
-             variant_name_ == "cuda_permute_candidate"
-                 ? std::string("cuda_token_owned_top2")
-                 : std::string("cuda_naive")},
-            {"runtime_status",
-             variant_name_ == "cuda_grouped_sm86_fp32_v1"
-                 ? std::string("benchmark_only_not_promoted")
-                 : std::string("public_runtime")},
-            {"unpermute_variant",
-             variant_name_ == "cuda_unpermute_candidate"
-                 ? std::string("cuda_warp_token_vec4")
-                 : std::string("cuda_naive")},
-            {"grouped_max_m_policy", std::string("worst_case_R")},
-            {"histogram_scan_variant",
-             variant_name_ == "cuda_fused_histogram_scan"
-                 ? std::string("cuda_fused_histogram_scan")
-                 : std::string("separate")},
-            {"materialize_sorted_route", false}};
+        {"strict_comparison_eligible", variant_name_ != "library_all_baselines_chain"},
+        {"materialize_sorted_route", false}};
   }
 
   WorkEstimate work_estimate(MeasurementLevel) const override {
@@ -315,7 +440,8 @@ class ChainAdapter final : public BenchmarkAdapter {
          static_cast<double>(active_experts_) * hidden_ * output_);
     work.logical_bytes += sizeof(float) * (static_cast<double>(route_pairs_) * output_ +
                                            static_cast<double>(tokens_) * output_);
-    const bool fused_histogram_scan = variant_name_ == "cuda_fused_histogram_scan";
+    const bool fused_histogram_scan = variant_name_ == "cuda_fused_histogram_scan" ||
+                                      variant_name_ == "cuda_all_candidates_chain";
     work.operator_metrics["kernel_launches"] = static_cast<std::int64_t>(
         (include_router_projection_ ? 9 : 8) - (fused_histogram_scan ? 1 : 0));
     work.operator_metrics["counts_reset_bytes"] =
@@ -324,7 +450,10 @@ class ChainAdapter final : public BenchmarkAdapter {
     return work;
   }
 
-  std::size_t workspace_bytes() const override { return cursors_.bytes(); }
+  std::size_t workspace_bytes() const override {
+    return cursors_.bytes() + dense_library_workspace_bytes_ + histogram_library_workspace_bytes_ +
+           permute_library_workspace_bytes_ + grouped_library_workspace_bytes_;
+  }
 
   std::vector<std::string> excluded_steps(MeasurementLevel) const override {
     return {"input_generation", "cpu_reference", "h2d_copy", "workspace_allocation"};
@@ -377,6 +506,51 @@ class ChainAdapter final : public BenchmarkAdapter {
     }
   }
 
+  void setup_library_chain(cudaStream_t stream) {
+    if (!include_router_projection_) {
+      throw std::invalid_argument(
+          "library_all_baselines_chain is only defined for chain_from_tokens");
+    }
+#if RAGGEDROUTE_HAS_CUBLAS && RAGGEDROUTE_HAS_CCCL && RAGGEDROUTE_HAS_CUTLASS && \
+    RAGGEDROUTE_HAS_VLLM_UNPERMUTE
+    dense_cublaslt_plan_ = library_baseline::create_dense_cublaslt_plan(
+        tokens_, experts_, hidden_, 64ULL * 1024ULL * 1024ULL, &dense_library_workspace_bytes_);
+    dense_library_workspace_.resize(dense_library_workspace_bytes_);
+
+    cuda_check(
+        library_baseline::query_cub_histogram_workspace(
+            static_cast<std::size_t>(route_pairs_), experts_, &histogram_library_workspace_bytes_),
+        "query chain CUB histogram workspace");
+    histogram_library_workspace_.resize(histogram_library_workspace_bytes_);
+
+    cuda_check(library_baseline::query_vllm_permute_workspace(tokens_, experts_, 2,
+                                                              &permute_library_workspace_bytes_),
+               "query chain vLLM permute workspace");
+    permute_library_workspace_.resize(permute_library_workspace_bytes_);
+    cuda_check(library_baseline::initialize_vllm_permute_workspace(
+                   permute_library_workspace_.data(), permute_library_workspace_bytes_, tokens_,
+                   experts_, 2, stream),
+               "initialize chain vLLM permute workspace");
+
+    // The repository's CUTLASS baseline requires fixed host problem metadata.
+    // The deterministic chain input produces the same offsets on every sample;
+    // the report marks this library path diagnostic rather than strictly L3-comparable.
+    grouped_cutlass_plan_ = library_baseline::create_grouped_cutlass_plan(
+        x_permuted_.data(), expert_weights_.data(), y_permuted_.data(), offsets_expected_.data(),
+        experts_, hidden_, output_);
+    grouped_library_workspace_bytes_ =
+        library_baseline::grouped_cutlass_workspace_bytes(grouped_cutlass_plan_);
+    grouped_library_workspace_.resize(grouped_library_workspace_bytes_);
+    library_baseline::initialize_grouped_cutlass_plan(grouped_cutlass_plan_,
+                                                      grouped_library_workspace_.data(),
+                                                      grouped_library_workspace_bytes_, stream);
+#else
+    (void)stream;
+    throw std::runtime_error(
+        "library_all_baselines_chain requires cuBLASLt, CCCL, CUTLASS, and vLLM baselines");
+#endif
+  }
+
   static void reject_unknown(const OptionMap& options) {
     const std::set<std::string> allowed = {"T", "E", "K", "N", "distribution", "zipf_s"};
     for (const auto& [name, unused] : options) {
@@ -399,6 +573,18 @@ class ChainAdapter final : public BenchmarkAdapter {
   DeviceBuffer<float> x_, router_weights_, logits_, route_weights_;
   DeviceBuffer<float> expert_weights_, x_permuted_, y_permuted_, y_;
   DeviceBuffer<std::int32_t> ids_, counts_, offsets_, cursors_, route_pos_;
+  std::size_t dense_library_workspace_bytes_ = 0;
+  std::size_t histogram_library_workspace_bytes_ = 0;
+  std::size_t permute_library_workspace_bytes_ = 0;
+  std::size_t grouped_library_workspace_bytes_ = 0;
+  DeviceBuffer<std::uint8_t> dense_library_workspace_, histogram_library_workspace_;
+  DeviceBuffer<std::uint8_t> permute_library_workspace_, grouped_library_workspace_;
+#if RAGGEDROUTE_HAS_CUBLAS
+  library_baseline::DenseCublasLtPlan* dense_cublaslt_plan_ = nullptr;
+#endif
+#if RAGGEDROUTE_HAS_CUTLASS
+  library_baseline::GroupedCutlassPlan* grouped_cutlass_plan_ = nullptr;
+#endif
 };
 
 }  // namespace

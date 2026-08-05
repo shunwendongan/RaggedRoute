@@ -7,6 +7,7 @@ import argparse
 import csv
 import hashlib
 import json
+import os
 import pathlib
 import re
 import sys
@@ -103,9 +104,9 @@ def validate_manifest(manifest: dict, bundle: pathlib.Path) -> list[str]:
             fail(errors, f"{label} unavailable item missing reason")
 
     actual_git = {
-        path.relative_to(bundle).as_posix()
-        for path in bundle.rglob("*") if path.is_file()
-        and path.relative_to(bundle).as_posix() not in CONTROL_FILES
+        os.path.relpath(path, bundle).replace("\\", "/")
+        for path in bundle.rglob("*")
+        if path.is_file() and os.path.relpath(path, bundle).replace("\\", "/") not in CONTROL_FILES
     }
     for path in sorted(actual_git - declared_git):
         fail(errors, f"{bundle.name}: undeclared git file {path}")
@@ -135,7 +136,7 @@ def validate_sums(bundle: pathlib.Path) -> list[str]:
         elif sha256_file(target) != expected:
             fail(errors, f"{bundle.name}: checksum mismatch {relative}")
     actual = {
-        path.relative_to(bundle).as_posix()
+        os.path.relpath(path, bundle).replace("\\", "/")
         for path in bundle.rglob("*") if path.is_file() and path.name != "SHA256SUMS"
     }
     for relative in sorted(actual - declared):

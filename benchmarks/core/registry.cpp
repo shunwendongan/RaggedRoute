@@ -5,8 +5,9 @@
 #include <utility>
 
 #if RAGGEDROUTE_HAS_CCCL
-#include <cub/version.cuh>
 #include <cuda/std/__cccl/version.h>
+
+#include <cub/version.cuh>
 #endif
 #if RAGGEDROUTE_HAS_CUTLASS
 #include <cutlass/version.h>
@@ -67,13 +68,13 @@ VariantDescriptor naive_descriptor(const std::string& algorithm_id) {
 }
 
 VariantDescriptor optimized_dense_descriptor(std::string name, std::string algorithm_id) {
-  return {std::move(name), "in_tree_cuda", "raggedroute.cuda_optimized.v1", "not_applicable",
-          std::move(algorithm_id), "strict_fp32"};
+  return {std::move(name),  "in_tree_cuda",          "raggedroute.cuda_optimized.v1",
+          "not_applicable", std::move(algorithm_id), "strict_fp32"};
 }
 
 VariantDescriptor optimized_dense_v2_descriptor(std::string name, std::string algorithm_id) {
-  return {std::move(name), "in_tree_cuda", "raggedroute.cuda_optimized.v2", "not_applicable",
-          std::move(algorithm_id), "strict_fp32"};
+  return {std::move(name),  "in_tree_cuda",          "raggedroute.cuda_optimized.v2",
+          "not_applicable", std::move(algorithm_id), "strict_fp32"};
 }
 
 VariantDescriptor descriptor(std::string name, std::string category, std::string version,
@@ -129,27 +130,28 @@ std::vector<std::string> descriptor_names(const std::vector<VariantDescriptor>& 
 }  // namespace
 
 std::vector<std::string> available_operators() {
-  return {"dense_gemm",    "topk_gate",    "histogram", "exclusive_scan",
-          "histogram_exclusive_scan", "token_permute", "grouped_gemm", "unpermute"};
+  return {
+      "dense_gemm",    "topk_gate",    "histogram", "exclusive_scan", "histogram_exclusive_scan",
+      "token_permute", "grouped_gemm", "unpermute"};
 }
 
 std::vector<VariantDescriptor> available_variant_descriptors(const std::string& operator_name) {
   if (operator_name == "dense_gemm") {
     std::vector<VariantDescriptor> variants = {naive_descriptor("thread_per_output")};
-    variants.push_back(optimized_dense_descriptor("cuda_tiled_scalar",
-                                                  "shared_tile16_linear_cta_scalar"));
-    variants.push_back(optimized_dense_descriptor("cuda_2d_mapping",
-                                                  "direct_2d_row_column_scalar"));
-    variants.push_back(optimized_dense_descriptor("cuda_tiled_vector",
-                                                  "shared_tile16_linear_cta_float4"));
-    variants.push_back(optimized_dense_descriptor("cuda_combined",
-                                                  "shared_tile16_direct_2d_scalar"));
+    variants.push_back(
+        optimized_dense_descriptor("cuda_tiled_scalar", "shared_tile16_linear_cta_scalar"));
+    variants.push_back(
+        optimized_dense_descriptor("cuda_2d_mapping", "direct_2d_row_column_scalar"));
+    variants.push_back(
+        optimized_dense_descriptor("cuda_tiled_vector", "shared_tile16_linear_cta_float4"));
+    variants.push_back(
+        optimized_dense_descriptor("cuda_combined", "shared_tile16_direct_2d_scalar"));
     variants.push_back(optimized_dense_v2_descriptor("cuda_register_tiled_v2_sync",
                                                      "shared_tile32_register_4x2_sync"));
     variants.push_back(optimized_dense_v2_descriptor("cuda_register_tiled_v2_async",
                                                      "shared_tile32_register_4x2_cp_async_2stage"));
-    variants.push_back(optimized_dense_v2_descriptor("cuda_register_tiled_v3_64x32_async",
-                                                     "shared_tile64x32_register_8x2_cp_async_2stage"));
+    variants.push_back(optimized_dense_v2_descriptor(
+        "cuda_register_tiled_v3_64x32_async", "shared_tile64x32_register_8x2_cp_async_2stage"));
 #if RAGGEDROUTE_HAS_CUBLAS
     variants.push_back(descriptor("cublaslt", "nvidia_cuda_library", "cublasLtMatmul.v1",
                                   cuda_library_revision(), "cublaslt_heuristic_0"));
@@ -172,10 +174,10 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     variants.push_back(descriptor("cuda_local_pair_two_reduce_top2_v4", "in_tree_cuda",
                                   "raggedroute.cuda_optimized.v4", "not_applicable",
                                   "row_packed_local_pair_two_subgroup_reductions"));
-    variants.push_back(descriptor(
-        "vllm_row_packed_top2", "adapted_production_cuda", "vllm.topk_softmax.adapted.fp32.v1",
-        "vllm@55c98e370aa058f567a9e682dc0652bdfba6b0bb; Apache-2.0",
-        "row_packed_vector_iterative_argmax"));
+    variants.push_back(descriptor("vllm_row_packed_top2", "adapted_production_cuda",
+                                  "vllm.topk_softmax.adapted.fp32.v1",
+                                  "vllm@55c98e370aa058f567a9e682dc0652bdfba6b0bb; Apache-2.0",
+                                  "row_packed_vector_iterative_argmax"));
 #if RAGGEDROUTE_HAS_CCCL
     variants.push_back(descriptor("cub_block_radix_top2", "nvidia_cccl",
                                   "cub::BlockRadixSort<uint64_t,32,2>", cccl_revision(),
@@ -186,8 +188,8 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
   if (operator_name == "histogram") {
     std::vector<VariantDescriptor> variants = {naive_descriptor("global_atomic")};
     variants.push_back(descriptor("cuda_candidate", "in_tree_cuda",
-                                  "raggedroute.histogram.cuda_candidate.v1",
-                                  "not_applicable", "shape_dispatched_shared_histogram"));
+                                  "raggedroute.histogram.cuda_candidate.v1", "not_applicable",
+                                  "shape_dispatched_shared_histogram"));
 #if RAGGEDROUTE_HAS_CCCL
     variants.push_back(descriptor("cub_device_histogram", "nvidia_cccl",
                                   "cub::DeviceHistogram::HistogramEven", cccl_revision(),
@@ -238,17 +240,17 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
                                   "raggedroute.cuda_naive_from_ids.v1", "not_applicable",
                                   "histogram_scan_atomic_permute"));
     variants.push_back(descriptor("cuda_atomic_vectorized_128", "in_tree_cuda_candidate",
-                                  "raggedroute.permute.atomic_vectorized_128.v1",
-                                  "not_applicable", "atomic_cursor_float4_128"));
+                                  "raggedroute.permute.atomic_vectorized_128.v1", "not_applicable",
+                                  "atomic_cursor_float4_128"));
     variants.push_back(descriptor("cuda_atomic_vectorized_64", "in_tree_cuda_candidate",
-                                  "raggedroute.permute.atomic_vectorized_64.v1",
-                                  "not_applicable", "atomic_cursor_float4_64"));
+                                  "raggedroute.permute.atomic_vectorized_64.v1", "not_applicable",
+                                  "atomic_cursor_float4_64"));
     variants.push_back(descriptor("cuda_atomic_vectorized_256", "in_tree_cuda_candidate",
-                                  "raggedroute.permute.atomic_vectorized_256.v1",
-                                  "not_applicable", "atomic_cursor_float4_256"));
+                                  "raggedroute.permute.atomic_vectorized_256.v1", "not_applicable",
+                                  "atomic_cursor_float4_256"));
     variants.push_back(descriptor("cuda_token_owned_top2", "in_tree_cuda_candidate",
-                                  "raggedroute.permute.token_owned_top2.v1",
-                                  "not_applicable", "token_owned_dual_destination"));
+                                  "raggedroute.permute.token_owned_top2.v1", "not_applicable",
+                                  "token_owned_dual_destination"));
     variants.push_back(descriptor("cuda_block_partial", "in_tree_cuda_candidate",
                                   "raggedroute.permute.block_partial.v1", "not_applicable",
                                   "block_private_rank_two_kernel"));
@@ -256,8 +258,8 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
                                   "raggedroute.permute.candidate.v1", "not_applicable",
                                   "evidence_selected_candidate"));
     variants.push_back(descriptor("cuda_candidate_from_ids", "in_tree_cuda_candidate",
-                                  "raggedroute.permute.candidate_from_ids.v1",
-                                  "not_applicable", "histogram_scan_candidate"));
+                                  "raggedroute.permute.candidate_from_ids.v1", "not_applicable",
+                                  "histogram_scan_candidate"));
 #if RAGGEDROUTE_HAS_CCCL
     const std::string vllm_dependency =
         "vllm@837eae64580c885101ee95b073aafb27a485e7ce; " + cccl_revision();
@@ -344,19 +346,31 @@ std::vector<std::string> available_suites() { return {"chain_from_tokens", "chai
 
 std::vector<VariantDescriptor> available_suite_variant_descriptors(const std::string& suite_name) {
   if (suite_name == "chain_from_tokens" || suite_name == "chain_from_logits") {
-    return {naive_descriptor("sequential_cuda_naive_chain"),
-            descriptor("cuda_permute_candidate", "in_tree_cuda_candidate",
-                       "raggedroute.chain.permute_candidate.v1", "not_applicable",
-                       "sequential_chain_with_optimized_permute"),
-            descriptor("cuda_grouped_sm86_fp32_v1", "in_tree_cuda",
-                       "raggedroute.chain.grouped_benchmark_candidate.v1", "not_applicable",
-                       "naive_chain_with_benchmark_only_grouped_sm86_fp32_v1"),
-            descriptor("cuda_unpermute_candidate", "in_tree_cuda_research",
-                       "raggedroute.chain.unpermute_candidate.v1", "not_applicable",
-                       "naive_chain_with_warp_token_vec4_unpermute"),
-            descriptor("cuda_fused_histogram_scan", "in_tree_cuda_candidate",
-                       "raggedroute.chain.fused_histogram_scan_subwarp.v2", "not_applicable",
-                       "chain_with_single_cta_fused_histogram_scan_subwarp")};
+    std::vector<VariantDescriptor> variants = {
+        naive_descriptor("sequential_cuda_naive_chain"),
+        descriptor("cuda_permute_candidate", "in_tree_cuda_candidate",
+                   "raggedroute.chain.permute_candidate.v1", "not_applicable",
+                   "sequential_chain_with_optimized_permute"),
+        descriptor("cuda_grouped_sm86_fp32_v1", "in_tree_cuda",
+                   "raggedroute.chain.grouped_benchmark_candidate.v1", "not_applicable",
+                   "naive_chain_with_benchmark_only_grouped_sm86_fp32_v1"),
+        descriptor("cuda_unpermute_candidate", "in_tree_cuda_research",
+                   "raggedroute.chain.unpermute_candidate.v1", "not_applicable",
+                   "naive_chain_with_warp_token_vec4_unpermute"),
+        descriptor("cuda_fused_histogram_scan", "in_tree_cuda_candidate",
+                   "raggedroute.chain.fused_histogram_scan_subwarp.v2", "not_applicable",
+                   "chain_with_single_cta_fused_histogram_scan_subwarp")};
+    if (suite_name == "chain_from_tokens") {
+      variants.push_back(descriptor(
+          "cuda_all_candidates_chain", "in_tree_cuda_research",
+          "raggedroute.chain.all_selected_candidates.v1", "not_applicable",
+          "dense_v3_topk_v4_fused_hist_scan_permute_candidate_grouped_sm86_unpermute_vec4"));
+      variants.push_back(descriptor(
+          "library_all_baselines_chain", "mixed_external_libraries",
+          "raggedroute.chain.all_repository_libraries.diagnostic.v1", "not_applicable",
+          "cublaslt_cub_top2_cub_hist_scan_vllm_permute_cutlass_grouped_vllm_unpermute"));
+    }
+    return variants;
   }
   return {};
 }

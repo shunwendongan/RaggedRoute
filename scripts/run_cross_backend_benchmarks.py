@@ -129,6 +129,37 @@ def command_for_triton(python: pathlib.Path, repo: pathlib.Path, suite: dict[str
     return command
 
 
+def command_for_triton_docker(docker: pathlib.Path, image: str, repo: pathlib.Path,
+                              suite: dict[str, Any], case: dict[str, Any], level: str,
+                              process_run: int, run_id: str, output: pathlib.Path,
+                              git_sha: str, git_dirty: bool) -> list[str]:
+    try:
+        relative_output = output.relative_to(repo)
+    except ValueError as error:
+        raise ValueError("Docker Triton output must be inside the repository") from error
+    cache = output.parent / "triton-cache"
+    cache.mkdir(parents=True, exist_ok=True)
+    container_cache = pathlib.PurePosixPath("/workspace") / pathlib.PurePosixPath(
+        cache.relative_to(repo).as_posix()
+    )
+    container_output = pathlib.PurePosixPath("/workspace") / pathlib.PurePosixPath(
+        relative_output.as_posix()
+    )
+    inner = command_for_triton(
+        pathlib.PurePosixPath("/usr/bin/python3"), pathlib.PurePosixPath("/workspace"), suite, case,
+        level, process_run, run_id, container_output
+    )
+    return [
+        str(docker), "run", "--rm", "--gpus", "all", "--ipc=host",
+        "--ulimit", "memlock=-1", "--ulimit", "stack=67108864",
+        "-e", f"RAGGEDROUTE_BUILD_GIT_SHA={git_sha}",
+        "-e", f"RAGGEDROUTE_BUILD_GIT_DIRTY={'true' if git_dirty else 'false'}",
+        "-e", f"TRITON_CACHE_DIR={container_cache}",
+        "-v", f"{repo}:/workspace", "-w", "/workspace",
+        "--entrypoint", "/usr/bin/python3", image, *[str(part) for part in inner[1:]],
+    ]
+
+
 def output_path_for_cpp(binary: pathlib.Path, output: pathlib.Path) -> pathlib.Path:
     """Return a path the native C++ benchmark can open.
 
@@ -150,6 +181,9 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--binary", required=True, type=pathlib.Path)
     parser.add_argument("--python", dest="python_executable", type=pathlib.Path, default=pathlib.Path(sys.executable))
+    parser.add_argument("--triton-docker-image")
+    parser.add_argument("--docker-executable", type=pathlib.Path,
+                        default=pathlib.Path("C:/Program Files/Docker/Docker/resources/bin/docker.exe"))
     parser.add_argument("--config", required=True, type=pathlib.Path)
     parser.add_argument("--output", required=True, type=pathlib.Path)
     parser.add_argument("--run-id")
@@ -160,9 +194,12 @@ def main() -> int:
     # Preserve a venv's ``bin/python`` symlink. Resolving it selects the base
     # interpreter and silently drops the venv's Torch/Triton site-packages.
     binary, python_executable, output = args.binary.resolve(), args.python_executable, args.output.resolve()
+    docker_executable = args.docker_executable.resolve()
     if not args.dry_run and not binary.is_file():
         raise FileNotFoundError(binary)
-    if not python_executable.is_file():
+    if args.triton_docker_image and not docker_executable.is_file():
+        raise FileNotFoundError(docker_executable)
+    if not args.triton_docker_image and not python_executable.is_file():
         raise FileNotFoundError(python_executable)
     if output.exists() and not args.dry_run:
         raise FileExistsError(f"refusing to append to existing output: {output}")
@@ -173,13 +210,23 @@ def main() -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     cpp_output = output_path_for_cpp(binary, output)
     gpu_query = ["nvidia-smi", "--query-gpu=name,uuid,pci.bus_id,driver_version,memory.total,pstate,clocks.current.sm,clocks.current.memory,power.draw,power.limit,temperature.gpu", "--format=csv,noheader,nounits"]
-    manifest = {"schema_version": MANIFEST, "created_utc": dt.datetime.now(dt.timezone.utc).isoformat(), "run_id": run_id, "suite": suite, "suite_path": str(args.config.resolve()), "binary": str(binary), "python": str(python_executable), "output": str(output), "repo_commit": sha, "repo_dirty": dirty, "repo_branch": branch, "host": os.environ.get("COMPUTERNAME") or os.uname().nodename, "gpu_snapshot_start": command_output(gpu_query, repo), "commands": []}
+    manifest = {"schema_version": MANIFEST, "created_utc": dt.datetime.now(dt.timezone.utc).isoformat(), "run_id": run_id, "suite": suite, "suite_path": str(args.config.resolve()), "binary": str(binary), "python": str(python_executable), "triton_docker_image": args.triton_docker_image, "docker_executable": str(docker_executable) if args.triton_docker_image else None, "output": str(output), "repo_commit": sha, "repo_dirty": dirty, "repo_branch": branch, "host": os.environ.get("COMPUTERNAME") or os.uname().nodename, "gpu_snapshot_start": command_output(gpu_query, repo), "commands": []}
     work = [(case, variant, level) for case in suite["cases"] for variant in case["variants"] for level in case["levels"]]
     for process_run in range(1, int(suite.get("process_runs", 1)) + 1):
         ordered = list(work)
         random.Random(int(suite.get("common", {}).get("seed", 20260729)) + process_run).shuffle(ordered)
         for case, variant, level in ordered:
-            command = command_for_cpp(binary, suite, case, variant, level, process_run, run_id, cpp_output, sha if suite["protocol"] == "release" else "") if variant["backend"] == "cpp" else command_for_triton(python_executable, repo, suite, case, level, process_run, run_id, output)
+            if variant["backend"] == "cpp":
+                command = command_for_cpp(binary, suite, case, variant, level, process_run, run_id,
+                                          cpp_output, sha if suite["protocol"] == "release" else "")
+            elif args.triton_docker_image:
+                command = command_for_triton_docker(
+                    docker_executable, args.triton_docker_image, repo, suite, case, level,
+                    process_run, run_id, output, sha[:12], dirty
+                )
+            else:
+                command = command_for_triton(python_executable, repo, suite, case, level,
+                                             process_run, run_id, output)
             manifest["commands"].append(command)
             print("+", shlex.join(command), flush=True)
             if not args.dry_run:

@@ -8,6 +8,7 @@ import ctypes
 import datetime as dt
 import json
 import math
+import os
 import pathlib
 import statistics
 import subprocess
@@ -52,6 +53,14 @@ ALGORITHMS = {
 
 
 def git_output(*args: str) -> str:
+    if args == ("rev-parse", "--short=12", "HEAD") and os.environ.get(
+        "RAGGEDROUTE_BUILD_GIT_SHA"
+    ):
+        return os.environ["RAGGEDROUTE_BUILD_GIT_SHA"][:12]
+    if args == ("status", "--porcelain") and os.environ.get(
+        "RAGGEDROUTE_BUILD_GIT_DIRTY"
+    ) is not None:
+        return "container-mounted-worktree" if os.environ["RAGGEDROUTE_BUILD_GIT_DIRTY"] == "true" else ""
     return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
 
 

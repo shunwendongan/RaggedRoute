@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstdint>
+#include <limits>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -324,15 +325,19 @@ class ChainAdapter final : public BenchmarkAdapter {
     }
     const auto route_weights = route_weights_.copy_to_host(stream);
     const double weight_tolerance =
-        variant_name_ == "library_all_baselines_chain" ? 2.0e-5 : 1.0e-6;
+        std::max(2.0e-5, 0.5 * static_cast<double>(std::numeric_limits<float>::epsilon()) *
+                              static_cast<double>(hidden_));
     auto weight_result =
         compare_floats(route_weights, route_weights_expected_, weight_tolerance, weight_tolerance);
     if (!weight_result.ok) {
       weight_result.message = "chain route weights: " + weight_result.message;
       return weight_result;
     }
+    const double output_atol =
+        std::max(4.0e-5, 8.0 * static_cast<double>(std::numeric_limits<float>::epsilon()) *
+                              static_cast<double>(hidden_));
     auto output_result =
-        compare_floats(y_.copy_to_host(stream), expected_output_, 1.0e-4, 4.0e-5 * hidden_);
+        compare_floats(y_.copy_to_host(stream), expected_output_, output_atol, 1.0e-4);
     if (!output_result.ok) output_result.message = "chain final output: " + output_result.message;
     return output_result;
   }

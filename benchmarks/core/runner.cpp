@@ -314,7 +314,16 @@ BenchmarkRecord run_benchmark(BenchmarkAdapter& adapter, const RunOptions& optio
     cuda_check(cudaStreamSynchronize(stream), "validation invocation sync");
     validation = adapter.validate(stream);
     if (!validation.ok) {
-      throw std::runtime_error("post-benchmark validation failed: " + validation.message);
+      std::ostringstream error;
+      error << "post-benchmark validation failed: " << validation.message;
+      if (validation.max_abs_error.has_value()) {
+        error << " (max_abs_error=" << *validation.max_abs_error;
+        if (validation.max_rel_error.has_value()) {
+          error << ", max_rel_error=" << *validation.max_rel_error;
+        }
+        error << ')';
+      }
+      throw std::runtime_error(error.str());
     }
   }
 

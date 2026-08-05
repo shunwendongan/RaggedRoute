@@ -1,0 +1,53 @@
+{
+  "schema_version": "raggedroute.cross_backend_suite.v1",
+  "suite_id": "rtx3080_realistic_moe_l3_release_v1",
+  "protocol": "release",
+  "process_runs": 3,
+  "common": {"warmup": 20, "samples": 30, "kernel_repeats": 3, "seed": 20260805, "cache_mode": "warm"},
+  "cases": [
+    {
+      "id": "moe.mixtral_decode_exact.t8_e8_k4096_n14336",
+      "suite": "chain_from_tokens",
+      "levels": ["l3"],
+      "params": {"T": 8, "E": 8, "K": 4096, "N": 14336},
+      "variants": [
+        {"name": "triton_reference", "backend": "triton", "reference_baseline": true},
+        {"name": "cuda_all_candidates_chain", "backend": "cpp", "reference_baseline": false},
+        {"name": "library_all_baselines_chain", "backend": "cpp", "reference_baseline": false}
+      ]
+    },
+    {
+      "id": "moe.continuous_decode_proxy.t128_e8_k1024_n3584",
+      "suite": "chain_from_tokens",
+      "levels": ["l3"],
+      "params": {"T": 128, "E": 8, "K": 1024, "N": 3584},
+      "variants": [
+        {"name": "triton_reference", "backend": "triton", "reference_baseline": true},
+        {"name": "cuda_all_candidates_chain", "backend": "cpp", "reference_baseline": false},
+        {"name": "library_all_baselines_chain", "backend": "cpp", "reference_baseline": false}
+      ]
+    },
+    {
+      "id": "moe.chunked_prefill_proxy.t512_e8_k512_n1792",
+      "suite": "chain_from_tokens",
+      "levels": ["l3"],
+      "params": {"T": 512, "E": 8, "K": 512, "N": 1792},
+      "variants": [
+        {"name": "triton_reference", "backend": "triton", "reference_baseline": true},
+        {"name": "cuda_all_candidates_chain", "backend": "cpp", "reference_baseline": false},
+        {"name": "library_all_baselines_chain", "backend": "cpp", "reference_baseline": false}
+      ]
+    },
+    {
+      "id": "moe.finegrained_prefill_proxy.t1024_e64_k256_n512",
+      "suite": "chain_from_tokens",
+      "levels": ["l3"],
+      "params": {"T": 1024, "E": 64, "K": 256, "N": 512},
+      "variants": [
+        {"name": "triton_reference", "backend": "triton", "reference_baseline": true},
+        {"name": "cuda_all_candidates_chain", "backend": "cpp", "reference_baseline": false},
+        {"name": "library_all_baselines_chain", "backend": "cpp", "reference_baseline": false}
+      ]
+    }
+  ]
+}

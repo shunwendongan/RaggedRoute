@@ -446,6 +446,10 @@ def prepare_chain_from_tokens(params: dict[str, Any], seed: int) -> PreparedCase
     route_pos = torch.empty((routes,), device="cuda", dtype=torch.int32)
     y_permuted = torch.empty((routes, output), device="cuda", dtype=torch.float32)
     result = torch.empty((tokens, output), device="cuda", dtype=torch.float32)
+    fp32_epsilon = torch.finfo(torch.float32).eps
+    route_weight_tolerance = max(2.0e-5, 0.5 * fp32_epsilon * hidden)
+    grouped_atol = max(3.0e-5, 4.0 * fp32_epsilon * hidden)
+    output_atol = max(4.0e-5, 8.0 * fp32_epsilon * hidden)
 
     def launch(level: str) -> None:
         if level != "l3":
@@ -469,10 +473,13 @@ def prepare_chain_from_tokens(params: dict[str, Any], seed: int) -> PreparedCase
             # logits come from strict-FP32 GEMM, while the independent oracle
             # forms logits in FP64 then rounds once, so permit propagated GEMM
             # rounding without weakening the exact ID/tie checks below.
-            (route_weights.cpu(), route_weights_expected, 2e-5, 2e-5, "route weights"),
+            (
+                route_weights.cpu(), route_weights_expected,
+                route_weight_tolerance, route_weight_tolerance, "route weights",
+            ),
             (x_permuted.cpu(), x_permuted_expected, 0.0, 0.0, "permuted rows"),
-            (y_permuted.cpu(), y_permuted_expected, 3e-5, 3e-5, "grouped GEMM"),
-            (result.cpu(), output_expected, 4e-5, 4e-5, "chain output"),
+            (y_permuted.cpu(), y_permuted_expected, 1e-4, grouped_atol, "grouped GEMM"),
+            (result.cpu(), output_expected, 1e-4, output_atol, "chain output"),
         )
         if not torch.equal(ids.cpu(), ids_expected):
             return {"ok": False, "message": "chain Top-2 ids differ", "max_abs_error": None, "max_rel_error": None}

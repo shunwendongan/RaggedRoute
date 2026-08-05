@@ -1,0 +1,10 @@
+Start (ns),Duration (ns),CorrId,GrdX,GrdY,GrdZ,BlkX,BlkY,BlkZ,Reg/Trd,StcSMem (MB),DymSMem (MB),Bytes (MB),Throughput (MB/s),SrcMemKd,DstMemKd,Device,Ctx,GreenCtx,Strm,Name
+6003541,4272,2640,32,1,1,128,1,1,48,0.000,0.008,,,,,NVIDIA GeForce RTX 3080 (0),1,,7,_dense_gemm_kernel
+6010162,1648,2646,512,1,1,32,1,1,19,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,7,_top2_selected_softmax_kernel
+6068833,1007,2651,1,1,1,128,1,1,16,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,7,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::FillFunctor<int>, std::array<char *, (unsigned long)1>>(int, T2, T3)"
+6099405,1891,2661,1,1,1,128,1,1,38,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,7,_histogram_kernel
+6139831,1251,2666,1,1,1,32,1,1,16,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,7,_exclusive_scan_kernel
+6172813,1922,2673,64,1,1,128,1,1,27,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,7,_route_map_kernel
+6193041,1770,2679,1024,1,1,128,1,1,16,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,7,_permute_rows_kernel
+6237312,175342,2686,64,64,1,256,1,1,52,0.000,0.025,,,,,NVIDIA GeForce RTX 3080 (0),1,,7,_grouped_gemm_kernel
+6414943,1525,2693,1,128,1,256,1,1,23,0.000,0.000,,,,,NVIDIA GeForce RTX 3080 (0),1,,7,_unpermute_kernel

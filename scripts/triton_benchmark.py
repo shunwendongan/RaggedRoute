@@ -601,9 +601,13 @@ def run(args: argparse.Namespace) -> dict[str, Any] | None:
         prepared.launch(args.level)
     torch.cuda.synchronize()
     if args.profile_once:
+        if args.profiler_api_capture:
+            torch.cuda.cudart().cudaProfilerStart()
         prepared.prepare_sample(args.level)
         prepared.launch(args.level)
         torch.cuda.synchronize()
+        if args.profiler_api_capture:
+            torch.cuda.cudart().cudaProfilerStop()
         return None
 
     samples: list[float] = []
@@ -678,6 +682,7 @@ def main() -> int:
     parser.add_argument("--output", type=pathlib.Path)
     parser.add_argument("--param", action="append", default=[])
     parser.add_argument("--profile-once", action="store_true")
+    parser.add_argument("--profiler-api-capture", action="store_true")
     args = parser.parse_args()
     if args.suite is not None:
         args.operator = args.suite

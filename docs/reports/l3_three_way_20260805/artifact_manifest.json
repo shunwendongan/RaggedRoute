@@ -1,0 +1,170 @@
+{
+  "schema_version": "raggedroute.artifact_manifest.v1",
+  "artifacts": [
+    {
+      "path": "artifacts/release_20260805_204227.jsonl",
+      "bytes": 29357,
+      "sha256": "20c34c41fba27f4828b0c6affc39e5671ba72cc2c2b4bd4aebbdc736bdd35e41"
+    },
+    {
+      "path": "artifacts/release_20260805_204227.jsonl.manifest.json",
+      "bytes": 13448,
+      "sha256": "e5c99baf838184accc93cdb61db3cf1217fa6e64f634e27949725553d413dde1"
+    },
+    {
+      "path": "artifacts/comparison_20260805_204227.json",
+      "bytes": 2926,
+      "sha256": "f4abd3015022ca22fd38490c20444858647b59bbaeca2a92de40c16eb1cc243a"
+    },
+    {
+      "path": "artifacts/verification_ctest.txt",
+      "bytes": 3298,
+      "sha256": "e37d49b770575cd0a2dad4e814e2eadedde5278d349c14ccce3c97c2224b881f"
+    },
+    {
+      "path": "artifacts/prior_single_operator_report/RaggedRoute_7ops_library_comparison_20260805_193637.md",
+      "bytes": 25460,
+      "sha256": "eddb16d5214dbf785853a7d48dc5eb6fafdecc6ae14a5321e87461dba1d3a944"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_nsys/manifest.json",
+      "bytes": 5200,
+      "sha256": "c19259c4f458da903c4e18edc48e1c3a62e33758329a21ab022743a3404d101b"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_nsys/analysis/nsys_cuda_gpu_kern_sum.csv",
+      "bytes": 1168,
+      "sha256": "fed0c50165a229d00c2f637bfa7f8090f7efa887013e22f4c5ecdf0d2b800bde"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_nsys/analysis/timeline_cuda_gpu_trace.csv",
+      "bytes": 31421,
+      "sha256": "ca6cc34d334e13e57ba1be3fe8de63fb91b51064175e6c0fb9119678c8455a82"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_nsys/analysis/nsys_hotspots.json",
+      "bytes": 3681,
+      "sha256": "12964539e75229dc5607a41b2fe039fd754b92e71c4392c636b2ac11a3cf03ac"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_nsys/reports/system.nsys-rep",
+      "bytes": 80077,
+      "sha256": "9ac3914159d91c50b1a55ef01ac38b597967bd00c255703929b63bd15d614945"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_ncu/manifest.json",
+      "bytes": 4153,
+      "sha256": "a23cae69b9b92360be79341e59ba91a5c649e88d7a2de6c9405e75a74a99b2d1"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_ncu/analysis/ncu_basic_details.txt",
+      "bytes": 7184,
+      "sha256": "4ca18681ced0160e6fa1d9916fceca8506387ad822c8b9bd38a2b8057fa92f12"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_ncu/analysis/ncu_basic_raw.csv",
+      "bytes": 31891,
+      "sha256": "3fcd7f9738c4765911088f6325b436ab5afe26df0a78a2bcdacba53f511eb32c"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_ncu/analysis/supported_key_metrics.json",
+      "bytes": 1786,
+      "sha256": "987a9d545259ab7fbd78f7e4b71110f051c550321628e8ab3781e0fbe7410438"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_ncu/reports/ncu_basic.ncu-rep",
+      "bytes": 189071,
+      "sha256": "53e4f9389a60e5899e262a06e1c8c97443e4f1a0150886cd8cecef0b7beee7f4"
+    },
+    {
+      "path": "artifacts/profile/library_nsys/manifest.json",
+      "bytes": 5146,
+      "sha256": "dd55b0b0e5cee297c11d8ac2c992aa630e0c33aa1769289823e0a6b8a30e5827"
+    },
+    {
+      "path": "artifacts/profile/library_nsys/analysis/nsys_cuda_gpu_kern_sum.csv",
+      "bytes": 7483,
+      "sha256": "c672111091ca08bc857700d2e191f8a5e230b4ef8676ecb5b6aea29c18383eb5"
+    },
+    {
+      "path": "artifacts/profile/library_nsys/analysis/timeline_cuda_gpu_trace.csv",
+      "bytes": 164258,
+      "sha256": "32f9cd0a65435239c0d1d68fedf5ee0990113757ea8c0c715e7d612bec4760b5"
+    },
+    {
+      "path": "artifacts/profile/library_nsys/analysis/nsys_hotspots.json",
+      "bytes": 17587,
+      "sha256": "37e044b7d2781187ebc50dd790c8a45b91b7855281521d83ab307ae7d2f48dcd"
+    },
+    {
+      "path": "artifacts/profile/library_nsys/reports/system.nsys-rep",
+      "bytes": 89167,
+      "sha256": "b37598d04ef8bc4eb1db19fb4113c92e893256697c41beb858cb9f5fc3ed1b67"
+    },
+    {
+      "path": "artifacts/profile/library_ncu/manifest.json",
+      "bytes": 4072,
+      "sha256": "fd86812b39d9624657e5adf63efee499f88ed1348eb060e324473c61a1a4a713"
+    },
+    {
+      "path": "artifacts/profile/library_ncu/analysis/ncu_basic_details.txt",
+      "bytes": 9820,
+      "sha256": "2f522604f0b8ff43fdd095af27db74040c6d348ef5d4632bf3ca32fadbde75c4"
+    },
+    {
+      "path": "artifacts/profile/library_ncu/analysis/ncu_basic_raw.csv",
+      "bytes": 33722,
+      "sha256": "2a2d40b16d70cf1497b2ac06f47e54a9af5ed2818ff40c1aaf9c3316e878eb71"
+    },
+    {
+      "path": "artifacts/profile/library_ncu/analysis/supported_key_metrics.json",
+      "bytes": 1786,
+      "sha256": "987a9d545259ab7fbd78f7e4b71110f051c550321628e8ab3781e0fbe7410438"
+    },
+    {
+      "path": "artifacts/profile/library_ncu/reports/ncu_basic.ncu-rep",
+      "bytes": 345699,
+      "sha256": "f0a5bf1eec3d28ec9a5ba90604b341c9c96ee635919c106d37739caaee7d6e9b"
+    },
+    {
+      "path": "artifacts/profile/triton_nsys_capture/nsys_cuda_api_sum.csv",
+      "bytes": 396,
+      "sha256": "e3c3d8419d39949a95337c98afcb0d7cdb1436dfaf19d4bc7d5655ae28e1f47d"
+    },
+    {
+      "path": "artifacts/profile/triton_nsys_capture/nsys_cuda_gpu_kern_sum.csv",
+      "bytes": 756,
+      "sha256": "153e78edc04e8eef47249754fa3a18df810ce4ca8c0b7040b17fc2da0617be61"
+    },
+    {
+      "path": "artifacts/profile/triton_nsys_capture/nsys_cuda_gpu_trace.csv",
+      "bytes": 1246,
+      "sha256": "c268452df837e30581074601d1262cdd69d82de2fd6aa44b266a83901621e0be"
+    },
+    {
+      "path": "artifacts/profile/triton_nsys_capture/system.nsys-rep",
+      "bytes": 46695,
+      "sha256": "60e1053d8fcea8a2625ac86dc6c200b2abdd42cde7fee4fdbd735b7ac4d557ef"
+    },
+    {
+      "path": "artifacts/profile/triton_ncu/ncu_basic_details.txt",
+      "bytes": 5274,
+      "sha256": "8e129bbdda84024d656f0312d9849f648c771622e1dd4a7dffdef7e85a8aa51e"
+    },
+    {
+      "path": "artifacts/profile/triton_ncu/ncu_basic_raw.csv",
+      "bytes": 31740,
+      "sha256": "23f9286bbbe96c935a61b6b36aa6ff823c2a1e616e335800db2bb232d84f6f17"
+    },
+    {
+      "path": "artifacts/profile/triton_ncu/ncu_basic.ncu-rep",
+      "bytes": 115625,
+      "sha256": "80b8be3613c49e476a91b6ec2b9c531fadf501c55e42b2337daa6d017916699a"
+    },
+    {
+      "path": "report_data.json",
+      "bytes": 12972,
+      "sha256": "fc0d59611473a4412dfa049491bcedd077907d7b919a48626a1147f3d87864c0"
+    }
+  ]
+}

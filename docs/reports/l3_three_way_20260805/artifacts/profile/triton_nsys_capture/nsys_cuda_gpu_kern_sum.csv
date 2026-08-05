@@ -1,0 +1,10 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+92.0,175342,1,175342.0,175342.0,175342,175342,0.0,_grouped_gemm_kernel
+2.2,4272,1,4272.0,4272.0,4272,4272,0.0,_dense_gemm_kernel
+1.0,1922,1,1922.0,1922.0,1922,1922,0.0,_route_map_kernel
+1.0,1891,1,1891.0,1891.0,1891,1891,0.0,_histogram_kernel
+0.9,1770,1,1770.0,1770.0,1770,1770,0.0,_permute_rows_kernel
+0.9,1648,1,1648.0,1648.0,1648,1648,0.0,_top2_selected_softmax_kernel
+0.8,1525,1,1525.0,1525.0,1525,1525,0.0,_unpermute_kernel
+0.7,1251,1,1251.0,1251.0,1251,1251,0.0,_exclusive_scan_kernel
+0.5,1007,1,1007.0,1007.0,1007,1007,0.0,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::FillFunctor<int>, std::array<char *, (unsigned long)1>>(int, T2, T3)"

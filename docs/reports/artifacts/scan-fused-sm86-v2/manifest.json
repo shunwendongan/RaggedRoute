@@ -1,0 +1,23 @@
+{
+  "schema_version": "raggedroute.evidence_bundle.v2",
+  "run_id": "scan-fused-sm86-v2",
+  "kind": "cuda_operator_performance",
+  "provenance": {"source_git_sha": "fe21c7470e849a2eab51c55c1338408ca18d0de2", "git_clean": false},
+  "hardware": {"status": "measured", "gpu": "NVIDIA GeForce RTX 3080", "compute_capability": "8.6", "sm_count": 68},
+  "toolchain": {"status": "measured", "cuda": "13.3.73", "cub": "3.3.4", "ncu": "2026.2.1", "nsys": "2026.1.3"},
+  "semantic_contract": {"dtype": "exact_int32", "experts": "1..64", "workspace_bytes": 0, "stream": "caller"},
+  "commands": [
+    {"role": "build", "command": "cmake --build out/build/rtx3080-sm86-release --config Release --parallel 4", "status": "passed"},
+    {"role": "ctest", "command": "ctest --preset test-rtx3080-sm86-release --output-on-failure", "status": "passed"},
+    {"role": "profile", "command": "NSYS/NCU F2 and baseline post-warmup captures", "status": "diagnostic"},
+    {"role": "release_benchmark", "command": "configs/operators/scan/benchmark/fused_v2_promoted.json", "status": "contaminated_by_concurrent_gpu_work"}
+  ],
+  "validation": {"status": "correctness_passed", "sanitizers": "final F2-only source passed", "performance_gate": "not_passed"},
+  "decision": {"status": "draft_candidate_submitted_per_user_request", "winner": "cuda_fused_histogram_scan", "strict_promotion": false},
+  "release_asset": {"tag": "not-created", "name": "scan-fused-sm86-v2-raw.zip", "url": "https://github.com/shunwendongan/RaggedRoute/releases/download/not-created/scan-fused-sm86-v2-raw.zip", "bytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "immutable": true},
+  "files": [
+    {"path": "README.md", "role": "evidence_index", "bytes": 527, "sha256": "d437d41c0b34cf364e1877c508142d5854f30733041eded99e19bd65f628154a", "storage": "git"},
+    {"path": "comparison.csv", "role": "compact_comparison", "bytes": 532, "sha256": "2c2e3c663db5bff80b4cc395dcc33a6be58530a7a140a7606cd1e3a6b6d94800", "storage": "git"},
+    {"path": "profile-summary.json", "role": "compact_profile_metrics", "bytes": 564, "sha256": "2d766b3d932c250ac7c854cd9ec6559c6a2c6352986eb1ca040d9134324dc291", "storage": "git"}
+  ]
+}

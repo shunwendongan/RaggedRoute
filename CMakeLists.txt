@@ -76,6 +76,7 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     src/histogram/cuda_naive/baseline.cu
     src/histogram/cuda_candidate/optimized.cu
     src/scan/cuda_naive/baseline.cu
+    src/scan/cuda_candidate/optimized.cu
     src/permute/cuda_naive/baseline.cu
     src/permute/cuda_candidate/optimized.cu
     src/grouped_gemm/cuda_naive/baseline.cu
@@ -205,6 +206,7 @@ if(RAGGEDROUTE_ENABLE_CUDA)
       benchmarks/adapters/topk_gate_adapter.cpp
       benchmarks/adapters/histogram_adapter.cpp
       benchmarks/adapters/exclusive_scan_adapter.cpp
+      benchmarks/adapters/histogram_exclusive_scan_adapter.cpp
       benchmarks/adapters/token_permute_adapter.cpp
       benchmarks/adapters/grouped_gemm_adapter.cpp
       benchmarks/adapters/unpermute_adapter.cpp
@@ -215,6 +217,8 @@ if(RAGGEDROUTE_ENABLE_CUDA)
       "${CMAKE_CURRENT_SOURCE_DIR}/src"
       "${CMAKE_CURRENT_SOURCE_DIR}/src/dense_gemm"
       "${CMAKE_CURRENT_SOURCE_DIR}/src/topk_gate"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/histogram"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/scan"
       "${CMAKE_CURRENT_SOURCE_DIR}/src/permute"
       "${CMAKE_CURRENT_SOURCE_DIR}/src/unpermute")
     target_link_libraries(raggedroute_benchmark_core PUBLIC

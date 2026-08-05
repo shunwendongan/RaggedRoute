@@ -76,8 +76,9 @@ def check_layout(files: list[pathlib.Path]) -> list[str]:
         if len(parts) >= 3 and parts[0] == "src" and parts[1] in OPERATORS and item.endswith((".cu", ".cpp", ".py")):
             if parts[2] not in SOURCE_ROLES and not (len(parts) == 3 and parts[2] == "operator.cpp"):
                 errors.append(f"operator source has no recognized role directory: {item}")
-    if any(item.startswith("src/scan/cuda_candidate/") for item in relative):
-        errors.append("removed Scan candidate directory is tracked")
+    # A measured fused Histogram->Scan implementation is now a first-class
+    # SM86 candidate. Its evidence and promotion decision live in docs/reports;
+    # the normalized cuda_candidate role remains valid for the source kernel.
     direct_configs = sorted(
         item for item in relative
         if pathlib.PurePosixPath(item).parent.as_posix() == "configs" and item.endswith(".json")

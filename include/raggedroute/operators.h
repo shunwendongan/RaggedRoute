@@ -58,6 +58,17 @@ struct ExclusiveScanArgs {
   KernelSelection kernel;
 };
 
+// Fused routing-metadata primitive. counts and offsets are distinct outputs;
+// the input and both outputs must be pairwise non-overlapping.
+struct HistogramExclusiveScanArgs {
+  const std::int32_t* expert_ids = nullptr;
+  std::int32_t* counts = nullptr;
+  std::int32_t* offsets = nullptr;
+  int route_pairs = 0;
+  int experts = 0;
+  KernelSelection kernel;
+};
+
 struct TokenPermuteArgs {
   ConstTensorView x;
   const std::int32_t* expert_ids = nullptr;
@@ -104,6 +115,8 @@ std::size_t get_dense_gemm_workspace_size(const DenseGemmArgs& args) noexcept;
 std::size_t get_topk_gate_workspace_size(const TopKGateArgs& args) noexcept;
 std::size_t get_histogram_workspace_size(const HistogramArgs& args) noexcept;
 std::size_t get_exclusive_scan_workspace_size(const ExclusiveScanArgs& args) noexcept;
+std::size_t get_histogram_exclusive_scan_workspace_size(
+    const HistogramExclusiveScanArgs& args) noexcept;
 std::size_t get_token_permute_workspace_size(const TokenPermuteArgs& args) noexcept;
 std::size_t get_grouped_gemm_workspace_size(const GroupedGemmArgs& args) noexcept;
 std::size_t get_unpermute_workspace_size(const UnpermuteArgs& args) noexcept;
@@ -115,6 +128,8 @@ Status dense_gemm(const DenseGemmArgs& args, const RuntimeContext& context) noex
 Status topk_gate(const TopKGateArgs& args, const RuntimeContext& context) noexcept;
 Status histogram(const HistogramArgs& args, const RuntimeContext& context) noexcept;
 Status exclusive_scan(const ExclusiveScanArgs& args, const RuntimeContext& context) noexcept;
+Status histogram_exclusive_scan(const HistogramExclusiveScanArgs& args,
+                                const RuntimeContext& context) noexcept;
 Status token_permute(const TokenPermuteArgs& args, const RuntimeContext& context) noexcept;
 Status grouped_gemm(const GroupedGemmArgs& args, const RuntimeContext& context) noexcept;
 Status unpermute(const UnpermuteArgs& args, const RuntimeContext& context) noexcept;

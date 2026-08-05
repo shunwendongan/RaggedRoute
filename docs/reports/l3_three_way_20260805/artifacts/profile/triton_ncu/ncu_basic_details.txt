@@ -1,0 +1,84 @@
+[14] python3.12@127.0.0.1
+  _grouped_gemm_kernel (64, 64, 1)x(256, 1, 1), Context 1, Stream 7, Device 0, CC 8.6
+    Warning: Data collection happened without fixed GPU frequencies. Profiling results may be inconsistent.
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz         9.24
+    SM Frequency                    Ghz         1.91
+    Elapsed Cycles                cycle       353847
+    Memory Throughput                 %        85.74
+    DRAM Throughput                   %         4.62
+    Duration                         us       184.93
+    L1/TEX Cache Throughput           %        87.21
+    L2 Cache Throughput               %        31.02
+    SM Active Cycles              cycle    347021.76
+    Compute (SM) Throughput           %        85.74
+    ----------------------- ----------- ------------
+
+    INF   This workload is utilizing greater than 80.0% of the available compute or memory performance of this device.  
+          To further improve performance, work will likely need to be shifted from the most utilized to another unit.   
+          Start by analyzing workloads in the Compute Workload Analysis section.                                        
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   256
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                   4096
+    Registers Per Thread             register/thread              52
+    Shared Memory Configuration Size           Kbyte          102.40
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block      Kbyte/block           24.58
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              68
+    Stack Size                                                  1024
+    Threads                                   thread         1048576
+    # TPCs                                                        34
+    Enabled TPC IDs                                              all
+    Uses Green Context                                             0
+    Waves Per SM                                               15.06
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Block Limit SM                        block           16
+    Block Limit Registers                 block            4
+    Block Limit Shared Mem                block            4
+    Block Limit Warps                     block            6
+    Theoretical Active Warps per SM        warp           32
+    Theoretical Occupancy                     %        66.67
+    Achieved Occupancy                        %        64.55
+    Achieved Active Warps Per SM           warp        30.99
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 33.33%                                                                                    
+          The 8.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 12. This kernel's theoretical occupancy (66.7%) is limited by the number of required      
+          registers, and the required amount of shared memory.                                                          
+
+    Section: GPU and Memory Workload Distribution
+    -------------------------- ----------- ------------
+    Metric Name                Metric Unit Metric Value
+    -------------------------- ----------- ------------
+    Average DRAM Active Cycles       cycle        78960
+    Total DRAM Elapsed Cycles        cycle     17091584
+    Average L1 Active Cycles         cycle    347021.76
+    Total L1 Elapsed Cycles          cycle     24002280
+    Average L2 Active Cycles         cycle    216772.45
+    Total L2 Elapsed Cycles          cycle     13698040
+    Average SM Active Cycles         cycle    347021.76
+    Total SM Elapsed Cycles          cycle     24002280
+    Average SMSP Active Cycles       cycle    346818.18
+    Total SMSP Elapsed Cycles        cycle     96009120
+    -------------------------- ----------- ------------
+
+    OPT   Est. Speedup: 5.251%                                                                                          
+          One or more L2 Slices have a much higher number of active cycles than the average number of active cycles.    
+          Maximum instance value is 8.29% above the average, while the minimum instance value is 2.22% below the        
+          average.                                                                                                      
+

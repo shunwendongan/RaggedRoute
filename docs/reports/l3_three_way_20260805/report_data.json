@@ -1,0 +1,396 @@
+{
+  "schema_version": "raggedroute.l3_three_way_report.v1",
+  "generated_local": "2026-08-05T21:56:00+08:00",
+  "release_record_count": 9,
+  "timelines": {
+    "cuda_candidate": {
+      "span_us": 61.087,
+      "kernel_sum_us": 39.936,
+      "events": [
+        {
+          "start_ns": 405318472,
+          "duration_ns": 5376,
+          "stage": "Dense GEMM",
+          "kernel": "dense_gemm_register_tiled_v3_64x32_async_kernel"
+        },
+        {
+          "start_ns": 405326376,
+          "duration_ns": 2080,
+          "stage": "Top-K Gate",
+          "kernel": "topk_gate_local_pair_two_reduce_kernel"
+        },
+        {
+          "start_ns": 405331240,
+          "duration_ns": 2144,
+          "stage": "Histogram + Scan (fused)",
+          "kernel": "histogram_exclusive_scan_fused_subwarp_kernel"
+        },
+        {
+          "start_ns": 405342920,
+          "duration_ns": 2592,
+          "stage": "Token Permute",
+          "kernel": "token_permute_token_owned_top2_kernel"
+        },
+        {
+          "start_ns": 405349191,
+          "duration_ns": 25728,
+          "stage": "Grouped GEMM",
+          "kernel": "grouped_gemm_register16x32_async_v3_kernel"
+        },
+        {
+          "start_ns": 405377543,
+          "duration_ns": 2016,
+          "stage": "Unpermute",
+          "kernel": "unpermute_warp_token_vec4_kernel"
+        }
+      ]
+    },
+    "library": {
+      "span_us": 90.43,
+      "kernel_sum_us": 63.614,
+      "events": [
+        {
+          "start_ns": 431089695,
+          "duration_ns": 6528,
+          "stage": "Dense GEMM",
+          "kernel": "ampere_sgemm_32x32_sliced1x4_nn"
+        },
+        {
+          "start_ns": 431098815,
+          "duration_ns": 11104,
+          "stage": "Top-K Gate",
+          "kernel": "cub_block_radix_top2_kernel"
+        },
+        {
+          "start_ns": 431113631,
+          "duration_ns": 1152,
+          "stage": "Histogram",
+          "kernel": "DeviceHistogramInitKernel"
+        },
+        {
+          "start_ns": 431118463,
+          "duration_ns": 5408,
+          "stage": "Histogram",
+          "kernel": "DeviceHistogramSweepKernel"
+        },
+        {
+          "start_ns": 431127455,
+          "duration_ns": 1503,
+          "stage": "Exclusive Scan",
+          "kernel": "block_scan_kernel"
+        },
+        {
+          "start_ns": 431131582,
+          "duration_ns": 7424,
+          "stage": "Token Permute",
+          "kernel": "DeviceRadixSortSingleTileKernel"
+        },
+        {
+          "start_ns": 431141534,
+          "duration_ns": 2880,
+          "stage": "Token Permute",
+          "kernel": "compute_expert_offsets"
+        },
+        {
+          "start_ns": 431147230,
+          "duration_ns": 3232,
+          "stage": "Token Permute",
+          "kernel": "expand_rows"
+        },
+        {
+          "start_ns": 431153086,
+          "duration_ns": 21599,
+          "stage": "Grouped GEMM",
+          "kernel": "CUTLASS grouped GEMM"
+        },
+        {
+          "start_ns": 431177341,
+          "duration_ns": 2784,
+          "stage": "Unpermute",
+          "kernel": "finalize_routing"
+        }
+      ]
+    },
+    "triton": {
+      "span_us": 412.927,
+      "kernel_sum_us": 190.628,
+      "events": [
+        {
+          "start_ns": 6003541,
+          "duration_ns": 4272,
+          "stage": "Dense GEMM",
+          "kernel": "_dense_gemm_kernel"
+        },
+        {
+          "start_ns": 6010162,
+          "duration_ns": 1648,
+          "stage": "Top-K Gate",
+          "kernel": "_top2_selected_softmax_kernel"
+        },
+        {
+          "start_ns": 6068833,
+          "duration_ns": 1007,
+          "stage": "Histogram reset",
+          "kernel": "fill/reset"
+        },
+        {
+          "start_ns": 6099405,
+          "duration_ns": 1891,
+          "stage": "Histogram",
+          "kernel": "_histogram_kernel"
+        },
+        {
+          "start_ns": 6139831,
+          "duration_ns": 1251,
+          "stage": "Exclusive Scan",
+          "kernel": "_exclusive_scan_kernel"
+        },
+        {
+          "start_ns": 6172813,
+          "duration_ns": 1922,
+          "stage": "Token Permute / map",
+          "kernel": "_route_map_kernel"
+        },
+        {
+          "start_ns": 6193041,
+          "duration_ns": 1770,
+          "stage": "Token Permute / rows",
+          "kernel": "_permute_rows_kernel"
+        },
+        {
+          "start_ns": 6237312,
+          "duration_ns": 175342,
+          "stage": "Grouped GEMM",
+          "kernel": "_grouped_gemm_kernel"
+        },
+        {
+          "start_ns": 6414943,
+          "duration_ns": 1525,
+          "stage": "Unpermute",
+          "kernel": "_unpermute_kernel"
+        }
+      ]
+    }
+  },
+  "ncu": {
+    "cuda_candidate": {
+      "kernel": "grouped_gemm_register16x32_async_v3_kernel",
+      "duration_us": 33.15,
+      "compute_pct": 21.71,
+      "memory_pct": 24.08,
+      "dram_pct": 24.08,
+      "l1_pct": 37.31,
+      "l2_pct": 16.48,
+      "grid": 272.0,
+      "block": 128.0,
+      "registers": 106.0,
+      "waves": 1.0,
+      "theoretical_occupancy_pct": 33.33,
+      "achieved_occupancy_pct": 26.62,
+      "dynamic_shared_kib": 0.0,
+      "warp_stalls": "not_collected",
+      "local_load_store_spills": "not_collected",
+      "pm_sampling": "not_collected"
+    },
+    "library": {
+      "kernel": "CUTLASS grouped GEMM",
+      "duration_us": 22.59,
+      "compute_pct": 55.72,
+      "memory_pct": 40.99,
+      "dram_pct": 34.34,
+      "l1_pct": 46.55,
+      "l2_pct": 12.06,
+      "grid": 64.0,
+      "block": 256.0,
+      "registers": 144.0,
+      "waves": 0.94,
+      "theoretical_occupancy_pct": 16.67,
+      "achieved_occupancy_pct": 16.66,
+      "dynamic_shared_kib": 16.66,
+      "warp_stalls": "not_collected",
+      "local_load_store_spills": "not_collected",
+      "pm_sampling": "not_collected"
+    },
+    "triton": {
+      "kernel": "_grouped_gemm_kernel",
+      "duration_us": 184.93,
+      "compute_pct": 85.74,
+      "memory_pct": 85.74,
+      "dram_pct": 4.62,
+      "l1_pct": 87.21,
+      "l2_pct": 31.02,
+      "grid": 4096.0,
+      "block": 256.0,
+      "registers": 52.0,
+      "waves": 15.06,
+      "theoretical_occupancy_pct": 66.67,
+      "achieved_occupancy_pct": 64.55,
+      "dynamic_shared_kib": 24.58,
+      "warp_stalls": "not_collected",
+      "local_load_store_spills": "not_collected",
+      "pm_sampling": "not_collected"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "artifacts/release_20260805_204227.jsonl",
+      "bytes": 29357,
+      "sha256": "20c34c41fba27f4828b0c6affc39e5671ba72cc2c2b4bd4aebbdc736bdd35e41"
+    },
+    {
+      "path": "artifacts/release_20260805_204227.jsonl.manifest.json",
+      "bytes": 13448,
+      "sha256": "e5c99baf838184accc93cdb61db3cf1217fa6e64f634e27949725553d413dde1"
+    },
+    {
+      "path": "artifacts/comparison_20260805_204227.json",
+      "bytes": 2926,
+      "sha256": "f4abd3015022ca22fd38490c20444858647b59bbaeca2a92de40c16eb1cc243a"
+    },
+    {
+      "path": "artifacts/verification_ctest.txt",
+      "bytes": 1616,
+      "sha256": "7bf9c77bf4cd768c7bdb28d358dbb88f5986b65f8d14324f769502501821f58f"
+    },
+    {
+      "path": "artifacts/prior_single_operator_report/RaggedRoute_7ops_library_comparison_20260805_193637.md",
+      "bytes": 25460,
+      "sha256": "eddb16d5214dbf785853a7d48dc5eb6fafdecc6ae14a5321e87461dba1d3a944"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_nsys/manifest.json",
+      "bytes": 5200,
+      "sha256": "c19259c4f458da903c4e18edc48e1c3a62e33758329a21ab022743a3404d101b"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_nsys/analysis/nsys_cuda_gpu_kern_sum.csv",
+      "bytes": 1168,
+      "sha256": "fed0c50165a229d00c2f637bfa7f8090f7efa887013e22f4c5ecdf0d2b800bde"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_nsys/analysis/timeline_cuda_gpu_trace.csv",
+      "bytes": 31421,
+      "sha256": "ca6cc34d334e13e57ba1be3fe8de63fb91b51064175e6c0fb9119678c8455a82"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_nsys/analysis/nsys_hotspots.json",
+      "bytes": 3681,
+      "sha256": "12964539e75229dc5607a41b2fe039fd754b92e71c4392c636b2ac11a3cf03ac"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_nsys/reports/system.nsys-rep",
+      "bytes": 80077,
+      "sha256": "9ac3914159d91c50b1a55ef01ac38b597967bd00c255703929b63bd15d614945"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_ncu/manifest.json",
+      "bytes": 4153,
+      "sha256": "a23cae69b9b92360be79341e59ba91a5c649e88d7a2de6c9405e75a74a99b2d1"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_ncu/analysis/ncu_basic_details.txt",
+      "bytes": 7184,
+      "sha256": "4ca18681ced0160e6fa1d9916fceca8506387ad822c8b9bd38a2b8057fa92f12"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_ncu/analysis/ncu_basic_raw.csv",
+      "bytes": 31891,
+      "sha256": "3fcd7f9738c4765911088f6325b436ab5afe26df0a78a2bcdacba53f511eb32c"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_ncu/analysis/supported_key_metrics.json",
+      "bytes": 1786,
+      "sha256": "987a9d545259ab7fbd78f7e4b71110f051c550321628e8ab3781e0fbe7410438"
+    },
+    {
+      "path": "artifacts/profile/cuda_candidate_ncu/reports/ncu_basic.ncu-rep",
+      "bytes": 189071,
+      "sha256": "53e4f9389a60e5899e262a06e1c8c97443e4f1a0150886cd8cecef0b7beee7f4"
+    },
+    {
+      "path": "artifacts/profile/library_nsys/manifest.json",
+      "bytes": 5146,
+      "sha256": "dd55b0b0e5cee297c11d8ac2c992aa630e0c33aa1769289823e0a6b8a30e5827"
+    },
+    {
+      "path": "artifacts/profile/library_nsys/analysis/nsys_cuda_gpu_kern_sum.csv",
+      "bytes": 7483,
+      "sha256": "c672111091ca08bc857700d2e191f8a5e230b4ef8676ecb5b6aea29c18383eb5"
+    },
+    {
+      "path": "artifacts/profile/library_nsys/analysis/timeline_cuda_gpu_trace.csv",
+      "bytes": 164258,
+      "sha256": "32f9cd0a65435239c0d1d68fedf5ee0990113757ea8c0c715e7d612bec4760b5"
+    },
+    {
+      "path": "artifacts/profile/library_nsys/analysis/nsys_hotspots.json",
+      "bytes": 17587,
+      "sha256": "37e044b7d2781187ebc50dd790c8a45b91b7855281521d83ab307ae7d2f48dcd"
+    },
+    {
+      "path": "artifacts/profile/library_nsys/reports/system.nsys-rep",
+      "bytes": 89167,
+      "sha256": "b37598d04ef8bc4eb1db19fb4113c92e893256697c41beb858cb9f5fc3ed1b67"
+    },
+    {
+      "path": "artifacts/profile/library_ncu/manifest.json",
+      "bytes": 4072,
+      "sha256": "fd86812b39d9624657e5adf63efee499f88ed1348eb060e324473c61a1a4a713"
+    },
+    {
+      "path": "artifacts/profile/library_ncu/analysis/ncu_basic_details.txt",
+      "bytes": 9820,
+      "sha256": "2f522604f0b8ff43fdd095af27db74040c6d348ef5d4632bf3ca32fadbde75c4"
+    },
+    {
+      "path": "artifacts/profile/library_ncu/analysis/ncu_basic_raw.csv",
+      "bytes": 33722,
+      "sha256": "2a2d40b16d70cf1497b2ac06f47e54a9af5ed2818ff40c1aaf9c3316e878eb71"
+    },
+    {
+      "path": "artifacts/profile/library_ncu/analysis/supported_key_metrics.json",
+      "bytes": 1786,
+      "sha256": "987a9d545259ab7fbd78f7e4b71110f051c550321628e8ab3781e0fbe7410438"
+    },
+    {
+      "path": "artifacts/profile/library_ncu/reports/ncu_basic.ncu-rep",
+      "bytes": 345699,
+      "sha256": "f0a5bf1eec3d28ec9a5ba90604b341c9c96ee635919c106d37739caaee7d6e9b"
+    },
+    {
+      "path": "artifacts/profile/triton_nsys_capture/nsys_cuda_api_sum.csv",
+      "bytes": 396,
+      "sha256": "e3c3d8419d39949a95337c98afcb0d7cdb1436dfaf19d4bc7d5655ae28e1f47d"
+    },
+    {
+      "path": "artifacts/profile/triton_nsys_capture/nsys_cuda_gpu_kern_sum.csv",
+      "bytes": 756,
+      "sha256": "153e78edc04e8eef47249754fa3a18df810ce4ca8c0b7040b17fc2da0617be61"
+    },
+    {
+      "path": "artifacts/profile/triton_nsys_capture/nsys_cuda_gpu_trace.csv",
+      "bytes": 1246,
+      "sha256": "c268452df837e30581074601d1262cdd69d82de2fd6aa44b266a83901621e0be"
+    },
+    {
+      "path": "artifacts/profile/triton_nsys_capture/system.nsys-rep",
+      "bytes": 46695,
+      "sha256": "60e1053d8fcea8a2625ac86dc6c200b2abdd42cde7fee4fdbd735b7ac4d557ef"
+    },
+    {
+      "path": "artifacts/profile/triton_ncu/ncu_basic_details.txt",
+      "bytes": 5274,
+      "sha256": "8e129bbdda84024d656f0312d9849f648c771622e1dd4a7dffdef7e85a8aa51e"
+    },
+    {
+      "path": "artifacts/profile/triton_ncu/ncu_basic_raw.csv",
+      "bytes": 31740,
+      "sha256": "23f9286bbbe96c935a61b6b36aa6ff823c2a1e616e335800db2bb232d84f6f17"
+    },
+    {
+      "path": "artifacts/profile/triton_ncu/ncu_basic.ncu-rep",
+      "bytes": 115625,
+      "sha256": "80b8be3613c49e476a91b6ec2b9c531fadf501c55e42b2337daa6d017916699a"
+    }
+  ]
+}

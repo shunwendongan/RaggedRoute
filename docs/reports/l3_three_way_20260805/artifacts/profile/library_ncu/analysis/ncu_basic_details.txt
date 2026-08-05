@@ -1,0 +1,104 @@
+[21952] raggedroute_benchmark.exe@127.0.0.1
+  void Kernel<GemmGrouped<MmaPipelined<GemmShape<128, 128, 8>, PredicatedTileIterator<MatrixShape<128, 8>, float, RowMajor, 1, PitchLinearStripminedThreadMap<PitchLinearShape<8, 128>, 256, 1>, 1, 0, NoPermute>, RegularTileIterator<MatrixShape<128, 8>, float, ColumnMajor, 1, TransposePitchLinearThreadMapSimt<PitchLinearStripminedThreadMap<PitchLinearShape<8, 128>, 256, 1>>, 4>, PredicatedTileIterator<MatrixShape<8, 128>, float, RowMajor, 0, PitchLinearStripminedThreadMap<PitchLinearShape<128, 8>, 256, 1>, 1, 0, NoPermute>, RegularTileIterator<MatrixShape<8, 128>, float, RowMajor, 0, PitchLinearStripminedThreadMap<PitchLinearShape<128, 8>, 256, 1>, 4>, float, RowMajor, MmaPolicy<MmaSimt<GemmShape<32, 64, 8>, float, ColumnMajor, float, RowMajor, float, RowMajor, MmaSimtPolicy<MatrixShape<4, 8>, RowMajorInterleaved<2>, GemmShape<4, 4, 1>>, 1, 0, 0, bool>, MatrixShape<4, 0>, MatrixShape<0, 0>, 1>, NumericArrayConverter<float, float, 4, 2, Identity>, NumericArrayConverter<float, float, 4, 2, Identity>, bool>, Epilogue<GemmShape<128, 128, 8>, MmaSimt<GemmShape<32, 64, 8>, float, ColumnMajor, float, RowMajor, float, RowMajor, MmaSimtPolicy<MatrixShape<4, 8>, RowMajorInterleaved<2>, GemmShape<4, 4, 1>>, 1, 0, 0, bool>, 1, PredicatedTileIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 1, 4, 4, 1>, OutputTileShape<1, 4, 2, 1, 8>, 256, 1, 32>, float, 0, NoPermute, 0>, FragmentIteratorSimt<GemmShape<32, 64, 8>, Mma<GemmShape<8, 8, 1>, float, ColumnMajor, float, RowMajor, float, RowMajor, OpMultiplyAdd, bool>, RowMajor, MmaSimtPolicy<MatrixShape<4, 8>, RowMajorInterleaved<2>, GemmShape<4, 4, 1>>>, TileIteratorSimt<GemmShape<32, 64, 8>, Mma<GemmShape<8, 8, 1>, float, ColumnMajor, float, RowMajor, float, RowMajor, OpMultiplyAdd, bool>, float, RowMajor, MmaSimtPolicy<MatrixShape<4, 8>, RowMajorInterleaved<2>, GemmShape<4, 4, 1>>>, SharedLoadIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 1, 4, 4, 1>, OutputTileShape<1, 4, 2, 1, 8>, 256, 1, 32>::CompactedThreadMap, float, 4>, LinearCombination<float, 1, float, float, 0, 2, float>, MatrixShape<0, 17>, 1, 1>, GemmBatchedIdentityThreadblockSwizzle, 0, 0>>(Params) (64, 1, 1)x(256, 1, 1), Context 1, Stream 13, Device 0, CC 8.6
+    Warning: Data collection happened without fixed GPU frequencies. Profiling results may be inconsistent.
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz         9.22
+    SM Frequency                    Ghz         1.67
+    Elapsed Cycles                cycle       37,729
+    Memory Throughput                 %        40.99
+    DRAM Throughput                   %        34.34
+    Duration                         us        22.59
+    L1/TEX Cache Throughput           %        46.55
+    L2 Cache Throughput               %        12.06
+    SM Active Cycles              cycle    33,059.57
+    Compute (SM) Throughput           %        55.72
+    ----------------------- ----------- ------------
+
+    OPT   This kernel grid is too small to fill the available resources on this device, resulting in only 0.94 full     
+          waves across all SMs. Look at Launch Statistics for more details.                                             
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   256
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                     64
+    Registers Per Thread             register/thread             144
+    Shared Memory Configuration Size           Kbyte           32.77
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block      Kbyte/block           16.66
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              68
+    Stack Size                                                 1,024
+    Threads                                   thread          16,384
+    # TPCs                                                        34
+    Enabled TPC IDs                                              all
+    Uses Green Context                                             0
+    Waves Per SM                                                0.94
+    -------------------------------- --------------- ---------------
+
+    OPT   Est. Speedup: 5.882%                                                                                          
+          The grid for this launch is configured to execute only 64 blocks, which is less than the 68 multiprocessors   
+          used. This can underutilize some multiprocessors. If you do not intend to execute this kernel concurrently    
+          with other workloads, consider reducing the block size to have at least one block per multiprocessor or       
+          increase the size of the grid to fully utilize the available hardware resources. See the Hardware Model       
+          (https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html#metrics-hw-model) description for more      
+          details on launch configurations.                                                                             
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Block Limit SM                        block           16
+    Block Limit Registers                 block            1
+    Block Limit Shared Mem                block            1
+    Block Limit Warps                     block            6
+    Theoretical Active Warps per SM        warp            8
+    Theoretical Occupancy                     %        16.67
+    Achieved Occupancy                        %        16.66
+    Achieved Active Warps Per SM           warp         8.00
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 83.33%                                                                                    
+          The 2.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 12. This kernel's theoretical occupancy (16.7%) is limited by the number of required      
+          registers, and the required amount of shared memory.                                                          
+
+    Section: GPU and Memory Workload Distribution
+    -------------------------- ----------- ------------
+    Metric Name                Metric Unit Metric Value
+    -------------------------- ----------- ------------
+    Average DRAM Active Cycles       cycle    71,561.60
+    Total DRAM Elapsed Cycles        cycle    2,083,840
+    Average L1 Active Cycles         cycle    33,059.57
+    Total L1 Elapsed Cycles          cycle    2,553,226
+    Average L2 Active Cycles         cycle    24,888.45
+    Total L2 Elapsed Cycles          cycle    1,454,600
+    Average SM Active Cycles         cycle    33,059.57
+    Total SM Elapsed Cycles          cycle    2,553,226
+    Average SMSP Active Cycles       cycle    33,034.47
+    Total SMSP Elapsed Cycles        cycle   10,212,904
+    -------------------------- ----------- ------------
+
+    OPT   Est. Speedup: 5.914%                                                                                          
+          One or more SMs have a much lower number of active cycles than the average number of active cycles. Maximum   
+          instance value is 6.72% above the average, while the minimum instance value is 100.00% below the average.     
+    ----- --------------------------------------------------------------------------------------------------------------
+    OPT   Est. Speedup: 6.08%                                                                                           
+          One or more SMSPs have a much lower number of active cycles than the average number of active cycles. Maximum 
+          instance value is 6.91% above the average, while the minimum instance value is 100.00% below the average.     
+    ----- --------------------------------------------------------------------------------------------------------------
+    OPT   Est. Speedup: 5.914%                                                                                          
+          One or more L1 Slices have a much lower number of active cycles than the average number of active cycles.     
+          Maximum instance value is 6.72% above the average, while the minimum instance value is 100.00% below the      
+          average.                                                                                                      
+    ----- --------------------------------------------------------------------------------------------------------------
+    OPT   Est. Speedup: 8.026%                                                                                          
+          One or more L2 Slices have a much higher number of active cycles than the average number of active cycles.    
+          Maximum instance value is 11.73% above the average, while the minimum instance value is 5.90% below the       
+          average.                                                                                                      
+

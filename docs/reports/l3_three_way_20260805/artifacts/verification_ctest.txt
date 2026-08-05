@@ -1,0 +1,32 @@
+Test project C:/Users/Administrator/Documents/Playground/RaggedRoute-l3-eval-8d4c281/out/build/rtx3080-sm86-release
+    Start 1: raggedroute_correctness
+1/8 Test #1: raggedroute_correctness ..............   Passed    0.86 sec
+    Start 2: raggedroute_correctness_dtype
+2/8 Test #2: raggedroute_correctness_dtype ........   Passed    0.10 sec
+    Start 3: raggedroute_correctness_selftest
+3/8 Test #3: raggedroute_correctness_selftest .....   Passed    0.12 sec
+    Start 4: raggedroute_correctness_edge
+4/8 Test #4: raggedroute_correctness_edge .........   Passed    0.10 sec
+    Start 5: raggedroute_correctness_randomized
+5/8 Test #5: raggedroute_correctness_randomized ...   Passed    0.10 sec
+    Start 6: raggedroute_correctness_stream
+6/8 Test #6: raggedroute_correctness_stream .......   Passed    0.10 sec
+    Start 7: raggedroute_operator_api
+7/8 Test #7: raggedroute_operator_api .............   Passed    0.12 sec
+    Start 8: raggedroute_script_tests
+8/8 Test #8: raggedroute_script_tests .............   Passed    0.57 sec
+
+100% tests passed, 0 tests failed out of 8
+
+Label Time Summary:
+correctness               =   1.51 sec*proc (7 tests)
+correctness_edge          =   0.10 sec*proc (1 test)
+correctness_randomized    =   0.10 sec*proc (1 test)
+correctness_selftest      =   0.12 sec*proc (1 test)
+correctness_smoke         =   0.86 sec*proc (1 test)
+dtype                     =   0.10 sec*proc (1 test)
+operator_api              =   0.12 sec*proc (1 test)
+sm86                      =   0.12 sec*proc (1 test)
+stream_contract           =   0.10 sec*proc (1 test)
+
+Total Test time (real) =   2.08 sec

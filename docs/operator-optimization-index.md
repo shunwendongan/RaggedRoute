@@ -1,21 +1,22 @@
 # 算子优化文档索引
 
-本目录按 RaggedRoute 的七个算子分别保存优化方案、实验决策和实际性能记录。七个算子与项目当前 API、benchmark adapter 和 `src/` 目录一一对应：
+本目录按 RaggedRoute 的七个语义算子分别保存优化方案、实验决策和实际性能记录；benchmark registry 另有一个 `histogram_exclusive_scan` 融合 adapter，因此当前是七阶段数据流、八个 adapter。
 
 当前统一实测报告：[RTX 3080 七算子 naive benchmark 与 Nsight 分析（a9489ab）](reports/rtx3080-naive-profile-a9489ab.md)。
 
 | 算子 | 当前 `Auto` | 显式/研究 candidate | 最新决策 |
 |---|---|---|---|
 | Dense GEMM | `cuda_naive` | optimized id 1–7，v3 为大 shape 最快自研路径 | 256³ 方差超限，不晋级 |
-| Top-K Gate | `cuda_naive` | optimized id 1–3 | 大 E 单点获益，连续 bucket 门禁失败 |
+| Top-K Gate | `cuda_naive` | optimized id 1–4 | v4 exact-E/连续 bucket 均无晋级区间 |
 | Histogram | `cuda_candidate` | small/sparse/block-private shape paths | **已晋级** SM86 `Auto` |
 | Exclusive Scan | `cuda_naive` | standalone C2/S1/S2 已删除 | 受 WDDM tail/CV 限制 |
-| Token Permute | `cuda_naive` | optimized id 1–5，alias 选 id 4 | 只保留显式 research alias |
+| Token Permute | `cuda_naive` | optimized id 1–5 与显式 v2 shape dispatcher | pure-permute 稳定性/覆盖门禁失败，只保留研究路径 |
 | Grouped GEMM | `cuda_naive` | benchmark-only SM86 candidate | 未通过 CUTLASS 门禁 |
 | Unpermute | `cuda_naive` | benchmark-only warp/CTA hybrid | 正式拒绝，不进入 public dispatch |
 
 Histogram→Scan 融合：`cuda_fused_histogram_scan`（F2，SM86；`R<=4096` 单 CTA，
-更大 R 回退）已绑定公共 fused API；性能结论和受干扰门禁状态见
+更大 R 回退）已绑定公共 fused API 且当前由该 primitive 的 `Auto` 选择；已有运行未通过
+稳定性、fallback 与 L3 门禁，必须在独占 CUDA 环境复测或撤回默认选择。性能边界见
 [F2 performance report](reports/rtx3080-histogram-scan-fused-sm86-v2.md)。
 
 | 算子 | 定位 | 优化文档 | 性能记录 |

@@ -1,6 +1,17 @@
 # RaggedRoute 后续开发路线
 
-> **状态：部分实现。** 里程碑 A1/A2 与 B4 的 profiler/text bundle 子集已实现，Histogram 已经过手工门禁晋升为第一个 shape-dispatched `Auto` candidate；A3 通用 promotion evaluator、真实 trace、working-set/plot 仍是计划。当前可执行范围及证据边界以 `implementation-status.md` 为准。
+> **状态：部分实现；事实基线 `main@354e1ff`，更新于 2026-08-09。** 里程碑 A1/A2 与 B4 的 profiler/text bundle 子集已实现，Histogram 已经过手工门禁晋升为第一个 shape-dispatched `Auto` candidate；A3 通用 promotion evaluator、真实 trace、working-set/plot 仍是计划。当前可执行范围及证据边界以 `implementation-status.md` 为准。
+
+> **环境边界：** 当前工作区是 macOS，只执行 CPU-only、文档、schema 与证据一致性检查。本路线中的 CUDA correctness、Compute Sanitizer、benchmark、NSYS/NCU 和 promotion 复测暂停，待回到独占 RTX 3080/其他受支持 NVIDIA CUDA 环境后继续；不得用 macOS 结果推断算子能力或性能。
+
+## 0. 面向 AI Infra/CUDA 实习的当前优先级
+
+1. **P0：关闭 F2 dispatch 与证据之间的缺口。** `HistogramExclusiveScan` 的 `Auto` 已指向 F2，但已有运行的 CV、fallback 与 L3 门禁失败。下一次 CUDA 窗口先重复 `configs/operators/scan/benchmark/fused_v2_promoted.json` 和对应 L3 suite；若仍失败，撤回默认选择而不是继续包装 speedup。
+2. **P1：把 Grouped GEMM 作为唯一主性能假设。** 最新 L3 诊断中它占 CUDA research chain kernel time 的 `64.4%`；现有候选为 106 registers/thread 且十 shape 对 CUTLASS ratio-of-sums 仅 `0.805x`。后续分别验证 task-map/负载均衡与 live-range/tile，不在一轮同时改多个机制。
+3. **P1：先补 workload，再做自动晋级。** 完成 B1/B2/B3 的 route trace、working set 和 cache 语义后再实现 A3 evaluator，否则三态决策只能是 `inconclusive`。
+4. **P2：整理真实 L3 证据。** PR #31/#32 合并到实验分支而非 `main`；未来需要以当前 `main` 重整、校验语义和来源后再决定是否合入，当前文档不得把它们写成已发布能力。
+5. **P2：修复 evidence policy 漂移。** 清理 `l3_three_way_20260805` 中直接进入 Git 的 profiler 二进制，并增加扩展名/角色检查；超大 comparison JSON 应压缩为摘要，完整文件进入 immutable Release 资产。
+6. **P3：低精度与新架构。** FP16/BF16 Tensor Core、Linux CUDA CI、H100/Blackwell 实卡验证属于后续增强；完成真实 kernel 与实卡验证前不进入简历成果。
 
 ## 1. 依赖顺序
 
@@ -70,6 +81,7 @@
 - [x] profiler duration 只用于瓶颈诊断，永不进入正式 latency、speedup 或 promotion 计算。
 - [ ] 增加 shape heatmap、working-set sweep、distribution/trace，以及 L1/L2/L3 breakdown 图表脚本；所有图表可追溯到 comparison/aggregate 输入。
 - [x] 迁移到 `raggedroute.evidence_bundle.v2`：Git 固化 report、compact summary/comparison、normalized profiler metrics、manifest 与 `SHA256SUMS`；raw JSONL/full aggregate/run manifest/NCU/NSYS/SQLite 进入不可覆盖 Release ZIP，无法恢复的历史文件显式标记 `unavailable`。
+- [ ] 增加仓库级 evidence policy gate：拒绝新的 `.ncu-rep`、`.nsys-rep`、SQLite 和未压缩 full aggregate/comparison 进入 Git；处理 `l3_three_way_20260805` 的既有例外。
 - [ ] 补齐真实 trace 和可追溯图表；现有 v2 bundle 已记录 promotion/拒绝决策，但不因此升级缺失证据的复现等级。
 
 ## 4. 验收测试

@@ -11,6 +11,8 @@
 > Benchmark 可执行契约：[benchmark-architecture.md](benchmark-architecture.md)
 > 算子级优化资料入口：[operator-optimization-index.md](operator-optimization-index.md)
 
+> **当前执行能力摘要：** `main@354e1ff` 只兑现 RTX 3080 / SM86、strict FP32、zero-stride row-major runtime。下文出现的 FP16/BF16、Tensor Core、H100/TMA/WGMMA 与 Blackwell 内容均为历史设计或未来路线，除非段落明确链接实测报告，否则不属于当前实现和简历成果。
+
 ## 0. 先给结论
 
 这个项目定位为“小而完整的单卡 MoE 核心算子库”，而不是完整模型框架，也不是七个互不相关的 CUDA Demo。采用“3 个主算子深入优化 + 4 个配套算子形成可组合微流水线”的结构：
@@ -22,7 +24,7 @@
 
 项目的一句话描述可以是：
 
-> 独立实现面向单 GPU Top-2 MoE 路由与专家线性计算的 7 算子 CUDA 库，在 RTX 3080 上围绕访存合并、共享内存、warp primitive、Tensor Core 与持久化调度迭代；以自写朴素 CUDA kernel 和 NVIDIA CUDA/CUTLASS/CUB 库为基线，提供严格的正确性、Kernel Body、Operator 与算子链测评。
+> 构建面向单 GPU Top-2 MoE 路由与一次专家线性计算的 7 算子 strict-FP32 CUDA 链，在 RTX 3080 上围绕访存合并、共享内存私有化、warp primitive、`cp.async` 实验与持久化调度迭代；以自写朴素 CUDA kernel 和 NVIDIA CUDA/CUTLASS/CUB 库为基线，提供可追溯的正确性、Kernel Body、Operator 与算子链测评。
 
 项目只承诺路由、数据重排、一次 Expert Linear Projection 和加权合并等核心 primitive，不承诺复现完整 Expert FFN、训练系统或端到端模型。这个边界既保留 GEMM 深度，也使项目更可信、可答辩。
 
@@ -40,8 +42,8 @@
 - hidden size 为 $K$；
 - expert 输出宽度为 $N$；
 - route pair 总数为 $R=T\cdot k$；
-- 激活和权重默认 FP16，router logits、gate weight 和累加默认 FP32；
-- Dense GEMM 另保留一个教育用途的 FP32 CUDA Core 路径。
+- 当前激活、权重、router logits、gate weight、输出和累加均为 strict FP32；
+- FP16/BF16 输入、FP32 累加与 Tensor Core 是后续 CUDA 环境中的目标，不属于当前 v0.2 执行能力。
 
 v2 实现以下可组合算子微流水线，用于验证七个算子的接口与协同工作：
 
@@ -75,7 +77,7 @@ Dense GEMM 在项目里同时承担“独立通用算子”和“可选 router p
 
 | 类别 | 可以怎么写 | 不能怎么写 |
 |---|---|---|
-| 已实现事实 | “实现 FP16/FP32 accumulation 的 SM86 kernel” | 未运行就写“支持 H100/B200” |
+| 已实现事实 | “实现 strict-FP32、SM86 的七阶段 CUDA 链与八 adapter 测评框架” | 把 dtype enum 或交叉编译写成 FP16/H100/B200 支持 |
 | 自己的实测 | “在指定 shape、指定软件版本下，相对基线加速 `[待实测]`” | 把最佳单点当作全 shape 结论 |
 | 外部资料 | “CUTLASS/论文采用了持久化调度，本文据此设计实验” | 把论文的加速比写成自己的结果 |
 
@@ -117,7 +119,7 @@ Dense GEMM 在项目里同时承担“独立通用算子”和“可选 router p
 
 | 算子 | 建议接口与输出 | 关键约定 |
 |---|---|---|
-| Dense GEMM | `dense_gemm(args, workspace, stream)` | row-major；FP32 路径支持 $C=\alpha AB+\beta C$；FP16 路径 FP32 accumulate |
+| Dense GEMM | `dense_gemm(args, context)` | 当前仅 zero-stride row-major、strict FP32、$\alpha=1,\beta=0$；FP16/BF16 FP32-accumulate 为未来计划 |
 | Fused Top-K Gate | `(ids[T,k], weights[T,k]) = topk_gate(logits[T,E])` | v2 为 Top-2；相同值取较小 expert id；NaN 策略固定 |
 | Expert Histogram | `counts[E] = histogram(ids[T,k])` | `sum(counts)=R`；32-bit count 足够时使用 `int32` |
 | Exclusive Scan | `offsets[E+1] = scan(counts[E])` | `offsets[0]=0`，`offsets[E]=R` |
@@ -201,7 +203,7 @@ RaggedRoute/
 
 | 处理 | 内容 | 原因 |
 |---|---|---|
-| 原样保留 | 7 算子流水线、3 主 4 辅、Top-2/$E\le64$、FP16+FP32 accumulate、RTX 3080→H100、Blackwell 仅预案 | 这是项目定位和可答辩范围，不因一篇外部文章改变 |
+| 原样保留 | 7 算子流水线、3 主 4 辅、Top-2/$E\le64$、当前 strict FP32、RTX 3080 主线；低精度/H100/Blackwell 仅作后续路线 | 这是项目定位和可答辩范围，不因一篇外部文章改变 |
 | 直接吸收 | 真实/长尾数据、working-set sweep、cache hit 与 DRAM 的联合解释、Little’s Law、实测带宽 | 是通用 GPU 性能分析方法，能提高 benchmark 可信度 |
 | 适配后吸收 | embedding hotness→expert 路由倾斜；索引 gather→permute/unpermute；metadata cache→offset/route/problem descriptor | 访问模式相似，但语义和瓶颈不能直接等同 |
 | 仅作实验候选 | 16-byte load、循环展开、SMEM 缓存、fusion | 是否有效依赖对齐、复用、register、occupancy 和 shape，必须由 profile 决定 |
@@ -451,7 +453,7 @@ CUDA-GDB 适合定位错误，不是主要性能工具；Nsight Compute 用于�
 3. `benchmark_release`：Release build、clean Git、验证开启、warmup≥10、samples≥20、至少三次独立进程，原始 JSONL 和 manifest 不覆盖旧 run；
 4. `profile`：只采集代表 shape 的 `.ncu-rep`/timeline。Nsight 的 replay、cache/clock control 和序列化会改变 duration，其时间不得作为正式 latency。
 
-公共 runner 的可执行生命周期和七个 adapter 的个性化 reset/reference/metrics 见 [Benchmark 架构与发布协议](benchmark-architecture.md)。CPU/PyTorch oracle 与 performance baseline 必须是两个字段：oracle 只判断正确性，cuBLAS/CUTLASS/CUB 或语义一致的 production implementation 才能成为 speedup 分母。
+公共 runner 的可执行生命周期和八个 adapter（七个语义算子加 `histogram_exclusive_scan`）的个性化 reset/reference/metrics 见 [Benchmark 架构与发布协议](benchmark-architecture.md)。CPU/PyTorch oracle 与 performance baseline 必须是两个字段：oracle 只判断正确性，cuBLAS/CUTLASS/CUB 或语义一致的 production implementation 才能成为 speedup 分母。
 
 ---
 
@@ -510,7 +512,7 @@ $$
 
 ### 5.4 Ampere 与 Hopper 的不同重点
 
-- SM86：重点是 `cp.async` global→shared 异步拷贝、Tensor Core tile、SMEM padding、register/occupancy 和 tail 处理。
+- SM86 当前主线：strict-FP32 CUDA Core、`cp.async` 研究路径、SMEM padding、register/occupancy 和 tail 处理；Tensor Core 只属于未来 FP16/BF16 路线。
 - H100 必做：先让可移植路径通过 correctness，重新搜索 tile/stage 并建立 H100 本地基线。
 - H100 可选深化：再评估 TMA 降低地址与搬运开销、WGMMA/warpgroup、warp specialization 与持久化调度；若实现，使用 `sm_90a` 单独构建和测试。SM86 fallback 保留，不用宏把两套代码揉成难以验证的一份。
 
@@ -1134,7 +1136,7 @@ Histogram→Scan→Permute 有真实全局依赖。除非：
 | 维度 | RTX 3080 / SM86 主线 | H100 / SM90a 迁移线 |
 |---|---|---|
 | 基础搬运 | 合并访问、vector load、`cp.async` | 先保留普通路径，再评估 TMA bulk/tensor copy |
-| 矩阵计算 | Ampere Tensor Core / `mma.sync`，FP16+FP32 accumulate | WGMMA/warpgroup、TMA、warp specialization；FP16/BF16 后再选 FP8 |
+| 矩阵计算 | 当前 strict-FP32 CUDA Core；未来再实现 Ampere FP16/BF16 Tensor Core | 仅在 H100 实卡阶段评估 WGMMA/warpgroup、TMA、warp specialization；FP16/BF16 后再选 FP8 |
 | CTA 协作 | 普通 CTA/warp，慎用 cooperative grid | 可研究 thread-block cluster/DSM，但非首要 |
 | 调度 | shape-specific + persistent CTA | 重新选择 virtual SM/cluster/tile；不能照搬 SM86 |
 | 资源上限 | 运行时查询 SM、SMEM、register 与 occupancy | 同样运行时查询；H100 PCIe/SXM 具体型号写入报告 |
@@ -1182,7 +1184,7 @@ Histogram→Scan→Permute 有真实全局依赖。除非：
 |---|---|---|---|
 | D0 | 工程骨架、CMake、设备信息、benchmark harness、结果 schema | 能编译运行空 kernel；保存环境 JSON | 计时与日志可重复 |
 | D1 | Dense GEMM V0/V1/V2 | naive、SMEM tiled、cuBLAS 对拍 | 非对齐 shape 正确，sanitizer 通过 |
-| D2 | GEMM register tile/vector/load；若来得及 Tensor Core/cp.async | 版本表 + 第一份 NCU 报告 | 能解释主要瓶颈与一次失败优化 |
+| D2 | GEMM register tile/vector/load 与 strict-FP32 `cp.async`；Tensor Core 延后 | 版本表 + 第一份 NCU 报告 | 能解释主要瓶颈与一次失败优化 |
 | D3 | Top-K reference、warp Top-2、selected-softmax fusion | tie/NaN 测试 + T/E sweep | ids/weights 确定；公平对比并记录优势或退化 |
 | D4 | Histogram、Scan | global atomic、shared/warp 聚合之一；warp/block scan | uniform/Zipf/边界正确，知道何时直接 atomic 更好 |
 | D5 | Permute、Unpermute V1/V2 | 可逆 mapping、vector path、tail | token round-trip 正确 |
@@ -1194,7 +1196,7 @@ Histogram→Scan→Permute 有真实全局依赖。除非：
 
 ### 14.1 若只剩 5 天
 
-- Dense GEMM：保留 tiled + register blocking 两轮，Tensor Core/cp.async 只做一条可解释路径。
+- Dense GEMM：保留 tiled + register blocking 与 strict-FP32 `cp.async` 研究链；Tensor Core 等低精度 kernel 完成真实实现和实测后再加入。
 - Top-K：做到 warp Top-2 + softmax fusion，这是最容易形成亮点的非 GEMM 算子。
 - Grouped GEMM：优先使用 CUTLASS grouped baseline 加自己可解释的 scheduler/shape 分派；不要硬写不可靠的 inline PTX。
 - Histogram/Scan/Permute/Unpermute：各自 reference + 朴素 CUDA + 一项最直接优化，确保流水线成立。
@@ -1335,17 +1337,21 @@ L2 成本审计表：
 
 ### 17.2 三条简历 bullet 模板
 
-在实测前不要填数字；实测后每条最多放一到两个最有代表性的指标。
+下列版本只使用 `main@354e1ff` 已有源码和 RTX 3080 证据。个人职责应表述为“主导项目方向、方案取舍、实验协议和结果验收，使用 Codex 辅助实现与文档”；只有能逐行解释并独立修改的 kernel 才进一步表述为本人手写。
 
-- 独立实现 Top-2 单卡 MoE 路由与专家计算算子链，覆盖 fused gate、expert histogram/scan、token permute、FP16 Grouped GEMM 与 weighted unpermute；建立 PyTorch 对拍、边界测试和 Compute Sanitizer 检查，覆盖 $E\le64$、空 expert 与倾斜路由。
-- 在 RTX 3080（SM86）上围绕 CTA/warp tiling、register blocking、16-byte vector access、shared-memory privatization 与 persistent scheduling 迭代 Dense/Grouped GEMM 和路由算子；在 `[shape 与分布]` 下相对 `[明确基线]` 获得 `[待实测]`，并用 Nsight Compute 将瓶颈定位为 `[待实测]`。
-- 构建 uniform/Zipf/trace-driven、cold/warm cache 的可复现 benchmark，分别记录 L1 Kernel Body、L2 Operator 与 L3 算子链延迟，以及逻辑/物理流量、cache hit、register、occupancy 与 warp stall；通过 `[Top-K softmax / unpermute reduce]` fusion 将算子链延迟由 `[待实测]` 降至 `[待实测]`；H100 结果仅在完成 H100 实卡复测后追加。
+- 主导设计单 GPU Top-2 MoE strict-FP32 CUDA 算子链，串联 router projection、selected-softmax Top-2、Histogram/Scan、Token Permute、Grouped GEMM 与 weighted Unpermute；建立 CPU oracle、边界/随机测试、caller-stream 合同、Compute Sanitizer 与八 adapter benchmark registry。
+- 在 RTX 3080（SM86）上组织 Dense GEMM、Top-K、Histogram、Permute 与 Grouped GEMM 的多版本实验，以 cuBLAS/CUB/CUTLASS/vLLM 作为语义匹配或明确标注边界的参考；Histogram 通过 12-case 五进程门禁晋升，Grouped GEMM 候选因十 shape 对 CUTLASS ratio-of-sums 仅 `0.805x` 而拒绝进入 runtime。
+- 构建 L1 Kernel Body、L2 Operator、L3 Chain 的可审计测量管线，固定 seed、warmup、sample、cache、workspace 和 excluded steps，并用 NSYS/NCU 区分 release latency 与 profiler 诊断；在固定 L3 research chain 中定位 Grouped GEMM 占 `64.4%` kernel time、受 106 registers/thread 与任务不均衡限制。
+
+若简历篇幅只能保留两条，优先保留第一条完整性和第三条性能工程方法；`69.734 us`、`3.524x` 等链级数字必须同时说明固定 shape、research chain 与跨工具链非 promotion 边界。
 
 ### 17.3 不建议写的句子
 
 - “性能超过 cuBLAS/CUTLASS”——除非给出具体 shape、dtype、版本和大量负例；通常只在自己的目标 shape 可能成立。
 - “支持 Ampere/Hopper/Blackwell”——只阅读文档或编译过不算支持。
 - “实现完整 MoE 推理框架/完整 Expert FFN”——当前项目是单 GPU 路由与一次 Expert Linear Projection 的核心算子库。
+- “实现 FP16/BF16 Tensor Core Grouped GEMM”——当前只有表示能力与未来计划，运行时 kernel 仍为 strict FP32。
+- “所有 CUDA kernel 都是我从零手写”——当前项目使用 Codex 辅助实现与文档，应把个人贡献收口到真实主导的设计、实验、验收和能独立解释/修改的代码。
 - “利用共享内存优化性能”——没有说明缓存了什么、复用几次、bank/register/occupancy 如何变化，等于没说。
 
 ### 17.4 必须能回答的十个问题
@@ -1360,6 +1366,8 @@ L2 成本审计表：
 8. 为什么 Histogram 和 Scan 不能随便融合进同一个普通多 CTA kernel？
 9. 你的 speedup 基线、计时范围、warmup、统计量和环境是什么？
 10. SM86 版本迁移 H100 后，为什么必须重新 profile，而不是只重新编译？
+
+分时长讲解、回答锚点、对抗性追问与个人贡献核对表见[简历话术与面试答辩手册](RaggedRoute-简历话术与面试答辩手册.md)和[CUDA/MoE 技术追问题库](RaggedRoute-CUDA-MoE技术追问题库.md)。它们保存在 `docs/` 供项目答辩使用，但不进入公开 README。
 
 ---
 
@@ -1397,27 +1405,27 @@ Top-K 的 radix/bitonic/RTop-K、histogram 的老架构实现、Blackwell Operat
 
 ### 19.1 代码与正确性
 
-- [ ] 七个 API 语义、dtype、layout、tie/NaN 策略写入头文件和 README。
-- [ ] 每个算子有 reference、朴素版、优化版。
-- [ ] 空 expert、热点、非对齐、tiny/large shape 测试齐全。
-- [ ] memcheck/racecheck/synccheck 结果留档。
-- [ ] 不同架构路径有显式 dispatch 和 fallback。
+- [x] 七个语义算子和一个融合 primitive 的 API、dtype、layout、tie/NaN 策略写入头文件和 README。
+- [x] 七个语义算子具有 CPU reference 与朴素 CUDA；研究 candidate 独立于 public `Auto` 晋级状态。
+- [x] 空 expert、热点、非对齐、tiny/large shape 已进入 correctness/benchmark 配置；真实 route trace 仍未完成。
+- [x] memcheck/initcheck/racecheck/synccheck 结果在 RTX 3080 evidence 中留档。
+- [x] SM86 有显式 dispatch/fallback；SM90/H100 与 Blackwell 仅交叉编译或预案，不宣称实卡支持。
 
 ### 19.2 性能证据
 
-- [ ] warmup、repeats、统计量和计时边界固定。
+- [x] 已发布 suite 固定 warmup、repeats、统计量和计时边界。
 - [ ] uniform、Zipf、trace-driven；cold/warm；working-set sweep。
 - [ ] logical bytes、physical traffic、cache hit、register、SMEM、occupancy、stall 都能追溯。
-- [ ] 每个主算子至少三轮版本与一次失败优化。
-- [ ] 每个 speedup 对应同机、同语义、同 dtype、同 shape 的基线。
-- [ ] L1 Kernel Body、必要的 L2 Operator 与 L3 微流水线结果同时存在。
+- [x] Dense GEMM、Top-K 与 Grouped GEMM 均保留多轮版本和失败优化。
+- [x] 正式 comparison 对同机、语义、dtype、shape 与测量边界 fail-closed；跨工具链结果另标 diagnostic。
+- [x] 已有 L1 Kernel Body、L2 Operator 与 L3 微流水线结果；真实 trace/working-set 仍缺失。
 
 ### 19.3 项目与简历
 
 - [ ] 一键构建、测试、benchmark、画图命令可在干净环境复现。
-- [ ] RTX 3080 报告完整；H100 未测项明确标 `[未测试]`。
-- [ ] README 有架构图、结果表、限制和复现说明。
-- [ ] 简历数字全部来自已提交 CSV/JSON。
+- [x] RTX 3080 报告已归档；H100/Blackwell 明确标为未实卡验证。
+- [x] README 有架构图、证据表、限制和复现说明。
+- [x] 本节推荐的简历数字均可回溯到已提交 CSV/JSON/Markdown 报告。
 - [ ] 能在 3 分钟讲清项目，在 15 分钟讲清一个 GEMM 和一个 routing 算子的优化因果链。
 
 ---

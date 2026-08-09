@@ -1,5 +1,7 @@
 # RaggedRoute
 
+English | [简体中文](README.zh-CN.md)
+
 [![CI](https://github.com/shunwendongan/RaggedRoute/actions/workflows/ci.yml/badge.svg)](https://github.com/shunwendongan/RaggedRoute/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 

@@ -54,6 +54,12 @@ class ChainAdapter final : public BenchmarkAdapter {
     if (variant_name_ == "cuda_all_candidates_chain") {
       return prefix + " with every selected CUDA candidate";
     }
+    if (variant_name_ == "cuda_postlogit_retained_main") {
+      return prefix + " with the retained main post-logit candidates and Grouped GEMM v1";
+    }
+    if (variant_name_ == "cuda_postlogit_integrated_latest") {
+      return prefix + " with the retained main post-logit candidates and Grouped GEMM v2";
+    }
     if (variant_name_ == "library_all_baselines_chain") {
       return prefix + " with repository library baselines (diagnostic contract)";
     }
@@ -131,6 +137,9 @@ class ChainAdapter final : public BenchmarkAdapter {
     const RuntimeContext context = make_runtime_context(stream, architecture_);
     const bool all_candidates = variant_name_ == "cuda_all_candidates_chain";
     const bool all_libraries = variant_name_ == "library_all_baselines_chain";
+    const bool retained_postlogit = variant_name_ == "cuda_postlogit_retained_main";
+    const bool integrated_postlogit = variant_name_ == "cuda_postlogit_integrated_latest";
+    const bool unified_postlogit = retained_postlogit || integrated_postlogit;
     if (include_router_projection_ && all_libraries) {
 #if RAGGEDROUTE_HAS_CUBLAS
       library_baseline::launch_dense_cublaslt(
@@ -168,7 +177,7 @@ class ChainAdapter final : public BenchmarkAdapter {
       topk_args.weights.data = route_weights_.data();
       topk_args.tokens = tokens_;
       topk_args.experts = experts_;
-      if (all_candidates) {
+      if (all_candidates || unified_postlogit) {
         topk_args.kernel = {KernelFamily::kCudaOptimized,
                             ops::kTopKGateLocalPairTwoReduceV4Implementation};
       }
@@ -188,7 +197,8 @@ class ChainAdapter final : public BenchmarkAdapter {
 #else
       throw std::runtime_error("library chain requires CCCL support");
 #endif
-    } else if (variant_name_ == "cuda_fused_histogram_scan" || all_candidates) {
+    } else if (variant_name_ == "cuda_fused_histogram_scan" || all_candidates ||
+               unified_postlogit) {
       HistogramExclusiveScanArgs fused_args;
       fused_args.expert_ids = ids_.data();
       fused_args.counts = counts_.data();
@@ -224,7 +234,7 @@ class ChainAdapter final : public BenchmarkAdapter {
     permute_args.experts = experts_;
     permute_args.top_k = 2;
     permute_args.hidden = hidden_;
-    if (variant_name_ == "cuda_permute_candidate" || all_candidates) {
+    if (variant_name_ == "cuda_permute_candidate" || all_candidates || unified_postlogit) {
       permute_args.kernel = {KernelFamily::kCudaOptimized,
                              ops::kTokenPermuteCandidateImplementation};
     }
@@ -264,14 +274,18 @@ class ChainAdapter final : public BenchmarkAdapter {
 #else
       throw std::runtime_error("library chain requires CUTLASS support");
 #endif
-    } else if (variant_name_ == "cuda_grouped_sm86_fp32_v1" || all_candidates) {
+    } else if (variant_name_ == "cuda_grouped_sm86_fp32_v1" || all_candidates ||
+               unified_postlogit) {
+      const std::uint32_t grouped_implementation =
+          integrated_postlogit ? ops::kGroupedGemmSm86Fp32V2Implementation
+                               : ops::kGroupedGemmSm86Fp32V1Implementation;
       cuda_check(
           ops::launch_grouped_gemm_optimized(
               static_cast<const float*>(grouped_args.x_permuted.data),
               static_cast<const float*>(grouped_args.expert_weights.data), grouped_args.offsets,
               static_cast<float*>(grouped_args.y_permuted.data), grouped_args.experts,
               grouped_args.hidden, grouped_args.output, grouped_args.max_expert_tokens,
-              ops::kGroupedGemmSm86Fp32V1Implementation, stream),
+              grouped_implementation, stream),
           "chain benchmark-only grouped_gemm candidate");
     } else {
       operator_check(grouped_gemm(grouped_args, context), "chain grouped_gemm operator");
@@ -296,7 +310,7 @@ class ChainAdapter final : public BenchmarkAdapter {
       throw std::runtime_error("library chain requires vLLM unpermute support");
 #endif
     }
-    if (variant_name_ == "cuda_unpermute_candidate" || all_candidates) {
+    if (variant_name_ == "cuda_unpermute_candidate" || all_candidates || unified_postlogit) {
       cuda_check(
           ops::launch_unpermute_optimized(
               static_cast<const float*>(unpermute_args.y_permuted.data), unpermute_args.route_pos,
@@ -355,6 +369,9 @@ class ChainAdapter final : public BenchmarkAdapter {
   }
 
   FieldMap variant_config() const override {
+    const bool retained_postlogit = variant_name_ == "cuda_postlogit_retained_main";
+    const bool integrated_postlogit = variant_name_ == "cuda_postlogit_integrated_latest";
+    const bool unified_postlogit = retained_postlogit || integrated_postlogit;
     return {
         {"components",
          include_router_projection_
@@ -363,7 +380,9 @@ class ChainAdapter final : public BenchmarkAdapter {
              : std::string(
                    "topk_gate,histogram,exclusive_scan,token_permute,grouped_gemm,unpermute")},
         {"component_variant",
-         variant_name_ == "cuda_all_candidates_chain" ? std::string("all_selected_cuda_candidates")
+         integrated_postlogit ? std::string("postlogit_integrated_latest_grouped_v2")
+         : retained_postlogit ? std::string("postlogit_retained_main_grouped_v1")
+         : variant_name_ == "cuda_all_candidates_chain" ? std::string("all_selected_cuda_candidates")
          : variant_name_ == "library_all_baselines_chain"
              ? std::string("all_repository_library_baselines_diagnostic")
          : variant_name_ == "cuda_permute_candidate"
@@ -375,23 +394,29 @@ class ChainAdapter final : public BenchmarkAdapter {
              ? std::string("cuda_naive_except_fused_histogram_scan")
              : std::string("cuda_naive")},
         {"permute_variant",
-         variant_name_ == "cuda_all_candidates_chain"
+         unified_postlogit ? std::string("cuda_candidate_v2_from_offsets")
+         : variant_name_ == "cuda_all_candidates_chain"
              ? std::string("cuda_candidate_from_ids_equivalent")
          : variant_name_ == "library_all_baselines_chain" ? std::string("vllm_moe_permute")
          : variant_name_ == "cuda_permute_candidate"      ? std::string("cuda_token_owned_top2")
                                                           : std::string("cuda_naive")},
         {"runtime_status", variant_name_ == "library_all_baselines_chain"
                                ? std::string("diagnostic_not_strictly_comparable")
-                           : variant_name_ == "cuda_grouped_sm86_fp32_v1" ||
+                           : variant_name_ == "cuda_grouped_sm86_fp32_v1" || unified_postlogit ||
                                    variant_name_ == "cuda_all_candidates_chain"
                                ? std::string("benchmark_only_not_promoted")
                                : std::string("public_runtime")},
         {"unpermute_variant",
-         variant_name_ == "cuda_all_candidates_chain"     ? std::string("cuda_warp_token_vec4")
+         unified_postlogit ? std::string("cuda_warp_token_vec4")
+         : variant_name_ == "cuda_all_candidates_chain"     ? std::string("cuda_warp_token_vec4")
          : variant_name_ == "library_all_baselines_chain" ? std::string("vllm_finalize_routing")
          : variant_name_ == "cuda_unpermute_candidate"    ? std::string("cuda_warp_token_vec4")
                                                           : std::string("cuda_naive")},
-        {"grouped_variant", variant_name_ == "cuda_all_candidates_chain"
+        {"grouped_variant", integrated_postlogit
+                                ? std::string("cuda_grouped_sm86_fp32_v2")
+                            : retained_postlogit
+                                ? std::string("cuda_grouped_sm86_fp32_v1")
+                            : variant_name_ == "cuda_all_candidates_chain"
                                 ? std::string("cuda_grouped_sm86_fp32_v1")
                             : variant_name_ == "library_all_baselines_chain"
                                 ? std::string("cutlass_grouped_fixed_problem_metadata")
@@ -400,7 +425,8 @@ class ChainAdapter final : public BenchmarkAdapter {
                                      ? std::string("fixed_host_offsets_from_deterministic_oracle")
                                      : std::string("worst_case_R")},
         {"histogram_scan_variant",
-         variant_name_ == "cuda_all_candidates_chain" ? std::string("cuda_fused_histogram_scan")
+         unified_postlogit ? std::string("cuda_fused_histogram_scan_v2")
+         : variant_name_ == "cuda_all_candidates_chain" ? std::string("cuda_fused_histogram_scan")
          : variant_name_ == "library_all_baselines_chain"
              ? std::string("cub_device_histogram_plus_cub_block_scan")
          : variant_name_ == "cuda_fused_histogram_scan" ? std::string("cuda_fused_histogram_scan")
@@ -410,7 +436,9 @@ class ChainAdapter final : public BenchmarkAdapter {
                           : variant_name_ == "library_all_baselines_chain"
                               ? std::string("cublaslt")
                               : std::string("cuda_naive")},
-        {"topk_variant", variant_name_ == "cuda_all_candidates_chain"
+        {"topk_variant", unified_postlogit
+                             ? std::string("cuda_local_pair_two_reduce_top2_v4")
+                         : variant_name_ == "cuda_all_candidates_chain"
                              ? std::string("cuda_local_pair_two_reduce_top2_v4")
                          : variant_name_ == "library_all_baselines_chain"
                              ? std::string("cub_block_radix_top2_benchmark_only")
@@ -441,6 +469,8 @@ class ChainAdapter final : public BenchmarkAdapter {
     work.logical_bytes += sizeof(float) * (static_cast<double>(route_pairs_) * output_ +
                                            static_cast<double>(tokens_) * output_);
     const bool fused_histogram_scan = variant_name_ == "cuda_fused_histogram_scan" ||
+                                      variant_name_ == "cuda_postlogit_retained_main" ||
+                                      variant_name_ == "cuda_postlogit_integrated_latest" ||
                                       variant_name_ == "cuda_all_candidates_chain";
     work.operator_metrics["kernel_launches"] = static_cast<std::int64_t>(
         (include_router_projection_ ? 9 : 8) - (fused_histogram_scan ? 1 : 0));

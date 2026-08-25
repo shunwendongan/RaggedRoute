@@ -190,6 +190,12 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     variants.push_back(descriptor("cuda_candidate", "in_tree_cuda",
                                   "raggedroute.histogram.cuda_candidate.v1", "not_applicable",
                                   "shape_dispatched_shared_histogram"));
+    variants.push_back(descriptor("cuda_candidate_v1", "in_tree_cuda",
+                                  "raggedroute.histogram.cuda_candidate.v1",
+                                  "not_applicable", "shape_dispatched_shared_histogram"));
+    variants.push_back(descriptor("cuda_candidate_v2", "in_tree_cuda_candidate",
+                                  "raggedroute.histogram.cuda_candidate.v2", "not_applicable",
+                                  "single_bin_direct_write_else_v1"));
 #if RAGGEDROUTE_HAS_CCCL
     variants.push_back(descriptor("cub_device_histogram", "nvidia_cccl",
                                   "cub::DeviceHistogram::HistogramEven", cccl_revision(),
@@ -313,6 +319,9 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     variants.push_back(descriptor("cuda_grouped_sm86_fp32_v1", "in_tree_cuda",
                                   "raggedroute.grouped.cuda_optimized.v1", "not_applicable",
                                   "explicit_sm86_direct_or_persistent"));
+    variants.push_back(descriptor("cuda_grouped_sm86_fp32_v2", "in_tree_cuda_research",
+                                  "raggedroute.grouped.cuda_candidate.v2", "not_applicable",
+                                  "warp_prefix_launch_bounds_5"));
 #if RAGGEDROUTE_HAS_CUBLAS
     variants.push_back(descriptor("cublas_per_expert", "nvidia_cuda_library",
                                   "cublasSgemm.per_active_expert.v1", cuda_library_revision(),
@@ -390,6 +399,16 @@ std::vector<VariantDescriptor> available_suite_variant_descriptors(const std::st
           "library_all_baselines_chain", "mixed_external_libraries",
           "raggedroute.chain.all_repository_libraries.diagnostic.v1", "not_applicable",
           "cublaslt_cub_top2_cub_hist_scan_vllm_permute_cutlass_grouped_vllm_unpermute"));
+    }
+    if (suite_name == "chain_from_logits") {
+      variants.push_back(descriptor(
+          "cuda_postlogit_retained_main", "in_tree_cuda_research",
+          "raggedroute.chain.postlogit_retained_main.v1", "not_applicable",
+          "topk_v4_fused_hist_scan_v2_permute_v2_grouped_v1_unpermute_retained_v1"));
+      variants.push_back(descriptor(
+          "cuda_postlogit_integrated_latest", "in_tree_cuda_research",
+          "raggedroute.chain.postlogit_integrated_latest.v1", "not_applicable",
+          "topk_v4_fused_hist_scan_v2_permute_v2_grouped_v2_unpermute_retained_v1"));
     }
     return variants;
   }

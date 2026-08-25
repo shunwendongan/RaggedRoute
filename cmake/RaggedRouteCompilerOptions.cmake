@@ -33,6 +33,8 @@ function(raggedroute_apply_target_settings target)
   endif()
 
   if(RAGGEDROUTE_ENABLE_CUDA)
+    target_compile_options(${target} PRIVATE
+      $<$<AND:$<COMPILE_LANGUAGE:CUDA>,$<NOT:$<CONFIG:Debug>>>:-O3>)
     if(RAGGEDROUTE_ENABLE_CUDA_DEVICE_DEBUG)
       target_compile_options(${target} PRIVATE
         $<$<AND:$<COMPILE_LANGUAGE:CUDA>,$<CONFIG:Debug>>:-G>)

@@ -193,9 +193,11 @@ void test_pure_dispatch() {
     require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
             "benchmark-only grouped GEMM candidates must not be runtime-dispatchable");
   }
-  request.requested_kernel = {KernelFamily::kCudaOptimized, 101};
-  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
-          "Histogram implementation ids must be rejected for dense GEMM");
+  for (const std::uint32_t implementation : {101U, 102U}) {
+    request.requested_kernel = {KernelFamily::kCudaOptimized, implementation};
+    require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+            "Histogram implementation ids must be rejected for dense GEMM");
+  }
 
   request.operator_kind = OperatorKind::kHistogram;
   request.signature = fp32_signature(request.operator_kind);
@@ -204,6 +206,9 @@ void test_pure_dispatch() {
   require(decision.kernel.family == KernelFamily::kCudaOptimized &&
               decision.kernel.implementation_id == 101,
           "Histogram dispatch must preserve its operator-local implementation id");
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 102};
+  require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
+          "benchmark-only Histogram v2 must not change the public dispatch surface");
   request.requested_kernel = {KernelFamily::kCudaNaive, 0};
   require_status(select_kernel(request, &decision), "explicit naive histogram dispatch");
   require(
@@ -691,6 +696,7 @@ void test_histogram_reset(const raggedroute::RuntimeContext& context) {
   require(ids.canaries_intact(context.stream) && counts.canaries_intact(context.stream),
           "small histogram candidate changed a redzone");
 
+  args.kernel = {raggedroute::KernelFamily::kCudaOptimized, 101};
   args.expert_ids = nullptr;
   args.route_pairs = 0;
   counts.copy_from_host({22, 11}, context.stream);

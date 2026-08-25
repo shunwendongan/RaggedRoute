@@ -1,0 +1,19 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_six_ops_v2_smoke_v1",
+  "protocol": "smoke",
+  "process_runs": 1,
+  "common": {"warmup": 2, "samples": 3, "kernel_repeats": 1, "seed": 20260825, "cache_mode": "warm"},
+  "cases": [
+    {
+      "id": "six_ops.smoke.uniform.t64_e16_k64_n64", "suite": "chain_from_logits", "levels": ["l3"],
+      "variants": [{"name": "cuda_postlogit_retained_main", "promotion_baseline": true}, {"name": "cuda_postlogit_integrated_latest", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}],
+      "params": {"T": 64, "E": 16, "K": 64, "N": 64, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "six_ops.smoke.zipf14.t512_e64_k128_n128", "suite": "chain_from_logits", "levels": ["l3"],
+      "variants": [{"name": "cuda_postlogit_retained_main", "promotion_baseline": true}, {"name": "cuda_postlogit_integrated_latest", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}],
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    }
+  ]
+}

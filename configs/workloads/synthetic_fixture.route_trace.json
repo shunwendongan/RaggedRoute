@@ -1,0 +1,76 @@
+{
+  "schema_version": "raggedroute.route_trace.v1",
+  "trace_id": "synthetic_fixture_t8_e8_top2",
+  "source_kind": "synthetic_fixture",
+  "description": "Unit-test-only route working set; not production evidence.",
+  "anonymized": true,
+  "tokens": 8,
+  "experts": 8,
+  "top_k": 2,
+  "frames": [
+    {
+      "frame_id": "balanced",
+      "expert_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        0
+      ]
+    },
+    {
+      "frame_id": "skewed",
+      "expert_ids": [
+        0,
+        1,
+        0,
+        2,
+        0,
+        3,
+        0,
+        4,
+        0,
+        5,
+        0,
+        6,
+        0,
+        7,
+        0,
+        1
+      ]
+    },
+    {
+      "frame_id": "shifted",
+      "expert_ids": [
+        7,
+        6,
+        6,
+        5,
+        5,
+        4,
+        4,
+        3,
+        3,
+        2,
+        2,
+        1,
+        1,
+        0,
+        0,
+        7
+      ]
+    }
+  ]
+}
+

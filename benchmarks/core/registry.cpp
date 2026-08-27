@@ -270,6 +270,12 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     variants.push_back(descriptor("cuda_candidate_v2", "in_tree_cuda_candidate",
                                   "raggedroute.permute.shape_dispatched.v2", "not_applicable",
                                   "shape_dispatch_tile4_direct_or_token_owned"));
+    variants.push_back(descriptor("cuda_token_tile2_direct", "in_tree_cuda_candidate",
+                                  "raggedroute.permute.token_tile2_direct.v3", "not_applicable",
+                                  "token_tile2_direct_atomic"));
+    variants.push_back(descriptor("cuda_candidate_v3", "in_tree_cuda_candidate",
+                                  "raggedroute.permute.shape_dispatched.v3", "not_applicable",
+                                  "shape_dispatch_tile4_tile2_or_token_owned"));
     variants.push_back(descriptor("cuda_candidate", "in_tree_cuda_candidate",
                                   "raggedroute.permute.candidate.v2", "not_applicable",
                                   "shape_dispatch_tile4_direct_or_token_owned"));
@@ -287,6 +293,9 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     variants.push_back(descriptor("cuda_candidate_v2_from_ids", "in_tree_cuda_candidate",
                                   "raggedroute.permute.candidate_from_ids.v2",
                                   "not_applicable", "fused_prepare_shape_dispatch_v2"));
+    variants.push_back(descriptor("cuda_candidate_v3_from_ids", "in_tree_cuda_candidate",
+                                  "raggedroute.permute.candidate_from_ids.v3",
+                                  "not_applicable", "fused_prepare_shape_dispatch_v3"));
 #if RAGGEDROUTE_HAS_CCCL
     const std::string vllm_dependency =
         "vllm@837eae64580c885101ee95b073aafb27a485e7ce; " + cccl_revision();
@@ -412,6 +421,10 @@ std::vector<VariantDescriptor> available_suite_variant_descriptors(const std::st
           "cuda_postlogit_integrated_latest", "in_tree_cuda_research",
           "raggedroute.chain.postlogit_integrated_latest.v1", "not_applicable",
           "topk_v4_fused_hist_scan_v2_permute_v2_grouped_v2_unpermute_retained_v1"));
+      variants.push_back(descriptor(
+          "cuda_postlogit_research_v3", "in_tree_cuda_research",
+          "raggedroute.chain.postlogit_research_v3.v1", "not_applicable",
+          "topk_v4_fused_hist_scan_v2_permute_v3_grouped_v3_unpermute_retained_v1"));
     }
     return variants;
   }

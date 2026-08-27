@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raggedroute.local/schemas/route-trace.v1.json",
+  "title": "RaggedRoute anonymized routing trace",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "trace_id",
+    "source_kind",
+    "tokens",
+    "experts",
+    "top_k",
+    "frames"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "raggedroute.route_trace.v1"
+    },
+    "trace_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._-]+$"
+    },
+    "source_kind": {
+      "enum": [
+        "production",
+        "captured",
+        "synthetic_fixture"
+      ]
+    },
+    "description": {
+      "type": "string"
+    },
+    "anonymized": {
+      "type": "boolean"
+    },
+    "tokens": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "experts": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 64
+    },
+    "top_k": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "frames": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "frame_id",
+          "expert_ids"
+        ],
+        "properties": {
+          "frame_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._-]+$"
+          },
+          "expert_ids": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

@@ -1,0 +1,87 @@
+{
+  "schema_version": "raggedroute.profile_suite.v1",
+  "suite_id": "rtx3080_permute_candidate_v3_profile_v1",
+  "cases": [
+    {
+      "id": "permute.v2.t4096_k1024.basic",
+      "operator": "token_permute",
+      "variant": "cuda_candidate_v2",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260827,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "token_permute_token_tile4_top2_kernel",
+      "params": {
+        "T": 4096,
+        "E": 64,
+        "top_k": 2,
+        "K": 1024,
+        "distribution": "single_hot",
+        "zipf_s": 0,
+        "materialize_sorted_route": true
+      }
+    },
+    {
+      "id": "permute.v3.t4096_k1024.basic",
+      "operator": "token_permute",
+      "variant": "cuda_candidate_v3",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260827,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "token_permute_token_tile2_top2_kernel",
+      "params": {
+        "T": 4096,
+        "E": 64,
+        "top_k": 2,
+        "K": 1024,
+        "distribution": "single_hot",
+        "zipf_s": 0,
+        "materialize_sorted_route": true
+      }
+    },
+    {
+      "id": "permute.v2.t8192_k256.basic",
+      "operator": "token_permute",
+      "variant": "cuda_candidate_v2",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260827,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "token_permute_token_tile4_top2_kernel",
+      "params": {
+        "T": 8192,
+        "E": 64,
+        "top_k": 2,
+        "K": 256,
+        "distribution": "zipf",
+        "zipf_s": 1.4,
+        "materialize_sorted_route": true
+      }
+    },
+    {
+      "id": "permute.v3.t8192_k256.basic",
+      "operator": "token_permute",
+      "variant": "cuda_candidate_v3",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260827,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "token_permute_token_tile2_top2_kernel",
+      "params": {
+        "T": 8192,
+        "E": 64,
+        "top_k": 2,
+        "K": 256,
+        "distribution": "zipf",
+        "zipf_s": 1.4,
+        "materialize_sorted_route": true
+      }
+    }
+  ]
+}
+

@@ -16,6 +16,7 @@ import os
 import pathlib
 import platform
 import random
+import re
 import shlex
 import subprocess
 import sys
@@ -25,6 +26,53 @@ from typing import Any
 SCHEMA_V1 = "raggedroute.suite.v1"
 SCHEMA_V2 = "raggedroute.suite.v2"
 SUPPORTED_SCHEMAS = {SCHEMA_V1, SCHEMA_V2}
+PORTABLE_TRACE_ID = re.compile(r"^[A-Za-z0-9._-]+$")
+
+
+def load_route_trace_header(path: pathlib.Path) -> dict[str, Any]:
+    tokens = path.read_text(encoding="utf-8").split()
+    if len(tokens) < 7 or tokens[0] != "raggedroute.route_trace.v1":
+        raise ValueError(f"invalid normalized route trace: {path}")
+    trace_id, source_kind = tokens[1], tokens[2]
+    token_count, experts, top_k, frame_count = map(int, tokens[3:7])
+    route_pairs = token_count * top_k
+    expected = 7 + frame_count * (1 + route_pairs)
+    if (
+        not PORTABLE_TRACE_ID.fullmatch(trace_id)
+        or source_kind not in {"production", "captured", "synthetic_fixture"}
+        or token_count < 1
+        or not 1 <= top_k <= experts <= 64
+        or frame_count < 1
+        or len(tokens) != expected
+    ):
+        raise ValueError(f"invalid normalized route trace metadata: {path}")
+    frame_ids: list[str] = []
+    cursor = 7
+    for _ in range(frame_count):
+        frame_id = tokens[cursor]
+        if not PORTABLE_TRACE_ID.fullmatch(frame_id) or frame_id in frame_ids:
+            raise ValueError(f"invalid or duplicate route trace frame id: {path}")
+        frame_ids.append(frame_id)
+        try:
+            ids = [int(value) for value in tokens[cursor + 1 : cursor + 1 + route_pairs]]
+        except ValueError as error:
+            raise ValueError(f"non-integer expert id in route trace: {path}") from error
+        if any(value < 0 or value >= experts for value in ids):
+            raise ValueError(f"out-of-range expert id in route trace: {path}")
+        for token in range(token_count):
+            selected = ids[token * top_k : (token + 1) * top_k]
+            if len(set(selected)) != top_k:
+                raise ValueError(f"repeated per-token expert id in route trace: {path}")
+        cursor += 1 + route_pairs
+    return {
+        "trace_id": trace_id,
+        "source_kind": source_kind,
+        "T": token_count,
+        "E": experts,
+        "top_k": top_k,
+        "frame_count": frame_count,
+        "frame_ids": frame_ids,
+    }
 
 
 def command_output(command: list[str], cwd: pathlib.Path) -> str:
@@ -76,7 +124,45 @@ def load_suite(path: pathlib.Path) -> dict[str, Any]:
                 suffix.append(f"{name.lower()}{value}")
             current["id"] = source_case["id"] + "." + "_".join(suffix)
             expanded_cases.append(current)
-    suite["cases"] = expanded_cases
+    trace_expanded_cases: list[dict[str, Any]] = []
+    repo = pathlib.Path(__file__).resolve().parents[1]
+    for source_case in expanded_cases:
+        trace_spec = source_case.get("route_trace")
+        if trace_spec is None:
+            trace_expanded_cases.append(source_case)
+            continue
+        if not isinstance(trace_spec, dict) or not isinstance(trace_spec.get("path"), str):
+            raise ValueError(f"case {source_case.get('id')} has an invalid route_trace")
+        relative_path = pathlib.Path(trace_spec["path"])
+        trace_path = relative_path if relative_path.is_absolute() else repo / relative_path
+        header = load_route_trace_header(trace_path.resolve())
+        requested = trace_spec.get("frames", "all")
+        frames = list(range(header["frame_count"])) if requested == "all" else requested
+        if not isinstance(frames, list) or not frames or any(
+            not isinstance(frame, int) or frame < 0 or frame >= header["frame_count"]
+            for frame in frames
+        ):
+            raise ValueError(f"case {source_case.get('id')} has invalid trace frames")
+        for frame in frames:
+            current = dict(source_case)
+            current.pop("route_trace")
+            current["params"] = dict(source_case.get("params", {}))
+            for name in ("T", "E", "top_k"):
+                configured = current["params"].get(name)
+                if configured is not None and configured != header[name]:
+                    raise ValueError(
+                        f"case {source_case.get('id')} {name} conflicts with route trace"
+                    )
+                current["params"][name] = header[name]
+            current["params"]["route_trace_path"] = str(relative_path).replace("\\", "/")
+            current["params"]["route_trace_frame"] = frame
+            frame_id = "".join(
+                character if character.isalnum() or character in "-_" else "_"
+                for character in header["frame_ids"][frame]
+            )
+            current["id"] = source_case["id"] + f".trace_{frame_id}"
+            trace_expanded_cases.append(current)
+    suite["cases"] = trace_expanded_cases
     ids = [case.get("id") for case in suite["cases"]]
     if any(not case_id for case_id in ids) or len(ids) != len(set(ids)):
         raise ValueError("every case requires a unique non-empty id")
@@ -281,6 +367,22 @@ def main() -> int:
         "compile_commands_sha256": file_sha256(
             binary.parent / "compile_commands.json"
         ),
+        "route_traces": [
+            {
+                "path": path,
+                "sha256": file_sha256(
+                    (repo / path).resolve() if not pathlib.Path(path).is_absolute()
+                    else pathlib.Path(path)
+                ),
+            }
+            for path in sorted(
+                {
+                    str(case.get("params", {}).get("route_trace_path"))
+                    for case in suite["cases"]
+                    if case.get("params", {}).get("route_trace_path")
+                }
+            )
+        ],
         "commands": [],
     }
 

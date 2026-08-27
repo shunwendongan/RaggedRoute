@@ -14,6 +14,8 @@ constexpr std::uint32_t kTokenPermuteBlockPartialImplementation = 5;
 constexpr std::uint32_t kTokenPermuteTokenTile4DirectImplementation = 6;
 constexpr std::uint32_t kTokenPermuteTokenTile4WarpAggregatedImplementation = 7;
 constexpr std::uint32_t kTokenPermuteShapeDispatchedV2Implementation = 8;
+constexpr std::uint32_t kTokenPermuteTokenTile2DirectImplementation = 9;
+constexpr std::uint32_t kTokenPermuteShapeDispatchedV3Implementation = 10;
 
 // SM86 v2 candidate. It uses the tile4 direct path only for large, aligned
 // Top-2 rows and keeps the proven token-owned path as its conservative
@@ -30,7 +32,9 @@ inline bool is_token_permute_optimized_implementation(std::uint32_t implementati
          implementation_id == kTokenPermuteBlockPartialImplementation ||
          implementation_id == kTokenPermuteTokenTile4DirectImplementation ||
          implementation_id == kTokenPermuteTokenTile4WarpAggregatedImplementation ||
-         implementation_id == kTokenPermuteShapeDispatchedV2Implementation;
+         implementation_id == kTokenPermuteShapeDispatchedV2Implementation ||
+         implementation_id == kTokenPermuteTokenTile2DirectImplementation ||
+         implementation_id == kTokenPermuteShapeDispatchedV3Implementation;
 }
 
 cudaError_t launch_token_permute_prepare_offsets_fused(

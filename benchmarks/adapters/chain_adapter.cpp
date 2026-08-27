@@ -60,6 +60,9 @@ class ChainAdapter final : public BenchmarkAdapter {
     if (variant_name_ == "cuda_postlogit_integrated_latest") {
       return prefix + " with the retained main post-logit candidates and Grouped GEMM v2";
     }
+    if (variant_name_ == "cuda_postlogit_research_v3") {
+      return prefix + " with Permute v3 and Grouped GEMM v3 research candidates";
+    }
     if (variant_name_ == "library_all_baselines_chain") {
       return prefix + " with repository library baselines (diagnostic contract)";
     }
@@ -75,11 +78,20 @@ class ChainAdapter final : public BenchmarkAdapter {
     architecture_ = current_device_architecture();
     tokens_ = get_int_option(options, "T", 64);
     experts_ = get_int_option(options, "E", 8, 2);
+    const int top_k = get_int_option(options, "top_k", 2, 1);
+    if (top_k != 2) {
+      throw std::invalid_argument("current chain adapters require top_k=2");
+    }
     if (experts_ > 64) throw std::invalid_argument("current chain adapters support E<=64");
     hidden_ = get_int_option(options, "K", 32);
     output_ = get_int_option(options, "N", 32);
     distribution_ = get_option(options, "distribution", "uniform");
     zipf_s_ = get_double_option(options, "zipf_s", 1.0);
+    route_trace_path_ = get_option(options, "route_trace_path", "");
+    route_trace_frame_ = get_int_option(options, "route_trace_frame", 0, 0);
+    if (include_router_projection_ && !route_trace_path_.empty()) {
+      throw std::invalid_argument("route traces are supported only by chain_from_logits");
+    }
     route_pairs_ = checked_int_product(tokens_, 2, "R=T*2");
     (void)checked_int_product(tokens_, output_, "T*N");
 
@@ -106,8 +118,22 @@ class ChainAdapter final : public BenchmarkAdapter {
         }
       }
     } else {
-      const auto desired_ids =
-          make_route_ids(tokens_, 2, experts_, distribution_, zipf_s_, seed + 2);
+      std::vector<std::int32_t> desired_ids;
+      if (route_trace_path_.empty()) {
+        desired_ids = make_route_ids(tokens_, 2, experts_, distribution_, zipf_s_, seed + 2);
+      } else {
+        const RouteTraceFrame trace = load_route_trace_frame(route_trace_path_, route_trace_frame_);
+        if (trace.tokens != tokens_ || trace.experts != experts_ || trace.top_k != 2) {
+          throw std::invalid_argument("route trace shape does not match chain params");
+        }
+        desired_ids = trace.expert_ids;
+        route_trace_id_ = trace.trace_id;
+        route_trace_source_kind_ = trace.source_kind;
+        route_trace_frame_id_ = trace.frame_id;
+        route_trace_frame_count_ = trace.frame_count;
+        distribution_ = "route_trace";
+        zipf_s_ = 0.0;
+      }
       std::fill(logits_host_.begin(), logits_host_.end(), -8.0F);
       for (int token = 0; token < tokens_; ++token) {
         logits_host_[static_cast<std::size_t>(token) * experts_ +
@@ -139,7 +165,8 @@ class ChainAdapter final : public BenchmarkAdapter {
     const bool all_libraries = variant_name_ == "library_all_baselines_chain";
     const bool retained_postlogit = variant_name_ == "cuda_postlogit_retained_main";
     const bool integrated_postlogit = variant_name_ == "cuda_postlogit_integrated_latest";
-    const bool unified_postlogit = retained_postlogit || integrated_postlogit;
+    const bool research_v3 = variant_name_ == "cuda_postlogit_research_v3";
+    const bool unified_postlogit = retained_postlogit || integrated_postlogit || research_v3;
     if (include_router_projection_ && all_libraries) {
 #if RAGGEDROUTE_HAS_CUBLAS
       library_baseline::launch_dense_cublaslt(
@@ -236,7 +263,8 @@ class ChainAdapter final : public BenchmarkAdapter {
     permute_args.hidden = hidden_;
     if (variant_name_ == "cuda_permute_candidate" || all_candidates || unified_postlogit) {
       permute_args.kernel = {KernelFamily::kCudaOptimized,
-                             ops::kTokenPermuteCandidateImplementation};
+                             research_v3 ? ops::kTokenPermuteShapeDispatchedV3Implementation
+                                         : ops::kTokenPermuteCandidateImplementation};
     }
     if (all_libraries) {
 #if RAGGEDROUTE_HAS_CCCL
@@ -277,8 +305,9 @@ class ChainAdapter final : public BenchmarkAdapter {
     } else if (variant_name_ == "cuda_grouped_sm86_fp32_v1" || all_candidates ||
                unified_postlogit) {
       const std::uint32_t grouped_implementation =
-          integrated_postlogit ? ops::kGroupedGemmSm86Fp32V2Implementation
-                               : ops::kGroupedGemmSm86Fp32V1Implementation;
+          research_v3 ? ops::kGroupedGemmSm86Fp32V3Implementation
+          : integrated_postlogit ? ops::kGroupedGemmSm86Fp32V2Implementation
+                                 : ops::kGroupedGemmSm86Fp32V1Implementation;
       cuda_check(
           ops::launch_grouped_gemm_optimized(
               static_cast<const float*>(grouped_args.x_permuted.data),
@@ -352,7 +381,7 @@ class ChainAdapter final : public BenchmarkAdapter {
   }
 
   FieldMap case_config() const override {
-    return {
+    FieldMap config = {
         {"T", static_cast<std::int64_t>(tokens_)},
         {"E", static_cast<std::int64_t>(experts_)},
         {"top_k", static_cast<std::int64_t>(2)},
@@ -366,12 +395,21 @@ class ChainAdapter final : public BenchmarkAdapter {
         {"chain_entry", include_router_projection_ ? std::string("tokens") : std::string("logits")},
         {"included_operator_count", static_cast<std::int64_t>(include_router_projection_ ? 7 : 6)},
         {"active_experts", static_cast<std::int64_t>(active_experts_)}};
+    if (!route_trace_path_.empty()) {
+      config["workload_source"] = route_trace_source_kind_;
+      config["route_trace_id"] = route_trace_id_;
+      config["route_trace_frame_id"] = route_trace_frame_id_;
+      config["route_trace_frame"] = static_cast<std::int64_t>(route_trace_frame_);
+      config["route_trace_frame_count"] = static_cast<std::int64_t>(route_trace_frame_count_);
+    }
+    return config;
   }
 
   FieldMap variant_config() const override {
     const bool retained_postlogit = variant_name_ == "cuda_postlogit_retained_main";
     const bool integrated_postlogit = variant_name_ == "cuda_postlogit_integrated_latest";
-    const bool unified_postlogit = retained_postlogit || integrated_postlogit;
+    const bool research_v3 = variant_name_ == "cuda_postlogit_research_v3";
+    const bool unified_postlogit = retained_postlogit || integrated_postlogit || research_v3;
     return {
         {"components",
          include_router_projection_
@@ -380,7 +418,8 @@ class ChainAdapter final : public BenchmarkAdapter {
              : std::string(
                    "topk_gate,histogram,exclusive_scan,token_permute,grouped_gemm,unpermute")},
         {"component_variant",
-         integrated_postlogit ? std::string("postlogit_integrated_latest_grouped_v2")
+         research_v3 ? std::string("postlogit_research_permute_v3_grouped_v3")
+         : integrated_postlogit ? std::string("postlogit_integrated_latest_grouped_v2")
          : retained_postlogit ? std::string("postlogit_retained_main_grouped_v1")
          : variant_name_ == "cuda_all_candidates_chain" ? std::string("all_selected_cuda_candidates")
          : variant_name_ == "library_all_baselines_chain"
@@ -394,7 +433,8 @@ class ChainAdapter final : public BenchmarkAdapter {
              ? std::string("cuda_naive_except_fused_histogram_scan")
              : std::string("cuda_naive")},
         {"permute_variant",
-         unified_postlogit ? std::string("cuda_candidate_v2_from_offsets")
+         research_v3 ? std::string("cuda_candidate_v3_from_offsets")
+         : unified_postlogit ? std::string("cuda_candidate_v2_from_offsets")
          : variant_name_ == "cuda_all_candidates_chain"
              ? std::string("cuda_candidate_from_ids_equivalent")
          : variant_name_ == "library_all_baselines_chain" ? std::string("vllm_moe_permute")
@@ -412,7 +452,9 @@ class ChainAdapter final : public BenchmarkAdapter {
          : variant_name_ == "library_all_baselines_chain" ? std::string("vllm_finalize_routing")
          : variant_name_ == "cuda_unpermute_candidate"    ? std::string("cuda_warp_token_vec4")
                                                           : std::string("cuda_naive")},
-        {"grouped_variant", integrated_postlogit
+        {"grouped_variant", research_v3
+                                ? std::string("cuda_grouped_sm86_fp32_v3")
+                            : integrated_postlogit
                                 ? std::string("cuda_grouped_sm86_fp32_v2")
                             : retained_postlogit
                                 ? std::string("cuda_grouped_sm86_fp32_v1")
@@ -471,6 +513,7 @@ class ChainAdapter final : public BenchmarkAdapter {
     const bool fused_histogram_scan = variant_name_ == "cuda_fused_histogram_scan" ||
                                       variant_name_ == "cuda_postlogit_retained_main" ||
                                       variant_name_ == "cuda_postlogit_integrated_latest" ||
+                                      variant_name_ == "cuda_postlogit_research_v3" ||
                                       variant_name_ == "cuda_all_candidates_chain";
     work.operator_metrics["kernel_launches"] = static_cast<std::int64_t>(
         (include_router_projection_ ? 9 : 8) - (fused_histogram_scan ? 1 : 0));
@@ -582,7 +625,8 @@ class ChainAdapter final : public BenchmarkAdapter {
   }
 
   static void reject_unknown(const OptionMap& options) {
-    const std::set<std::string> allowed = {"T", "E", "K", "N", "distribution", "zipf_s"};
+    const std::set<std::string> allowed = {"T", "E", "top_k", "K", "N", "distribution", "zipf_s",
+                                           "route_trace_path", "route_trace_frame"};
     for (const auto& [name, unused] : options) {
       (void)unused;
       if (!allowed.count(name)) throw std::invalid_argument("unknown chain param: " + name);
@@ -596,6 +640,8 @@ class ChainAdapter final : public BenchmarkAdapter {
   int route_pairs_ = 0, active_experts_ = 0;
   double zipf_s_ = 0.0;
   std::string distribution_;
+  std::string route_trace_path_, route_trace_id_, route_trace_source_kind_, route_trace_frame_id_;
+  int route_trace_frame_ = 0, route_trace_frame_count_ = 0;
   std::vector<float> x_host_, router_weights_host_, logits_host_;
   std::vector<float> expert_weights_host_, route_weights_expected_;
   std::vector<float> expected_output_;

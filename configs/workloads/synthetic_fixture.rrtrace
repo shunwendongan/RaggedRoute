@@ -1,0 +1,7 @@
+raggedroute.route_trace.v1
+synthetic_fixture_t8_e8_top2
+synthetic_fixture
+8 8 2 3
+balanced 0 1 2 3 4 5 6 7 1 2 3 4 5 6 7 0
+skewed 0 1 0 2 0 3 0 4 0 5 0 6 0 7 0 1
+shifted 7 6 6 5 5 4 4 3 3 2 2 1 1 0 0 7

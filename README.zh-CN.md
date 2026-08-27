@@ -46,12 +46,14 @@ Benchmark registry 一共暴露八个 adapter：七个语义算子，以及可�
 | Expert Histogram | shape-dispatched `cuda_candidate` | small/sparse/block-private 路径；CUB 参考 | 通过 12-case、五进程门禁后在 SM86 晋级 |
 | Exclusive Scan | `cuda_naive` | CUB Device/Block/Warp Scan 参考 | standalone 实验候选已删除 |
 | Histogram + Scan | `R <= 4096`、`E <= 64` 时使用融合 F2，否则回退两阶段路径 | CUB 组合参考 | 代码路径存在，但仍需 release 级复测 |
-| Token Permute | `cuda_naive` | 显式 v2 shape dispatcher；adapted vLLM 路径 | 保留作研究；pure-permute 稳定性阻止默认晋级 |
-| Grouped GEMM | `cuda_naive` | benchmark-only SM86 candidate；CUTLASS/cuBLAS 参考 | 未通过声明的 CUTLASS shape 门禁 |
+| Token Permute | `cuda_naive` | 显式 v2/v3 shape dispatcher；adapted vLLM 路径 | v3 增加双 token CTA 研究路径；等待 clean Release 判定 |
+| Grouped GEMM | `cuda_naive` | 显式 SM86 v1/v2/v3；CUTLASS/cuBLAS 参考 | v3 只改变 tile/live-range geometry；未默认晋级 |
 | Unpermute | `cuda_naive` | benchmark-only warp/CTA candidate；adapted vLLM 参考 | 因 tail 与稳定性门禁失败而拒绝晋级 |
 
 > [!CAUTION]
 > `histogram_exclusive_scan` 在 SM86 上当前会由 `Auto` 选择融合 F2。归档运行受到其他 GPU workload 干扰：融合区域中心结果有潜力，但 CV、fallback 与 L3 门禁均失败。在独占 CUDA 环境复测通过或撤回默认选择之前，应将其视为实验路径。macOS 上没有进行任何新的 CUDA 能力或性能检查。
+
+当前简历项目迭代刻意只聚焦两个热点：`cuda_grouped_sm86_fp32_v3` 用 `16x64x16`、256 threads、两级 `cp.async` tile 对比 CUTLASS；`cuda_candidate_v3` 在 v2 tile4 回退的 Permute shape 上验证双 token CTA。两者都是显式 research ID，保留 v2/v1 fallback，且不修改 `Auto`。版本化 route trace 与三态 evaluator 已实现；仓库内 trace 只是一份 synthetic parser fixture，因此在获得 captured/production 输入前，真实 trace 晋级必须保持 `insufficient_evidence`。
 
 ## 工程亮点
 
@@ -158,8 +160,8 @@ CUDA Event 提供未被 profiler 干扰的 Release latency。NSYS 用于解释 l
 ## 当前限制与后续工作
 
 - 在独占 RTX 3080 窗口复测融合 Histogram + Scan F2；若稳定性、fallback 或 L3 门禁仍失败，则撤回其 `Auto`；
-- Grouped GEMM 每轮只验证一个假设：先研究 task-map balance 和 expert skew，再研究 register live range/tile shape，并保持 CUTLASS 为 strict-FP32 参考；
-- 在实现三态 promotion evaluator 前，增加带版本的真实 route trace 以及 working-set/cache 语义；
+- 完成 Grouped GEMM v3、Permute v3 和六阶段 L3 的 clean 五进程判定；若稳定性或 speedup 门禁失败，则保留拒绝记录；
+- 在提出任何真实 trace 性能结论前，用匿名 captured/production working set 替换仓库内 synthetic fixture；
 - 在作为 `main` 能力前，整理 realistic/vLLM-semantic stacked evidence 分支；
 - 将原始 profiler binary 和完整 aggregate 放入不可覆盖的 Release asset，并加强仓库规则以防 evidence policy 漂移；
 - 只在未来 CUDA 环境真正实现并测量 FP16/BF16 Tensor Core 路径。H100/Blackwell 支持必须经过实卡 correctness 与性能验证。
@@ -169,6 +171,7 @@ CUDA Event 提供未被 profiler 干扰的 Release latency。NSYS 用于解释 l
 - [实现状态与声明边界](docs/implementation-status.md)
 - [开发路线图](docs/development-roadmap.md)
 - [Benchmark 架构](docs/benchmark-architecture.md)
+- [Route trace 与三态 promotion](docs/route-trace-and-promotion.md)
 - [正确性框架](docs/correctness-framework.md)
 - [算子优化索引](docs/operator-optimization-index.md)
 - [CI 质量门禁](docs/ci-quality-gates.md)

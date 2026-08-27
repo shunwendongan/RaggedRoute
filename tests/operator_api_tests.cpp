@@ -220,14 +220,14 @@ void test_pure_dispatch() {
 
   request.operator_kind = OperatorKind::kTokenPermute;
   request.signature = fp32_signature(request.operator_kind);
-  for (std::uint32_t implementation = 1; implementation <= 8; ++implementation) {
+  for (std::uint32_t implementation = 1; implementation <= 10; ++implementation) {
     request.requested_kernel = {KernelFamily::kCudaOptimized, implementation};
     require_status(select_kernel(request, &decision), "explicit optimized token permute dispatch");
     require(decision.kernel.family == KernelFamily::kCudaOptimized &&
                 decision.kernel.implementation_id == implementation,
             "token permute must preserve its explicit implementation id");
   }
-  request.requested_kernel = {KernelFamily::kCudaOptimized, 9};
+  request.requested_kernel = {KernelFamily::kCudaOptimized, 11};
   require(select_kernel(request, &decision).code == StatusCode::kUnsupportedKernelVariant,
           "unimplemented optimized token permute ids must be rejected");
 

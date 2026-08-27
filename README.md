@@ -46,12 +46,14 @@ The benchmark registry exposes eight adapters: the seven semantic operators plus
 | Expert Histogram | shape-dispatched `cuda_candidate` | small/sparse/block-private paths; CUB reference | promoted on SM86 after a 12-case five-process gate |
 | Exclusive Scan | `cuda_naive` | CUB Device/Block/Warp Scan references | standalone experimental candidates were removed |
 | Histogram + Scan | fused F2 for `R <= 4096`, `E <= 64`; otherwise separate fallback | CUB composite references | code path exists, but release-quality revalidation is still required |
-| Token Permute | `cuda_naive` | explicit shape-dispatched v2; adapted vLLM paths | retained for research; unstable pure-permute cases prevent promotion |
-| Grouped GEMM | `cuda_naive` | benchmark-only SM86 candidate; CUTLASS/cuBLAS references | rejected against CUTLASS across the declared shape gate |
+| Token Permute | `cuda_naive` | explicit shape-dispatched v2/v3; adapted vLLM paths | v3 adds a two-token CTA research path; clean Release decision pending |
+| Grouped GEMM | `cuda_naive` | explicit SM86 v1/v2/v3; CUTLASS/cuBLAS references | v3 changes only tile/live-range geometry; no default promotion |
 | Unpermute | `cuda_naive` | benchmark-only warp/CTA candidate; adapted vLLM reference | rejected because tail and stability gates failed |
 
 > [!CAUTION]
 > `histogram_exclusive_scan` currently resolves `Auto` to the fused F2 implementation on SM86. The archived run was affected by competing GPU workloads: fused-region center results were promising, but CV, fallback, and L3 gates failed. Treat this path as experimental until it is rerun in an exclusive CUDA environment or demoted. No new CUDA capability or performance check is performed on macOS.
+
+The active portfolio round is deliberately narrow. `cuda_grouped_sm86_fp32_v3` tests a `16x64x16`, 256-thread, two-stage `cp.async` tile against CUTLASS; `cuda_candidate_v3` tests two tokens per CTA for the Permute shapes where v2 tile4 regressed. Both are explicit research IDs, preserve v2/v1 fallbacks, and leave `Auto` unchanged. Versioned route traces and a three-state evaluator are implemented; the tracked trace is a synthetic parser fixture, so real-trace promotion remains `insufficient_evidence` until captured input is supplied.
 
 ## Engineering highlights
 
@@ -158,8 +160,8 @@ CUDA Events provide unprofiled release latency. NSYS explains launch gaps and st
 ## Current limitations and next work
 
 - Rerun fused Histogram + Scan F2 in an exclusive RTX 3080 window; demote `Auto` if it still fails stability, fallback, or L3 gates.
-- Rework Grouped GEMM one hypothesis at a time: task-map balance and expert skew first, then register live ranges/tile shape, with CUTLASS as the strict-FP32 reference.
-- Add versioned real route traces and working-set/cache semantics before implementing the three-state promotion evaluator.
+- Complete the clean five-process Grouped GEMM v3, Permute v3, and six-stage L3 decisions; preserve a rejected candidate if stability or speedup gates fail.
+- Replace the tracked synthetic route fixture with an anonymized captured/production working set before making any real-trace claim.
 - Reconcile the realistic/vLLM-semantic stacked evidence branches before treating them as `main` capabilities.
 - Keep raw profiler binaries and full aggregates in immutable release assets; tighten repository checks against evidence-policy drift.
 - Implement and measure FP16/BF16 Tensor Core paths only in a future CUDA environment. H100/Blackwell support requires real-hardware correctness and performance validation.
@@ -169,6 +171,7 @@ CUDA Events provide unprofiled release latency. NSYS explains launch gaps and st
 - [Implementation status and claim boundary](docs/implementation-status.md)
 - [Development roadmap](docs/development-roadmap.md)
 - [Benchmark architecture](docs/benchmark-architecture.md)
+- [Route trace and three-state promotion](docs/route-trace-and-promotion.md)
 - [Correctness framework](docs/correctness-framework.md)
 - [Operator optimization index](docs/operator-optimization-index.md)
 - [CI quality gates](docs/ci-quality-gates.md)

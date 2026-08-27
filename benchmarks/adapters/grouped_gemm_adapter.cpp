@@ -111,12 +111,29 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
     output_ = get_int_option(options, "N", 128);
     distribution_ = get_option(options, "distribution", "uniform");
     zipf_s_ = get_double_option(options, "zipf_s", 1.0);
+    route_trace_path_ = get_option(options, "route_trace_path", "");
+    route_trace_frame_ = get_int_option(options, "route_trace_frame", 0, 0);
     if (experts_ < top_k_ || experts_ > 64) {
       throw std::invalid_argument("current grouped GEMM adapter requires top_k<=E<=64");
     }
     route_pairs_ = checked_int_product(tokens_, top_k_, "R=T*top_k");
 
-    const auto ids = make_route_ids(tokens_, top_k_, experts_, distribution_, zipf_s_, seed + 1);
+    std::vector<std::int32_t> ids;
+    if (route_trace_path_.empty()) {
+      ids = make_route_ids(tokens_, top_k_, experts_, distribution_, zipf_s_, seed + 1);
+    } else {
+      const RouteTraceFrame trace = load_route_trace_frame(route_trace_path_, route_trace_frame_);
+      if (trace.tokens != tokens_ || trace.experts != experts_ || trace.top_k != top_k_) {
+        throw std::invalid_argument("route trace shape does not match grouped_gemm params");
+      }
+      ids = trace.expert_ids;
+      route_trace_id_ = trace.trace_id;
+      route_trace_source_kind_ = trace.source_kind;
+      route_trace_frame_id_ = trace.frame_id;
+      route_trace_frame_count_ = trace.frame_count;
+      distribution_ = "route_trace";
+      zipf_s_ = 0.0;
+    }
     counts_ = counts_from_ids(ids, experts_);
     offsets_host_ = offsets_from_counts(counts_);
     max_expert_tokens_ = *std::max_element(counts_.begin(), counts_.end());
@@ -214,7 +231,7 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
     return compare_floats(output_buffer_.copy_to_host(stream), expected_, 1.0e-4, 2.0e-5 * hidden_);
   }
   FieldMap case_config() const override {
-    return {{"T", static_cast<std::int64_t>(tokens_)},
+    FieldMap config = {{"T", static_cast<std::int64_t>(tokens_)},
             {"E", static_cast<std::int64_t>(experts_)},
             {"top_k", static_cast<std::int64_t>(top_k_)},
             {"R", static_cast<std::int64_t>(route_pairs_)},
@@ -226,6 +243,14 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
             {"zipf_s", zipf_s_},
             {"active_experts", static_cast<std::int64_t>(active_experts_)},
             {"max_expert_tokens", static_cast<std::int64_t>(max_expert_tokens_)}};
+    if (!route_trace_path_.empty()) {
+      config["workload_source"] = route_trace_source_kind_;
+      config["route_trace_id"] = route_trace_id_;
+      config["route_trace_frame_id"] = route_trace_frame_id_;
+      config["route_trace_frame"] = static_cast<std::int64_t>(route_trace_frame_);
+      config["route_trace_frame_count"] = static_cast<std::int64_t>(route_trace_frame_count_);
+    }
+    return config;
   }
   FieldMap variant_config() const override {
     if (variant_name_ == "cublas_per_expert") {
@@ -334,7 +359,8 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
 
  private:
   static void reject_unknown(const OptionMap& options) {
-    const std::set<std::string> allowed = {"T", "E", "top_k", "K", "N", "distribution", "zipf_s"};
+    const std::set<std::string> allowed = {"T", "E", "top_k", "K", "N", "distribution", "zipf_s",
+                                           "route_trace_path", "route_trace_frame"};
     for (const auto& [name, unused] : options) {
       (void)unused;
       if (!allowed.count(name)) throw std::invalid_argument("unknown grouped_gemm param: " + name);
@@ -353,6 +379,8 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
   int route_pairs_ = 0, max_expert_tokens_ = 0, active_experts_ = 0;
   double zipf_s_ = 0.0;
   std::string distribution_;
+  std::string route_trace_path_, route_trace_id_, route_trace_source_kind_, route_trace_frame_id_;
+  int route_trace_frame_ = 0, route_trace_frame_count_ = 0;
   std::vector<std::int32_t> counts_, offsets_host_;
   std::vector<float> x_host_, weights_host_, expected_;
   DeviceBuffer<std::int32_t> offsets_;

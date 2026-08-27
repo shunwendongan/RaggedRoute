@@ -1,0 +1,34 @@
+{
+  "schema_version": "raggedroute.profile_suite.v1",
+  "suite_id": "rtx3080_grouped_gemm_candidate_v3_profile_v1",
+  "cases": [
+    {
+      "id": "grouped.v2.uniform.t2048.detailed",
+      "operator": "grouped_gemm", "variant": "cuda_grouped_sm86_fp32_v2", "level": "l2", "warmup": 20,
+      "seed": 20260827, "set": "detailed", "cache_control": "none",
+      "kernel_pattern": "grouped_gemm_register16x32_sm86_v2_kernel",
+      "params": {"T": 2048, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "grouped.v2.zipf14.t2048.detailed",
+      "operator": "grouped_gemm", "variant": "cuda_grouped_sm86_fp32_v2", "level": "l2", "warmup": 20,
+      "seed": 20260827, "set": "detailed", "cache_control": "none",
+      "kernel_pattern": "grouped_gemm_register16x32_sm86_v2_kernel",
+      "params": {"T": 2048, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    },
+    {
+      "id": "grouped.v3.uniform.t2048.detailed",
+      "operator": "grouped_gemm", "variant": "cuda_grouped_sm86_fp32_v3", "level": "l2", "warmup": 20,
+      "seed": 20260827, "set": "detailed", "cache_control": "none",
+      "kernel_pattern": "grouped_gemm_register16x64_sm86_v3_kernel",
+      "params": {"T": 2048, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "grouped.v3.zipf14.t2048.detailed",
+      "operator": "grouped_gemm", "variant": "cuda_grouped_sm86_fp32_v3", "level": "l2", "warmup": 20,
+      "seed": 20260827, "set": "detailed", "cache_control": "none",
+      "kernel_pattern": "grouped_gemm_register16x64_sm86_v3_kernel",
+      "params": {"T": 2048, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    }
+  ]
+}

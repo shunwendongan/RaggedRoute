@@ -13,6 +13,7 @@ constexpr std::uint32_t kGroupedGemmRegister16x32AsyncV3Implementation = 4;
 constexpr std::uint32_t kGroupedGemmSm86Fp32V1Implementation = 5;
 constexpr std::uint32_t kGroupedGemmRegister16x32AsyncFullV4Implementation = 6;
 constexpr std::uint32_t kGroupedGemmSm86Fp32V2Implementation = 7;
+constexpr std::uint32_t kGroupedGemmSm86Fp32V3Implementation = 8;
 
 cudaError_t launch_grouped_gemm_optimized(
     const float* x_permuted, const float* expert_weights, const std::int32_t* offsets,
@@ -45,6 +46,11 @@ cudaError_t launch_grouped_gemm_register16x32_async_full_v4(
     cudaStream_t caller_stream);
 
 cudaError_t launch_grouped_gemm_sm86_fp32_v2(
+    const float* x_permuted, const float* expert_weights, const std::int32_t* offsets,
+    float* y_permuted, int experts, int hidden, int output, int max_expert_tokens,
+    cudaStream_t caller_stream);
+
+cudaError_t launch_grouped_gemm_sm86_fp32_v3(
     const float* x_permuted, const float* expert_weights, const std::int32_t* offsets,
     float* y_permuted, int experts, int hidden, int output, int max_expert_tokens,
     cudaStream_t caller_stream);

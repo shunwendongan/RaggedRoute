@@ -322,6 +322,9 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     variants.push_back(descriptor("cuda_grouped_sm86_fp32_v2", "in_tree_cuda_research",
                                   "raggedroute.grouped.cuda_candidate.v2", "not_applicable",
                                   "warp_prefix_launch_bounds_5"));
+    variants.push_back(descriptor("cuda_grouped_sm86_fp32_v3", "in_tree_cuda_research",
+                                  "raggedroute.grouped.cuda_candidate.v3", "not_applicable",
+                                  "large_aligned_register16x64_cp_async_else_v2"));
 #if RAGGEDROUTE_HAS_CUBLAS
     variants.push_back(descriptor("cublas_per_expert", "nvidia_cuda_library",
                                   "cublasSgemm.per_active_expert.v1", cuda_library_revision(),

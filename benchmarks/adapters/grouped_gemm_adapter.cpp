@@ -21,6 +21,7 @@ bool is_optimized_grouped_variant(const std::string& variant) {
          variant == "cuda_grouped_register16x32_async_v3" ||
          variant == "cuda_grouped_register16x32_async_full_v4" ||
          variant == "cuda_grouped_sm86_fp32_v2" ||
+         variant == "cuda_grouped_sm86_fp32_v3" ||
          variant == "cuda_grouped_sm86_fp32_v1";
 }
 
@@ -45,6 +46,9 @@ std::uint32_t optimized_grouped_implementation(const std::string& variant) {
   }
   if (variant == "cuda_grouped_sm86_fp32_v2") {
     return ops::kGroupedGemmSm86Fp32V2Implementation;
+  }
+  if (variant == "cuda_grouped_sm86_fp32_v3") {
+    return ops::kGroupedGemmSm86Fp32V3Implementation;
   }
   throw std::invalid_argument("unsupported optimized grouped_gemm variant: " + variant);
 }
@@ -83,6 +87,9 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
     }
     if (variant_name_ == "cuda_grouped_sm86_fp32_v2") {
       return "SM86 v2 warp-prefix launch-bounds grouped GEMM (research candidate)";
+    }
+    if (variant_name_ == "cuda_grouped_sm86_fp32_v3") {
+      return "SM86 v3 16x64 cp.async large-aligned grouped GEMM (research candidate)";
     }
     return "Single-launch FP32 grouped GEMM with one grid-z slice per expert";
   }
@@ -287,6 +294,21 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
               {"resident_blocks", std::string("launch_bounds_min_5_per_sm")},
               {"staging", std::string("sm86_cp_async_double_buffered")},
               {"fallback", std::string("register16x32_sync_for_tail")},
+              {"math_mode", std::string("strict_fp32")},
+              {"runtime_status", std::string("explicit_research_candidate")}};
+    }
+    if (variant_name_ == "cuda_grouped_sm86_fp32_v3") {
+      return {{"algorithm_id", std::string("large_aligned_register16x64_v3")},
+              {"tile_m", static_cast<std::int64_t>(16)},
+              {"tile_n", static_cast<std::int64_t>(64)},
+              {"tile_k", static_cast<std::int64_t>(16)},
+              {"threads_per_block", static_cast<std::int64_t>(256)},
+              {"outputs_per_thread", static_cast<std::int64_t>(4)},
+              {"scheduler", std::string("warp_prefix_persistent_round_robin")},
+              {"staging", std::string("sm86_cp_async_double_buffered")},
+              {"selection",
+               std::string("aligned_k16_n64_max_expert_tokens_ge_32_else_v2")},
+              {"fallback", std::string("cuda_grouped_sm86_fp32_v2")},
               {"math_mode", std::string("strict_fp32")},
               {"runtime_status", std::string("explicit_research_candidate")}};
     }

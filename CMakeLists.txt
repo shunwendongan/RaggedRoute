@@ -82,6 +82,7 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     src/grouped_gemm/cuda_naive/baseline.cu
     src/grouped_gemm/cuda_candidate/optimized.cu
     src/grouped_gemm/cuda_candidate/optimized_register.cu
+    src/grouped_gemm/cuda_candidate/optimized_wide.cu
     src/unpermute/cuda_naive/baseline.cu
     src/unpermute/cuda_candidate/optimized.cu)
   add_library(RaggedRoute::baseline_ops ALIAS raggedroute_baseline_ops)

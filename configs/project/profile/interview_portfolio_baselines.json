@@ -1,0 +1,123 @@
+{
+  "schema_version": "raggedroute.profile_suite.v2",
+  "suite_id": "rtx3080_interview_portfolio_baselines_v1",
+  "note": "Strong-reference pass paired to the candidate profile shapes. NCU durations are diagnostic only.",
+  "system_cases": [
+    {
+      "id": "portfolio.postlogit.uniform",
+      "suite": "chain_from_logits",
+      "variant": "cuda_postlogit_integrated_latest",
+      "level": "l3",
+      "warmup": 20,
+      "seed": 20260828,
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "portfolio.postlogit.zipf14",
+      "suite": "chain_from_logits",
+      "variant": "cuda_postlogit_integrated_latest",
+      "level": "l3",
+      "warmup": 20,
+      "seed": 20260828,
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    }
+  ],
+  "cases": [
+    {
+      "id": "dense.baseline.m1024",
+      "operator": "dense_gemm",
+      "variant": "cublas",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260828,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "ampere_sgemm_64x64_nn",
+      "params": {"M": 1024, "N": 1024, "K": 1024}
+    },
+    {
+      "id": "topk.baseline.t2048_e64",
+      "operator": "topk_gate",
+      "variant": "vllm_row_packed_top2",
+      "level": "l1",
+      "warmup": 20,
+      "seed": 20260828,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "vllm_row_packed_top2_kernel",
+      "params": {"T": 2048, "E": 64, "input_mode": "random", "input_alignment": 16}
+    },
+    {
+      "id": "histogram.baseline.r1m_e64",
+      "operator": "histogram",
+      "variant": "cub_device_histogram",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260828,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "DeviceHistogram",
+      "params": {"T": 524288, "E": 64, "top_k": 2, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "histogram_scan.baseline.r4096_e64",
+      "operator": "histogram_exclusive_scan",
+      "variant": "cuda_separate_current",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260828,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "histogram_(single_cta_shared|naive)_kernel",
+      "params": {"R": 4096, "E": 64, "distribution": "zipf", "zipf_s": 1.4}
+    },
+    {
+      "id": "scan.baseline.e64",
+      "operator": "exclusive_scan",
+      "variant": "cub_block_scan",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260828,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "block_scan_kernel",
+      "params": {"E": 64, "R": 4096, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "permute.baseline.t2048_k256",
+      "operator": "token_permute",
+      "variant": "vllm_expand_rows",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260828,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "expand_rows",
+      "params": {"T": 2048, "E": 64, "top_k": 2, "K": 256, "distribution": "uniform", "zipf_s": 0.0, "materialize_sorted_route": true}
+    },
+    {
+      "id": "grouped.baseline.t2048_zipf14",
+      "operator": "grouped_gemm",
+      "variant": "cutlass_grouped",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260828,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "cutlass::Kernel",
+      "params": {"T": 2048, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    },
+    {
+      "id": "unpermute.baseline.t1024_n256",
+      "operator": "unpermute",
+      "variant": "vllm_finalize_routing",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260828,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "finalize_routing",
+      "params": {"T": 1024, "E": 64, "top_k": 2, "N": 256, "distribution": "uniform", "zipf_s": 0.0}
+    }
+  ]
+}

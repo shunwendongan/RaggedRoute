@@ -1,0 +1,123 @@
+{
+  "schema_version": "raggedroute.profile_suite.v2",
+  "suite_id": "rtx3080_interview_portfolio_candidates_v1",
+  "note": "Candidate pass. Run the two L3 system cases first; all NCU durations are diagnostic only.",
+  "system_cases": [
+    {
+      "id": "portfolio.postlogit.uniform",
+      "suite": "chain_from_logits",
+      "variant": "cuda_postlogit_integrated_latest",
+      "level": "l3",
+      "warmup": 20,
+      "seed": 20260828,
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "portfolio.postlogit.zipf14",
+      "suite": "chain_from_logits",
+      "variant": "cuda_postlogit_integrated_latest",
+      "level": "l3",
+      "warmup": 20,
+      "seed": 20260828,
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    }
+  ],
+  "cases": [
+    {
+      "id": "dense.candidate.m1024",
+      "operator": "dense_gemm",
+      "variant": "cuda_register_tiled_v3_64x32_async",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260828,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "dense_gemm_register_tiled_v3_64x32_async_kernel",
+      "params": {"M": 1024, "N": 1024, "K": 1024}
+    },
+    {
+      "id": "topk.candidate.t2048_e64",
+      "operator": "topk_gate",
+      "variant": "cuda_local_pair_two_reduce_top2_v4",
+      "level": "l1",
+      "warmup": 20,
+      "seed": 20260828,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "topk_gate_local_pair_two_reduce_kernel",
+      "params": {"T": 2048, "E": 64, "input_mode": "random", "input_alignment": 16}
+    },
+    {
+      "id": "histogram.candidate.r1m_e64",
+      "operator": "histogram",
+      "variant": "cuda_candidate_v2",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260828,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "histogram_block_private_kernel",
+      "params": {"T": 524288, "E": 64, "top_k": 2, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "histogram_scan.candidate.r4096_e64",
+      "operator": "histogram_exclusive_scan",
+      "variant": "cuda_fused_histogram_scan",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260828,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "histogram_exclusive_scan_fused_subwarp_kernel",
+      "params": {"R": 4096, "E": 64, "distribution": "zipf", "zipf_s": 1.4}
+    },
+    {
+      "id": "scan.candidate.e64",
+      "operator": "exclusive_scan",
+      "variant": "cuda_naive",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260828,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "exclusive_scan_naive_kernel",
+      "params": {"E": 64, "R": 4096, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "permute.candidate.t4096_k1024",
+      "operator": "token_permute",
+      "variant": "cuda_candidate_v3",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260828,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "token_permute_token_tile2_top2_kernel",
+      "params": {"T": 4096, "E": 64, "top_k": 2, "K": 1024, "distribution": "single_hot", "zipf_s": 0.0, "materialize_sorted_route": true}
+    },
+    {
+      "id": "grouped.candidate.t2048_zipf14",
+      "operator": "grouped_gemm",
+      "variant": "cuda_grouped_sm86_fp32_v3",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260828,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "grouped_gemm_register16x64_sm86_v3_kernel",
+      "params": {"T": 2048, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    },
+    {
+      "id": "unpermute.candidate.t1024_n256",
+      "operator": "unpermute",
+      "variant": "cuda_warp_token_vec4",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260828,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "unpermute_warp_token_vec4_kernel",
+      "params": {"T": 1024, "E": 64, "top_k": 2, "N": 256, "distribution": "uniform", "zipf_s": 0.0}
+    }
+  ]
+}

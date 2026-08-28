@@ -46,14 +46,14 @@ Benchmark registry 一共暴露八个 adapter：七个语义算子，以及可�
 | Expert Histogram | shape-dispatched `cuda_candidate` | small/sparse/block-private 路径；CUB 参考 | 通过 12-case、五进程门禁后在 SM86 晋级 |
 | Exclusive Scan | `cuda_naive` | CUB Device/Block/Warp Scan 参考 | standalone 实验候选已删除 |
 | Histogram + Scan | `R <= 4096`、`E <= 64` 时使用融合 F2，否则回退两阶段路径 | CUB 组合参考 | 代码路径存在，但仍需 release 级复测 |
-| Token Permute | `cuda_naive` | 显式 v2/v3 shape dispatcher；adapted vLLM 路径 | v3 增加双 token CTA 研究路径；等待 clean Release 判定 |
-| Grouped GEMM | `cuda_naive` | 显式 SM86 v1/v2/v3；CUTLASS/cuBLAS 参考 | v3 只改变 tile/live-range geometry；未默认晋级 |
+| Token Permute | `cuda_naive` | 显式 v2/v3 shape dispatcher；adapted vLLM 路径 | v3 对 v1 ratio-of-sums 为 0.9938x；CV 门禁下证据不足 |
+| Grouped GEMM | `cuda_naive` | 显式 SM86 v1/v2/v3；CUTLASS/cuBLAS 参考 | v3 对 CUTLASS ratio-of-sums 为 0.9141x；证据不足且不晋级 |
 | Unpermute | `cuda_naive` | benchmark-only warp/CTA candidate；adapted vLLM 参考 | 因 tail 与稳定性门禁失败而拒绝晋级 |
 
 > [!CAUTION]
 > `histogram_exclusive_scan` 在 SM86 上当前会由 `Auto` 选择融合 F2。归档运行受到其他 GPU workload 干扰：融合区域中心结果有潜力，但 CV、fallback 与 L3 门禁均失败。在独占 CUDA 环境复测通过或撤回默认选择之前，应将其视为实验路径。macOS 上没有进行任何新的 CUDA 能力或性能检查。
 
-当前简历项目迭代刻意只聚焦两个热点：`cuda_grouped_sm86_fp32_v3` 用 `16x64x16`、256 threads、两级 `cp.async` tile 对比 CUTLASS；`cuda_candidate_v3` 在 v2 tile4 回退的 Permute shape 上验证双 token CTA。两者都是显式 research ID，保留 v2/v1 fallback，且不修改 `Auto`。版本化 route trace 与三态 evaluator 已实现；仓库内 trace 只是一份 synthetic parser fixture，因此在获得 captured/production 输入前，真实 trace 晋级必须保持 `insufficient_evidence`。
+本轮简历项目迭代只验证两个热点假设。clean、未插桩、五进程 Release 中，Grouped GEMM v3 对 CUTLASS 的 ratio-of-sums 为 `0.9141x`，Permute v3 对保留的 token-owned 路径为 `0.9938x`，六阶段 v3 链对 integrated v2 为 `0.9743x`。WDDM 离群点使所有 case 超过 `CV <= 0.10` 门禁，因此正式状态均为 `insufficient_evidence`；与此同时，不利的 aggregate 趋势已经足以阻止晋级。显式 research ID 和 v2/v1 fallback 继续保留以便复现，`Auto` 不变。仓库内 trace 只是一份 synthetic parser fixture，因此在获得 captured/production 输入前，真实 trace 晋级同样保持 `insufficient_evidence`。
 
 ## 工程亮点
 
@@ -87,6 +87,8 @@ Suite v2 将不同 variant 组织在同一个 logical case 下，并声明唯一
 观察到的 CUDA/Triton 比值为 `3.524x`，但这里只把它作为跨 backend 诊断，不作为生产 speedup。在 CUDA research chain 中，Grouped GEMM 占 NSYS kernel time 的 `64.4%`。NCU 报告 106 registers/thread、one wave/SM、26.62% achieved occupancy，以及 SM/L2 工作不均，因此 Grouped GEMM 是下一阶段价值最高的优化对象。
 
 项目也保留了最强反例：在干净的三进程、十 shape 对比中，Grouped GEMM candidate 相对 CUTLASS 的 ratio-of-sums 只有 `0.805x`，并在 `T=2048,E=64,K=N=128,uniform` 降至 `0.467x`。这项失败本身也是项目结论：局部胜点不足以支持默认发布。
+
+当前本地 `657d29e` v3 campaign 将下一轮失败假设也整理成了可审计证据。Grouped v3 虽减少了 global-load request，但 registers 从 86 增至 96、static shared memory 从 7,952 增至 12,048 bytes，achieved occupancy 与 issue activity 同时下降；Permute tile2 仍受 DRAM 带宽约束，未改善完整矩阵。详见 [v3 诊断报告](docs/reports/rtx3080-six-ops-v3-657d29e.md) 与 [带 SHA-256 的 compact evidence](docs/reports/compact/20260827-657d29e-six-ops-v3/REPORT.md)。
 
 ## 快速开始
 
@@ -160,7 +162,7 @@ CUDA Event 提供未被 profiler 干扰的 Release latency。NSYS 用于解释 l
 ## 当前限制与后续工作
 
 - 在独占 RTX 3080 窗口复测融合 Histogram + Scan F2；若稳定性、fallback 或 L3 门禁仍失败，则撤回其 `Auto`；
-- 完成 Grouped GEMM v3、Permute v3 和六阶段 L3 的 clean 五进程判定；若稳定性或 speedup 门禁失败，则保留拒绝记录；
+- 只在更低噪声或独占 CUDA 环境重跑已完成的五进程 v3 campaign；当前 aggregate 趋势已不支持晋级，但 WDDM 方差使正式状态保持 `insufficient_evidence`；
 - 在提出任何真实 trace 性能结论前，用匿名 captured/production working set 替换仓库内 synthetic fixture；
 - 在作为 `main` 能力前，整理 realistic/vLLM-semantic stacked evidence 分支；
 - 将原始 profiler binary 和完整 aggregate 放入不可覆盖的 Release asset，并加强仓库规则以防 evidence policy 漂移；

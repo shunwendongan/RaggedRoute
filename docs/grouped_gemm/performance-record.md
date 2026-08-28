@@ -77,3 +77,14 @@ Grouped GEMM 的 `kAuto` 与 L3 chain 继续使用 naive。正式三进程 clean
 
 最终报告：[RTX 3080 Grouped GEMM SM86 strict-FP32](../reports/rtx3080-grouped-gemm-sm86-a5df6eb.md)；
 [可提交 artifact 摘要](../reports/artifacts/20260802T190625Z-7fb8f43-grouped-gemm-sm86/)。
+
+## 2026-08-27 / SM86 strict-FP32 v3 tile geometry experiment
+
+- 固定代码 SHA：`657d29e54ce94097be00b0ac57aea4f5e1f4f143`；RTX 3080、CUDA 13.3.73、driver 591.86、NCU 2026.2.1、NSYS 2026.1.3。
+- `cuda_grouped_sm86_fp32_v3` 只将 aligned large path 改为 `16x64x16`、256 threads、两级 `cp.async`；调度、strict-FP32 合同、workspace 与 v2 fallback 不变，`Auto` 未修改。
+- 10-case、5-process、clean uninstrumented Release 对 CUTLASS 的 ratio-of-sums 为 `0.9141x`，shape geomean 为 `1.0189x`，仅 4/10 shape 获益。关键反例为 uniform `T2048/E64/K=N=128` 的 `0.4745x`；同规模 Zipf1.4 为 `0.8526x`。
+- 全部 correctness 和 sanitizer 门禁通过且 workspace 为 0，但所有配对都有进程内 `CV > 0.10`，因此 evaluator 输出 `insufficient_evidence`，不是可晋级结论。
+- NSYS Zipf L3 中 v2/v3 Grouped median 分别为 43.871/51.839 us，占 GPU kernel time 70.9%/74.5%；其他阶段基本不变。
+- NCU detailed 显示 v3 global-load requests 从 93,328 降至 81,200，local load/store 均为 0；但 registers/thread 从 86 升至 96、static shared 从 7,952 升至 12,048 B、achieved occupancy 从 36.24% 降至 30.29%、`sm__issue_active.avg.pct_of_peak_sustained_elapsed` 从 33.24% 降至 25.38%。更宽 tile 的资源与发射代价没有被 load request 减少抵消。
+
+决定：v3 作为显式失败研究路径保留，不进入 `Auto`，也不在同一版本叠加第二种调度机制。证据见 [统一 v3 报告](../reports/rtx3080-six-ops-v3-657d29e.md) 与 [compact bundle](../reports/compact/20260827-657d29e-six-ops-v3/REPORT.md)。

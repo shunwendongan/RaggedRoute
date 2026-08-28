@@ -9,7 +9,6 @@ import hashlib
 import html
 import json
 import pathlib
-import shutil
 import sys
 import zipfile
 from typing import Any
@@ -100,7 +99,11 @@ def build(inputs: list[tuple[str, pathlib.Path]], output: pathlib.Path,
     for scope, source in inputs:
         decision = load_decision(source)
         target = decisions_dir / f"{scope}.json"
-        shutil.copyfile(source, target)
+        target.write_text(
+            json.dumps(decision, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
         decisions.append((scope, decision))
         copied.append(target)
 

@@ -2,7 +2,7 @@
 
 本目录按 RaggedRoute 的七个语义算子分别保存优化方案、实验决策和实际性能记录；benchmark registry 另有一个 `histogram_exclusive_scan` 融合 adapter，因此当前是七阶段数据流、八个 adapter。
 
-当前统一实测报告：[RTX 3080 七算子 naive benchmark 与 Nsight 分析（a9489ab）](reports/rtx3080-naive-profile-a9489ab.md)。
+当前统一实测报告：[RTX 3080 七算子 naive benchmark 与 Nsight 分析（a9489ab）](reports/rtx3080-naive-profile-a9489ab.md)；最新本地 v3 研究轮次见 [六阶段 v3 统一复测（657d29e）](reports/rtx3080-six-ops-v3-657d29e.md)。
 
 | 算子 | 当前 `Auto` | 显式/研究 candidate | 最新决策 |
 |---|---|---|---|
@@ -10,8 +10,8 @@
 | Top-K Gate | `cuda_naive` | optimized id 1–4 | v4 exact-E/连续 bucket 均无晋级区间 |
 | Histogram | `cuda_candidate` | small/sparse/block-private shape paths | **已晋级** SM86 `Auto` |
 | Exclusive Scan | `cuda_naive` | standalone C2/S1/S2 已删除 | 受 WDDM tail/CV 限制 |
-| Token Permute | `cuda_naive` | optimized id 1–5 与显式 v2 shape dispatcher | pure-permute 稳定性/覆盖门禁失败，只保留研究路径 |
-| Grouped GEMM | `cuda_naive` | benchmark-only SM86 candidate | 未通过 CUTLASS 门禁 |
+| Token Permute | `cuda_naive` | optimized id 1–5 与显式 v2/v3 shape dispatcher | v3 为 0.9938x；CV 超限，证据不足且不晋级 |
+| Grouped GEMM | `cuda_naive` | 显式 SM86 v1/v2/v3 candidate | v3 对 CUTLASS 为 0.9141x；证据不足且不晋级 |
 | Unpermute | `cuda_naive` | benchmark-only warp/CTA hybrid | 正式拒绝，不进入 public dispatch |
 
 Histogram→Scan 融合：`cuda_fused_histogram_scan`（F2，SM86；`R<=4096` 单 CTA，

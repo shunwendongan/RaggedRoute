@@ -46,14 +46,14 @@ The benchmark registry exposes eight adapters: the seven semantic operators plus
 | Expert Histogram | shape-dispatched `cuda_candidate` | small/sparse/block-private paths; CUB reference | promoted on SM86 after a 12-case five-process gate |
 | Exclusive Scan | `cuda_naive` | CUB Device/Block/Warp Scan references | standalone experimental candidates were removed |
 | Histogram + Scan | fused F2 for `R <= 4096`, `E <= 64`; otherwise separate fallback | CUB composite references | code path exists, but release-quality revalidation is still required |
-| Token Permute | `cuda_naive` | explicit shape-dispatched v2/v3; adapted vLLM paths | v3 adds a two-token CTA research path; clean Release decision pending |
-| Grouped GEMM | `cuda_naive` | explicit SM86 v1/v2/v3; CUTLASS/cuBLAS references | v3 changes only tile/live-range geometry; no default promotion |
+| Token Permute | `cuda_naive` | explicit shape-dispatched v2/v3; adapted vLLM paths | v3 reached 0.9938x ratio-of-sums vs v1; insufficient evidence under the CV gate |
+| Grouped GEMM | `cuda_naive` | explicit SM86 v1/v2/v3; CUTLASS/cuBLAS references | v3 reached 0.9141x ratio-of-sums vs CUTLASS; insufficient evidence and no default promotion |
 | Unpermute | `cuda_naive` | benchmark-only warp/CTA candidate; adapted vLLM reference | rejected because tail and stability gates failed |
 
 > [!CAUTION]
 > `histogram_exclusive_scan` currently resolves `Auto` to the fused F2 implementation on SM86. The archived run was affected by competing GPU workloads: fused-region center results were promising, but CV, fallback, and L3 gates failed. Treat this path as experimental until it is rerun in an exclusive CUDA environment or demoted. No new CUDA capability or performance check is performed on macOS.
 
-The active portfolio round is deliberately narrow. `cuda_grouped_sm86_fp32_v3` tests a `16x64x16`, 256-thread, two-stage `cp.async` tile against CUTLASS; `cuda_candidate_v3` tests two tokens per CTA for the Permute shapes where v2 tile4 regressed. Both are explicit research IDs, preserve v2/v1 fallbacks, and leave `Auto` unchanged. Versioned route traces and a three-state evaluator are implemented; the tracked trace is a synthetic parser fixture, so real-trace promotion remains `insufficient_evidence` until captured input is supplied.
+The latest local portfolio round deliberately tested only two hotspot hypotheses. On clean, uninstrumented five-process Release data, Grouped GEMM v3 reached `0.9141x` ratio-of-sums versus CUTLASS, Permute v3 reached `0.9938x` versus the retained token-owned path, and the six-stage v3 chain reached `0.9743x` versus integrated v2. Every decision is `insufficient_evidence` because WDDM outliers exceeded the `CV <= 0.10` gate; the unfavorable aggregate trends independently rule out promotion. The explicit research IDs and v2/v1 fallbacks remain reproducible, while `Auto` is unchanged. The tracked route trace is only a synthetic parser fixture, so real-trace promotion also remains `insufficient_evidence` until captured input is supplied.
 
 ## Engineering highlights
 
@@ -87,6 +87,8 @@ The latest report merged into `main` is the [RTX 3080 seven-stage L3 three-way a
 The observed CUDA/Triton ratio is `3.524x`, but it is deliberately reported as a cross-backend diagnostic rather than a production speedup. In the CUDA research chain, Grouped GEMM accounts for `64.4%` of NSYS kernel time. NCU reports 106 registers/thread, one wave/SM, 26.62% achieved occupancy, and SM/L2 work imbalance—making Grouped GEMM the highest-value next optimization target.
 
 The strongest counterexample is also preserved: the clean three-process Grouped GEMM candidate reached only `0.805x` ratio-of-sums versus CUTLASS across ten shapes and fell to `0.467x` at `T=2048,E=64,K=N=128,uniform`. That failure is part of the project result: local wins did not justify a default path.
+
+The current local v3 campaign at `657d29e` preserves the next failed hypotheses as compact evidence. Grouped v3 reduced measured global-load requests but raised registers from 86 to 96 and static shared memory from 7,952 to 12,048 bytes; achieved occupancy and issue activity fell. Permute tile2 remained DRAM-bound and did not improve the full matrix. See the [v3 diagnosis](docs/reports/rtx3080-six-ops-v3-657d29e.md) and [SHA-256 compact evidence](docs/reports/compact/20260827-657d29e-six-ops-v3/REPORT.md).
 
 ## Quick start
 
@@ -160,7 +162,7 @@ CUDA Events provide unprofiled release latency. NSYS explains launch gaps and st
 ## Current limitations and next work
 
 - Rerun fused Histogram + Scan F2 in an exclusive RTX 3080 window; demote `Auto` if it still fails stability, fallback, or L3 gates.
-- Complete the clean five-process Grouped GEMM v3, Permute v3, and six-stage L3 decisions; preserve a rejected candidate if stability or speedup gates fail.
+- Repeat the completed five-process v3 campaign only in a lower-noise or exclusive CUDA environment; current aggregate trends do not justify promotion even though WDDM variance makes the formal state `insufficient_evidence`.
 - Replace the tracked synthetic route fixture with an anonymized captured/production working set before making any real-trace claim.
 - Reconcile the realistic/vLLM-semantic stacked evidence branches before treating them as `main` capabilities.
 - Keep raw profiler binaries and full aggregates in immutable release assets; tighten repository checks against evidence-policy drift.

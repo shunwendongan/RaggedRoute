@@ -40,3 +40,12 @@
 - NSYS large-uniform 的诊断中，token-owned copy median 10.400 us，tile4-direct 9.568 us；v2 full path 由 10.432 us fused prepare + 9.632 us copy 构成。NCU detailed 显示 direct 的 0.627 waves/SM、34 registers/thread、41.7% achieved occupancy、48.6% DRAM throughput（ID4：2.510、34、63.6%、66.3%）。这些是 profiler 诊断值，非 Release latency。
 
 完整报告与可审计 compact artifacts：[SM86 v2 report](../reports/rtx3080-permute-sm86-v2-bdc77c2.md)；[v2 artifact bundle](../reports/artifacts/20260803T181954Z-bdc77c2-permute-sm86-v2/)。
+
+## 2026-08-27 / SM86 v3 two-token CTA experiment
+
+- 固定代码 SHA：`657d29e54ce94097be00b0ac57aea4f5e1f4f143`。v3 新增 64-thread、2-token CTA，并按 shape 在 tile4/tile2/token-owned v1 间选择；workspace、atomic placement 语义和 `Auto` 均不变。
+- 28-case、5-process、clean uninstrumented Release 相对 token-owned v1 的 ratio-of-sums 为 `0.9938x`，shape geomean `0.9980x`，仅 10/28 shape 获益。重点反例 `T4096/K256`、`T4096/K1024`、`T2048/K512`、`T8192/K256` 分别为 `0.9467x`、`0.9957x`、`0.9424x`、`0.9900x`。
+- full-from-ids 相对 pinned vLLM 的趋势仍为 `1.5452x` ratio-of-sums、5/5 shape 获益，但两侧全部 `CV > 0.10`，不能写成正式 speedup。
+- NCU basic 对 `T4096/K1024/single_hot` 显示 tile4/tile2 的 diagnostic duration 为 80.608/79.744 us，DRAM throughput 为 84.55%/85.11%，registers/thread 都是 34。tile2 将 waves/SM 从 1.255 增至 1.882，却把 achieved occupancy 从 77.79% 降到 58.20%；纯 CTA geometry 改动没有突破带宽上限。
+
+决定：v3 不晋级，保留为显式 research path；正式 evaluator 因 WDDM 长尾输出 `insufficient_evidence`。证据见 [统一 v3 报告](../reports/rtx3080-six-ops-v3-657d29e.md) 与 [compact bundle](../reports/compact/20260827-657d29e-six-ops-v3/REPORT.md)。

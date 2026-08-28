@@ -1,0 +1,218 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="1346" viewBox="0 0 1160 1346">
+<rect width="100%" height="100%" fill="#111827"/>
+<style>text{font-family:Segoe UI,Arial,sans-serif;fill:#f3f4f6}.muted{fill:#aeb6c4}</style>
+<text x="20" y="30" font-size="20" font-weight="600">RaggedRoute CUDA v3 paired p50 speedup</text>
+<text x="20" y="52" font-size="12" class="muted">green >=1.03x; yellow 0.97-1.00x; red &lt;0.97x</text>
+<text x="20" y="84" font-size="12">grouped</text>
+<text x="160" y="84" font-size="12">grouped_gemm.v3.many_empty.t16_e64_k64_n64</text>
+<rect x="1010" y="71" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="84" font-size="12" text-anchor="middle">1.4277x</text>
+<text x="20" y="108" font-size="12">grouped</text>
+<text x="160" y="108" font-size="12">grouped_gemm.v3.non_aligned.t512_e64_k127_n129</text>
+<rect x="1010" y="95" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="108" font-size="12" text-anchor="middle">0.7735x</text>
+<text x="20" y="132" font-size="12">grouped</text>
+<text x="160" y="132" font-size="12">grouped_gemm.v3.single_expert.t512_e64_k128_n256</text>
+<rect x="1010" y="119" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="132" font-size="12" text-anchor="middle">1.7151x</text>
+<text x="20" y="156" font-size="12">grouped</text>
+<text x="160" y="156" font-size="12">grouped_gemm.v3.single_hot.t512_e64_k128_n128</text>
+<rect x="1010" y="143" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="156" font-size="12" text-anchor="middle">1.6568x</text>
+<text x="20" y="180" font-size="12">grouped</text>
+<text x="160" y="180" font-size="12">grouped_gemm.v3.tail.t17_e8_k13_n11</text>
+<rect x="1010" y="167" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="180" font-size="12" text-anchor="middle">1.0924x</text>
+<text x="20" y="204" font-size="12">grouped</text>
+<text x="160" y="204" font-size="12">grouped_gemm.v3.uniform.t2048_e64_k128_n128</text>
+<rect x="1010" y="191" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="204" font-size="12" text-anchor="middle">0.4745x</text>
+<text x="20" y="228" font-size="12">grouped</text>
+<text x="160" y="228" font-size="12">grouped_gemm.v3.uniform.t512_e16_k128_n256</text>
+<rect x="1010" y="215" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="228" font-size="12" text-anchor="middle">0.8888x</text>
+<text x="20" y="252" font-size="12">grouped</text>
+<text x="160" y="252" font-size="12">grouped_gemm.v3.uniform.t512_e64_k128_n128</text>
+<rect x="1010" y="239" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="252" font-size="12" text-anchor="middle">0.9908x</text>
+<text x="20" y="276" font-size="12">grouped</text>
+<text x="160" y="276" font-size="12">grouped_gemm.v3.zipf14.t2048_e64_k128_n128</text>
+<rect x="1010" y="263" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="276" font-size="12" text-anchor="middle">0.8526x</text>
+<text x="20" y="300" font-size="12">grouped</text>
+<text x="160" y="300" font-size="12">grouped_gemm.v3.zipf14.t512_e64_k128_n128</text>
+<rect x="1010" y="287" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="300" font-size="12" text-anchor="middle">0.9875x</text>
+<text x="20" y="324" font-size="12">permute</text>
+<text x="160" y="324" font-size="12">permute.anchor.uniform.t512_e64_top2_k256</text>
+<rect x="1010" y="311" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="324" font-size="12" text-anchor="middle">0.9881x</text>
+<text x="20" y="348" font-size="12">permute</text>
+<text x="160" y="348" font-size="12">permute.anchor.zipf06.t512_e64_top2_k256</text>
+<rect x="1010" y="335" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="348" font-size="12" text-anchor="middle">1.0161x</text>
+<text x="20" y="372" font-size="12">permute</text>
+<text x="160" y="372" font-size="12">permute.anchor.zipf10.t512_e64_top2_k256</text>
+<rect x="1010" y="359" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="372" font-size="12" text-anchor="middle">1.0166x</text>
+<text x="20" y="396" font-size="12">permute</text>
+<text x="160" y="396" font-size="12">permute.anchor.zipf14.t512_e64_top2_k256</text>
+<rect x="1010" y="383" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="396" font-size="12" text-anchor="middle">1.0097x</text>
+<text x="20" y="420" font-size="12">permute</text>
+<text x="160" y="420" font-size="12">permute.anchor.zipf14.t512_e64_top2_k256.cold_scrub</text>
+<rect x="1010" y="407" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="420" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="444" font-size="12">permute</text>
+<text x="160" y="444" font-size="12">permute.chain_skew.zipf14.t128_e16_top2_k64</text>
+<rect x="1010" y="431" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="444" font-size="12" text-anchor="middle">0.9847x</text>
+<text x="20" y="468" font-size="12">permute</text>
+<text x="160" y="468" font-size="12">permute.chain_small.uniform.t64_e16_top2_k64.sorted_off</text>
+<rect x="1010" y="455" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="468" font-size="12" text-anchor="middle">1.0168x</text>
+<text x="20" y="492" font-size="12">permute</text>
+<text x="160" y="492" font-size="12">permute.chain_small.uniform.t64_e16_top2_k64.sorted_on</text>
+<rect x="1010" y="479" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="492" font-size="12" text-anchor="middle">0.9834x</text>
+<text x="20" y="516" font-size="12">permute</text>
+<text x="160" y="516" font-size="12">permute.generic_topk.uniform.t128_e8_top4_k64</text>
+<rect x="1010" y="503" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="516" font-size="12" text-anchor="middle">0.9986x</text>
+<text x="20" y="540" font-size="12">permute</text>
+<text x="160" y="540" font-size="12">permute.large.single_hot.t2048_e64_top2_k256</text>
+<rect x="1010" y="527" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="540" font-size="12" text-anchor="middle">0.9873x</text>
+<text x="20" y="564" font-size="12">permute</text>
+<text x="160" y="564" font-size="12">permute.large.uniform.t2048_e64_top2_k256</text>
+<rect x="1010" y="551" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="564" font-size="12" text-anchor="middle">1.0488x</text>
+<text x="20" y="588" font-size="12">permute</text>
+<text x="160" y="588" font-size="12">permute.medium.uniform.t512_e64_top2_k128</text>
+<rect x="1010" y="575" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="588" font-size="12" text-anchor="middle">0.9871x</text>
+<text x="20" y="612" font-size="12">permute</text>
+<text x="160" y="612" font-size="12">permute.non_vector_tail.zipf14.t512_e64_top2_k257</text>
+<rect x="1010" y="599" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="612" font-size="12" text-anchor="middle">0.9956x</text>
+<text x="20" y="636" font-size="12">permute</text>
+<text x="160" y="636" font-size="12">permute.tail.zipf10.t17_e8_top2_k19</text>
+<rect x="1010" y="623" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="636" font-size="12" text-anchor="middle">1.0298x</text>
+<text x="20" y="660" font-size="12">permute</text>
+<text x="160" y="660" font-size="12">permute.tiny.single_hot.t1_e8_top2_k19</text>
+<rect x="1010" y="647" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="660" font-size="12" text-anchor="middle">0.9889x</text>
+<text x="20" y="684" font-size="12">permute</text>
+<text x="160" y="684" font-size="12">permute.v2.t1024_e64_k128.uniform</text>
+<rect x="1010" y="671" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="684" font-size="12" text-anchor="middle">1.0152x</text>
+<text x="20" y="708" font-size="12">permute</text>
+<text x="160" y="708" font-size="12">permute.v2.t1024_e64_k256.zipf06</text>
+<rect x="1010" y="695" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="708" font-size="12" text-anchor="middle">1.0245x</text>
+<text x="20" y="732" font-size="12">permute</text>
+<text x="160" y="732" font-size="12">permute.v2.t1024_e64_k512.single_hot</text>
+<rect x="1010" y="719" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="732" font-size="12" text-anchor="middle">0.9423x</text>
+<text x="20" y="756" font-size="12">permute</text>
+<text x="160" y="756" font-size="12">permute.v2.t129_e16_k64.zipf14</text>
+<rect x="1010" y="743" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="756" font-size="12" text-anchor="middle">0.9654x</text>
+<text x="20" y="780" font-size="12">permute</text>
+<text x="160" y="780" font-size="12">permute.v2.t2048_e64_k1024.zipf14</text>
+<rect x="1010" y="767" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="780" font-size="12" text-anchor="middle">0.9843x</text>
+<text x="20" y="804" font-size="12">permute</text>
+<text x="160" y="804" font-size="12">permute.v2.t2048_e64_k512.uniform</text>
+<rect x="1010" y="791" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="804" font-size="12" text-anchor="middle">0.9424x</text>
+<text x="20" y="828" font-size="12">permute</text>
+<text x="160" y="828" font-size="12">permute.v2.t257_e64_k128.uniform</text>
+<rect x="1010" y="815" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="828" font-size="12" text-anchor="middle">1.1022x</text>
+<text x="20" y="852" font-size="12">permute</text>
+<text x="160" y="852" font-size="12">permute.v2.t4096_e64_k1024.single_hot</text>
+<rect x="1010" y="839" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="852" font-size="12" text-anchor="middle">0.9957x</text>
+<text x="20" y="876" font-size="12">permute</text>
+<text x="160" y="876" font-size="12">permute.v2.t4096_e64_k256.uniform</text>
+<rect x="1010" y="863" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="876" font-size="12" text-anchor="middle">0.9467x</text>
+<text x="20" y="900" font-size="12">permute</text>
+<text x="160" y="900" font-size="12">permute.v2.t513_e64_k257.zipf14</text>
+<rect x="1010" y="887" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="900" font-size="12" text-anchor="middle">1.0483x</text>
+<text x="20" y="924" font-size="12">permute</text>
+<text x="160" y="924" font-size="12">permute.v2.t65_e16_k64.uniform</text>
+<rect x="1010" y="911" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="924" font-size="12" text-anchor="middle">0.9738x</text>
+<text x="20" y="948" font-size="12">permute</text>
+<text x="160" y="948" font-size="12">permute.v2.t8192_e64_k256.zipf14</text>
+<rect x="1010" y="935" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="948" font-size="12" text-anchor="middle">0.9900x</text>
+<text x="20" y="972" font-size="12">permute</text>
+<text x="160" y="972" font-size="12">permute.wide_hot.single_hot.t2048_e64_top2_k1024</text>
+<rect x="1010" y="959" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="972" font-size="12" text-anchor="middle">0.9781x</text>
+<text x="20" y="996" font-size="12">permute_vllm</text>
+<text x="160" y="996" font-size="12">permute.v3.full.anchor.uniform</text>
+<rect x="1010" y="983" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="996" font-size="12" text-anchor="middle">1.8381x</text>
+<text x="20" y="1020" font-size="12">permute_vllm</text>
+<text x="160" y="1020" font-size="12">permute.v3.full.anchor.zipf14</text>
+<rect x="1010" y="1007" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1020" font-size="12" text-anchor="middle">1.9139x</text>
+<text x="20" y="1044" font-size="12">permute_vllm</text>
+<text x="160" y="1044" font-size="12">permute.v3.full.large.single_hot</text>
+<rect x="1010" y="1031" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1044" font-size="12" text-anchor="middle">1.3059x</text>
+<text x="20" y="1068" font-size="12">permute_vllm</text>
+<text x="160" y="1068" font-size="12">permute.v3.full.large.uniform</text>
+<rect x="1010" y="1055" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1068" font-size="12" text-anchor="middle">1.2700x</text>
+<text x="20" y="1092" font-size="12">permute_vllm</text>
+<text x="160" y="1092" font-size="12">permute.v3.full.tail</text>
+<rect x="1010" y="1079" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1092" font-size="12" text-anchor="middle">1.6628x</text>
+<text x="20" y="1116" font-size="12">l3</text>
+<text x="160" y="1116" font-size="12">six_ops_v3.uniform.t2048_e64_k128_n128</text>
+<rect x="1010" y="1103" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="1116" font-size="12" text-anchor="middle">0.9787x</text>
+<text x="20" y="1140" font-size="12">l3</text>
+<text x="160" y="1140" font-size="12">six_ops_v3.uniform.t512_e64_k128_n128</text>
+<rect x="1010" y="1127" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="1140" font-size="12" text-anchor="middle">0.9842x</text>
+<text x="20" y="1164" font-size="12">l3</text>
+<text x="160" y="1164" font-size="12">six_ops_v3.uniform.t64_e16_k64_n64</text>
+<rect x="1010" y="1151" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="1164" font-size="12" text-anchor="middle">1.0095x</text>
+<text x="20" y="1188" font-size="12">l3</text>
+<text x="160" y="1188" font-size="12">six_ops_v3.zipf14.t128_e16_k64_n64</text>
+<rect x="1010" y="1175" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1188" font-size="12" text-anchor="middle">1.0320x</text>
+<text x="20" y="1212" font-size="12">l3</text>
+<text x="160" y="1212" font-size="12">six_ops_v3.zipf14.t2048_e64_k128_n128</text>
+<rect x="1010" y="1199" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1212" font-size="12" text-anchor="middle">0.9430x</text>
+<text x="20" y="1236" font-size="12">l3</text>
+<text x="160" y="1236" font-size="12">six_ops_v3.zipf14.t512_e64_k128_n128</text>
+<rect x="1010" y="1223" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="1236" font-size="12" text-anchor="middle">0.9829x</text>
+<text x="20" y="1260" font-size="12">l3</text>
+<text x="160" y="1260" font-size="12">six_ops_v3.zipf14.t512_e64_k128_n128.cold_scrub</text>
+<rect x="1010" y="1247" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1260" font-size="12" text-anchor="middle">0.9038x</text>
+<text x="20" y="1284" font-size="12">real_trace</text>
+<text x="160" y="1284" font-size="12">trace.l3.placeholder.trace_balanced</text>
+<rect x="1010" y="1271" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1284" font-size="12" text-anchor="middle">0.9695x</text>
+<text x="20" y="1308" font-size="12">real_trace</text>
+<text x="160" y="1308" font-size="12">trace.l3.placeholder.trace_shifted</text>
+<rect x="1010" y="1295" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="1308" font-size="12" text-anchor="middle">0.9882x</text>
+<text x="20" y="1332" font-size="12">real_trace</text>
+<text x="160" y="1332" font-size="12">trace.l3.placeholder.trace_skewed</text>
+<rect x="1010" y="1319" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="1332" font-size="12" text-anchor="middle">1.0124x</text>
+</svg>

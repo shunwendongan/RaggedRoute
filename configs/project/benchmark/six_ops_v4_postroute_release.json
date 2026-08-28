@@ -88,7 +88,7 @@
       "id": "postroute.cold_scrub.representative.topk248",
       "suite": "chain_from_route_ids",
       "levels": ["l3"],
-      "cache_mode": "cold-scrub",
+      "cache_mode": "cold_scrub",
       "cache_scrub_bytes": 67108864,
       "variants": [
         {"name": "cuda_postroute_current_v1", "promotion_baseline": true},

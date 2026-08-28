@@ -90,7 +90,8 @@ def write_archive(output: pathlib.Path, archive: pathlib.Path, files: list[pathl
 def build(inputs: list[tuple[str, pathlib.Path]], output: pathlib.Path,
           archive: pathlib.Path | None = None,
           title: str = "RaggedRoute CUDA v3",
-          schema_version: str = "raggedroute.compact_v3_evidence.v1") -> None:
+          schema_version: str = "raggedroute.compact_v3_evidence.v1",
+          extra_files: list[pathlib.Path] | None = None) -> None:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite evidence directory: {output}")
     output.mkdir(parents=True)
@@ -161,6 +162,14 @@ def build(inputs: list[tuple[str, pathlib.Path]], output: pathlib.Path,
     report_path.write_text("\n".join(report_lines), encoding="utf-8", newline="\n")
 
     evidence_files = copied + [csv_path, heatmap_path, report_path]
+    for source in extra_files or []:
+        if not source.is_file():
+            raise FileNotFoundError(source)
+        target = output / source.name
+        if target.exists():
+            raise FileExistsError(f"extra evidence target already exists: {target}")
+        target.write_bytes(source.read_bytes())
+        evidence_files.append(target)
     manifest = {
         "schema_version": schema_version,
         "files": [
@@ -199,12 +208,14 @@ def main() -> int:
     parser.add_argument("--archive", type=pathlib.Path)
     parser.add_argument("--title", default="RaggedRoute CUDA v3")
     parser.add_argument("--schema-version", default="raggedroute.compact_v3_evidence.v1")
+    parser.add_argument("--extra", action="append", type=pathlib.Path, default=[],
+                        help="Copy an additional report into the compact evidence bundle")
     args = parser.parse_args()
     inputs = [(scope, pathlib.Path(path)) for scope, path in args.decision]
     scopes = [scope for scope, _ in inputs]
     if len(scopes) != len(set(scopes)):
         raise ValueError("decision scopes must be unique")
-    build(inputs, args.output_dir, args.archive, args.title, args.schema_version)
+    build(inputs, args.output_dir, args.archive, args.title, args.schema_version, args.extra)
     print(args.output_dir)
     return 0
 

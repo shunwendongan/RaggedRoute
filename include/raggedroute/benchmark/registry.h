@@ -34,5 +34,6 @@ AdapterPtr make_token_permute_adapter(const std::string& variant_name);
 AdapterPtr make_grouped_gemm_adapter(const std::string& variant_name);
 AdapterPtr make_unpermute_adapter(const std::string& variant_name);
 AdapterPtr make_chain_adapter(bool include_router_projection, const std::string& variant_name);
+AdapterPtr make_postroute_chain_adapter(const std::string& variant_name);
 
 }  // namespace raggedroute::benchmark

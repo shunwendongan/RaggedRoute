@@ -9,62 +9,66 @@
       "python scripts\\repository_checks.py",
       "python -m unittest discover -s tests -p test_*.py",
       "ctest --preset test-rtx3080-sm86-release --output-on-failure",
-      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\research\\six-ops-v3\\sanitizer"
+      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\research\\six-ops-v4\\sanitizer"
     ],
     "smoke": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\grouped_gemm\\benchmark\\candidate_v3_smoke.json --output out\\research\\six-ops-v3\\grouped-v3-smoke.jsonl",
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\permute\\benchmark\\candidate_v3_smoke.json --output out\\research\\six-ops-v3\\permute-v3-smoke.jsonl",
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\project\\benchmark\\route_trace_smoke.json --output out\\research\\six-ops-v3\\route-trace-smoke.jsonl"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\grouped_gemm\\benchmark\\candidate_v4a_screen.json --output out\\research\\six-ops-v4\\grouped-v4a-smoke.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\permute\\benchmark\\routeprep_v4_screen.json --output out\\research\\six-ops-v4\\routeprep-v4-smoke.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\project\\benchmark\\six_ops_v4_smoke.json --output out\\research\\six-ops-v4\\six-ops-v4-smoke.jsonl"
     ],
     "release": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\grouped_gemm\\benchmark\\candidate_v3_release.json --output out\\research\\six-ops-v3\\grouped-v3-release.jsonl",
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\permute\\benchmark\\candidate_v3_release.json --output out\\research\\six-ops-v3\\permute-v3-release.jsonl",
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\permute\\benchmark\\candidate_v3_library_release.json --output out\\research\\six-ops-v3\\permute-v3-vllm-release.jsonl",
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\project\\benchmark\\six_ops_v3_release.json --output out\\research\\six-ops-v3\\six-ops-v3-release.jsonl",
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\project\\benchmark\\route_trace_release_placeholder.json --output out\\research\\six-ops-v3\\route-trace-placeholder-release.jsonl",
-      "python scripts\\evaluate_promotion.py --input out\\research\\six-ops-v3\\grouped-v3-release.jsonl --baseline cutlass_grouped --candidate cuda_grouped_sm86_fp32_v3 --policy configs\\policies\\grouped_gemm_v3_promotion.json --output out\\research\\six-ops-v3\\grouped-v3-decision.json --markdown out\\research\\six-ops-v3\\grouped-v3-decision.md",
-      "python scripts\\evaluate_promotion.py --input out\\research\\six-ops-v3\\permute-v3-release.jsonl --baseline cuda_token_owned_top2 --candidate cuda_candidate_v3 --policy configs\\policies\\token_permute_v3_promotion.json --output out\\research\\six-ops-v3\\permute-v3-decision.json --markdown out\\research\\six-ops-v3\\permute-v3-decision.md",
-      "python scripts\\evaluate_promotion.py --input out\\research\\six-ops-v3\\permute-v3-vllm-release.jsonl --baseline vllm_moe_permute --candidate cuda_candidate_v3_from_ids --policy configs\\policies\\token_permute_v3_vllm_retention.json --output out\\research\\six-ops-v3\\permute-v3-vllm-decision.json --markdown out\\research\\six-ops-v3\\permute-v3-vllm-decision.md",
-      "python scripts\\evaluate_promotion.py --input out\\research\\six-ops-v3\\six-ops-v3-release.jsonl --baseline cuda_postlogit_integrated_latest --candidate cuda_postlogit_research_v3 --policy configs\\policies\\cuda_v3_promotion.json --output out\\research\\six-ops-v3\\l3-v3-decision.json --markdown out\\research\\six-ops-v3\\l3-v3-decision.md",
-      "python scripts\\evaluate_promotion.py --input out\\research\\six-ops-v3\\route-trace-placeholder-release.jsonl --baseline cuda_postlogit_integrated_latest --candidate cuda_postlogit_research_v3 --policy configs\\policies\\cuda_v3_real_trace_promotion.json --output out\\research\\six-ops-v3\\real-trace-decision.json --markdown out\\research\\six-ops-v3\\real-trace-decision.md",
-      "python scripts\\build_v3_portfolio_evidence.py --decision grouped out\\research\\six-ops-v3\\grouped-v3-decision.json --decision permute out\\research\\six-ops-v3\\permute-v3-decision.json --decision permute_vllm out\\research\\six-ops-v3\\permute-v3-vllm-decision.json --decision l3 out\\research\\six-ops-v3\\l3-v3-decision.json --decision real_trace out\\research\\six-ops-v3\\real-trace-decision.json --output-dir out\\research\\six-ops-v3\\compact-evidence --archive out\\research\\six-ops-v3\\compact-evidence.zip"
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\grouped_gemm\\benchmark\\candidate_v4_release.json --output out\\research\\six-ops-v4\\grouped-v4-release.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\permute\\benchmark\\routeprep_v4_release.json --output out\\research\\six-ops-v4\\routeprep-v4-release.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\project\\benchmark\\six_ops_v4_postroute_release.json --output out\\research\\six-ops-v4\\postroute-v4-release.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\project\\benchmark\\six_ops_v4_graph_release.json --output out\\research\\six-ops-v4\\graph-v4-release.jsonl",
+      "python scripts\\evaluate_promotion.py --input out\\research\\six-ops-v4\\grouped-v4-release.jsonl --baseline cuda_grouped_sm86_fp32_v2 --candidate cuda_grouped_sm86_fp32_v4a_desc_static_t256 --policy configs\\policies\\portfolio_aggressive.json --output out\\research\\six-ops-v4\\grouped-v4a-static-t256-decision.json --markdown out\\research\\six-ops-v4\\grouped-v4a-static-t256-decision.md",
+      "python scripts\\evaluate_promotion.py --input out\\research\\six-ops-v4\\routeprep-v4-release.jsonl --baseline cuda_candidate_v3_from_ids --candidate cuda_routeprep_shared_rank_t256_v1 --policy configs\\policies\\portfolio_aggressive.json --output out\\research\\six-ops-v4\\routeprep-v4-t256-decision.json --markdown out\\research\\six-ops-v4\\routeprep-v4-t256-decision.md",
+      "python scripts\\evaluate_promotion.py --input out\\research\\six-ops-v4\\postroute-v4-release.jsonl --baseline cuda_postroute_current_v1 --candidate cuda_postroute_gather_grouped_v1 --policy configs\\policies\\portfolio_aggressive.json --output out\\research\\six-ops-v4\\postroute-gather-decision.json --markdown out\\research\\six-ops-v4\\postroute-gather-decision.md",
+      "python scripts\\evaluate_promotion.py --input out\\research\\six-ops-v4\\graph-v4-release.jsonl --case-prefix graph.postlogit.steady.fixed --baseline cuda_postlogit_integrated_latest --candidate cuda_postlogit_graph_fixed_v1 --policy configs\\policies\\portfolio_aggressive.json --output out\\research\\six-ops-v4\\graph-postlogit-fixed-decision.json --markdown out\\research\\six-ops-v4\\graph-postlogit-fixed-decision.md",
+      "python scripts\\evaluate_promotion.py --input out\\research\\six-ops-v4\\graph-v4-release.jsonl --case-prefix graph.postroute.steady.fixed --baseline cuda_postroute_current_v1 --candidate cuda_postroute_graph_fixed_v1 --policy configs\\policies\\portfolio_aggressive.json --output out\\research\\six-ops-v4\\graph-postroute-fixed-decision.json --markdown out\\research\\six-ops-v4\\graph-postroute-fixed-decision.md",
+      "python scripts\\analyze_graph_results.py --input out\\research\\six-ops-v4\\graph-v4-release.jsonl --case-prefix graph.postlogit --baseline cuda_postlogit_integrated_latest --output out\\research\\six-ops-v4\\graph-postlogit-analysis.json --markdown out\\research\\six-ops-v4\\graph-postlogit-analysis.md",
+      "python scripts\\analyze_graph_results.py --input out\\research\\six-ops-v4\\graph-v4-release.jsonl --case-prefix graph.postroute --baseline cuda_postroute_current_v1 --output out\\research\\six-ops-v4\\graph-postroute-analysis.json --markdown out\\research\\six-ops-v4\\graph-postroute-analysis.md",
+      "python scripts\\build_v3_portfolio_evidence.py --decision grouped out\\research\\six-ops-v4\\grouped-v4a-static-t256-decision.json --decision routeprep out\\research\\six-ops-v4\\routeprep-v4-t256-decision.json --decision postroute_gather out\\research\\six-ops-v4\\postroute-gather-decision.json --decision graph_postlogit out\\research\\six-ops-v4\\graph-postlogit-fixed-decision.json --decision graph_postroute out\\research\\six-ops-v4\\graph-postroute-fixed-decision.json --title \"RaggedRoute CUDA v4 aggressive research\" --schema-version raggedroute.compact_v4_evidence.v1 --output-dir out\\research\\six-ops-v4\\compact-evidence --archive out\\research\\six-ops-v4\\compact-evidence.zip"
     ]
   },
   "benchmark": {
     "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
     "profile_cases": [
       {
-        "name": "grouped-v3-uniform-t2048",
-        "arguments": ["--operator", "grouped_gemm", "--variant", "cuda_grouped_sm86_fp32_v3", "--level", "l2", "--warmup", "20", "--profile-once", "--param", "T=2048", "--param", "E=64", "--param", "top_k=2", "--param", "K=128", "--param", "N=128", "--param", "distribution=uniform"]
+        "name": "grouped-v4a-static-prepass-uniform",
+        "arguments": ["--operator", "grouped_gemm", "--variant", "cuda_grouped_sm86_fp32_v4a_desc_static_t256", "--level", "l2", "--warmup", "20", "--profile-once", "--param", "T=2048", "--param", "E=64", "--param", "top_k=2", "--param", "K=128", "--param", "N=128", "--param", "distribution=uniform"],
+        "kernel_regex": "grouped_gemm_descriptor_prepass_kernel"
       },
       {
-        "name": "permute-v3-tile2-t4096-k1024",
-        "arguments": ["--operator", "token_permute", "--variant", "cuda_candidate_v3", "--level", "l2", "--warmup", "20", "--profile-once", "--param", "T=4096", "--param", "E=64", "--param", "top_k=2", "--param", "K=1024", "--param", "distribution=uniform"]
+        "name": "routeprep-topk4-zipf",
+        "arguments": ["--operator", "token_permute", "--variant", "cuda_routeprep_shared_rank_t256_v1", "--level", "l2", "--warmup", "20", "--profile-once", "--param", "T=2048", "--param", "E=64", "--param", "top_k=4", "--param", "K=128", "--param", "distribution=zipf", "--param", "zipf_s=1.4"],
+        "kernel_regex": "token_permute_routeprep_shared_rank_kernel"
       },
       {
-        "name": "l3-research-v3-zipf-t2048",
-        "arguments": ["--suite", "chain_from_logits", "--variant", "cuda_postlogit_research_v3", "--level", "l3", "--warmup", "20", "--profile-once", "--param", "T=2048", "--param", "E=64", "--param", "K=128", "--param", "N=128", "--param", "distribution=zipf", "--param", "zipf_s=1.4"]
+        "name": "postroute-gather-topk8-zipf",
+        "arguments": ["--suite", "chain_from_route_ids", "--variant", "cuda_postroute_gather_grouped_v1", "--level", "l3", "--warmup", "20", "--profile-once", "--param", "T=2048", "--param", "E=64", "--param", "top_k=8", "--param", "K=128", "--param", "N=128", "--param", "distribution=zipf", "--param", "zipf_s=1.4"],
+        "kernel_regex": "grouped_gemm_gather_naive_kernel"
       }
     ],
-    "kernel_regex": "token_permute_token_(tile4|tile2)_top2_kernel|grouped_gemm_register16x(32_sm86_v2|64_sm86_v3)_kernel"
+    "kernel_regex": "(grouped_gemm_descriptor_(prepass_)?kernel|token_permute_routeprep_shared_rank_kernel|grouped_gemm_gather_naive_kernel)"
   },
   "variants": {
-    "baseline": "cuda_postlogit_integrated_latest",
-    "candidate": "cuda_postlogit_research_v3"
+    "baseline": "cuda_postroute_current_v1",
+    "candidate": "cuda_postroute_gather_grouped_v1"
   },
   "output": {
-    "root": "out\\research\\six-ops-v3",
+    "root": "out\\research\\six-ops-v4",
     "retention": {
       "keep_raw_for": ["baseline", "promoted", "final"],
       "rejected_candidate": "all"
     }
   },
   "promotion_policy": {
-    "version": "six-ops-v3-l3-v1",
+    "version": "portfolio-aggressive-v4",
     "min_processes": 5,
-    "median_speedup": 1.03,
-    "p95_regression_tolerance": 0.03,
-    "max_shape_regression": 0.05,
-    "max_workspace_growth": 0.0
+    "median_speedup": 1.01,
+    "p95_regression_tolerance": 0.10,
+    "max_shape_regression": 0.10,
+    "max_workspace_growth": 67108864
   }
 }

@@ -188,12 +188,17 @@ def evaluate(
          f"ratio-of-sums {ratio_of_sums:.4f} below threshold"),
         (win_fraction >= float(policy.get("minimum_speedup_shape_coverage", 0.80)),
          f"shape win fraction {win_fraction:.4f} below threshold"),
+        (geomean >= float(policy.get("minimum_geometric_mean_p50_speedup", 0.0)),
+         f"geometric mean {geomean:.4f} below threshold"),
         (max_p50_regression <= float(policy.get("maximum_single_shape_p50_regression_fraction", 0.05)),
          f"max p50 regression {max_p50_regression:.4f} above threshold"),
         (max_p95_regression <= float(policy.get("maximum_single_shape_p95_regression_fraction", 0.03)),
          f"max p95 regression {max_p95_regression:.4f} above threshold"),
         (max_workspace_growth <= int(policy.get("maximum_workspace_growth_bytes", 0)),
          f"workspace growth {max_workspace_growth} bytes above threshold"),
+        (not rows or max(row["candidate_workspace_bytes"] for row in rows) <=
+         int(policy.get("maximum_candidate_workspace_bytes", 2**63 - 1)),
+         "candidate workspace exceeds absolute threshold"),
     )
     performance_failures.extend(message for passed, message in checks if not passed)
     if correctness_failures:
@@ -277,9 +282,22 @@ def main() -> int:
     parser.add_argument("--policy", required=True, type=pathlib.Path)
     parser.add_argument("--output", required=True, type=pathlib.Path)
     parser.add_argument("--markdown", type=pathlib.Path)
+    parser.add_argument(
+        "--case-prefix", action="append", default=[],
+        help="Keep only case_id values beginning with one of these prefixes."
+    )
     args = parser.parse_args()
     policy = json.loads(args.policy.read_text(encoding="utf-8"))
-    result = evaluate(read_records(args.input), args.baseline, args.candidate, policy)
+    input_records = read_records(args.input)
+    if args.case_prefix:
+        input_records = [
+            record for record in input_records
+            if any(str(record.get("case_id", "")).startswith(prefix)
+                   for prefix in args.case_prefix)
+        ]
+        if not input_records:
+            raise ValueError("no benchmark records matched --case-prefix")
+    result = evaluate(input_records, args.baseline, args.candidate, policy)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if args.markdown:

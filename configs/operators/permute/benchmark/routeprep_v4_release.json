@@ -1,0 +1,69 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_routeprep_topk248_release_v1",
+  "protocol": "release",
+  "process_runs": 5,
+  "common": {
+    "warmup": 20,
+    "samples": 30,
+    "kernel_repeats": 1,
+    "seed": 20260828,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "routeprep.top2.r512_to_r65536",
+      "operator": "token_permute",
+      "levels": ["l2"],
+      "variants": [
+        {"name": "cuda_candidate_v3_from_ids", "promotion_baseline": true},
+        {"name": "cuda_routeprep_shared_rank_t256_v1", "promotion_baseline": false},
+        {"name": "cuda_routeprep_shared_rank_t512_v1", "promotion_baseline": false},
+        {"name": "cuda_routeprep_shared_rank_t1024_v1", "promotion_baseline": false},
+        {"name": "cuda_permute_token_owned_topk2_v4", "promotion_baseline": false}
+      ],
+      "params": {"top_k": 2, "K": 128, "zipf_s": 1.4, "materialize_sorted_route": true},
+      "matrix": {
+        "T": [256, 2048, 4096, 8192, 16384, 32768],
+        "E": [16, 64],
+        "distribution": ["uniform", "zipf", "single_hot", "round_robin"]
+      }
+    },
+    {
+      "id": "routeprep.top4.r512_to_r65536",
+      "operator": "token_permute",
+      "levels": ["l2"],
+      "variants": [
+        {"name": "cuda_candidate_v3_from_ids", "promotion_baseline": true},
+        {"name": "cuda_routeprep_shared_rank_t256_v1", "promotion_baseline": false},
+        {"name": "cuda_routeprep_shared_rank_t512_v1", "promotion_baseline": false},
+        {"name": "cuda_routeprep_shared_rank_t1024_v1", "promotion_baseline": false},
+        {"name": "cuda_permute_token_owned_topk4_v4", "promotion_baseline": false}
+      ],
+      "params": {"top_k": 4, "K": 128, "zipf_s": 1.4, "materialize_sorted_route": true},
+      "matrix": {
+        "T": [128, 1024, 2048, 4096, 8192, 16384],
+        "E": [16, 64],
+        "distribution": ["uniform", "zipf", "single_hot", "round_robin"]
+      }
+    },
+    {
+      "id": "routeprep.top8.r512_to_r65536",
+      "operator": "token_permute",
+      "levels": ["l2"],
+      "variants": [
+        {"name": "cuda_candidate_v3_from_ids", "promotion_baseline": true},
+        {"name": "cuda_routeprep_shared_rank_t256_v1", "promotion_baseline": false},
+        {"name": "cuda_routeprep_shared_rank_t512_v1", "promotion_baseline": false},
+        {"name": "cuda_routeprep_shared_rank_t1024_v1", "promotion_baseline": false},
+        {"name": "cuda_permute_token_owned_topk8_v4", "promotion_baseline": false}
+      ],
+      "params": {"top_k": 8, "K": 128, "zipf_s": 1.4, "materialize_sorted_route": true},
+      "matrix": {
+        "T": [64, 512, 1024, 2048, 4096, 8192],
+        "E": [16, 64],
+        "distribution": ["uniform", "zipf", "single_hot", "round_robin"]
+      }
+    }
+  ]
+}

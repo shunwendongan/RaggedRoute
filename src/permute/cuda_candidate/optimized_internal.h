@@ -42,6 +42,19 @@ cudaError_t launch_token_permute_prepare_offsets_fused(
     std::int32_t* cursors, int tokens, int experts, int top_k,
     cudaStream_t caller_stream);
 
+cudaError_t launch_token_permute_routeprep_shared_rank(
+    const std::int32_t* expert_ids, std::int32_t* counts, std::int32_t* offsets,
+    std::int32_t* route_pos, std::int32_t* sorted_route, int tokens, int experts,
+    int top_k, int threads, cudaStream_t caller_stream);
+
+cudaError_t launch_token_permute_copy_token_owned_topk(
+    const float* x, const std::int32_t* route_pos, float* x_permuted, int tokens,
+    int top_k, int hidden, cudaStream_t caller_stream);
+
+cudaError_t launch_token_permute_copy_from_positions(
+    const float* x, const std::int32_t* route_pos, float* x_permuted, int tokens,
+    int top_k, int hidden, cudaStream_t caller_stream);
+
 cudaError_t launch_token_permute_optimized(
     const float* x, const std::int32_t* expert_ids, const std::int32_t* offsets,
     std::int32_t* cursors, float* x_permuted, std::int32_t* route_pos,

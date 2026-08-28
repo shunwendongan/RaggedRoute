@@ -1,0 +1,56 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_six_ops_v4_aggressive_smoke_v1",
+  "protocol": "smoke",
+  "process_runs": 1,
+  "common": {
+    "warmup": 5,
+    "samples": 5,
+    "kernel_repeats": 1,
+    "seed": 20260828,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "postroute.smoke.topk248",
+      "suite": "chain_from_route_ids",
+      "levels": ["l3"],
+      "variants": [
+        {"name": "cuda_postroute_current_v1", "promotion_baseline": true},
+        {"name": "cuda_postroute_shared_rank_t256_v1", "promotion_baseline": false},
+        {"name": "cuda_postroute_token_owned_v4", "promotion_baseline": false},
+        {"name": "cuda_postroute_grouped_v4a_desc", "promotion_baseline": false},
+        {"name": "cuda_postroute_gather_grouped_v1", "promotion_baseline": false}
+      ],
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4},
+      "matrix": {"top_k": [2, 4, 8]}
+    },
+    {
+      "id": "graph.smoke.postlogit",
+      "suite": "chain_from_logits",
+      "levels": ["l4"],
+      "variants": [
+        {"name": "cuda_postlogit_integrated_latest", "promotion_baseline": true},
+        {"name": "cuda_postlogit_graph_fixed_v1", "promotion_baseline": false},
+        {"name": "cuda_postlogit_graph_param_update_v2", "promotion_baseline": false},
+        {"name": "cuda_postlogit_graph_exec_update_v3", "promotion_baseline": false},
+        {"name": "cuda_postlogit_graph_cache_v4", "promotion_baseline": false}
+      ],
+      "params": {"T": 128, "E": 16, "K": 64, "N": 64, "distribution": "uniform", "zipf_s": 0.0, "graph_cache_tokens": "64,128"}
+    },
+    {
+      "id": "graph.smoke.postroute.topk248",
+      "suite": "chain_from_route_ids",
+      "levels": ["l4"],
+      "variants": [
+        {"name": "cuda_postroute_current_v1", "promotion_baseline": true},
+        {"name": "cuda_postroute_graph_fixed_v1", "promotion_baseline": false},
+        {"name": "cuda_postroute_graph_param_update_v2", "promotion_baseline": false},
+        {"name": "cuda_postroute_graph_exec_update_v3", "promotion_baseline": false},
+        {"name": "cuda_postroute_graph_cache_v4", "promotion_baseline": false}
+      ],
+      "params": {"T": 128, "E": 16, "K": 64, "N": 64, "distribution": "uniform", "zipf_s": 0.0, "graph_cache_tokens": "64,128", "graph_cache_topks": "2,4,8"},
+      "matrix": {"top_k": [2, 4, 8]}
+    }
+  ]
+}

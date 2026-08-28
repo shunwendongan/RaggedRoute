@@ -173,6 +173,27 @@ inline int checked_int_product(int left, int right, const std::string& label) {
   return left * right;
 }
 
+inline std::vector<int> parse_positive_int_list(const std::string& text,
+                                                const std::string& label) {
+  if (text.empty()) throw std::invalid_argument(label + " must not be empty");
+  std::vector<int> values;
+  std::size_t begin = 0;
+  while (begin <= text.size()) {
+    const std::size_t end = text.find(',', begin);
+    const std::string item = text.substr(begin, end == std::string::npos ? end : end - begin);
+    if (item.empty()) throw std::invalid_argument(label + " contains an empty item");
+    std::size_t consumed = 0;
+    const long long value = std::stoll(item, &consumed);
+    if (consumed != item.size() || value < 1 || value > std::numeric_limits<int>::max()) {
+      throw std::invalid_argument(label + " contains an invalid positive integer: " + item);
+    }
+    values.push_back(static_cast<int>(value));
+    if (end == std::string::npos) break;
+    begin = end + 1;
+  }
+  return values;
+}
+
 inline std::vector<float> make_random_floats(std::size_t count, std::uint64_t seed,
                                              float low = -1.0F, float high = 1.0F) {
   std::mt19937_64 engine(seed);
@@ -189,7 +210,7 @@ inline std::vector<std::int32_t> make_route_ids(int tokens, int top_k, int exper
     throw std::invalid_argument("route shape requires tokens>=1 and experts>=top_k>=1");
   }
   if (distribution != "uniform" && distribution != "zipf" && distribution != "single_hot" &&
-      distribution != "round_robin") {
+      distribution != "round_robin" && distribution != "duplicate_route") {
     throw std::invalid_argument("unsupported distribution: " + distribution);
   }
 
@@ -206,7 +227,9 @@ inline std::vector<std::int32_t> make_route_ids(int tokens, int top_k, int exper
   for (int token = 0; token < tokens; ++token) {
     for (int rank = 0; rank < top_k; ++rank) {
       int candidate = 0;
-      if (distribution == "single_hot") {
+      if (distribution == "duplicate_route") {
+        candidate = 0;
+      } else if (distribution == "single_hot") {
         candidate = rank;
       } else if (distribution == "round_robin") {
         candidate = (token + rank) % experts;

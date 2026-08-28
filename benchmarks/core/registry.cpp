@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <tuple>
 #include <utility>
 
 #if RAGGEDROUTE_HAS_CCCL
@@ -296,6 +297,30 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     variants.push_back(descriptor("cuda_candidate_v3_from_ids", "in_tree_cuda_candidate",
                                   "raggedroute.permute.candidate_from_ids.v3",
                                   "not_applicable", "fused_prepare_shape_dispatch_v3"));
+    variants.push_back(descriptor("cuda_routeprep_shared_rank_t256_v1",
+                                  "in_tree_cuda_research",
+                                  "raggedroute.routeprep.shared_rank.t256.v1",
+                                  "not_applicable", "single_cta_shared_rank_t256"));
+    variants.push_back(descriptor("cuda_routeprep_shared_rank_t512_v1",
+                                  "in_tree_cuda_research",
+                                  "raggedroute.routeprep.shared_rank.t512.v1",
+                                  "not_applicable", "single_cta_shared_rank_t512"));
+    variants.push_back(descriptor("cuda_routeprep_shared_rank_t1024_v1",
+                                  "in_tree_cuda_research",
+                                  "raggedroute.routeprep.shared_rank.t1024.v1",
+                                  "not_applicable", "single_cta_shared_rank_t1024"));
+    variants.push_back(descriptor("cuda_permute_token_owned_topk2_v4",
+                                  "in_tree_cuda_research",
+                                  "raggedroute.permute.token_owned_topk2.v4",
+                                  "not_applicable", "shared_rank_token_owned_topk2"));
+    variants.push_back(descriptor("cuda_permute_token_owned_topk4_v4",
+                                  "in_tree_cuda_research",
+                                  "raggedroute.permute.token_owned_topk4.v4",
+                                  "not_applicable", "shared_rank_token_owned_topk4"));
+    variants.push_back(descriptor("cuda_permute_token_owned_topk8_v4",
+                                  "in_tree_cuda_research",
+                                  "raggedroute.permute.token_owned_topk8.v4",
+                                  "not_applicable", "shared_rank_token_owned_topk8"));
 #if RAGGEDROUTE_HAS_CCCL
     const std::string vllm_dependency =
         "vllm@837eae64580c885101ee95b073aafb27a485e7ce; " + cccl_revision();
@@ -334,6 +359,32 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     variants.push_back(descriptor("cuda_grouped_sm86_fp32_v3", "in_tree_cuda_research",
                                   "raggedroute.grouped.cuda_candidate.v3", "not_applicable",
                                   "large_aligned_register16x64_cp_async_else_v2"));
+    for (const auto& [name, version, scheduler] :
+         std::vector<std::tuple<std::string, std::string, std::string>>{
+             {"cuda_grouped_sm86_fp32_v4a_desc_static_t256", "v4a-static-t256",
+              "descriptor_static_t256"},
+             {"cuda_grouped_sm86_fp32_v4a_desc_static_t512", "v4a-static-t512",
+              "descriptor_static_t512"},
+             {"cuda_grouped_sm86_fp32_v4a_desc_static_t1024", "v4a-static-t1024",
+              "descriptor_static_t1024"},
+             {"cuda_grouped_sm86_fp32_v4a_desc_queue_t256", "v4a-queue-t256",
+              "descriptor_queue_t256"},
+             {"cuda_grouped_sm86_fp32_v4a_desc_queue_t512", "v4a-queue-t512",
+              "descriptor_queue_t512"},
+             {"cuda_grouped_sm86_fp32_v4a_desc_queue_t1024", "v4a-queue-t1024",
+              "descriptor_queue_t1024"}}) {
+      variants.push_back(descriptor(name, "in_tree_cuda_research",
+                                    "raggedroute.grouped.cuda_candidate." + version,
+                                    "not_applicable", scheduler));
+    }
+    variants.push_back(descriptor("cuda_grouped_sm86_fp32_v4a_desc",
+                                  "in_tree_cuda_research",
+                                  "raggedroute.grouped.cuda_candidate.v4a-selected",
+                                  "not_applicable", "descriptor_selected_alias"));
+    variants.push_back(descriptor("cuda_grouped_sm86_fp32_v4b_cache_order",
+                                  "in_tree_cuda_research",
+                                  "raggedroute.grouped.cuda_candidate.v4b", "not_applicable",
+                                  "descriptor_column_major_cache_order"));
 #if RAGGEDROUTE_HAS_CUBLAS
     variants.push_back(descriptor("cublas_per_expert", "nvidia_cuda_library",
                                   "cublasSgemm.per_active_expert.v1", cuda_library_revision(),
@@ -384,7 +435,9 @@ AdapterPtr make_adapter(const std::string& operator_name, const std::string& var
   return std::make_unique<RegisteredAdapter>(std::move(adapter), descriptor);
 }
 
-std::vector<std::string> available_suites() { return {"chain_from_tokens", "chain_from_logits"}; }
+std::vector<std::string> available_suites() {
+  return {"chain_from_tokens", "chain_from_logits", "chain_from_route_ids"};
+}
 
 std::vector<VariantDescriptor> available_suite_variant_descriptors(const std::string& suite_name) {
   if (suite_name == "chain_from_tokens" || suite_name == "chain_from_logits") {
@@ -425,8 +478,61 @@ std::vector<VariantDescriptor> available_suite_variant_descriptors(const std::st
           "cuda_postlogit_research_v3", "in_tree_cuda_research",
           "raggedroute.chain.postlogit_research_v3.v1", "not_applicable",
           "topk_v4_fused_hist_scan_v2_permute_v3_grouped_v3_unpermute_retained_v1"));
+      variants.push_back(descriptor(
+          "cuda_postlogit_graph_fixed_v1", "in_tree_cuda_research",
+          "raggedroute.chain.postlogit.graph.fixed.v1", "not_applicable",
+          "fixed_capture_uploaded_integrated_latest"));
+      variants.push_back(descriptor(
+          "cuda_postlogit_graph_param_update_v2", "in_tree_cuda_research",
+          "raggedroute.chain.postlogit.graph.param_update.v2", "not_applicable",
+          "kernel_node_set_params_integrated_latest"));
+      variants.push_back(descriptor(
+          "cuda_postlogit_graph_exec_update_v3", "in_tree_cuda_research",
+          "raggedroute.chain.postlogit.graph.exec_update.v3", "not_applicable",
+          "recapture_exec_update_integrated_latest"));
+      variants.push_back(descriptor(
+          "cuda_postlogit_graph_cache_v4", "in_tree_cuda_research",
+          "raggedroute.chain.postlogit.graph.cache.v4", "not_applicable",
+          "lru16_shape_key_capture_on_miss_integrated_latest"));
     }
     return variants;
+  }
+  if (suite_name == "chain_from_route_ids") {
+    return {
+        naive_descriptor("five_stage_post_routing_cuda_naive"),
+        descriptor("cuda_postroute_current_v1", "in_tree_cuda_research",
+                   "raggedroute.chain.postroute.current.v1", "not_applicable",
+                   "fused_hist_scan_permute_v2_grouped_v2_retained_unpermute"),
+        descriptor("cuda_postroute_shared_rank_t256_v1", "in_tree_cuda_research",
+                   "raggedroute.chain.postroute.shared_rank.t256.v1", "not_applicable",
+                   "shared_rank_t256_route_owned_grouped_v2"),
+        descriptor("cuda_postroute_shared_rank_t512_v1", "in_tree_cuda_research",
+                   "raggedroute.chain.postroute.shared_rank.t512.v1", "not_applicable",
+                   "shared_rank_t512_route_owned_grouped_v2"),
+        descriptor("cuda_postroute_shared_rank_t1024_v1", "in_tree_cuda_research",
+                   "raggedroute.chain.postroute.shared_rank.t1024.v1", "not_applicable",
+                   "shared_rank_t1024_route_owned_grouped_v2"),
+        descriptor("cuda_postroute_token_owned_v4", "in_tree_cuda_research",
+                   "raggedroute.chain.postroute.token_owned.v4", "not_applicable",
+                   "shared_rank_token_owned_topk_grouped_v2"),
+        descriptor("cuda_postroute_grouped_v4a_desc", "in_tree_cuda_research",
+                   "raggedroute.chain.postroute.grouped_desc.v4a", "not_applicable",
+                   "shared_rank_token_owned_grouped_descriptor_selected"),
+        descriptor("cuda_postroute_gather_grouped_v1", "in_tree_cuda_research",
+                   "raggedroute.chain.postroute.gather_grouped.v1", "not_applicable",
+                   "shared_rank_no_x_permuted_grouped_gather"),
+        descriptor("cuda_postroute_graph_fixed_v1", "in_tree_cuda_research",
+                   "raggedroute.chain.postroute.graph.fixed.v1", "not_applicable",
+                   "fixed_capture_uploaded_gather_chain"),
+        descriptor("cuda_postroute_graph_param_update_v2", "in_tree_cuda_research",
+                   "raggedroute.chain.postroute.graph.param_update.v2", "not_applicable",
+                   "kernel_node_set_params_then_launch"),
+        descriptor("cuda_postroute_graph_exec_update_v3", "in_tree_cuda_research",
+                   "raggedroute.chain.postroute.graph.exec_update.v3", "not_applicable",
+                   "recapture_exec_update_then_launch"),
+        descriptor("cuda_postroute_graph_cache_v4", "in_tree_cuda_research",
+                   "raggedroute.chain.postroute.graph.cache.v4", "not_applicable",
+                   "lru16_shape_key_capture_on_miss_graph_cache")};
   }
   return {};
 }
@@ -442,6 +548,7 @@ AdapterPtr make_suite_adapter(const std::string& suite_name, const std::string& 
   AdapterPtr adapter;
   if (suite_name == "chain_from_tokens") adapter = make_chain_adapter(true, variant_name);
   if (suite_name == "chain_from_logits") adapter = make_chain_adapter(false, variant_name);
+  if (suite_name == "chain_from_route_ids") adapter = make_postroute_chain_adapter(variant_name);
   if (!adapter) throw std::logic_error("suite registry has no adapter factory");
   return std::make_unique<RegisteredAdapter>(std::move(adapter), descriptor);
 }

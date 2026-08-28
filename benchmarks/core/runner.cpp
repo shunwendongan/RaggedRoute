@@ -13,6 +13,13 @@
 #include <stdexcept>
 #include <type_traits>
 
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/benchmark/adapter_utils.h"
 
@@ -158,6 +165,54 @@ class EventPair {
   cudaEvent_t stop_{};
 };
 
+double host_timestamp_seconds() {
+#ifdef _WIN32
+  static const double inverse_frequency = [] {
+    LARGE_INTEGER frequency{};
+    if (!QueryPerformanceFrequency(&frequency) || frequency.QuadPart <= 0) {
+      throw std::runtime_error("QueryPerformanceFrequency failed");
+    }
+    return 1.0 / static_cast<double>(frequency.QuadPart);
+  }();
+  LARGE_INTEGER counter{};
+  if (!QueryPerformanceCounter(&counter)) {
+    throw std::runtime_error("QueryPerformanceCounter failed");
+  }
+  return static_cast<double>(counter.QuadPart) * inverse_frequency;
+#else
+  return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch())
+      .count();
+#endif
+}
+
+void write_measurement_summary(std::ostringstream& out, const MeasurementSummary& summary,
+                               const char* semantics) {
+  write_quoted(out, "sample_semantics");
+  out << ':';
+  write_quoted(out, semantics);
+  out << ',';
+  auto field = [&](const char* name, double value) {
+    write_quoted(out, name);
+    out << ':';
+    write_number(out, value);
+    out << ',';
+  };
+  field("mean_us", summary.mean_us);
+  field("stddev_us", summary.stddev_us);
+  field("cv", summary.cv);
+  field("min_us", summary.min_us);
+  field("p50_us", summary.p50_us);
+  field("p90_us", summary.p90_us);
+  field("p95_us", summary.p95_us);
+  write_quoted(out, "raw_samples_us");
+  out << ":[";
+  for (std::size_t i = 0; i < summary.raw_samples_us.size(); ++i) {
+    if (i != 0) out << ',';
+    write_number(out, summary.raw_samples_us[i]);
+  }
+  out << "]";
+}
+
 }  // namespace
 
 MeasurementSummary summarize_samples(const std::vector<double>& samples_us) {
@@ -288,23 +343,30 @@ BenchmarkRecord run_benchmark(BenchmarkAdapter& adapter, const RunOptions& optio
   cuda_check(cudaStreamSynchronize(stream), "warmup synchronization");
 
   EventPair events;
-  std::vector<double> samples;
-  samples.reserve(static_cast<std::size_t>(options.samples));
+  std::vector<double> gpu_samples, host_samples, submission_samples;
+  gpu_samples.reserve(static_cast<std::size_t>(options.samples));
+  host_samples.reserve(static_cast<std::size_t>(options.samples));
+  submission_samples.reserve(static_cast<std::size_t>(options.samples));
   for (int sample = 0; sample < options.samples; ++sample) {
     scrub_cache();
     adapter.prepare_sample(options.level, stream);
     cuda_check(cudaStreamSynchronize(stream), "sample preparation synchronization");
     cuda_check(cudaEventRecord(events.start(), stream), "cudaEventRecord(start)");
+    const double host_begin = host_timestamp_seconds();
     for (int repeat = 0; repeat < options.kernel_repeats; ++repeat) {
       adapter.enqueue(options.level, stream);
     }
+    const double submission_end = host_timestamp_seconds();
     cuda_check(cudaEventRecord(events.stop(), stream), "cudaEventRecord(stop)");
     cuda_check(cudaEventSynchronize(events.stop()), "cudaEventSynchronize(stop)");
+    const double host_end = host_timestamp_seconds();
     float milliseconds = 0.0F;
     cuda_check(cudaEventElapsedTime(&milliseconds, events.start(), events.stop()),
                "cudaEventElapsedTime");
-    samples.push_back(static_cast<double>(milliseconds) * 1000.0 /
-                      static_cast<double>(options.kernel_repeats));
+    const double repeats = static_cast<double>(options.kernel_repeats);
+    gpu_samples.push_back(static_cast<double>(milliseconds) * 1000.0 / repeats);
+    submission_samples.push_back((submission_end - host_begin) * 1.0e6 / repeats);
+    host_samples.push_back((host_end - host_begin) * 1.0e6 / repeats);
   }
 
   ValidationResult validation{true, "validation disabled", std::nullopt, std::nullopt};
@@ -338,7 +400,12 @@ BenchmarkRecord run_benchmark(BenchmarkAdapter& adapter, const RunOptions& optio
   record.variant_config = adapter.variant_config();
   record.work = adapter.work_estimate(options.level);
   record.environment = collect_environment();
-  record.timing = summarize_samples(samples);
+  record.gpu_span_timing = summarize_samples(gpu_samples);
+  record.host_time_to_solution_timing = summarize_samples(host_samples);
+  record.cpu_submission_timing = summarize_samples(submission_samples);
+  record.timing = options.level == MeasurementLevel::kHostCall
+                      ? *record.host_time_to_solution_timing
+                      : *record.gpu_span_timing;
   record.validation = validation;
   return record;
 }
@@ -436,6 +503,22 @@ std::string record_to_json(const BenchmarkRecord& record) {
     write_number(out, record.timing.raw_samples_us[i]);
   }
   out << "]},";
+
+  auto auxiliary_timing = [&](const char* name,
+                              const std::optional<MeasurementSummary>& summary,
+                              const char* semantics) {
+    if (!summary) return;
+    write_quoted(out, name);
+    out << ":{";
+    write_measurement_summary(out, *summary, semantics);
+    out << "},";
+  };
+  auxiliary_timing("gpu_span_timing", record.gpu_span_timing,
+                   "cuda_event_span_divided_by_repeats");
+  auxiliary_timing("host_time_to_solution_timing", record.host_time_to_solution_timing,
+                   "qpc_enqueue_through_final_event_sync_divided_by_repeats");
+  auxiliary_timing("cpu_submission_timing", record.cpu_submission_timing,
+                   "qpc_adapter_enqueue_return_divided_by_repeats");
 
   write_quoted(out, "validation");
   out << ":{";

@@ -44,7 +44,7 @@ def color(speedup: float) -> str:
     return "#d7655b"
 
 
-def svg(decisions: list[tuple[str, dict[str, Any]]]) -> str:
+def svg(decisions: list[tuple[str, dict[str, Any]]], title: str) -> str:
     rows = [
         (scope, row["case_id"], float(row["p50_speedup"]))
         for scope, decision in decisions
@@ -57,7 +57,7 @@ def svg(decisions: list[tuple[str, dict[str, Any]]]) -> str:
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="#111827"/>',
         '<style>text{font-family:Segoe UI,Arial,sans-serif;fill:#f3f4f6}.muted{fill:#aeb6c4}</style>',
-        '<text x="20" y="30" font-size="20" font-weight="600">RaggedRoute CUDA v3 paired p50 speedup</text>',
+        f'<text x="20" y="30" font-size="20" font-weight="600">{html.escape(title)} paired p50 speedup</text>',
         '<text x="20" y="52" font-size="12" class="muted">green >=1.03x; yellow 0.97-1.00x; red &lt;0.97x</text>',
     ]
     if not rows:
@@ -88,7 +88,9 @@ def write_archive(output: pathlib.Path, archive: pathlib.Path, files: list[pathl
 
 
 def build(inputs: list[tuple[str, pathlib.Path]], output: pathlib.Path,
-          archive: pathlib.Path | None = None) -> None:
+          archive: pathlib.Path | None = None,
+          title: str = "RaggedRoute CUDA v3",
+          schema_version: str = "raggedroute.compact_v3_evidence.v1") -> None:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite evidence directory: {output}")
     output.mkdir(parents=True)
@@ -127,10 +129,10 @@ def build(inputs: list[tuple[str, pathlib.Path]], output: pathlib.Path,
             })
 
     heatmap_path = output / "shape_heatmap.svg"
-    heatmap_path.write_text(svg(decisions), encoding="utf-8", newline="\n")
+    heatmap_path.write_text(svg(decisions, title), encoding="utf-8", newline="\n")
     report_path = output / "REPORT.md"
     report_lines = [
-        "# RaggedRoute CUDA v3 compact evidence",
+        f"# {title} compact evidence",
         "",
         "> Promotion decisions use clean, uninstrumented Release timing. NSYS/NCU durations are diagnostic only and raw profiler reports remain outside this compact bundle.",
         "",
@@ -160,7 +162,7 @@ def build(inputs: list[tuple[str, pathlib.Path]], output: pathlib.Path,
 
     evidence_files = copied + [csv_path, heatmap_path, report_path]
     manifest = {
-        "schema_version": "raggedroute.compact_v3_evidence.v1",
+        "schema_version": schema_version,
         "files": [
             {
                 "path": path.relative_to(output).as_posix(),
@@ -195,12 +197,14 @@ def main() -> int:
                         required=True)
     parser.add_argument("--output-dir", required=True, type=pathlib.Path)
     parser.add_argument("--archive", type=pathlib.Path)
+    parser.add_argument("--title", default="RaggedRoute CUDA v3")
+    parser.add_argument("--schema-version", default="raggedroute.compact_v3_evidence.v1")
     args = parser.parse_args()
     inputs = [(scope, pathlib.Path(path)) for scope, path in args.decision]
     scopes = [scope for scope, _ in inputs]
     if len(scopes) != len(set(scopes)):
         raise ValueError("decision scopes must be unique")
-    build(inputs, args.output_dir, args.archive)
+    build(inputs, args.output_dir, args.archive, args.title, args.schema_version)
     print(args.output_dir)
     return 0
 

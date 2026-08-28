@@ -141,14 +141,30 @@ def load_config(path: pathlib.Path) -> dict[str, Any]:
     operators = [case.get("operator") for case in cases]
     if any(not item for item in ids) or len(ids) != len(set(ids)):
         raise ValueError("profile case ids must be non-empty and unique")
-    if any(operator not in KERNEL_PATTERNS for operator in operators):
-        raise ValueError("profile suite contains an unknown operator")
+    for case in cases:
+        has_operator = isinstance(case.get("operator"), str)
+        has_suite = isinstance(case.get("suite"), str)
+        if has_operator == has_suite:
+            raise ValueError("each profile case requires exactly one operator or suite")
+        if has_operator and case["operator"] not in KERNEL_PATTERNS:
+            raise ValueError("profile suite contains an unknown operator")
+        if has_suite and not case["suite"]:
+            raise ValueError("profile suite contains an empty suite target")
+        if has_suite and not case.get("kernel_pattern"):
+            raise ValueError("suite profile cases require an explicit kernel_pattern")
     if schema == "raggedroute.profile_suite.v2":
         if set(operators) != set(KERNEL_PATTERNS) or len(cases) != len(KERNEL_PATTERNS):
             raise ValueError("profile suite v2 requires exactly one case for every operator")
-        system_case = config.get("system_case")
-        if not isinstance(system_case, dict) or not system_case.get("suite"):
-            raise ValueError("profile suite v2 requires a system_case")
+        system_cases = config.get("system_cases")
+        if system_cases is None:
+            system_cases = [config.get("system_case")]
+        if (not isinstance(system_cases, list) or not system_cases or
+                any(not isinstance(case, dict) or not case.get("suite") for case in system_cases)):
+            raise ValueError("profile suite v2 requires one or more system_cases")
+        system_ids = [case.get("id") for case in system_cases]
+        if (any(not isinstance(case_id, str) or not case_id for case_id in system_ids) or
+                len(system_ids) != len(set(system_ids))):
+            raise ValueError("system_case ids must be non-empty and unique")
     return config
 
 
@@ -288,6 +304,8 @@ def target_command(binary: pathlib.Path, case: dict[str, Any], *, system: bool =
     command = [str(binary)]
     if system:
         command.extend(("--suite", str(case["suite"])))
+    elif case.get("suite"):
+        command.extend(("--suite", str(case["suite"])))
     else:
         command.extend(("--operator", str(case["operator"])))
     command.extend(
@@ -326,7 +344,9 @@ def compute_commands(
         report_base = reports / f"{case['id']}.{current_set}"
         report = pathlib.Path(f"{report_base}.ncu-rep")
         warmup = int(case.get("warmup", 5))
-        pattern = case.get("kernel_pattern", KERNEL_PATTERNS[case["operator"]])
+        pattern = case.get("kernel_pattern")
+        if not pattern:
+            pattern = KERNEL_PATTERNS[case["operator"]]
         command = [
             ncu,
             "--target-processes",
@@ -613,8 +633,13 @@ def command_system(args: argparse.Namespace) -> int:
     nsys = find_tool("nsys")
     if not nsys:
         raise RuntimeError("nsys was not found")
+    system_cases = config.get("system_cases") or [config["system_case"]]
+    selected = [case for case in system_cases if not args.case_id or case["id"] == args.case_id]
+    if len(selected) != 1:
+        raise ValueError("system --case must select exactly one configured system case")
+    system_case = selected[0]
     reports = args.run_dir.resolve() / "reports" if args.dry_run else run_paths(args.run_dir, True)["reports"]
-    report_base = reports / "system.full7"
+    report_base = reports / f"system.{system_case['id']}"
     report = pathlib.Path(f"{report_base}.nsys-rep")
     if report.exists():
         raise FileExistsError(report)
@@ -626,7 +651,7 @@ def command_system(args: argparse.Namespace) -> int:
         "--cpuctxsw=none",
         "--force-overwrite=false",
         f"--output={report_base}",
-        *target_command(binary, config["system_case"], system=True),
+        *target_command(binary, system_case, system=True),
     ]
     if args.dry_run:
         print("+", shlex.join(command), flush=True)
@@ -724,6 +749,8 @@ def build_parser() -> argparse.ArgumentParser:
         if name == "compute":
             current.add_argument("--case", action="append", dest="case_ids")
             current.add_argument("--set", dest="profile_set", choices=("basic", "detailed", "full"))
+        else:
+            current.add_argument("--case", dest="case_id")
         current.set_defaults(handler=handler)
 
     analyze = subparsers.add_parser("analyze")

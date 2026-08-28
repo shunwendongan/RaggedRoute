@@ -1,0 +1,34 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_grouped_gemm_v4a_descriptor_screen_v1",
+  "protocol": "smoke",
+  "process_runs": 1,
+  "common": {"warmup": 10, "samples": 10, "kernel_repeats": 5, "seed": 20260828, "cache_mode": "warm"},
+  "cases": [
+    {
+      "id": "grouped.v4a.aligned", "operator": "grouped_gemm", "levels": ["l2"],
+      "variants": [
+        {"name": "cuda_grouped_sm86_fp32_v2", "promotion_baseline": true},
+        {"name": "cuda_grouped_sm86_fp32_v4a_desc_static_t256", "promotion_baseline": false},
+        {"name": "cuda_grouped_sm86_fp32_v4a_desc_static_t512", "promotion_baseline": false},
+        {"name": "cuda_grouped_sm86_fp32_v4a_desc_static_t1024", "promotion_baseline": false},
+        {"name": "cuda_grouped_sm86_fp32_v4a_desc_queue_t256", "promotion_baseline": false},
+        {"name": "cuda_grouped_sm86_fp32_v4a_desc_queue_t512", "promotion_baseline": false},
+        {"name": "cuda_grouped_sm86_fp32_v4a_desc_queue_t1024", "promotion_baseline": false},
+        {"name": "cuda_grouped_sm86_fp32_v4b_cache_order", "promotion_baseline": false}
+      ],
+      "params": {"E": 64, "top_k": 2, "K": 128, "N": 128, "zipf_s": 1.4},
+      "matrix": {"T": [64, 512, 2048], "distribution": ["uniform", "zipf", "single_hot"]}
+    },
+    {
+      "id": "grouped.v4a.tail_fallback", "operator": "grouped_gemm", "levels": ["l2"],
+      "variants": [
+        {"name": "cuda_grouped_sm86_fp32_v2", "promotion_baseline": true},
+        {"name": "cuda_grouped_sm86_fp32_v4a_desc_static_t256", "promotion_baseline": false},
+        {"name": "cuda_grouped_sm86_fp32_v4a_desc_static_t512", "promotion_baseline": false},
+        {"name": "cuda_grouped_sm86_fp32_v4a_desc_static_t1024", "promotion_baseline": false}
+      ],
+      "params": {"T": 17, "E": 16, "top_k": 2, "K": 67, "N": 71, "distribution": "zipf", "zipf_s": 1.4}
+    }
+  ]
+}

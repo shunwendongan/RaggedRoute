@@ -25,6 +25,51 @@ bool is_optimized_grouped_variant(const std::string& variant) {
          variant == "cuda_grouped_sm86_fp32_v1";
 }
 
+bool is_descriptor_grouped_variant(const std::string& variant) {
+  return variant == "cuda_grouped_sm86_fp32_v4a_desc_static_t256" ||
+         variant == "cuda_grouped_sm86_fp32_v4a_desc_static_t512" ||
+         variant == "cuda_grouped_sm86_fp32_v4a_desc_static_t1024" ||
+         variant == "cuda_grouped_sm86_fp32_v4a_desc_queue_t256" ||
+         variant == "cuda_grouped_sm86_fp32_v4a_desc_queue_t512" ||
+         variant == "cuda_grouped_sm86_fp32_v4a_desc_queue_t1024" ||
+         variant == "cuda_grouped_sm86_fp32_v4a_desc" ||
+         variant == "cuda_grouped_sm86_fp32_v4b_cache_order";
+}
+
+std::uint32_t descriptor_grouped_implementation(const std::string& variant) {
+  if (variant == "cuda_grouped_sm86_fp32_v4a_desc_static_t256") {
+    return ops::kGroupedGemmSm86Fp32V4ADescStaticT256Implementation;
+  }
+  if (variant == "cuda_grouped_sm86_fp32_v4a_desc_static_t512") {
+    return ops::kGroupedGemmSm86Fp32V4ADescStaticT512Implementation;
+  }
+  if (variant == "cuda_grouped_sm86_fp32_v4a_desc_static_t1024") {
+    return ops::kGroupedGemmSm86Fp32V4ADescStaticT1024Implementation;
+  }
+  if (variant == "cuda_grouped_sm86_fp32_v4a_desc_queue_t256") {
+    return ops::kGroupedGemmSm86Fp32V4ADescQueueT256Implementation;
+  }
+  if (variant == "cuda_grouped_sm86_fp32_v4a_desc_queue_t512") {
+    return ops::kGroupedGemmSm86Fp32V4ADescQueueT512Implementation;
+  }
+  if (variant == "cuda_grouped_sm86_fp32_v4a_desc_queue_t1024") {
+    return ops::kGroupedGemmSm86Fp32V4ADescQueueT1024Implementation;
+  }
+  if (variant == "cuda_grouped_sm86_fp32_v4a_desc") {
+    return ops::kGroupedGemmSm86Fp32V4ADescImplementation;
+  }
+  if (variant == "cuda_grouped_sm86_fp32_v4b_cache_order") {
+    return ops::kGroupedGemmSm86Fp32V4BCacheOrderImplementation;
+  }
+  throw std::invalid_argument("unsupported descriptor grouped_gemm variant: " + variant);
+}
+
+int descriptor_prepass_threads(const std::string& variant) {
+  if (variant.find("t1024") != std::string::npos) return 1024;
+  if (variant.find("t512") != std::string::npos) return 512;
+  return 256;
+}
+
 std::uint32_t optimized_grouped_implementation(const std::string& variant) {
   if (variant == "cuda_grouped_tiled16_sync_v0") {
     return ops::kGroupedGemmTiled16SyncV0Implementation;
@@ -90,6 +135,9 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
     }
     if (variant_name_ == "cuda_grouped_sm86_fp32_v3") {
       return "SM86 v3 16x64 cp.async large-aligned grouped GEMM (research candidate)";
+    }
+    if (is_descriptor_grouped_variant(variant_name_)) {
+      return "SM86 v4 descriptor-prepass 16x32 cp.async grouped GEMM (research candidate)";
     }
     return "Single-launch FP32 grouped GEMM with one grid-z slice per expert";
   }
@@ -165,6 +213,15 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
     x_.copy_from_host(x_host_, stream);
     weights_.copy_from_host(weights_host_, stream);
     offsets_.copy_from_host(offsets_host_, stream);
+    if (is_descriptor_grouped_variant(variant_name_)) {
+      candidate_workspace_bytes_ = ops::grouped_gemm_descriptor_workspace_size(
+          experts_, output_, max_expert_tokens_);
+      if (candidate_workspace_bytes_ == 0 ||
+          candidate_workspace_bytes_ > 64ULL * 1024ULL * 1024ULL) {
+        throw std::runtime_error("descriptor grouped GEMM workspace exceeds research limit");
+      }
+      candidate_workspace_.resize(candidate_workspace_bytes_);
+    }
 #if RAGGEDROUTE_HAS_CUBLAS
     if (variant_name_ == "cublas_per_expert") {
       cublas_plan_ = library_baseline::create_grouped_cublas_plan();
@@ -200,6 +257,15 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
       return;
     }
 #endif
+    if (is_descriptor_grouped_variant(variant_name_)) {
+      cuda_check(ops::launch_grouped_gemm_sm86_fp32_v4_descriptor(
+                     x_.data(), weights_.data(), offsets_.data(), output_buffer_.data(), experts_,
+                     hidden_, output_, max_expert_tokens_, candidate_workspace_.data(),
+                     candidate_workspace_bytes_, descriptor_grouped_implementation(variant_name_),
+                     stream),
+                 "launch_grouped_gemm_sm86_fp32_v4_descriptor benchmark-only candidate");
+      return;
+    }
     if (is_optimized_grouped_variant(variant_name_)) {
       const std::uint32_t implementation = optimized_grouped_implementation(variant_name_);
       cuda_check(ops::launch_grouped_gemm_optimized(
@@ -335,6 +401,26 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
                std::string("aligned_k16_n64_max_expert_tokens_ge_32_else_v2")},
               {"fallback", std::string("cuda_grouped_sm86_fp32_v2")},
               {"math_mode", std::string("strict_fp32")},
+               {"runtime_status", std::string("explicit_research_candidate")}};
+    }
+    if (is_descriptor_grouped_variant(variant_name_)) {
+      const bool queue = variant_name_.find("_queue_") != std::string::npos;
+      const bool cache_order = variant_name_ == "cuda_grouped_sm86_fp32_v4b_cache_order";
+      return {{"algorithm_id", std::string(cache_order ? "descriptor_cache_order_v4b"
+                                                        : "descriptor_prepass_v4a")},
+              {"tile_m", static_cast<std::int64_t>(16)},
+              {"tile_n", static_cast<std::int64_t>(32)},
+              {"tile_k", static_cast<std::int64_t>(16)},
+              {"gemm_threads_per_block", static_cast<std::int64_t>(128)},
+              {"prepass_threads_per_block",
+               static_cast<std::int64_t>(descriptor_prepass_threads(variant_name_))},
+              {"scheduler", std::string(queue ? "descriptor_global_atomic_queue"
+                                               : "descriptor_static_round_robin")},
+              {"descriptor_order", std::string(cache_order ? "column_major_within_expert"
+                                                             : "row_major_within_expert")},
+              {"staging", std::string("sm86_cp_async_double_buffered")},
+              {"fallback", std::string("cuda_grouped_sm86_fp32_v2")},
+              {"math_mode", std::string("strict_fp32")},
               {"runtime_status", std::string("explicit_research_candidate")}};
     }
     return {{"tile_m", static_cast<std::int64_t>(16)},
@@ -351,7 +437,9 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
     work.operator_metrics["active_gemm_problems"] = static_cast<std::int64_t>(active_experts_);
     return work;
   }
-  std::size_t workspace_bytes() const override { return library_workspace_bytes_; }
+  std::size_t workspace_bytes() const override {
+    return library_workspace_bytes_ + candidate_workspace_bytes_;
+  }
   std::vector<std::string> excluded_steps(MeasurementLevel) const override {
     return {"route_generation", "offset_preparation", "input_generation", "h2d_copy",
             "workspace_allocation"};
@@ -375,6 +463,7 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
   library_baseline::GroupedCutlassPlan* cutlass_plan_ = nullptr;
 #endif
   std::size_t library_workspace_bytes_ = 0;
+  std::size_t candidate_workspace_bytes_ = 0;
   DeviceArchitecture architecture_ = DeviceArchitecture::kOther;
   int route_pairs_ = 0, max_expert_tokens_ = 0, active_experts_ = 0;
   double zipf_s_ = 0.0;
@@ -386,6 +475,7 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
   DeviceBuffer<std::int32_t> offsets_;
   DeviceBuffer<float> x_, weights_, output_buffer_;
   DeviceBuffer<std::uint8_t> library_workspace_;
+  DeviceBuffer<std::uint8_t> candidate_workspace_;
 };
 
 }  // namespace

@@ -108,7 +108,7 @@
       "seed": 20260828,
       "set": "basic",
       "cache_control": "none",
-      "kernel_pattern": "grouped_gemm_gather_naive_kernel",
+      "kernel_pattern": "grouped_gemm_descriptor_kernel",
       "params": {"T": 2048, "E": 64, "top_k": 8, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
     },
     {

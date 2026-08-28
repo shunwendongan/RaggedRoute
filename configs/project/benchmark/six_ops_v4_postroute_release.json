@@ -21,7 +21,6 @@
         {"name": "cuda_postroute_shared_rank_t512_v1", "promotion_baseline": false},
         {"name": "cuda_postroute_shared_rank_t1024_v1", "promotion_baseline": false},
         {"name": "cuda_postroute_token_owned_v4", "promotion_baseline": false},
-        {"name": "cuda_postroute_grouped_v4a_desc", "promotion_baseline": false},
         {"name": "cuda_postroute_gather_grouped_v1", "promotion_baseline": false},
         {"name": "cuda_naive", "promotion_baseline": false}
       ],
@@ -41,7 +40,6 @@
         {"name": "cuda_postroute_shared_rank_t512_v1", "promotion_baseline": false},
         {"name": "cuda_postroute_shared_rank_t1024_v1", "promotion_baseline": false},
         {"name": "cuda_postroute_token_owned_v4", "promotion_baseline": false},
-        {"name": "cuda_postroute_grouped_v4a_desc", "promotion_baseline": false},
         {"name": "cuda_postroute_gather_grouped_v1", "promotion_baseline": false},
         {"name": "cuda_naive", "promotion_baseline": false}
       ],
@@ -61,7 +59,6 @@
         {"name": "cuda_postroute_shared_rank_t512_v1", "promotion_baseline": false},
         {"name": "cuda_postroute_shared_rank_t1024_v1", "promotion_baseline": false},
         {"name": "cuda_postroute_token_owned_v4", "promotion_baseline": false},
-        {"name": "cuda_postroute_grouped_v4a_desc", "promotion_baseline": false},
         {"name": "cuda_postroute_gather_grouped_v1", "promotion_baseline": false},
         {"name": "cuda_naive", "promotion_baseline": false}
       ],
@@ -81,7 +78,6 @@
         {"name": "cuda_postroute_shared_rank_t512_v1", "promotion_baseline": false},
         {"name": "cuda_postroute_shared_rank_t1024_v1", "promotion_baseline": false},
         {"name": "cuda_postroute_token_owned_v4", "promotion_baseline": false},
-        {"name": "cuda_postroute_grouped_v4a_desc", "promotion_baseline": false},
         {"name": "cuda_postroute_gather_grouped_v1", "promotion_baseline": false},
         {"name": "cuda_naive", "promotion_baseline": false}
       ],
@@ -100,7 +96,6 @@
         {"name": "cuda_postroute_shared_rank_t512_v1", "promotion_baseline": false},
         {"name": "cuda_postroute_shared_rank_t1024_v1", "promotion_baseline": false},
         {"name": "cuda_postroute_token_owned_v4", "promotion_baseline": false},
-        {"name": "cuda_postroute_grouped_v4a_desc", "promotion_baseline": false},
         {"name": "cuda_postroute_gather_grouped_v1", "promotion_baseline": false},
         {"name": "cuda_naive", "promotion_baseline": false}
       ],

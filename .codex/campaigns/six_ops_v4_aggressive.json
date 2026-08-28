@@ -26,11 +26,10 @@
   "benchmark": {
     "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
     "profile_cases": [
-      {"name": "grouped-v4a-static-prepass-uniform", "arguments": ["--operator", "grouped_gemm", "--variant", "cuda_grouped_sm86_fp32_v4a_desc_static_t256", "--level", "l2", "--warmup", "20", "--profile-once", "--param", "T=2048", "--param", "E=64", "--param", "top_k=2", "--param", "K=128", "--param", "N=128", "--param", "distribution=uniform"], "kernel_regex": "grouped_gemm_descriptor_prepass_kernel"},
       {"name": "routeprep-topk4-zipf", "arguments": ["--operator", "token_permute", "--variant", "cuda_routeprep_shared_rank_t256_v1", "--level", "l2", "--warmup", "20", "--profile-once", "--param", "T=2048", "--param", "E=64", "--param", "top_k=4", "--param", "K=128", "--param", "distribution=zipf", "--param", "zipf_s=1.4"], "kernel_regex": "token_permute_routeprep_shared_rank_kernel"},
       {"name": "postroute-gather-topk8-zipf", "arguments": ["--suite", "chain_from_route_ids", "--variant", "cuda_postroute_gather_grouped_v1", "--level", "l3", "--warmup", "20", "--profile-once", "--param", "T=2048", "--param", "E=64", "--param", "top_k=8", "--param", "K=128", "--param", "N=128", "--param", "distribution=zipf", "--param", "zipf_s=1.4"], "kernel_regex": "grouped_gemm_gather_naive_kernel"}
     ],
-    "kernel_regex": "(grouped_gemm_descriptor_(prepass_)?kernel|token_permute_routeprep_shared_rank_kernel|grouped_gemm_gather_naive_kernel)"
+    "kernel_regex": "(token_permute_routeprep_shared_rank_kernel|grouped_gemm_gather_naive_kernel)"
   },
   "variants": {"baseline": "cuda_postroute_current_v1", "candidate": "cuda_postroute_gather_grouped_v1"},
   "output": {

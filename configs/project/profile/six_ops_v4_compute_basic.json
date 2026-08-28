@@ -120,7 +120,7 @@
       "seed": 20260828,
       "set": "basic",
       "cache_control": "none",
-      "kernel_pattern": "unpermute_(warp|cta)_token_vec4_kernel",
+      "kernel_pattern": "unpermute_warp_token_vec4_kernel",
       "params": {"T": 1024, "E": 64, "top_k": 2, "N": 256, "distribution": "uniform", "zipf_s": 0.0}
     }
   ]

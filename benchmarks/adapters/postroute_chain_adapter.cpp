@@ -420,7 +420,9 @@ class PostRouteChainAdapter final : public BenchmarkAdapter {
         {"unpermute", variant_name_ == "cuda_naive"
                           ? std::string("cuda_naive")
                           : std::string("cuda_warp_token_vec4_top2_else_generic_fallback")},
-        {"runtime_status", std::string("benchmark_only_not_promoted")}};
+        {"runtime_status", variant_name_ == "cuda_postroute_graph_fixed_v1"
+                               ? std::string("promoted_explicit_fixed_shape_only")
+                               : std::string("benchmark_only_not_promoted")}};
     if (is_graph_variant(variant_name_)) {
       config["graph_mode"] = variant_name_ == "cuda_postroute_graph_fixed_v1"
                                  ? std::string("fixed_capture_upload_replay")

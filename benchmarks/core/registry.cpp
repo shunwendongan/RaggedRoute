@@ -479,7 +479,7 @@ std::vector<VariantDescriptor> available_suite_variant_descriptors(const std::st
           "raggedroute.chain.postlogit_research_v3.v1", "not_applicable",
           "topk_v4_fused_hist_scan_v2_permute_v3_grouped_v3_unpermute_retained_v1"));
       variants.push_back(descriptor(
-          "cuda_postlogit_graph_fixed_v1", "in_tree_cuda_research",
+          "cuda_postlogit_graph_fixed_v1", "in_tree_cuda_promoted_explicit_fixed_shape_only",
           "raggedroute.chain.postlogit.graph.fixed.v1", "not_applicable",
           "fixed_capture_uploaded_integrated_latest"));
       variants.push_back(descriptor(
@@ -521,7 +521,7 @@ std::vector<VariantDescriptor> available_suite_variant_descriptors(const std::st
         descriptor("cuda_postroute_gather_grouped_v1", "in_tree_cuda_research",
                    "raggedroute.chain.postroute.gather_grouped.v1", "not_applicable",
                    "shared_rank_no_x_permuted_grouped_gather"),
-        descriptor("cuda_postroute_graph_fixed_v1", "in_tree_cuda_research",
+        descriptor("cuda_postroute_graph_fixed_v1", "in_tree_cuda_promoted_explicit_fixed_shape_only",
                    "raggedroute.chain.postroute.graph.fixed.v1", "not_applicable",
                    "fixed_capture_uploaded_gather_chain"),
         descriptor("cuda_postroute_graph_param_update_v2", "in_tree_cuda_research",

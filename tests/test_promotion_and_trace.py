@@ -111,7 +111,40 @@ class PromotionAndTraceTests(unittest.TestCase):
         records[-1]["timing"]["batch_mean_us_p50"] = 0.0
         decision = promotion.evaluate(records, "base", "candidate", self.policy())
         self.assertEqual(decision["decision"], "insufficient_evidence")
-        self.assertTrue(any("invalid batch_mean_us_p50" in reason for reason in decision["reasons"]))
+        self.assertTrue(any("invalid timing.batch_mean_us_p50" in reason
+                            for reason in decision["reasons"]))
+
+    def test_graph_policy_can_explicitly_use_host_boundary_with_a_cv_exception(self) -> None:
+        records = self.paired()
+        for record in records:
+            record["measurement_level"] = "L4_host_call"
+            record["timing"]["cv"] = 0.9
+            record["host_time_to_solution_timing"] = {
+                "p50_us": record["timing"]["batch_mean_us_p50"],
+                "p95_us": record["timing"]["batch_mean_us_p95"],
+                "cv": 0.01,
+            }
+            if record["variant"] == "candidate":
+                record.setdefault("variant_config", {}).update({
+                    "graph_mode": "fixed_capture_upload_replay",
+                    "graph_setup_excluded": True,
+                    "mixed_shape_cache_trace": False,
+                })
+        policy = self.policy() | {
+            "required_measurement_level": "L4_host_call",
+            "timing_source": "host_time_to_solution_timing",
+            "ignore_timing_cv": True,
+            "stability_exception": "test-only WDDM exception",
+            "required_candidate_variant_config": {
+                "graph_mode": "fixed_capture_upload_replay",
+                "graph_setup_excluded": True,
+                "mixed_shape_cache_trace": False,
+            },
+        }
+        decision = promotion.evaluate(records, "base", "candidate", policy)
+        self.assertEqual(decision["decision"], "promote")
+        self.assertEqual(decision["measurement"]["timing_source"], "host_time_to_solution_timing")
+        self.assertFalse(decision["measurement"]["timing_cv_enforced"])
 
     def test_empty_decision_uses_json_null_for_uncollected_metrics(self) -> None:
         decision = promotion.evaluate([], "base", "candidate", self.policy())

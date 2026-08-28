@@ -26,13 +26,37 @@ def read_records(path: pathlib.Path) -> list[dict[str, Any]]:
     return records
 
 
-def median_field(records: list[dict[str, Any]], field: str) -> float:
-    return statistics.median(float(record["timing"][field]) for record in records)
+def timing_spec(policy: dict[str, Any]) -> tuple[str, str, str, str]:
+    """Resolve the timing boundary selected by a policy.
+
+    CUDA-event timing remains the default for operator promotion.  CUDA Graph
+    submission experiments are different: their release claim is host
+    time-to-solution, so a policy can explicitly select that separately
+    recorded boundary without reinterpreting profiler output as benchmark data.
+    """
+    section = str(policy.get("timing_source", "timing"))
+    if section == "timing":
+        return (
+            section,
+            str(policy.get("timing_p50_field", "batch_mean_us_p50")),
+            str(policy.get("timing_p95_field", "batch_mean_us_p95")),
+            str(policy.get("timing_cv_field", "cv")),
+        )
+    return (
+        section,
+        str(policy.get("timing_p50_field", "p50_us")),
+        str(policy.get("timing_p95_field", "p95_us")),
+        str(policy.get("timing_cv_field", "cv")),
+    )
 
 
-def finite_positive_timing(record: dict[str, Any], field: str) -> bool:
+def median_field(records: list[dict[str, Any]], section: str, field: str) -> float:
+    return statistics.median(float(record[section][field]) for record in records)
+
+
+def finite_positive_timing(record: dict[str, Any], section: str, field: str) -> bool:
     try:
-        value = float(record.get("timing", {}).get(field, math.nan))
+        value = float(record.get(section, {}).get(field, math.nan))
     except (TypeError, ValueError):
         return False
     return math.isfinite(value) and value > 0.0
@@ -59,6 +83,8 @@ def evaluate(
     minimum_processes = int(policy.get("minimum_independent_process_runs", 5))
     minimum_paired_shapes = int(policy.get("minimum_paired_shapes", 1))
     maximum_cv = float(policy.get("maximum_all_samples_cv", 0.10))
+    timing_section, p50_field, p95_field, cv_field = timing_spec(policy)
+    ignore_timing_cv = bool(policy.get("ignore_timing_cv", False))
     require_real = bool(policy.get("require_real_route_trace", False))
     required_level = policy.get("required_measurement_level")
     for case in cases:
@@ -90,15 +116,31 @@ def evaluate(
                 )
             if any(not record.get("validation", {}).get("ok", False) for record in current):
                 correctness_failures.append(f"{case}/{name}: correctness failed")
-            try:
-                cv = max(float(record.get("timing", {}).get("cv", math.inf)) for record in current)
-            except (TypeError, ValueError):
-                cv = math.inf
-            if not math.isfinite(cv) or cv > maximum_cv:
-                evidence_failures.append(f"{case}/{name}: max CV {cv:.4f} > {maximum_cv:.4f}")
-            for field in ("batch_mean_us_p50", "batch_mean_us_p95"):
-                if not all(finite_positive_timing(record, field) for record in current):
-                    evidence_failures.append(f"{case}/{name}: invalid {field}")
+            if not ignore_timing_cv:
+                try:
+                    cv = max(float(record.get(timing_section, {}).get(cv_field, math.inf))
+                             for record in current)
+                except (TypeError, ValueError):
+                    cv = math.inf
+                if not math.isfinite(cv) or cv > maximum_cv:
+                    evidence_failures.append(
+                        f"{case}/{name}: max {timing_section}.{cv_field} {cv:.4f} > "
+                        f"{maximum_cv:.4f}"
+                    )
+            for field in (p50_field, p95_field):
+                if not all(finite_positive_timing(record, timing_section, field)
+                           for record in current):
+                    evidence_failures.append(
+                        f"{case}/{name}: invalid {timing_section}.{field}"
+                    )
+            if name == candidate:
+                for field, expected in policy.get("required_candidate_variant_config", {}).items():
+                    if any(record.get("variant_config", {}).get(field) != expected
+                           for record in current):
+                        evidence_failures.append(
+                            f"{case}/{name}: candidate variant_config.{field} does not match "
+                            f"the promotion policy"
+                        )
         baseline_processes = {int(record.get("process_run", 0)) for record in baseline_records}
         candidate_processes = {int(record.get("process_run", 0)) for record in candidate_records}
         if policy.get("require_same_process_runs", True) and baseline_processes != candidate_processes:
@@ -136,16 +178,16 @@ def evaluate(
         if require_real and not workload_sources <= {"production", "captured"}:
             evidence_failures.append(f"{case}: real route trace is required")
         valid_timings = all(
-            finite_positive_timing(record, field)
+            finite_positive_timing(record, timing_section, field)
             for record in baseline_records + candidate_records
-            for field in ("batch_mean_us_p50", "batch_mean_us_p95")
+            for field in (p50_field, p95_field)
         )
         if not valid_timings:
             continue
-        baseline_p50 = median_field(baseline_records, "batch_mean_us_p50")
-        candidate_p50 = median_field(candidate_records, "batch_mean_us_p50")
-        baseline_p95 = median_field(baseline_records, "batch_mean_us_p95")
-        candidate_p95 = median_field(candidate_records, "batch_mean_us_p95")
+        baseline_p50 = median_field(baseline_records, timing_section, p50_field)
+        candidate_p50 = median_field(candidate_records, timing_section, p50_field)
+        baseline_p95 = median_field(baseline_records, timing_section, p95_field)
+        candidate_p95 = median_field(candidate_records, timing_section, p95_field)
         baseline_workspace = max(int(record.get("workspace_bytes", 0)) for record in baseline_records)
         candidate_workspace = max(int(record.get("workspace_bytes", 0)) for record in candidate_records)
         rows.append({
@@ -217,6 +259,14 @@ def evaluate(
         "schema_version": "raggedroute.promotion_decision.v1",
         "baseline": baseline,
         "candidate": candidate,
+        "measurement": {
+            "timing_source": timing_section,
+            "p50_field": p50_field,
+            "p95_field": p95_field,
+            "cv_field": cv_field,
+            "timing_cv_enforced": not ignore_timing_cv,
+            "policy_exception": policy.get("stability_exception"),
+        },
         "decision": decision,
         "reasons": reasons,
         "summary": {

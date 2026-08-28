@@ -1,6 +1,6 @@
 # 实现状态与证据边界
 
-更新时间：2026-08-09
+更新时间：2026-08-28
 事实基线：`main@354e1ff0a3aaf602830c8d989eb358cfa857a4c9`。PR #31/#32 合并到实验分支而非 `main`，不计入下列当前能力。
 
 ## 已实现
@@ -50,6 +50,7 @@
 - 2026-08-05：Token Permute v2 作为显式研究路径保留，full-from-ids 的五 case 中心结果相对旧 candidate/vLLM 更快，但 pure-permute 28-case 存在全配对高 CV、覆盖不足和最差 shape 大幅退化，因此 `Auto` 保持 naive；
 - 2026-08-05：合入单一固定 workload 的七阶段 L3 三线路诊断报告。Selected CUDA research chain p50 为 `69.734 us`，Triton reference 为 `245.760 us`，但跨工具链比值不具 promotion 资格；该链中 Grouped GEMM 占 NSYS kernel time `64.4%`。报告见 [L3 three-way analysis](reports/l3_three_way_20260805/RaggedRoute_L3_3way_comparison.md)；
 - 2026-08-05：`main@354e1ff` 的 GitHub CI 通过 repository checks、Python tests 与 Windows/Linux CPU-only build/CTest。当前 macOS 工作区只执行 CPU-only/文档检查，不做 CUDA 能力或性能复测。
+- 2026-08-28：SM86 aggressive v4 完成 Grouped descriptor（static/queue 256/512/1024 与 cache-order）、Top-K 2/4/8 route-prep/token-owned copy、postroute gather 与 CUDA Graph 实验。Grouped descriptor、route-prep、token-owned 和 gather 未满足晋级条件，均保留为 research/rejection evidence。两个 fixed CUDA Graph replay variant 在独立的 host-time policy 下晋级为 `promoted_explicit_fixed_shape_only`：该 policy 明确记录了用户授权的 WDDM CV 例外；它只适用于固定 shape、固定 buffer/topology、setup 已完成的 replay，不改公开 API 或 `KernelFamily::kAuto`。见 [v4 Graph report](reports/rtx3080-sm86-v4-graph-promotion.md)。
 
 ## 尚未实现，禁止据此宣称
 
@@ -60,6 +61,7 @@
 - 除 Histogram 与独立 fused Histogram→Scan primitive 外的 shape-aware default dispatch；自动 evaluator 已实现，但当前 v3 因 WDDM CV 超限为 `insufficient_evidence`，且 aggregate 趋势不支持晋级；
 - H100/Blackwell 实卡支持、正确性或性能；本机 SM90/SM90a 交叉编译不等同于 H100 验证；
 - 完整 MoE FFN、训练、多 GPU 或 All-to-All。
+- 通用 CUDA Graph dispatch、cache-miss/mixed-shape request SLA、param-update/exec-update promotion；当前仅 fixed replay 获得显式晋级，且其 WDDM CV 例外不得外推到其他算子或环境。
 
 因此当前提交仍不是“七个算子已经优化完成”。Grouped GEMM 候选会保留 clean-Git、同机同语义的 Release 证据，但因相对 CUTLASS 的门禁失败而不发布 runtime optimized 路径；后续性能声明仍必须来自相同协议的未 profile A/B。
 

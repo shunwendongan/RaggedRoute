@@ -49,3 +49,11 @@
 - NCU basic 对 `T4096/K1024/single_hot` 显示 tile4/tile2 的 diagnostic duration 为 80.608/79.744 us，DRAM throughput 为 84.55%/85.11%，registers/thread 都是 34。tile2 将 waves/SM 从 1.255 增至 1.882，却把 achieved occupancy 从 77.79% 降到 58.20%；纯 CTA geometry 改动没有突破带宽上限。
 
 决定：v3 不晋级，保留为显式 research path；正式 evaluator 因 WDDM 长尾输出 `insufficient_evidence`。证据见 [统一 v3 报告](../reports/rtx3080-six-ops-v3-657d29e.md) 与 [compact bundle](../reports/compact/20260827-657d29e-six-ops-v3/REPORT.md)。
+
+## 2026-08-28 / Top-K 2/4/8 route-prep 与 gather 筛选
+
+- shared-rank route-prep t1024 相对 v3 的 ratio-of-sums 为 `1.0439x`，但只有 40.3% shape 获益，最大 p50/p95 回退为 55.9%/111.9%；不晋级。
+- Top-4 token-owned copy 相对 shared-rank t256 的 ratio-of-sums 为 `1.0170x`、72.9% shape 获益，仍未形成稳定的全面晋级证据。
+- 不物化 `X_permuted` 的 gather fusion 相对 current postroute chain 为 `0.8191x`，并增加 4,195,072 B workspace；拒绝该方向。该结果不能被 CUDA Graph fixed replay 的 host speedup 抵消或改写。
+
+详情见 [v4 final report](../reports/rtx3080-sm86-v4-graph-promotion.md)。

@@ -55,6 +55,8 @@ The benchmark registry exposes eight adapters: the seven semantic operators plus
 
 The latest local portfolio round deliberately tested only two hotspot hypotheses. On clean, uninstrumented five-process Release data, Grouped GEMM v3 reached `0.9141x` ratio-of-sums versus CUTLASS, Permute v3 reached `0.9938x` versus the retained token-owned path, and the six-stage v3 chain reached `0.9743x` versus integrated v2. Every decision is `insufficient_evidence` because WDDM outliers exceeded the `CV <= 0.10` gate; the unfavorable aggregate trends independently rule out promotion. The explicit research IDs and v2/v1 fallbacks remain reproducible, while `Auto` is unchanged. The tracked route trace is only a synthetic parser fixture, so real-trace promotion also remains `insufficient_evidence` until captured input is supplied.
 
+The completed v4 round retains those rejected kernel directions and adds one deliberately narrow result: explicit fixed-shape CUDA Graph replay is promoted under an auditable Windows WDDM CV exception. Its host time-to-solution is `1.6205x` for the six-stage postlogit topology and `1.2336x` over the Top-K 2/4/8 postroute matrix; capture/instantiate/upload are setup work and break-even is 8–22 replays. This does not change `KernelFamily::kAuto`, apply to graph cache misses, or claim a GPU kernel speedup. See the [v4 Graph promotion report](docs/reports/rtx3080-sm86-v4-graph-promotion.md).
+
 ## Engineering highlights
 
 ### A public operator contract, not benchmark-only kernels
@@ -76,7 +78,7 @@ Suite v2 groups variants under one logical case and one declared promotion basel
 
 ## Evidence snapshot
 
-The latest report merged into `main` is the [RTX 3080 seven-stage L3 three-way analysis](docs/reports/l3_three_way_20260805/RaggedRoute_L3_3way_comparison.md). It evaluates one strict-FP32 workload (`T=512`, `E=64`, `top_k=2`, `K=N=128`) with three independent release processes per path:
+The historical baseline report is the [RTX 3080 seven-stage L3 three-way analysis](docs/reports/l3_three_way_20260805/RaggedRoute_L3_3way_comparison.md). It evaluates one strict-FP32 workload (`T=512`, `E=64`, `top_k=2`, `K=N=128`) with three independent release processes per path; the latest scoped Graph conclusion is documented separately in the [v4 promotion report](docs/reports/rtx3080-sm86-v4-graph-promotion.md):
 
 | Research chain | Aggregate p50 | p95 | Cross-process CV | Interpretation |
 |---|---:|---:|---:|---|
@@ -89,6 +91,8 @@ The observed CUDA/Triton ratio is `3.524x`, but it is deliberately reported as a
 The strongest counterexample is also preserved: the clean three-process Grouped GEMM candidate reached only `0.805x` ratio-of-sums versus CUTLASS across ten shapes and fell to `0.467x` at `T=2048,E=64,K=N=128,uniform`. That failure is part of the project result: local wins did not justify a default path.
 
 The current local v3 campaign at `657d29e` preserves the next failed hypotheses as compact evidence. Grouped v3 reduced measured global-load requests but raised registers from 86 to 96 and static shared memory from 7,952 to 12,048 bytes; achieved occupancy and issue activity fell. Permute tile2 remained DRAM-bound and did not improve the full matrix. See the [v3 diagnosis](docs/reports/rtx3080-six-ops-v3-657d29e.md) and [SHA-256 compact evidence](docs/reports/compact/20260827-657d29e-six-ops-v3/REPORT.md).
+
+The v4 evidence also preserves negative results: Grouped descriptor queue-1024 is `0.9225x` versus v2 and gather fusion is `0.8191x` with additional workspace. Only the Graph fixed-replay result uses the stated WDDM exception; the [v4 report and checksummed evidence](docs/reports/rtx3080-sm86-v4-graph-promotion.md) keep both policy decisions visible.
 
 ## Quick start
 

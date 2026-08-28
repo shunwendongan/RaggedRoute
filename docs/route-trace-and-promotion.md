@@ -36,3 +36,7 @@ python scripts\evaluate_promotion.py `
 ```
 
 For real-trace claims, use `cuda_v3_real_trace_promotion.json`. A synthetic fixture deliberately produces `insufficient_evidence`, even if its timings are favorable. Profiler duration is never an evaluator input; only clean, uninstrumented Release records can decide promotion.
+
+## CUDA Graph fixed-replay exception
+
+CUDA Graph changes the relevant performance boundary from a GPU kernel span to host submission plus completion. The opt-in [fixed-replay policy](../configs/policies/cuda_graph_wddm_fixed_replay_promotion.json) therefore selects the separately recorded `host_time_to_solution_timing` section and requires a fixed uploaded topology. It is the only policy that may waive the CV gate for the documented Windows WDDM multi-modal behavior, and it records that waiver in every decision. It cannot promote `KernelFamily::kAuto`, a cache miss, a mixed-shape trace, or a parameter/topology update path.

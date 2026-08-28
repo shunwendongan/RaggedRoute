@@ -88,3 +88,11 @@ Grouped GEMM 的 `kAuto` 与 L3 chain 继续使用 naive。正式三进程 clean
 - NCU detailed 显示 v3 global-load requests 从 93,328 降至 81,200，local load/store 均为 0；但 registers/thread 从 86 升至 96、static shared 从 7,952 升至 12,048 B、achieved occupancy 从 36.24% 降至 30.29%、`sm__issue_active.avg.pct_of_peak_sustained_elapsed` 从 33.24% 降至 25.38%。更宽 tile 的资源与发射代价没有被 load request 减少抵消。
 
 决定：v3 作为显式失败研究路径保留，不进入 `Auto`，也不在同一版本叠加第二种调度机制。证据见 [统一 v3 报告](../reports/rtx3080-six-ops-v3-657d29e.md) 与 [compact bundle](../reports/compact/20260827-657d29e-six-ops-v3/REPORT.md)。
+
+## 2026-08-28 / SM86 v4A descriptor scheduling experiment
+
+- 256/512/1024-thread prepass 的 static/queue 矩阵与 v4B cache-order 均完成 correctness、sanitizer 和 clean five-process Release 筛选；没有改变 `16x32x16` v2 FP32 mainloop 合同或 `Auto`。
+- 最优 queue-1024 相对 v2 的 ratio-of-sums 为 `0.9225x`、geomean `0.8448x`、仅 30% shape 获益，最大 p50/p95 回退为 55.6%/264.3%，因此拒绝 descriptor scheduling 方向。
+- NCU detailed 的 descriptor prepass 是单 CTA（0.00245 waves/SM，0.12% SM throughput），说明扩大到 1024 threads 不会使用更多 SM；descriptor mainloop 的 84 registers/thread、35.79% achieved occupancy 和 barrier/long-scoreboard/mio-throttle stalls 才是下一轮应隔离的变量。
+
+证据见 [v4 final report](../reports/rtx3080-sm86-v4-graph-promotion.md) 与 [raw compact bundle](../reports/compact/20260828-sm86-v4-raw-final/FINAL_REPORT.md)。

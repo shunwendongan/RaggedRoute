@@ -55,6 +55,8 @@ Benchmark registry 一共暴露八个 adapter：七个语义算子，以及可�
 
 本轮简历项目迭代只验证两个热点假设。clean、未插桩、五进程 Release 中，Grouped GEMM v3 对 CUTLASS 的 ratio-of-sums 为 `0.9141x`，Permute v3 对保留的 token-owned 路径为 `0.9938x`，六阶段 v3 链对 integrated v2 为 `0.9743x`。WDDM 离群点使所有 case 超过 `CV <= 0.10` 门禁，因此正式状态均为 `insufficient_evidence`；与此同时，不利的 aggregate 趋势已经足以阻止晋级。显式 research ID 和 v2/v1 fallback 继续保留以便复现，`Auto` 不变。仓库内 trace 只是一份 synthetic parser fixture，因此在获得 captured/production 输入前，真实 trace 晋级同样保持 `insufficient_evidence`。
 
+已完成的 v4 轮次保留上述未通过的 kernel 方向，并新增一个刻意收窄的结论：固定 shape 的显式 CUDA Graph replay 在可审计的 Windows WDDM CV 例外下晋级。其 host time-to-solution 在六阶段 postlogit topology 为 `1.6205x`，在 Top-K 2/4/8 postroute 矩阵为 `1.2336x`；capture/instantiate/upload 属于 setup，回本次数为 8–22 次 replay。这不修改 `KernelFamily::kAuto`，不适用于 graph cache miss，也不是 GPU kernel speedup 宣称。详见 [v4 Graph 晋级报告](docs/reports/rtx3080-sm86-v4-graph-promotion.md)。
+
 ## 工程亮点
 
 ### 公共算子合同，而不只是 benchmark kernel
@@ -76,7 +78,7 @@ Suite v2 将不同 variant 组织在同一个 logical case 下，并声明唯一
 
 ## 证据快照
 
-当前 `main` 中最新报告是 [RTX 3080 七阶段 L3 三线路分析](docs/reports/l3_three_way_20260805/RaggedRoute_L3_3way_comparison.md)。报告使用一个固定 strict-FP32 workload（`T=512`、`E=64`、`top_k=2`、`K=N=128`），每条路径运行三个独立 Release 进程：
+历史基线报告是 [RTX 3080 七阶段 L3 三线路分析](docs/reports/l3_three_way_20260805/RaggedRoute_L3_3way_comparison.md)。该报告使用一个固定 strict-FP32 workload（`T=512`、`E=64`、`top_k=2`、`K=N=128`），每条路径运行三个独立 Release 进程；最新的有限范围 Graph 结论见独立的 [v4 晋级报告](docs/reports/rtx3080-sm86-v4-graph-promotion.md)：
 
 | Research chain | 聚合 p50 | p95 | 跨进程 CV | 解释 |
 |---|---:|---:|---:|---|
@@ -89,6 +91,8 @@ Suite v2 将不同 variant 组织在同一个 logical case 下，并声明唯一
 项目也保留了最强反例：在干净的三进程、十 shape 对比中，Grouped GEMM candidate 相对 CUTLASS 的 ratio-of-sums 只有 `0.805x`，并在 `T=2048,E=64,K=N=128,uniform` 降至 `0.467x`。这项失败本身也是项目结论：局部胜点不足以支持默认发布。
 
 当前本地 `657d29e` v3 campaign 将下一轮失败假设也整理成了可审计证据。Grouped v3 虽减少了 global-load request，但 registers 从 86 增至 96、static shared memory 从 7,952 增至 12,048 bytes，achieved occupancy 与 issue activity 同时下降；Permute tile2 仍受 DRAM 带宽约束，未改善完整矩阵。详见 [v3 诊断报告](docs/reports/rtx3080-six-ops-v3-657d29e.md) 与 [带 SHA-256 的 compact evidence](docs/reports/compact/20260827-657d29e-six-ops-v3/REPORT.md)。
+
+v4 evidence 同样保留失败结果：Grouped descriptor queue-1024 对 v2 为 `0.9225x`，gather fusion 为 `0.8191x` 且增加 workspace。只有 Graph fixed replay 使用上文所述 WDDM 例外；[v4 报告和带校验和的证据](docs/reports/rtx3080-sm86-v4-graph-promotion.md) 同时保留两套 policy decision。
 
 ## 快速开始
 

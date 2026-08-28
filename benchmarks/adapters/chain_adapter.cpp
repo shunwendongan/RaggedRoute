@@ -544,7 +544,9 @@ class ChainAdapter final : public BenchmarkAdapter {
          : variant_name_ == "library_all_baselines_chain" ? std::string("vllm_moe_permute")
          : variant_name_ == "cuda_permute_candidate"      ? std::string("cuda_token_owned_top2")
                                                           : std::string("cuda_naive")},
-        {"runtime_status", variant_name_ == "library_all_baselines_chain"
+        {"runtime_status", variant_name_ == "cuda_postlogit_graph_fixed_v1"
+                               ? std::string("promoted_explicit_fixed_shape_only")
+                           : variant_name_ == "library_all_baselines_chain"
                                ? std::string("diagnostic_not_strictly_comparable")
                            : variant_name_ == "cuda_grouped_sm86_fp32_v1" || unified_postlogit ||
                                    variant_name_ == "cuda_all_candidates_chain"

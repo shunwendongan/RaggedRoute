@@ -2,7 +2,7 @@
 
 本目录按 RaggedRoute 的七个语义算子分别保存优化方案、实验决策和实际性能记录；benchmark registry 另有一个 `histogram_exclusive_scan` 融合 adapter，因此当前是七阶段数据流、八个 adapter。
 
-当前统一实测报告：[RTX 3080 七算子 naive benchmark 与 Nsight 分析（a9489ab）](reports/rtx3080-naive-profile-a9489ab.md)；最新本地 v3 研究轮次见 [六阶段 v3 统一复测（657d29e）](reports/rtx3080-six-ops-v3-657d29e.md)。
+当前统一实测报告：[RTX 3080 七算子 naive benchmark 与 Nsight 分析（a9489ab）](reports/rtx3080-naive-profile-a9489ab.md)；v3 研究轮次见 [六阶段 v3 统一复测（657d29e）](reports/rtx3080-six-ops-v3-657d29e.md)；最新 v4 结论见 [SM86 CUDA Graph fixed replay 晋级记录](reports/rtx3080-sm86-v4-graph-promotion.md)。
 
 | 算子 | 当前 `Auto` | 显式/研究 candidate | 最新决策 |
 |---|---|---|---|
@@ -13,6 +13,8 @@
 | Token Permute | `cuda_naive` | optimized id 1–5 与显式 v2/v3 shape dispatcher | v3 为 0.9938x；CV 超限，证据不足且不晋级 |
 | Grouped GEMM | `cuda_naive` | 显式 SM86 v1/v2/v3 candidate | v3 对 CUTLASS 为 0.9141x；证据不足且不晋级 |
 | Unpermute | `cuda_naive` | benchmark-only warp/CTA hybrid | 正式拒绝，不进入 public dispatch |
+
+六阶段/五阶段 chain：只有 `cuda_postlogit_graph_fixed_v1` 与 `cuda_postroute_graph_fixed_v1` 在固定 shape、setup 已完成的 host replay 边界获得显式晋级；两者均不进入 `Auto`，后者还应作为包含 gather route-stage 的完整 topology 报告。其余 v4 candidate 保持未晋级，完整口径见 [v4 report](reports/rtx3080-sm86-v4-graph-promotion.md)。
 
 Histogram→Scan 融合：`cuda_fused_histogram_scan`（F2，SM86；`R<=4096` 单 CTA，
 更大 R 回退）已绑定公共 fused API 且当前由该 primitive 的 `Auto` 选择；已有运行未通过

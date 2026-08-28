@@ -12,6 +12,9 @@
 namespace raggedroute {
 namespace {
 
+static_assert(ops::kTokenPermuteShapeDispatchedV3Implementation == 10,
+              "token permute v3 implementation id is part of the research dispatch contract");
+
 bool has_zero_strides(const TensorSpec& spec) noexcept {
   return spec.strides[0] == 0 && spec.strides[1] == 0 && spec.strides[2] == 0;
 }

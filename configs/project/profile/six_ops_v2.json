@@ -1,0 +1,14 @@
+{
+  "schema_version": "raggedroute.profile_suite.v1",
+  "suite_id": "rtx3080_six_ops_v2_profile_v1",
+  "note": "Diagnostic only. Run NSYS on paired L3 variants first; run these filtered NCU basic cases after inspecting demangled kernel names.",
+  "cases": [
+    {"id": "topk.v4.t2048_e64", "operator": "topk_gate", "variant": "cuda_local_pair_two_reduce_top2_v4", "level": "l1", "warmup": 20, "seed": 20260825, "set": "basic", "cache_control": "none", "kernel_pattern": "topk_gate_local_pair_two_reduce_kernel", "params": {"T": 2048, "E": 64, "input_alignment": 16}},
+    {"id": "histogram.v2.e1.r4096", "operator": "histogram", "variant": "cuda_candidate_v2", "level": "l2", "warmup": 20, "seed": 20260825, "set": "basic", "cache_control": "none", "kernel_pattern": "histogram_single_bin_write_kernel", "params": {"T": 4096, "E": 1, "top_k": 1, "distribution": "single_hot", "zipf_s": 0.0}},
+    {"id": "histogram_scan.fused.r1024_e64", "operator": "histogram_exclusive_scan", "variant": "cuda_fused_histogram_scan", "level": "l2", "warmup": 20, "seed": 20260825, "set": "basic", "cache_control": "none", "kernel_pattern": "histogram_exclusive_scan_fused_subwarp_kernel", "params": {"R": 1024, "E": 64, "distribution": "zipf", "zipf_s": 1.4}},
+    {"id": "permute.v2.tile4.t2048_e64_k128", "operator": "token_permute", "variant": "cuda_candidate_v2", "level": "l2", "warmup": 20, "seed": 20260825, "set": "basic", "cache_control": "none", "kernel_pattern": "token_permute_token_tile4_top2_kernel", "params": {"T": 2048, "E": 64, "top_k": 2, "K": 128, "distribution": "uniform", "zipf_s": 0.0, "materialize_sorted_route": false}},
+    {"id": "grouped.v2.uniform.t512_e64_k128_n128", "operator": "grouped_gemm", "variant": "cuda_grouped_sm86_fp32_v2", "level": "l2", "warmup": 20, "seed": 20260825, "set": "basic", "cache_control": "none", "kernel_pattern": "grouped_gemm_register16x32_sm86_v2_kernel", "params": {"T": 512, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "uniform", "zipf_s": 0.0}},
+    {"id": "grouped.v2.zipf14.t512_e64_k128_n128", "operator": "grouped_gemm", "variant": "cuda_grouped_sm86_fp32_v2", "level": "l2", "warmup": 20, "seed": 20260825, "set": "basic", "cache_control": "none", "kernel_pattern": "grouped_gemm_register16x32_sm86_v2_kernel", "params": {"T": 512, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}},
+    {"id": "unpermute.retained.t1024_n256", "operator": "unpermute", "variant": "cuda_warp_token_vec4", "level": "l2", "warmup": 20, "seed": 20260825, "set": "basic", "cache_control": "none", "kernel_pattern": "unpermute_(warp|cta)_token_vec4_kernel", "params": {"T": 1024, "E": 64, "top_k": 2, "N": 256, "distribution": "uniform", "zipf_s": 0.0}}
+  ]
+}

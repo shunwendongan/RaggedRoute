@@ -12,6 +12,10 @@ namespace {
 constexpr unsigned int kThreadsPerBlock = 256;
 constexpr unsigned int kItemsPerThread = 8;
 
+__global__ void histogram_single_bin_write_kernel(std::int32_t* counts, int route_pairs) {
+  if (threadIdx.x == 0) counts[0] = route_pairs;
+}
+
 __global__ void histogram_single_cta_shared_kernel(const std::int32_t* expert_ids,
                                                    std::int32_t* counts, int route_pairs,
                                                    int experts) {
@@ -87,8 +91,12 @@ cudaError_t launch_histogram_optimized(const std::int32_t* expert_ids, std::int3
                                        cudaStream_t caller_stream) {
   const cudaError_t validation = validate_arguments(expert_ids, counts, route_pairs, experts);
   if (validation != cudaSuccess) return validation;
-  if (implementation_id != kHistogramCandidateImplementation) {
+  if (!is_histogram_benchmark_implementation(implementation_id)) {
     return cudaErrorInvalidValue;
+  }
+  if (implementation_id == kHistogramCandidateV2Implementation && experts == 1) {
+    histogram_single_bin_write_kernel<<<1, 1, 0, caller_stream>>>(counts, route_pairs);
+    return cudaGetLastError();
   }
   if (route_pairs <= kHistogramSingleCtaMaxRoutePairs) {
     histogram_single_cta_shared_kernel<<<1, kThreadsPerBlock, 0, caller_stream>>>(

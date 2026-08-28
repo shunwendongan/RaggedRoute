@@ -1,0 +1,32 @@
+{
+  "schema_version": "raggedroute.cuda_graph_fixed_replay_promotion_policy.v1",
+  "scope": "explicit fixed-shape CUDA Graph replay only; never KernelFamily::kAuto",
+  "minimum_independent_process_runs": 5,
+  "minimum_paired_shapes": 1,
+  "maximum_all_samples_cv": 0.10,
+  "ignore_timing_cv": true,
+  "stability_exception": "User-authorized Windows WDDM multimodal-latency exception. The CV gate is waived only for this fixed-shape CUDA Graph host-replay policy; all other evidence, correctness, pairing, and performance gates remain enforced.",
+  "timing_source": "host_time_to_solution_timing",
+  "timing_p50_field": "p50_us",
+  "timing_p95_field": "p95_us",
+  "timing_cv_field": "cv",
+  "minimum_ratio_of_sums_p50_speedup": 1.03,
+  "minimum_geometric_mean_p50_speedup": 1.00,
+  "minimum_speedup_shape_coverage": 0.80,
+  "maximum_single_shape_p50_regression_fraction": 0.10,
+  "maximum_single_shape_p95_regression_fraction": 0.10,
+  "maximum_workspace_growth_bytes": 67108864,
+  "maximum_candidate_workspace_bytes": 67108864,
+  "require_same_gpu_uuid": true,
+  "require_same_case_config": true,
+  "require_same_process_runs": true,
+  "require_same_build_git_sha": true,
+  "require_same_run_id": true,
+  "required_measurement_level": "L4_host_call",
+  "require_real_route_trace": false,
+  "required_candidate_variant_config": {
+    "graph_mode": "fixed_capture_upload_replay",
+    "graph_setup_excluded": true,
+    "mixed_shape_cache_trace": false
+  }
+}

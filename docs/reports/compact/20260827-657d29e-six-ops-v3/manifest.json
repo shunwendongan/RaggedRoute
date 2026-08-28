@@ -1,0 +1,45 @@
+{
+  "files": [
+    {
+      "bytes": 1210,
+      "path": "REPORT.md",
+      "sha256": "a7fb1c5513d2981edfdf086b0fc3683d756df3353ec712b6153454addf7c081c"
+    },
+    {
+      "bytes": 9661,
+      "path": "decisions/grouped.json",
+      "sha256": "2cd47ba71c4119a6747ed9470acc12cbfb8a6d601b14e1625cf52982a112c622"
+    },
+    {
+      "bytes": 7146,
+      "path": "decisions/l3.json",
+      "sha256": "533cad59f2f0aa10385ad8ef01ace32c86c1cffe61e22a452bbfbd70532d277b"
+    },
+    {
+      "bytes": 25060,
+      "path": "decisions/permute.json",
+      "sha256": "82997cba5cbaeab3f7c2a8505bea49280306add449b7a94d3e2a50e7c6ac485a"
+    },
+    {
+      "bytes": 4736,
+      "path": "decisions/permute_vllm.json",
+      "sha256": "f6c51f5c77f9ad1e441186202593961e98ff6995b1a7878702b0d796bf9d452c"
+    },
+    {
+      "bytes": 3920,
+      "path": "decisions/real_trace.json",
+      "sha256": "23ff1cd72dcd2ca4a5617ca7352480d84eacacaf2d4d173a542fcaa1013687c1"
+    },
+    {
+      "bytes": 1104,
+      "path": "promotion_summary.csv",
+      "sha256": "40aef098993cc25ee49174188457476635b07221b4c0b791ccfe678b17729cb1"
+    },
+    {
+      "bytes": 15295,
+      "path": "shape_heatmap.svg",
+      "sha256": "b103f358f14ce2449b2ca89e04f9d225e60e08b048ec08f6ca1cb67f790dac58"
+    }
+  ],
+  "schema_version": "raggedroute.compact_v3_evidence.v1"
+}

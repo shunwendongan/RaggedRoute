@@ -1,0 +1,946 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="5714" viewBox="0 0 1160 5714">
+<rect width="100%" height="100%" fill="#111827"/>
+<style>text{font-family:Segoe UI,Arial,sans-serif;fill:#f3f4f6}.muted{fill:#aeb6c4}</style>
+<text x="20" y="30" font-size="20" font-weight="600">RaggedRoute CUDA v4 aggressive final evidence paired p50 speedup</text>
+<text x="20" y="52" font-size="12" class="muted">green >=1.03x; yellow 0.97-1.00x; red &lt;0.97x</text>
+<text x="20" y="84" font-size="12">grouped_queue1024</text>
+<text x="160" y="84" font-size="12">grouped.v4.main.t2048_distributionsingle_hot</text>
+<rect x="1010" y="71" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="84" font-size="12" text-anchor="middle">1.0458x</text>
+<text x="20" y="108" font-size="12">grouped_queue1024</text>
+<text x="160" y="108" font-size="12">grouped.v4.main.t2048_distributionuniform</text>
+<rect x="1010" y="95" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="108" font-size="12" text-anchor="middle">1.0292x</text>
+<text x="20" y="132" font-size="12">grouped_queue1024</text>
+<text x="160" y="132" font-size="12">grouped.v4.main.t2048_distributionzipf</text>
+<rect x="1010" y="119" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="132" font-size="12" text-anchor="middle">1.0902x</text>
+<text x="20" y="156" font-size="12">grouped_queue1024</text>
+<text x="160" y="156" font-size="12">grouped.v4.main.t512_distributionsingle_hot</text>
+<rect x="1010" y="143" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="156" font-size="12" text-anchor="middle">0.7928x</text>
+<text x="20" y="180" font-size="12">grouped_queue1024</text>
+<text x="160" y="180" font-size="12">grouped.v4.main.t512_distributionuniform</text>
+<rect x="1010" y="167" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="180" font-size="12" text-anchor="middle">0.9875x</text>
+<text x="20" y="204" font-size="12">grouped_queue1024</text>
+<text x="160" y="204" font-size="12">grouped.v4.main.t512_distributionzipf</text>
+<rect x="1010" y="191" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="204" font-size="12" text-anchor="middle">0.8366x</text>
+<text x="20" y="228" font-size="12">grouped_queue1024</text>
+<text x="160" y="228" font-size="12">grouped.v4.main.t64_distributionsingle_hot</text>
+<rect x="1010" y="215" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="228" font-size="12" text-anchor="middle">0.6667x</text>
+<text x="20" y="252" font-size="12">grouped_queue1024</text>
+<text x="160" y="252" font-size="12">grouped.v4.main.t64_distributionuniform</text>
+<rect x="1010" y="239" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="252" font-size="12" text-anchor="middle">0.7541x</text>
+<text x="20" y="276" font-size="12">grouped_queue1024</text>
+<text x="160" y="276" font-size="12">grouped.v4.main.t64_distributionzipf</text>
+<rect x="1010" y="263" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="276" font-size="12" text-anchor="middle">0.7458x</text>
+<text x="20" y="300" font-size="12">grouped_queue1024</text>
+<text x="160" y="300" font-size="12">grouped.v4.many_empty</text>
+<rect x="1010" y="287" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="300" font-size="12" text-anchor="middle">0.6429x</text>
+<text x="20" y="324" font-size="12">routeprep_t1024</text>
+<text x="160" y="324" font-size="12">routeprep.top2.r512_to_r65536.e16_t16384_distributionround_robin</text>
+<rect x="1010" y="311" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="324" font-size="12" text-anchor="middle">0.9350x</text>
+<text x="20" y="348" font-size="12">routeprep_t1024</text>
+<text x="160" y="348" font-size="12">routeprep.top2.r512_to_r65536.e16_t16384_distributionsingle_hot</text>
+<rect x="1010" y="335" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="348" font-size="12" text-anchor="middle">1.3684x</text>
+<text x="20" y="372" font-size="12">routeprep_t1024</text>
+<text x="160" y="372" font-size="12">routeprep.top2.r512_to_r65536.e16_t16384_distributionuniform</text>
+<rect x="1010" y="359" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="372" font-size="12" text-anchor="middle">0.9483x</text>
+<text x="20" y="396" font-size="12">routeprep_t1024</text>
+<text x="160" y="396" font-size="12">routeprep.top2.r512_to_r65536.e16_t16384_distributionzipf</text>
+<rect x="1010" y="383" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="396" font-size="12" text-anchor="middle">1.1399x</text>
+<text x="20" y="420" font-size="12">routeprep_t1024</text>
+<text x="160" y="420" font-size="12">routeprep.top2.r512_to_r65536.e16_t2048_distributionround_robin</text>
+<rect x="1010" y="407" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="420" font-size="12" text-anchor="middle">0.9048x</text>
+<text x="20" y="444" font-size="12">routeprep_t1024</text>
+<text x="160" y="444" font-size="12">routeprep.top2.r512_to_r65536.e16_t2048_distributionsingle_hot</text>
+<rect x="1010" y="431" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="444" font-size="12" text-anchor="middle">1.1250x</text>
+<text x="20" y="468" font-size="12">routeprep_t1024</text>
+<text x="160" y="468" font-size="12">routeprep.top2.r512_to_r65536.e16_t2048_distributionuniform</text>
+<rect x="1010" y="455" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="468" font-size="12" text-anchor="middle">0.8636x</text>
+<text x="20" y="492" font-size="12">routeprep_t1024</text>
+<text x="160" y="492" font-size="12">routeprep.top2.r512_to_r65536.e16_t2048_distributionzipf</text>
+<rect x="1010" y="479" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="492" font-size="12" text-anchor="middle">0.9000x</text>
+<text x="20" y="516" font-size="12">routeprep_t1024</text>
+<text x="160" y="516" font-size="12">routeprep.top2.r512_to_r65536.e16_t256_distributionround_robin</text>
+<rect x="1010" y="503" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="516" font-size="12" text-anchor="middle">0.9231x</text>
+<text x="20" y="540" font-size="12">routeprep_t1024</text>
+<text x="160" y="540" font-size="12">routeprep.top2.r512_to_r65536.e16_t256_distributionsingle_hot</text>
+<rect x="1010" y="527" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="540" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="564" font-size="12">routeprep_t1024</text>
+<text x="160" y="564" font-size="12">routeprep.top2.r512_to_r65536.e16_t256_distributionuniform</text>
+<rect x="1010" y="551" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="564" font-size="12" text-anchor="middle">0.9231x</text>
+<text x="20" y="588" font-size="12">routeprep_t1024</text>
+<text x="160" y="588" font-size="12">routeprep.top2.r512_to_r65536.e16_t256_distributionzipf</text>
+<rect x="1010" y="575" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="588" font-size="12" text-anchor="middle">0.9231x</text>
+<text x="20" y="612" font-size="12">routeprep_t1024</text>
+<text x="160" y="612" font-size="12">routeprep.top2.r512_to_r65536.e16_t32768_distributionround_robin</text>
+<rect x="1010" y="599" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="612" font-size="12" text-anchor="middle">0.9301x</text>
+<text x="20" y="636" font-size="12">routeprep_t1024</text>
+<text x="160" y="636" font-size="12">routeprep.top2.r512_to_r65536.e16_t32768_distributionsingle_hot</text>
+<rect x="1010" y="623" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="636" font-size="12" text-anchor="middle">1.3404x</text>
+<text x="20" y="660" font-size="12">routeprep_t1024</text>
+<text x="160" y="660" font-size="12">routeprep.top2.r512_to_r65536.e16_t32768_distributionuniform</text>
+<rect x="1010" y="647" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="660" font-size="12" text-anchor="middle">0.9571x</text>
+<text x="20" y="684" font-size="12">routeprep_t1024</text>
+<text x="160" y="684" font-size="12">routeprep.top2.r512_to_r65536.e16_t32768_distributionzipf</text>
+<rect x="1010" y="671" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="684" font-size="12" text-anchor="middle">1.1297x</text>
+<text x="20" y="708" font-size="12">routeprep_t1024</text>
+<text x="160" y="708" font-size="12">routeprep.top2.r512_to_r65536.e16_t4096_distributionround_robin</text>
+<rect x="1010" y="695" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="708" font-size="12" text-anchor="middle">0.8947x</text>
+<text x="20" y="732" font-size="12">routeprep_t1024</text>
+<text x="160" y="732" font-size="12">routeprep.top2.r512_to_r65536.e16_t4096_distributionsingle_hot</text>
+<rect x="1010" y="719" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="732" font-size="12" text-anchor="middle">1.1852x</text>
+<text x="20" y="756" font-size="12">routeprep_t1024</text>
+<text x="160" y="756" font-size="12">routeprep.top2.r512_to_r65536.e16_t4096_distributionuniform</text>
+<rect x="1010" y="743" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="756" font-size="12" text-anchor="middle">0.9714x</text>
+<text x="20" y="780" font-size="12">routeprep_t1024</text>
+<text x="160" y="780" font-size="12">routeprep.top2.r512_to_r65536.e16_t4096_distributionzipf</text>
+<rect x="1010" y="767" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="780" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="804" font-size="12">routeprep_t1024</text>
+<text x="160" y="804" font-size="12">routeprep.top2.r512_to_r65536.e16_t8192_distributionround_robin</text>
+<rect x="1010" y="791" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="804" font-size="12" text-anchor="middle">1.0154x</text>
+<text x="20" y="828" font-size="12">routeprep_t1024</text>
+<text x="160" y="828" font-size="12">routeprep.top2.r512_to_r65536.e16_t8192_distributionsingle_hot</text>
+<rect x="1010" y="815" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="828" font-size="12" text-anchor="middle">1.2644x</text>
+<text x="20" y="852" font-size="12">routeprep_t1024</text>
+<text x="160" y="852" font-size="12">routeprep.top2.r512_to_r65536.e16_t8192_distributionuniform</text>
+<rect x="1010" y="839" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="852" font-size="12" text-anchor="middle">1.0076x</text>
+<text x="20" y="876" font-size="12">routeprep_t1024</text>
+<text x="160" y="876" font-size="12">routeprep.top2.r512_to_r65536.e16_t8192_distributionzipf</text>
+<rect x="1010" y="863" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="876" font-size="12" text-anchor="middle">1.2222x</text>
+<text x="20" y="900" font-size="12">routeprep_t1024</text>
+<text x="160" y="900" font-size="12">routeprep.top2.r512_to_r65536.e64_t16384_distributionround_robin</text>
+<rect x="1010" y="887" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="900" font-size="12" text-anchor="middle">0.8889x</text>
+<text x="20" y="924" font-size="12">routeprep_t1024</text>
+<text x="160" y="924" font-size="12">routeprep.top2.r512_to_r65536.e64_t16384_distributionsingle_hot</text>
+<rect x="1010" y="911" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="924" font-size="12" text-anchor="middle">1.1860x</text>
+<text x="20" y="948" font-size="12">routeprep_t1024</text>
+<text x="160" y="948" font-size="12">routeprep.top2.r512_to_r65536.e64_t16384_distributionuniform</text>
+<rect x="1010" y="935" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="948" font-size="12" text-anchor="middle">0.8224x</text>
+<text x="20" y="972" font-size="12">routeprep_t1024</text>
+<text x="160" y="972" font-size="12">routeprep.top2.r512_to_r65536.e64_t16384_distributionzipf</text>
+<rect x="1010" y="959" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="972" font-size="12" text-anchor="middle">0.9694x</text>
+<text x="20" y="996" font-size="12">routeprep_t1024</text>
+<text x="160" y="996" font-size="12">routeprep.top2.r512_to_r65536.e64_t2048_distributionround_robin</text>
+<rect x="1010" y="983" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="996" font-size="12" text-anchor="middle">0.8333x</text>
+<text x="20" y="1020" font-size="12">routeprep_t1024</text>
+<text x="160" y="1020" font-size="12">routeprep.top2.r512_to_r65536.e64_t2048_distributionsingle_hot</text>
+<rect x="1010" y="1007" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1020" font-size="12" text-anchor="middle">1.1176x</text>
+<text x="20" y="1044" font-size="12">routeprep_t1024</text>
+<text x="160" y="1044" font-size="12">routeprep.top2.r512_to_r65536.e64_t2048_distributionuniform</text>
+<rect x="1010" y="1031" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1044" font-size="12" text-anchor="middle">0.7500x</text>
+<text x="20" y="1068" font-size="12">routeprep_t1024</text>
+<text x="160" y="1068" font-size="12">routeprep.top2.r512_to_r65536.e64_t2048_distributionzipf</text>
+<rect x="1010" y="1055" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1068" font-size="12" text-anchor="middle">0.8696x</text>
+<text x="20" y="1092" font-size="12">routeprep_t1024</text>
+<text x="160" y="1092" font-size="12">routeprep.top2.r512_to_r65536.e64_t256_distributionround_robin</text>
+<rect x="1010" y="1079" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1092" font-size="12" text-anchor="middle">0.8667x</text>
+<text x="20" y="1116" font-size="12">routeprep_t1024</text>
+<text x="160" y="1116" font-size="12">routeprep.top2.r512_to_r65536.e64_t256_distributionsingle_hot</text>
+<rect x="1010" y="1103" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="1116" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="1140" font-size="12">routeprep_t1024</text>
+<text x="160" y="1140" font-size="12">routeprep.top2.r512_to_r65536.e64_t256_distributionuniform</text>
+<rect x="1010" y="1127" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1140" font-size="12" text-anchor="middle">0.9286x</text>
+<text x="20" y="1164" font-size="12">routeprep_t1024</text>
+<text x="160" y="1164" font-size="12">routeprep.top2.r512_to_r65536.e64_t256_distributionzipf</text>
+<rect x="1010" y="1151" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1164" font-size="12" text-anchor="middle">0.9286x</text>
+<text x="20" y="1188" font-size="12">routeprep_t1024</text>
+<text x="160" y="1188" font-size="12">routeprep.top2.r512_to_r65536.e64_t32768_distributionround_robin</text>
+<rect x="1010" y="1175" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1188" font-size="12" text-anchor="middle">0.9432x</text>
+<text x="20" y="1212" font-size="12">routeprep_t1024</text>
+<text x="160" y="1212" font-size="12">routeprep.top2.r512_to_r65536.e64_t32768_distributionsingle_hot</text>
+<rect x="1010" y="1199" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1212" font-size="12" text-anchor="middle">1.3451x</text>
+<text x="20" y="1236" font-size="12">routeprep_t1024</text>
+<text x="160" y="1236" font-size="12">routeprep.top2.r512_to_r65536.e64_t32768_distributionuniform</text>
+<rect x="1010" y="1223" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1236" font-size="12" text-anchor="middle">0.7952x</text>
+<text x="20" y="1260" font-size="12">routeprep_t1024</text>
+<text x="160" y="1260" font-size="12">routeprep.top2.r512_to_r65536.e64_t32768_distributionzipf</text>
+<rect x="1010" y="1247" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="1260" font-size="12" text-anchor="middle">0.9953x</text>
+<text x="20" y="1284" font-size="12">routeprep_t1024</text>
+<text x="160" y="1284" font-size="12">routeprep.top2.r512_to_r65536.e64_t4096_distributionround_robin</text>
+<rect x="1010" y="1271" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1284" font-size="12" text-anchor="middle">0.8750x</text>
+<text x="20" y="1308" font-size="12">routeprep_t1024</text>
+<text x="160" y="1308" font-size="12">routeprep.top2.r512_to_r65536.e64_t4096_distributionsingle_hot</text>
+<rect x="1010" y="1295" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1308" font-size="12" text-anchor="middle">1.1786x</text>
+<text x="20" y="1332" font-size="12">routeprep_t1024</text>
+<text x="160" y="1332" font-size="12">routeprep.top2.r512_to_r65536.e64_t4096_distributionuniform</text>
+<rect x="1010" y="1319" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1332" font-size="12" text-anchor="middle">0.6786x</text>
+<text x="20" y="1356" font-size="12">routeprep_t1024</text>
+<text x="160" y="1356" font-size="12">routeprep.top2.r512_to_r65536.e64_t4096_distributionzipf</text>
+<rect x="1010" y="1343" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="1356" font-size="12" text-anchor="middle">0.9722x</text>
+<text x="20" y="1380" font-size="12">routeprep_t1024</text>
+<text x="160" y="1380" font-size="12">routeprep.top2.r512_to_r65536.e64_t8192_distributionround_robin</text>
+<rect x="1010" y="1367" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1380" font-size="12" text-anchor="middle">0.9429x</text>
+<text x="20" y="1404" font-size="12">routeprep_t1024</text>
+<text x="160" y="1404" font-size="12">routeprep.top2.r512_to_r65536.e64_t8192_distributionsingle_hot</text>
+<rect x="1010" y="1391" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1404" font-size="12" text-anchor="middle">1.2500x</text>
+<text x="20" y="1428" font-size="12">routeprep_t1024</text>
+<text x="160" y="1428" font-size="12">routeprep.top2.r512_to_r65536.e64_t8192_distributionuniform</text>
+<rect x="1010" y="1415" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1428" font-size="12" text-anchor="middle">0.8353x</text>
+<text x="20" y="1452" font-size="12">routeprep_t1024</text>
+<text x="160" y="1452" font-size="12">routeprep.top2.r512_to_r65536.e64_t8192_distributionzipf</text>
+<rect x="1010" y="1439" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="1452" font-size="12" text-anchor="middle">0.9773x</text>
+<text x="20" y="1476" font-size="12">routeprep_t1024</text>
+<text x="160" y="1476" font-size="12">routeprep.top4.r512_to_r65536.e16_t1024_distributionround_robin</text>
+<rect x="1010" y="1463" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1476" font-size="12" text-anchor="middle">0.9524x</text>
+<text x="20" y="1500" font-size="12">routeprep_t1024</text>
+<text x="160" y="1500" font-size="12">routeprep.top4.r512_to_r65536.e16_t1024_distributionsingle_hot</text>
+<rect x="1010" y="1487" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1500" font-size="12" text-anchor="middle">1.1429x</text>
+<text x="20" y="1524" font-size="12">routeprep_t1024</text>
+<text x="160" y="1524" font-size="12">routeprep.top4.r512_to_r65536.e16_t1024_distributionuniform</text>
+<rect x="1010" y="1511" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="1524" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="1548" font-size="12">routeprep_t1024</text>
+<text x="160" y="1548" font-size="12">routeprep.top4.r512_to_r65536.e16_t1024_distributionzipf</text>
+<rect x="1010" y="1535" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1548" font-size="12" text-anchor="middle">0.9286x</text>
+<text x="20" y="1572" font-size="12">routeprep_t1024</text>
+<text x="160" y="1572" font-size="12">routeprep.top4.r512_to_r65536.e16_t128_distributionround_robin</text>
+<rect x="1010" y="1559" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="1572" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="1596" font-size="12">routeprep_t1024</text>
+<text x="160" y="1596" font-size="12">routeprep.top4.r512_to_r65536.e16_t128_distributionsingle_hot</text>
+<rect x="1010" y="1583" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="1596" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="1620" font-size="12">routeprep_t1024</text>
+<text x="160" y="1620" font-size="12">routeprep.top4.r512_to_r65536.e16_t128_distributionuniform</text>
+<rect x="1010" y="1607" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="1620" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="1644" font-size="12">routeprep_t1024</text>
+<text x="160" y="1644" font-size="12">routeprep.top4.r512_to_r65536.e16_t128_distributionzipf</text>
+<rect x="1010" y="1631" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1644" font-size="12" text-anchor="middle">0.9231x</text>
+<text x="20" y="1668" font-size="12">routeprep_t1024</text>
+<text x="160" y="1668" font-size="12">routeprep.top4.r512_to_r65536.e16_t16384_distributionround_robin</text>
+<rect x="1010" y="1655" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1668" font-size="12" text-anchor="middle">1.1789x</text>
+<text x="20" y="1692" font-size="12">routeprep_t1024</text>
+<text x="160" y="1692" font-size="12">routeprep.top4.r512_to_r65536.e16_t16384_distributionsingle_hot</text>
+<rect x="1010" y="1679" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1692" font-size="12" text-anchor="middle">1.4545x</text>
+<text x="20" y="1716" font-size="12">routeprep_t1024</text>
+<text x="160" y="1716" font-size="12">routeprep.top4.r512_to_r65536.e16_t16384_distributionuniform</text>
+<rect x="1010" y="1703" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1716" font-size="12" text-anchor="middle">1.1084x</text>
+<text x="20" y="1740" font-size="12">routeprep_t1024</text>
+<text x="160" y="1740" font-size="12">routeprep.top4.r512_to_r65536.e16_t16384_distributionzipf</text>
+<rect x="1010" y="1727" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1740" font-size="12" text-anchor="middle">1.1882x</text>
+<text x="20" y="1764" font-size="12">routeprep_t1024</text>
+<text x="160" y="1764" font-size="12">routeprep.top4.r512_to_r65536.e16_t2048_distributionround_robin</text>
+<rect x="1010" y="1751" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1764" font-size="12" text-anchor="middle">0.9677x</text>
+<text x="20" y="1788" font-size="12">routeprep_t1024</text>
+<text x="160" y="1788" font-size="12">routeprep.top4.r512_to_r65536.e16_t2048_distributionsingle_hot</text>
+<rect x="1010" y="1775" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1788" font-size="12" text-anchor="middle">1.1600x</text>
+<text x="20" y="1812" font-size="12">routeprep_t1024</text>
+<text x="160" y="1812" font-size="12">routeprep.top4.r512_to_r65536.e16_t2048_distributionuniform</text>
+<rect x="1010" y="1799" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="1812" font-size="12" text-anchor="middle">0.9697x</text>
+<text x="20" y="1836" font-size="12">routeprep_t1024</text>
+<text x="160" y="1836" font-size="12">routeprep.top4.r512_to_r65536.e16_t2048_distributionzipf</text>
+<rect x="1010" y="1823" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="1836" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="1860" font-size="12">routeprep_t1024</text>
+<text x="160" y="1860" font-size="12">routeprep.top4.r512_to_r65536.e16_t4096_distributionround_robin</text>
+<rect x="1010" y="1847" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1860" font-size="12" text-anchor="middle">1.2800x</text>
+<text x="20" y="1884" font-size="12">routeprep_t1024</text>
+<text x="160" y="1884" font-size="12">routeprep.top4.r512_to_r65536.e16_t4096_distributionsingle_hot</text>
+<rect x="1010" y="1871" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1884" font-size="12" text-anchor="middle">1.2857x</text>
+<text x="20" y="1908" font-size="12">routeprep_t1024</text>
+<text x="160" y="1908" font-size="12">routeprep.top4.r512_to_r65536.e16_t4096_distributionuniform</text>
+<rect x="1010" y="1895" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1908" font-size="12" text-anchor="middle">1.0703x</text>
+<text x="20" y="1932" font-size="12">routeprep_t1024</text>
+<text x="160" y="1932" font-size="12">routeprep.top4.r512_to_r65536.e16_t4096_distributionzipf</text>
+<rect x="1010" y="1919" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1932" font-size="12" text-anchor="middle">1.2364x</text>
+<text x="20" y="1956" font-size="12">routeprep_t1024</text>
+<text x="160" y="1956" font-size="12">routeprep.top4.r512_to_r65536.e16_t8192_distributionround_robin</text>
+<rect x="1010" y="1943" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1956" font-size="12" text-anchor="middle">1.1735x</text>
+<text x="20" y="1980" font-size="12">routeprep_t1024</text>
+<text x="160" y="1980" font-size="12">routeprep.top4.r512_to_r65536.e16_t8192_distributionsingle_hot</text>
+<rect x="1010" y="1967" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="1980" font-size="12" text-anchor="middle">1.3415x</text>
+<text x="20" y="2004" font-size="12">routeprep_t1024</text>
+<text x="160" y="2004" font-size="12">routeprep.top4.r512_to_r65536.e16_t8192_distributionuniform</text>
+<rect x="1010" y="1991" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2004" font-size="12" text-anchor="middle">1.0536x</text>
+<text x="20" y="2028" font-size="12">routeprep_t1024</text>
+<text x="160" y="2028" font-size="12">routeprep.top4.r512_to_r65536.e16_t8192_distributionzipf</text>
+<rect x="1010" y="2015" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2028" font-size="12" text-anchor="middle">1.0909x</text>
+<text x="20" y="2052" font-size="12">routeprep_t1024</text>
+<text x="160" y="2052" font-size="12">routeprep.top4.r512_to_r65536.e64_t1024_distributionround_robin</text>
+<rect x="1010" y="2039" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="2052" font-size="12" text-anchor="middle">0.9545x</text>
+<text x="20" y="2076" font-size="12">routeprep_t1024</text>
+<text x="160" y="2076" font-size="12">routeprep.top4.r512_to_r65536.e64_t1024_distributionsingle_hot</text>
+<rect x="1010" y="2063" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="2076" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="2100" font-size="12">routeprep_t1024</text>
+<text x="160" y="2100" font-size="12">routeprep.top4.r512_to_r65536.e64_t1024_distributionuniform</text>
+<rect x="1010" y="2087" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="2100" font-size="12" text-anchor="middle">0.7500x</text>
+<text x="20" y="2124" font-size="12">routeprep_t1024</text>
+<text x="160" y="2124" font-size="12">routeprep.top4.r512_to_r65536.e64_t1024_distributionzipf</text>
+<rect x="1010" y="2111" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="2124" font-size="12" text-anchor="middle">0.8333x</text>
+<text x="20" y="2148" font-size="12">routeprep_t1024</text>
+<text x="160" y="2148" font-size="12">routeprep.top4.r512_to_r65536.e64_t128_distributionround_robin</text>
+<rect x="1010" y="2135" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="2148" font-size="12" text-anchor="middle">0.9231x</text>
+<text x="20" y="2172" font-size="12">routeprep_t1024</text>
+<text x="160" y="2172" font-size="12">routeprep.top4.r512_to_r65536.e64_t128_distributionsingle_hot</text>
+<rect x="1010" y="2159" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="2172" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="2196" font-size="12">routeprep_t1024</text>
+<text x="160" y="2196" font-size="12">routeprep.top4.r512_to_r65536.e64_t128_distributionuniform</text>
+<rect x="1010" y="2183" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="2196" font-size="12" text-anchor="middle">0.8667x</text>
+<text x="20" y="2220" font-size="12">routeprep_t1024</text>
+<text x="160" y="2220" font-size="12">routeprep.top4.r512_to_r65536.e64_t128_distributionzipf</text>
+<rect x="1010" y="2207" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="2220" font-size="12" text-anchor="middle">0.9286x</text>
+<text x="20" y="2244" font-size="12">routeprep_t1024</text>
+<text x="160" y="2244" font-size="12">routeprep.top4.r512_to_r65536.e64_t16384_distributionround_robin</text>
+<rect x="1010" y="2231" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2244" font-size="12" text-anchor="middle">1.1946x</text>
+<text x="20" y="2268" font-size="12">routeprep_t1024</text>
+<text x="160" y="2268" font-size="12">routeprep.top4.r512_to_r65536.e64_t16384_distributionsingle_hot</text>
+<rect x="1010" y="2255" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2268" font-size="12" text-anchor="middle">1.4823x</text>
+<text x="20" y="2292" font-size="12">routeprep_t1024</text>
+<text x="160" y="2292" font-size="12">routeprep.top4.r512_to_r65536.e64_t16384_distributionuniform</text>
+<rect x="1010" y="2279" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="2292" font-size="12" text-anchor="middle">0.8294x</text>
+<text x="20" y="2316" font-size="12">routeprep_t1024</text>
+<text x="160" y="2316" font-size="12">routeprep.top4.r512_to_r65536.e64_t16384_distributionzipf</text>
+<rect x="1010" y="2303" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2316" font-size="12" text-anchor="middle">1.1127x</text>
+<text x="20" y="2340" font-size="12">routeprep_t1024</text>
+<text x="160" y="2340" font-size="12">routeprep.top4.r512_to_r65536.e64_t2048_distributionround_robin</text>
+<rect x="1010" y="2327" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="2340" font-size="12" text-anchor="middle">0.9841x</text>
+<text x="20" y="2364" font-size="12">routeprep_t1024</text>
+<text x="160" y="2364" font-size="12">routeprep.top4.r512_to_r65536.e64_t2048_distributionsingle_hot</text>
+<rect x="1010" y="2351" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2364" font-size="12" text-anchor="middle">1.1538x</text>
+<text x="20" y="2388" font-size="12">routeprep_t1024</text>
+<text x="160" y="2388" font-size="12">routeprep.top4.r512_to_r65536.e64_t2048_distributionuniform</text>
+<rect x="1010" y="2375" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="2388" font-size="12" text-anchor="middle">0.6481x</text>
+<text x="20" y="2412" font-size="12">routeprep_t1024</text>
+<text x="160" y="2412" font-size="12">routeprep.top4.r512_to_r65536.e64_t2048_distributionzipf</text>
+<rect x="1010" y="2399" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="2412" font-size="12" text-anchor="middle">0.9706x</text>
+<text x="20" y="2436" font-size="12">routeprep_t1024</text>
+<text x="160" y="2436" font-size="12">routeprep.top4.r512_to_r65536.e64_t4096_distributionround_robin</text>
+<rect x="1010" y="2423" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2436" font-size="12" text-anchor="middle">1.0741x</text>
+<text x="20" y="2460" font-size="12">routeprep_t1024</text>
+<text x="160" y="2460" font-size="12">routeprep.top4.r512_to_r65536.e64_t4096_distributionsingle_hot</text>
+<rect x="1010" y="2447" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2460" font-size="12" text-anchor="middle">1.2444x</text>
+<text x="20" y="2484" font-size="12">routeprep_t1024</text>
+<text x="160" y="2484" font-size="12">routeprep.top4.r512_to_r65536.e64_t4096_distributionuniform</text>
+<rect x="1010" y="2471" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="2484" font-size="12" text-anchor="middle">0.8235x</text>
+<text x="20" y="2508" font-size="12">routeprep_t1024</text>
+<text x="160" y="2508" font-size="12">routeprep.top4.r512_to_r65536.e64_t4096_distributionzipf</text>
+<rect x="1010" y="2495" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="2508" font-size="12" text-anchor="middle">0.8788x</text>
+<text x="20" y="2532" font-size="12">routeprep_t1024</text>
+<text x="160" y="2532" font-size="12">routeprep.top4.r512_to_r65536.e64_t8192_distributionround_robin</text>
+<rect x="1010" y="2519" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2532" font-size="12" text-anchor="middle">1.2211x</text>
+<text x="20" y="2556" font-size="12">routeprep_t1024</text>
+<text x="160" y="2556" font-size="12">routeprep.top4.r512_to_r65536.e64_t8192_distributionsingle_hot</text>
+<rect x="1010" y="2543" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2556" font-size="12" text-anchor="middle">1.2561x</text>
+<text x="20" y="2580" font-size="12">routeprep_t1024</text>
+<text x="160" y="2580" font-size="12">routeprep.top4.r512_to_r65536.e64_t8192_distributionuniform</text>
+<rect x="1010" y="2567" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="2580" font-size="12" text-anchor="middle">0.8258x</text>
+<text x="20" y="2604" font-size="12">routeprep_t1024</text>
+<text x="160" y="2604" font-size="12">routeprep.top4.r512_to_r65536.e64_t8192_distributionzipf</text>
+<rect x="1010" y="2591" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2604" font-size="12" text-anchor="middle">1.0388x</text>
+<text x="20" y="2628" font-size="12">routeprep_t1024</text>
+<text x="160" y="2628" font-size="12">routeprep.top8.r512_to_r65536.e16_t1024_distributionround_robin</text>
+<rect x="1010" y="2615" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2628" font-size="12" text-anchor="middle">1.0714x</text>
+<text x="20" y="2652" font-size="12">routeprep_t1024</text>
+<text x="160" y="2652" font-size="12">routeprep.top8.r512_to_r65536.e16_t1024_distributionsingle_hot</text>
+<rect x="1010" y="2639" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2652" font-size="12" text-anchor="middle">1.0741x</text>
+<text x="20" y="2676" font-size="12">routeprep_t1024</text>
+<text x="160" y="2676" font-size="12">routeprep.top8.r512_to_r65536.e16_t1024_distributionuniform</text>
+<rect x="1010" y="2663" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="2676" font-size="12" text-anchor="middle">0.9394x</text>
+<text x="20" y="2700" font-size="12">routeprep_t1024</text>
+<text x="160" y="2700" font-size="12">routeprep.top8.r512_to_r65536.e16_t1024_distributionzipf</text>
+<rect x="1010" y="2687" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="2700" font-size="12" text-anchor="middle">0.9375x</text>
+<text x="20" y="2724" font-size="12">routeprep_t1024</text>
+<text x="160" y="2724" font-size="12">routeprep.top8.r512_to_r65536.e16_t2048_distributionround_robin</text>
+<rect x="1010" y="2711" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2724" font-size="12" text-anchor="middle">1.0755x</text>
+<text x="20" y="2748" font-size="12">routeprep_t1024</text>
+<text x="160" y="2748" font-size="12">routeprep.top8.r512_to_r65536.e16_t2048_distributionsingle_hot</text>
+<rect x="1010" y="2735" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2748" font-size="12" text-anchor="middle">1.1667x</text>
+<text x="20" y="2772" font-size="12">routeprep_t1024</text>
+<text x="160" y="2772" font-size="12">routeprep.top8.r512_to_r65536.e16_t2048_distributionuniform</text>
+<rect x="1010" y="2759" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="2772" font-size="12" text-anchor="middle">0.9609x</text>
+<text x="20" y="2796" font-size="12">routeprep_t1024</text>
+<text x="160" y="2796" font-size="12">routeprep.top8.r512_to_r65536.e16_t2048_distributionzipf</text>
+<rect x="1010" y="2783" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2796" font-size="12" text-anchor="middle">1.0391x</text>
+<text x="20" y="2820" font-size="12">routeprep_t1024</text>
+<text x="160" y="2820" font-size="12">routeprep.top8.r512_to_r65536.e16_t4096_distributionround_robin</text>
+<rect x="1010" y="2807" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2820" font-size="12" text-anchor="middle">1.2053x</text>
+<text x="20" y="2844" font-size="12">routeprep_t1024</text>
+<text x="160" y="2844" font-size="12">routeprep.top8.r512_to_r65536.e16_t4096_distributionsingle_hot</text>
+<rect x="1010" y="2831" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2844" font-size="12" text-anchor="middle">1.1977x</text>
+<text x="20" y="2868" font-size="12">routeprep_t1024</text>
+<text x="160" y="2868" font-size="12">routeprep.top8.r512_to_r65536.e16_t4096_distributionuniform</text>
+<rect x="1010" y="2855" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="2868" font-size="12" text-anchor="middle">0.9646x</text>
+<text x="20" y="2892" font-size="12">routeprep_t1024</text>
+<text x="160" y="2892" font-size="12">routeprep.top8.r512_to_r65536.e16_t4096_distributionzipf</text>
+<rect x="1010" y="2879" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2892" font-size="12" text-anchor="middle">1.0935x</text>
+<text x="20" y="2916" font-size="12">routeprep_t1024</text>
+<text x="160" y="2916" font-size="12">routeprep.top8.r512_to_r65536.e16_t512_distributionround_robin</text>
+<rect x="1010" y="2903" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="2916" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="2940" font-size="12">routeprep_t1024</text>
+<text x="160" y="2940" font-size="12">routeprep.top8.r512_to_r65536.e16_t512_distributionsingle_hot</text>
+<rect x="1010" y="2927" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="2940" font-size="12" text-anchor="middle">1.0526x</text>
+<text x="20" y="2964" font-size="12">routeprep_t1024</text>
+<text x="160" y="2964" font-size="12">routeprep.top8.r512_to_r65536.e16_t512_distributionuniform</text>
+<rect x="1010" y="2951" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="2964" font-size="12" text-anchor="middle">0.9545x</text>
+<text x="20" y="2988" font-size="12">routeprep_t1024</text>
+<text x="160" y="2988" font-size="12">routeprep.top8.r512_to_r65536.e16_t512_distributionzipf</text>
+<rect x="1010" y="2975" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="2988" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="3012" font-size="12">routeprep_t1024</text>
+<text x="160" y="3012" font-size="12">routeprep.top8.r512_to_r65536.e16_t64_distributionround_robin</text>
+<rect x="1010" y="2999" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="3012" font-size="12" text-anchor="middle">0.9231x</text>
+<text x="20" y="3036" font-size="12">routeprep_t1024</text>
+<text x="160" y="3036" font-size="12">routeprep.top8.r512_to_r65536.e16_t64_distributionsingle_hot</text>
+<rect x="1010" y="3023" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="3036" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="3060" font-size="12">routeprep_t1024</text>
+<text x="160" y="3060" font-size="12">routeprep.top8.r512_to_r65536.e16_t64_distributionuniform</text>
+<rect x="1010" y="3047" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="3060" font-size="12" text-anchor="middle">0.9615x</text>
+<text x="20" y="3084" font-size="12">routeprep_t1024</text>
+<text x="160" y="3084" font-size="12">routeprep.top8.r512_to_r65536.e16_t64_distributionzipf</text>
+<rect x="1010" y="3071" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="3084" font-size="12" text-anchor="middle">0.9231x</text>
+<text x="20" y="3108" font-size="12">routeprep_t1024</text>
+<text x="160" y="3108" font-size="12">routeprep.top8.r512_to_r65536.e16_t8192_distributionround_robin</text>
+<rect x="1010" y="3095" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="3108" font-size="12" text-anchor="middle">1.1538x</text>
+<text x="20" y="3132" font-size="12">routeprep_t1024</text>
+<text x="160" y="3132" font-size="12">routeprep.top8.r512_to_r65536.e16_t8192_distributionsingle_hot</text>
+<rect x="1010" y="3119" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="3132" font-size="12" text-anchor="middle">1.3148x</text>
+<text x="20" y="3156" font-size="12">routeprep_t1024</text>
+<text x="160" y="3156" font-size="12">routeprep.top8.r512_to_r65536.e16_t8192_distributionuniform</text>
+<rect x="1010" y="3143" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="3156" font-size="12" text-anchor="middle">1.0985x</text>
+<text x="20" y="3180" font-size="12">routeprep_t1024</text>
+<text x="160" y="3180" font-size="12">routeprep.top8.r512_to_r65536.e16_t8192_distributionzipf</text>
+<rect x="1010" y="3167" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="3180" font-size="12" text-anchor="middle">1.0428x</text>
+<text x="20" y="3204" font-size="12">routeprep_t1024</text>
+<text x="160" y="3204" font-size="12">routeprep.top8.r512_to_r65536.e64_t1024_distributionround_robin</text>
+<rect x="1010" y="3191" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="3204" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="3228" font-size="12">routeprep_t1024</text>
+<text x="160" y="3228" font-size="12">routeprep.top8.r512_to_r65536.e64_t1024_distributionsingle_hot</text>
+<rect x="1010" y="3215" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="3228" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="3252" font-size="12">routeprep_t1024</text>
+<text x="160" y="3252" font-size="12">routeprep.top8.r512_to_r65536.e64_t1024_distributionuniform</text>
+<rect x="1010" y="3239" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="3252" font-size="12" text-anchor="middle">0.6415x</text>
+<text x="20" y="3276" font-size="12">routeprep_t1024</text>
+<text x="160" y="3276" font-size="12">routeprep.top8.r512_to_r65536.e64_t1024_distributionzipf</text>
+<rect x="1010" y="3263" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="3276" font-size="12" text-anchor="middle">0.8378x</text>
+<text x="20" y="3300" font-size="12">routeprep_t1024</text>
+<text x="160" y="3300" font-size="12">routeprep.top8.r512_to_r65536.e64_t2048_distributionround_robin</text>
+<rect x="1010" y="3287" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="3300" font-size="12" text-anchor="middle">1.0833x</text>
+<text x="20" y="3324" font-size="12">routeprep_t1024</text>
+<text x="160" y="3324" font-size="12">routeprep.top8.r512_to_r65536.e64_t2048_distributionsingle_hot</text>
+<rect x="1010" y="3311" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="3324" font-size="12" text-anchor="middle">1.1633x</text>
+<text x="20" y="3348" font-size="12">routeprep_t1024</text>
+<text x="160" y="3348" font-size="12">routeprep.top8.r512_to_r65536.e64_t2048_distributionuniform</text>
+<rect x="1010" y="3335" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="3348" font-size="12" text-anchor="middle">0.8861x</text>
+<text x="20" y="3372" font-size="12">routeprep_t1024</text>
+<text x="160" y="3372" font-size="12">routeprep.top8.r512_to_r65536.e64_t2048_distributionzipf</text>
+<rect x="1010" y="3359" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="3372" font-size="12" text-anchor="middle">0.9618x</text>
+<text x="20" y="3396" font-size="12">routeprep_t1024</text>
+<text x="160" y="3396" font-size="12">routeprep.top8.r512_to_r65536.e64_t4096_distributionround_robin</text>
+<rect x="1010" y="3383" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="3396" font-size="12" text-anchor="middle">1.1600x</text>
+<text x="20" y="3420" font-size="12">routeprep_t1024</text>
+<text x="160" y="3420" font-size="12">routeprep.top8.r512_to_r65536.e64_t4096_distributionsingle_hot</text>
+<rect x="1010" y="3407" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="3420" font-size="12" text-anchor="middle">1.1868x</text>
+<text x="20" y="3444" font-size="12">routeprep_t1024</text>
+<text x="160" y="3444" font-size="12">routeprep.top8.r512_to_r65536.e64_t4096_distributionuniform</text>
+<rect x="1010" y="3431" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="3444" font-size="12" text-anchor="middle">0.8205x</text>
+<text x="20" y="3468" font-size="12">routeprep_t1024</text>
+<text x="160" y="3468" font-size="12">routeprep.top8.r512_to_r65536.e64_t4096_distributionzipf</text>
+<rect x="1010" y="3455" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="3468" font-size="12" text-anchor="middle">0.9453x</text>
+<text x="20" y="3492" font-size="12">routeprep_t1024</text>
+<text x="160" y="3492" font-size="12">routeprep.top8.r512_to_r65536.e64_t512_distributionround_robin</text>
+<rect x="1010" y="3479" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="3492" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="3516" font-size="12">routeprep_t1024</text>
+<text x="160" y="3516" font-size="12">routeprep.top8.r512_to_r65536.e64_t512_distributionsingle_hot</text>
+<rect x="1010" y="3503" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="3516" font-size="12" text-anchor="middle">1.0256x</text>
+<text x="20" y="3540" font-size="12">routeprep_t1024</text>
+<text x="160" y="3540" font-size="12">routeprep.top8.r512_to_r65536.e64_t512_distributionuniform</text>
+<rect x="1010" y="3527" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="3540" font-size="12" text-anchor="middle">0.8214x</text>
+<text x="20" y="3564" font-size="12">routeprep_t1024</text>
+<text x="160" y="3564" font-size="12">routeprep.top8.r512_to_r65536.e64_t512_distributionzipf</text>
+<rect x="1010" y="3551" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="3564" font-size="12" text-anchor="middle">0.8800x</text>
+<text x="20" y="3588" font-size="12">routeprep_t1024</text>
+<text x="160" y="3588" font-size="12">routeprep.top8.r512_to_r65536.e64_t64_distributionround_robin</text>
+<rect x="1010" y="3575" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="3588" font-size="12" text-anchor="middle">0.9286x</text>
+<text x="20" y="3612" font-size="12">routeprep_t1024</text>
+<text x="160" y="3612" font-size="12">routeprep.top8.r512_to_r65536.e64_t64_distributionsingle_hot</text>
+<rect x="1010" y="3599" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="3612" font-size="12" text-anchor="middle">0.9286x</text>
+<text x="20" y="3636" font-size="12">routeprep_t1024</text>
+<text x="160" y="3636" font-size="12">routeprep.top8.r512_to_r65536.e64_t64_distributionuniform</text>
+<rect x="1010" y="3623" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="3636" font-size="12" text-anchor="middle">0.8667x</text>
+<text x="20" y="3660" font-size="12">routeprep_t1024</text>
+<text x="160" y="3660" font-size="12">routeprep.top8.r512_to_r65536.e64_t64_distributionzipf</text>
+<rect x="1010" y="3647" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="3660" font-size="12" text-anchor="middle">0.8667x</text>
+<text x="20" y="3684" font-size="12">routeprep_t1024</text>
+<text x="160" y="3684" font-size="12">routeprep.top8.r512_to_r65536.e64_t8192_distributionround_robin</text>
+<rect x="1010" y="3671" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="3684" font-size="12" text-anchor="middle">1.2791x</text>
+<text x="20" y="3708" font-size="12">routeprep_t1024</text>
+<text x="160" y="3708" font-size="12">routeprep.top8.r512_to_r65536.e64_t8192_distributionsingle_hot</text>
+<rect x="1010" y="3695" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="3708" font-size="12" text-anchor="middle">1.3375x</text>
+<text x="20" y="3732" font-size="12">routeprep_t1024</text>
+<text x="160" y="3732" font-size="12">routeprep.top8.r512_to_r65536.e64_t8192_distributionuniform</text>
+<rect x="1010" y="3719" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="3732" font-size="12" text-anchor="middle">0.8074x</text>
+<text x="20" y="3756" font-size="12">routeprep_t1024</text>
+<text x="160" y="3756" font-size="12">routeprep.top8.r512_to_r65536.e64_t8192_distributionzipf</text>
+<rect x="1010" y="3743" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="3756" font-size="12" text-anchor="middle">0.9540x</text>
+<text x="20" y="3780" font-size="12">token_owned_top4</text>
+<text x="160" y="3780" font-size="12">routeprep.top4.r512_to_r65536.e16_t1024_distributionround_robin</text>
+<rect x="1010" y="3767" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="3780" font-size="12" text-anchor="middle">1.0870x</text>
+<text x="20" y="3804" font-size="12">token_owned_top4</text>
+<text x="160" y="3804" font-size="12">routeprep.top4.r512_to_r65536.e16_t1024_distributionsingle_hot</text>
+<rect x="1010" y="3791" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="3804" font-size="12" text-anchor="middle">1.0476x</text>
+<text x="20" y="3828" font-size="12">token_owned_top4</text>
+<text x="160" y="3828" font-size="12">routeprep.top4.r512_to_r65536.e16_t1024_distributionuniform</text>
+<rect x="1010" y="3815" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="3828" font-size="12" text-anchor="middle">1.0833x</text>
+<text x="20" y="3852" font-size="12">token_owned_top4</text>
+<text x="160" y="3852" font-size="12">routeprep.top4.r512_to_r65536.e16_t1024_distributionzipf</text>
+<rect x="1010" y="3839" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="3852" font-size="12" text-anchor="middle">1.0909x</text>
+<text x="20" y="3876" font-size="12">token_owned_top4</text>
+<text x="160" y="3876" font-size="12">routeprep.top4.r512_to_r65536.e16_t128_distributionround_robin</text>
+<rect x="1010" y="3863" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="3876" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="3900" font-size="12">token_owned_top4</text>
+<text x="160" y="3900" font-size="12">routeprep.top4.r512_to_r65536.e16_t128_distributionsingle_hot</text>
+<rect x="1010" y="3887" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="3900" font-size="12" text-anchor="middle">1.0833x</text>
+<text x="20" y="3924" font-size="12">token_owned_top4</text>
+<text x="160" y="3924" font-size="12">routeprep.top4.r512_to_r65536.e16_t128_distributionuniform</text>
+<rect x="1010" y="3911" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="3924" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="3948" font-size="12">token_owned_top4</text>
+<text x="160" y="3948" font-size="12">routeprep.top4.r512_to_r65536.e16_t128_distributionzipf</text>
+<rect x="1010" y="3935" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="3948" font-size="12" text-anchor="middle">1.0400x</text>
+<text x="20" y="3972" font-size="12">token_owned_top4</text>
+<text x="160" y="3972" font-size="12">routeprep.top4.r512_to_r65536.e16_t16384_distributionround_robin</text>
+<rect x="1010" y="3959" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="3972" font-size="12" text-anchor="middle">1.0242x</text>
+<text x="20" y="3996" font-size="12">token_owned_top4</text>
+<text x="160" y="3996" font-size="12">routeprep.top4.r512_to_r65536.e16_t16384_distributionsingle_hot</text>
+<rect x="1010" y="3983" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="3996" font-size="12" text-anchor="middle">1.0311x</text>
+<text x="20" y="4020" font-size="12">token_owned_top4</text>
+<text x="160" y="4020" font-size="12">routeprep.top4.r512_to_r65536.e16_t16384_distributionuniform</text>
+<rect x="1010" y="4007" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="4020" font-size="12" text-anchor="middle">0.9495x</text>
+<text x="20" y="4044" font-size="12">token_owned_top4</text>
+<text x="160" y="4044" font-size="12">routeprep.top4.r512_to_r65536.e16_t16384_distributionzipf</text>
+<rect x="1010" y="4031" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="4044" font-size="12" text-anchor="middle">0.9739x</text>
+<text x="20" y="4068" font-size="12">token_owned_top4</text>
+<text x="160" y="4068" font-size="12">routeprep.top4.r512_to_r65536.e16_t2048_distributionround_robin</text>
+<rect x="1010" y="4055" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4068" font-size="12" text-anchor="middle">1.0526x</text>
+<text x="20" y="4092" font-size="12">token_owned_top4</text>
+<text x="160" y="4092" font-size="12">routeprep.top4.r512_to_r65536.e16_t2048_distributionsingle_hot</text>
+<rect x="1010" y="4079" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4092" font-size="12" text-anchor="middle">1.0588x</text>
+<text x="20" y="4116" font-size="12">token_owned_top4</text>
+<text x="160" y="4116" font-size="12">routeprep.top4.r512_to_r65536.e16_t2048_distributionuniform</text>
+<rect x="1010" y="4103" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4116" font-size="12" text-anchor="middle">1.1026x</text>
+<text x="20" y="4140" font-size="12">token_owned_top4</text>
+<text x="160" y="4140" font-size="12">routeprep.top4.r512_to_r65536.e16_t2048_distributionzipf</text>
+<rect x="1010" y="4127" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4140" font-size="12" text-anchor="middle">1.0933x</text>
+<text x="20" y="4164" font-size="12">token_owned_top4</text>
+<text x="160" y="4164" font-size="12">routeprep.top4.r512_to_r65536.e16_t4096_distributionround_robin</text>
+<rect x="1010" y="4151" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4164" font-size="12" text-anchor="middle">1.0349x</text>
+<text x="20" y="4188" font-size="12">token_owned_top4</text>
+<text x="160" y="4188" font-size="12">routeprep.top4.r512_to_r65536.e16_t4096_distributionsingle_hot</text>
+<rect x="1010" y="4175" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4188" font-size="12" text-anchor="middle">1.0526x</text>
+<text x="20" y="4212" font-size="12">token_owned_top4</text>
+<text x="160" y="4212" font-size="12">routeprep.top4.r512_to_r65536.e16_t4096_distributionuniform</text>
+<rect x="1010" y="4199" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="4212" font-size="12" text-anchor="middle">0.9834x</text>
+<text x="20" y="4236" font-size="12">token_owned_top4</text>
+<text x="160" y="4236" font-size="12">routeprep.top4.r512_to_r65536.e16_t4096_distributionzipf</text>
+<rect x="1010" y="4223" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4236" font-size="12" text-anchor="middle">1.1266x</text>
+<text x="20" y="4260" font-size="12">token_owned_top4</text>
+<text x="160" y="4260" font-size="12">routeprep.top4.r512_to_r65536.e16_t8192_distributionround_robin</text>
+<rect x="1010" y="4247" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="4260" font-size="12" text-anchor="middle">0.9937x</text>
+<text x="20" y="4284" font-size="12">token_owned_top4</text>
+<text x="160" y="4284" font-size="12">routeprep.top4.r512_to_r65536.e16_t8192_distributionsingle_hot</text>
+<rect x="1010" y="4271" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4284" font-size="12" text-anchor="middle">1.0345x</text>
+<text x="20" y="4308" font-size="12">token_owned_top4</text>
+<text x="160" y="4308" font-size="12">routeprep.top4.r512_to_r65536.e16_t8192_distributionuniform</text>
+<rect x="1010" y="4295" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="4308" font-size="12" text-anchor="middle">1.0058x</text>
+<text x="20" y="4332" font-size="12">token_owned_top4</text>
+<text x="160" y="4332" font-size="12">routeprep.top4.r512_to_r65536.e16_t8192_distributionzipf</text>
+<rect x="1010" y="4319" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="4332" font-size="12" text-anchor="middle">1.0185x</text>
+<text x="20" y="4356" font-size="12">token_owned_top4</text>
+<text x="160" y="4356" font-size="12">routeprep.top4.r512_to_r65536.e64_t1024_distributionround_robin</text>
+<rect x="1010" y="4343" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4356" font-size="12" text-anchor="middle">1.0833x</text>
+<text x="20" y="4380" font-size="12">token_owned_top4</text>
+<text x="160" y="4380" font-size="12">routeprep.top4.r512_to_r65536.e64_t1024_distributionsingle_hot</text>
+<rect x="1010" y="4367" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4380" font-size="12" text-anchor="middle">1.0952x</text>
+<text x="20" y="4404" font-size="12">token_owned_top4</text>
+<text x="160" y="4404" font-size="12">routeprep.top4.r512_to_r65536.e64_t1024_distributionuniform</text>
+<rect x="1010" y="4391" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="4404" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="4428" font-size="12">token_owned_top4</text>
+<text x="160" y="4428" font-size="12">routeprep.top4.r512_to_r65536.e64_t1024_distributionzipf</text>
+<rect x="1010" y="4415" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4428" font-size="12" text-anchor="middle">1.0800x</text>
+<text x="20" y="4452" font-size="12">token_owned_top4</text>
+<text x="160" y="4452" font-size="12">routeprep.top4.r512_to_r65536.e64_t128_distributionround_robin</text>
+<rect x="1010" y="4439" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="4452" font-size="12" text-anchor="middle">1.0000x</text>
+<text x="20" y="4476" font-size="12">token_owned_top4</text>
+<text x="160" y="4476" font-size="12">routeprep.top4.r512_to_r65536.e64_t128_distributionsingle_hot</text>
+<rect x="1010" y="4463" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4476" font-size="12" text-anchor="middle">1.0769x</text>
+<text x="20" y="4500" font-size="12">token_owned_top4</text>
+<text x="160" y="4500" font-size="12">routeprep.top4.r512_to_r65536.e64_t128_distributionuniform</text>
+<rect x="1010" y="4487" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4500" font-size="12" text-anchor="middle">1.0714x</text>
+<text x="20" y="4524" font-size="12">token_owned_top4</text>
+<text x="160" y="4524" font-size="12">routeprep.top4.r512_to_r65536.e64_t128_distributionzipf</text>
+<rect x="1010" y="4511" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="4524" font-size="12" text-anchor="middle">0.9286x</text>
+<text x="20" y="4548" font-size="12">token_owned_top4</text>
+<text x="160" y="4548" font-size="12">routeprep.top4.r512_to_r65536.e64_t16384_distributionround_robin</text>
+<rect x="1010" y="4535" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="4548" font-size="12" text-anchor="middle">0.9873x</text>
+<text x="20" y="4572" font-size="12">token_owned_top4</text>
+<text x="160" y="4572" font-size="12">routeprep.top4.r512_to_r65536.e64_t16384_distributionsingle_hot</text>
+<rect x="1010" y="4559" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="4572" font-size="12" text-anchor="middle">0.9562x</text>
+<text x="20" y="4596" font-size="12">token_owned_top4</text>
+<text x="160" y="4596" font-size="12">routeprep.top4.r512_to_r65536.e64_t16384_distributionuniform</text>
+<rect x="1010" y="4583" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4596" font-size="12" text-anchor="middle">1.0307x</text>
+<text x="20" y="4620" font-size="12">token_owned_top4</text>
+<text x="160" y="4620" font-size="12">routeprep.top4.r512_to_r65536.e64_t16384_distributionzipf</text>
+<rect x="1010" y="4607" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4620" font-size="12" text-anchor="middle">1.0836x</text>
+<text x="20" y="4644" font-size="12">token_owned_top4</text>
+<text x="160" y="4644" font-size="12">routeprep.top4.r512_to_r65536.e64_t2048_distributionround_robin</text>
+<rect x="1010" y="4631" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4644" font-size="12" text-anchor="middle">1.0513x</text>
+<text x="20" y="4668" font-size="12">token_owned_top4</text>
+<text x="160" y="4668" font-size="12">routeprep.top4.r512_to_r65536.e64_t2048_distributionsingle_hot</text>
+<rect x="1010" y="4655" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4668" font-size="12" text-anchor="middle">1.1212x</text>
+<text x="20" y="4692" font-size="12">token_owned_top4</text>
+<text x="160" y="4692" font-size="12">routeprep.top4.r512_to_r65536.e64_t2048_distributionuniform</text>
+<rect x="1010" y="4679" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4692" font-size="12" text-anchor="middle">1.0556x</text>
+<text x="20" y="4716" font-size="12">token_owned_top4</text>
+<text x="160" y="4716" font-size="12">routeprep.top4.r512_to_r65536.e64_t2048_distributionzipf</text>
+<rect x="1010" y="4703" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4716" font-size="12" text-anchor="middle">1.0588x</text>
+<text x="20" y="4740" font-size="12">token_owned_top4</text>
+<text x="160" y="4740" font-size="12">routeprep.top4.r512_to_r65536.e64_t4096_distributionround_robin</text>
+<rect x="1010" y="4727" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="4740" font-size="12" text-anchor="middle">1.0227x</text>
+<text x="20" y="4764" font-size="12">token_owned_top4</text>
+<text x="160" y="4764" font-size="12">routeprep.top4.r512_to_r65536.e64_t4096_distributionsingle_hot</text>
+<rect x="1010" y="4751" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4764" font-size="12" text-anchor="middle">1.0336x</text>
+<text x="20" y="4788" font-size="12">token_owned_top4</text>
+<text x="160" y="4788" font-size="12">routeprep.top4.r512_to_r65536.e64_t4096_distributionuniform</text>
+<rect x="1010" y="4775" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4788" font-size="12" text-anchor="middle">1.0673x</text>
+<text x="20" y="4812" font-size="12">token_owned_top4</text>
+<text x="160" y="4812" font-size="12">routeprep.top4.r512_to_r65536.e64_t4096_distributionzipf</text>
+<rect x="1010" y="4799" width="120" height="18" rx="3" fill="#e5bd55"/>
+<text x="1070" y="4812" font-size="12" text-anchor="middle">0.9778x</text>
+<text x="20" y="4836" font-size="12">token_owned_top4</text>
+<text x="160" y="4836" font-size="12">routeprep.top4.r512_to_r65536.e64_t8192_distributionround_robin</text>
+<rect x="1010" y="4823" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="4836" font-size="12" text-anchor="middle">1.0424x</text>
+<text x="20" y="4860" font-size="12">token_owned_top4</text>
+<text x="160" y="4860" font-size="12">routeprep.top4.r512_to_r65536.e64_t8192_distributionsingle_hot</text>
+<rect x="1010" y="4847" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="4860" font-size="12" text-anchor="middle">1.0069x</text>
+<text x="20" y="4884" font-size="12">token_owned_top4</text>
+<text x="160" y="4884" font-size="12">routeprep.top4.r512_to_r65536.e64_t8192_distributionuniform</text>
+<rect x="1010" y="4871" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="4884" font-size="12" text-anchor="middle">0.9561x</text>
+<text x="20" y="4908" font-size="12">token_owned_top4</text>
+<text x="160" y="4908" font-size="12">routeprep.top4.r512_to_r65536.e64_t8192_distributionzipf</text>
+<rect x="1010" y="4895" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="4908" font-size="12" text-anchor="middle">1.0171x</text>
+<text x="20" y="4932" font-size="12">postroute_gather</text>
+<text x="160" y="4932" font-size="12">postroute.cold_scrub.representative.topk248.distributionuniform_top_k2</text>
+<rect x="1010" y="4919" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="4932" font-size="12" text-anchor="middle">0.7812x</text>
+<text x="20" y="4956" font-size="12">postroute_gather</text>
+<text x="160" y="4956" font-size="12">postroute.cold_scrub.representative.topk248.distributionuniform_top_k4</text>
+<rect x="1010" y="4943" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="4956" font-size="12" text-anchor="middle">0.9032x</text>
+<text x="20" y="4980" font-size="12">postroute_gather</text>
+<text x="160" y="4980" font-size="12">postroute.cold_scrub.representative.topk248.distributionuniform_top_k8</text>
+<rect x="1010" y="4967" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="4980" font-size="12" text-anchor="middle">0.8632x</text>
+<text x="20" y="5004" font-size="12">postroute_gather</text>
+<text x="160" y="5004" font-size="12">postroute.cold_scrub.representative.topk248.distributionzipf_top_k2</text>
+<rect x="1010" y="4991" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="5004" font-size="12" text-anchor="middle">0.9600x</text>
+<text x="20" y="5028" font-size="12">postroute_gather</text>
+<text x="160" y="5028" font-size="12">postroute.cold_scrub.representative.topk248.distributionzipf_top_k4</text>
+<rect x="1010" y="5015" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="5028" font-size="12" text-anchor="middle">0.9500x</text>
+<text x="20" y="5052" font-size="12">postroute_gather</text>
+<text x="160" y="5052" font-size="12">postroute.cold_scrub.representative.topk248.distributionzipf_top_k8</text>
+<rect x="1010" y="5039" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="5052" font-size="12" text-anchor="middle">0.8914x</text>
+<text x="20" y="5076" font-size="12">postroute_gather</text>
+<text x="160" y="5076" font-size="12">postroute.large.topk248.distributionuniform_top_k2</text>
+<rect x="1010" y="5063" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="5076" font-size="12" text-anchor="middle">0.9379x</text>
+<text x="20" y="5100" font-size="12">postroute_gather</text>
+<text x="160" y="5100" font-size="12">postroute.large.topk248.distributionuniform_top_k4</text>
+<rect x="1010" y="5087" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="5100" font-size="12" text-anchor="middle">0.8129x</text>
+<text x="20" y="5124" font-size="12">postroute_gather</text>
+<text x="160" y="5124" font-size="12">postroute.large.topk248.distributionuniform_top_k8</text>
+<rect x="1010" y="5111" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="5124" font-size="12" text-anchor="middle">0.7854x</text>
+<text x="20" y="5148" font-size="12">postroute_gather</text>
+<text x="160" y="5148" font-size="12">postroute.large.topk248.distributionzipf_top_k2</text>
+<rect x="1010" y="5135" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5148" font-size="12" text-anchor="middle">1.0897x</text>
+<text x="20" y="5172" font-size="12">postroute_gather</text>
+<text x="160" y="5172" font-size="12">postroute.large.topk248.distributionzipf_top_k4</text>
+<rect x="1010" y="5159" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="5172" font-size="12" text-anchor="middle">0.9697x</text>
+<text x="20" y="5196" font-size="12">postroute_gather</text>
+<text x="160" y="5196" font-size="12">postroute.large.topk248.distributionzipf_top_k8</text>
+<rect x="1010" y="5183" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="5196" font-size="12" text-anchor="middle">0.8362x</text>
+<text x="20" y="5220" font-size="12">postroute_gather</text>
+<text x="160" y="5220" font-size="12">postroute.max_route_pairs.topk8.distributionuniform</text>
+<rect x="1010" y="5207" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="5220" font-size="12" text-anchor="middle">0.5294x</text>
+<text x="20" y="5244" font-size="12">postroute_gather</text>
+<text x="160" y="5244" font-size="12">postroute.max_route_pairs.topk8.distributionzipf</text>
+<rect x="1010" y="5231" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="5244" font-size="12" text-anchor="middle">0.5954x</text>
+<text x="20" y="5268" font-size="12">postroute_gather</text>
+<text x="160" y="5268" font-size="12">postroute.representative.topk248.distributionuniform_top_k2</text>
+<rect x="1010" y="5255" width="120" height="18" rx="3" fill="#d7655b"/>
+<text x="1070" y="5268" font-size="12" text-anchor="middle">0.9245x</text>
+<text x="20" y="5292" font-size="12">postroute_gather</text>
+<text x="160" y="5292" font-size="12">postroute.representative.topk248.distributionuniform_top_k4</text>
+<rect x="1010" y="5279" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5292" font-size="12" text-anchor="middle">1.3525x</text>
+<text x="20" y="5316" font-size="12">postroute_gather</text>
+<text x="160" y="5316" font-size="12">postroute.representative.topk248.distributionuniform_top_k8</text>
+<rect x="1010" y="5303" width="120" height="18" rx="3" fill="#9ac46a"/>
+<text x="1070" y="5316" font-size="12" text-anchor="middle">1.0222x</text>
+<text x="20" y="5340" font-size="12">postroute_gather</text>
+<text x="160" y="5340" font-size="12">postroute.representative.topk248.distributionzipf_top_k2</text>
+<rect x="1010" y="5327" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5340" font-size="12" text-anchor="middle">1.0426x</text>
+<text x="20" y="5364" font-size="12">postroute_gather</text>
+<text x="160" y="5364" font-size="12">postroute.representative.topk248.distributionzipf_top_k4</text>
+<rect x="1010" y="5351" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5364" font-size="12" text-anchor="middle">1.1250x</text>
+<text x="20" y="5388" font-size="12">postroute_gather</text>
+<text x="160" y="5388" font-size="12">postroute.representative.topk248.distributionzipf_top_k8</text>
+<rect x="1010" y="5375" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5388" font-size="12" text-anchor="middle">1.0864x</text>
+<text x="20" y="5412" font-size="12">postroute_gather</text>
+<text x="160" y="5412" font-size="12">postroute.small.topk248.distributionsingle_hot_top_k2</text>
+<rect x="1010" y="5399" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5412" font-size="12" text-anchor="middle">1.1458x</text>
+<text x="20" y="5436" font-size="12">postroute_gather</text>
+<text x="160" y="5436" font-size="12">postroute.small.topk248.distributionsingle_hot_top_k4</text>
+<rect x="1010" y="5423" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5436" font-size="12" text-anchor="middle">1.1250x</text>
+<text x="20" y="5460" font-size="12">postroute_gather</text>
+<text x="160" y="5460" font-size="12">postroute.small.topk248.distributionsingle_hot_top_k8</text>
+<rect x="1010" y="5447" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5460" font-size="12" text-anchor="middle">1.1400x</text>
+<text x="20" y="5484" font-size="12">postroute_gather</text>
+<text x="160" y="5484" font-size="12">postroute.small.topk248.distributionuniform_top_k2</text>
+<rect x="1010" y="5471" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5484" font-size="12" text-anchor="middle">1.0769x</text>
+<text x="20" y="5508" font-size="12">postroute_gather</text>
+<text x="160" y="5508" font-size="12">postroute.small.topk248.distributionuniform_top_k4</text>
+<rect x="1010" y="5495" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5508" font-size="12" text-anchor="middle">1.0741x</text>
+<text x="20" y="5532" font-size="12">postroute_gather</text>
+<text x="160" y="5532" font-size="12">postroute.small.topk248.distributionuniform_top_k8</text>
+<rect x="1010" y="5519" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5532" font-size="12" text-anchor="middle">1.0357x</text>
+<text x="20" y="5556" font-size="12">postroute_gather</text>
+<text x="160" y="5556" font-size="12">postroute.small.topk248.distributionzipf_top_k2</text>
+<rect x="1010" y="5543" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5556" font-size="12" text-anchor="middle">1.1154x</text>
+<text x="20" y="5580" font-size="12">postroute_gather</text>
+<text x="160" y="5580" font-size="12">postroute.small.topk248.distributionzipf_top_k4</text>
+<rect x="1010" y="5567" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5580" font-size="12" text-anchor="middle">1.0370x</text>
+<text x="20" y="5604" font-size="12">postroute_gather</text>
+<text x="160" y="5604" font-size="12">postroute.small.topk248.distributionzipf_top_k8</text>
+<rect x="1010" y="5591" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5604" font-size="12" text-anchor="middle">1.0357x</text>
+<text x="20" y="5628" font-size="12">graph_postlogit</text>
+<text x="160" y="5628" font-size="12">graph.postlogit.steady.fixed</text>
+<rect x="1010" y="5615" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5628" font-size="12" text-anchor="middle">1.6205x</text>
+<text x="20" y="5652" font-size="12">graph_postroute</text>
+<text x="160" y="5652" font-size="12">graph.postroute.steady.fixed.topk248.top_k2</text>
+<rect x="1010" y="5639" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5652" font-size="12" text-anchor="middle">1.2416x</text>
+<text x="20" y="5676" font-size="12">graph_postroute</text>
+<text x="160" y="5676" font-size="12">graph.postroute.steady.fixed.topk248.top_k4</text>
+<rect x="1010" y="5663" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5676" font-size="12" text-anchor="middle">1.2118x</text>
+<text x="20" y="5700" font-size="12">graph_postroute</text>
+<text x="160" y="5700" font-size="12">graph.postroute.steady.fixed.topk248.top_k8</text>
+<rect x="1010" y="5687" width="120" height="18" rx="3" fill="#3ca370"/>
+<text x="1070" y="5700" font-size="12" text-anchor="middle">1.2481x</text>
+</svg>

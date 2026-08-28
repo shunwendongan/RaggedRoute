@@ -1,0 +1,91 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "route_trace_working_set_smoke_v1",
+  "protocol": "smoke",
+  "process_runs": 1,
+  "common": {
+    "warmup": 10,
+    "samples": 10,
+    "kernel_repeats": 10,
+    "seed": 20260827,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "trace.permute",
+      "operator": "token_permute",
+      "levels": [
+        "l2"
+      ],
+      "route_trace": {
+        "path": "configs/workloads/synthetic_fixture.rrtrace",
+        "frames": "all"
+      },
+      "variants": [
+        {
+          "name": "cuda_candidate_v2",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_candidate_v3",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "K": 64,
+        "materialize_sorted_route": true
+      }
+    },
+    {
+      "id": "trace.grouped",
+      "operator": "grouped_gemm",
+      "levels": [
+        "l2"
+      ],
+      "route_trace": {
+        "path": "configs/workloads/synthetic_fixture.rrtrace",
+        "frames": "all"
+      },
+      "variants": [
+        {
+          "name": "cuda_grouped_sm86_fp32_v2",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_grouped_sm86_fp32_v3",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "K": 64,
+        "N": 64
+      }
+    },
+    {
+      "id": "trace.l3",
+      "suite": "chain_from_logits",
+      "levels": [
+        "l3"
+      ],
+      "route_trace": {
+        "path": "configs/workloads/synthetic_fixture.rrtrace",
+        "frames": "all"
+      },
+      "variants": [
+        {
+          "name": "cuda_postlogit_integrated_latest",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_postlogit_research_v3",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "K": 64,
+        "N": 64
+      }
+    }
+  ]
+}
+

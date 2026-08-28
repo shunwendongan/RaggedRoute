@@ -17,7 +17,7 @@ void usage(std::ostream& out) {
   out << "RaggedRoute CUDA benchmark\n\n"
       << "  raggedroute_benchmark --list\n"
       << "  raggedroute_benchmark --operator NAME [options] --param key=value ...\n\n"
-      << "  raggedroute_benchmark --suite chain_from_tokens|chain_from_logits ...\n\n"
+      << "  raggedroute_benchmark --suite chain_from_tokens|chain_from_logits|chain_from_route_ids ...\n\n"
       << "Common options:\n"
       << "  --variant cuda_naive\n"
       << "  --level l1|l2\n"

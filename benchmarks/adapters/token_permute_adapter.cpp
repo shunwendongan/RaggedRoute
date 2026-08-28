@@ -19,24 +19,47 @@ bool is_optimized_variant(const std::string& name) {
          name == "cuda_atomic_vectorized_256" || name == "cuda_token_owned_top2" ||
          name == "cuda_block_partial" || name == "cuda_token_tile4_direct" ||
          name == "cuda_token_tile4_warp_aggregated" || name == "cuda_candidate_v2" ||
+         name == "cuda_token_tile2_direct" || name == "cuda_candidate_v3" ||
          name == "cuda_candidate" ||
          name == "cuda_candidate_from_ids" ||
          name == "cuda_fused_prepare_token_owned_from_ids" ||
          name == "cuda_fused_prepare_warp_aggregated_from_ids" ||
-         name == "cuda_candidate_v2_from_ids";
+         name == "cuda_candidate_v2_from_ids" || name == "cuda_candidate_v3_from_ids";
+}
+
+bool is_shared_routeprep_variant(const std::string& name) {
+  return name == "cuda_routeprep_shared_rank_t256_v1" ||
+         name == "cuda_routeprep_shared_rank_t512_v1" ||
+         name == "cuda_routeprep_shared_rank_t1024_v1" ||
+         name == "cuda_permute_token_owned_topk2_v4" ||
+         name == "cuda_permute_token_owned_topk4_v4" ||
+         name == "cuda_permute_token_owned_topk8_v4";
+}
+
+bool is_token_owned_topk_v4(const std::string& name) {
+  return name == "cuda_permute_token_owned_topk2_v4" ||
+         name == "cuda_permute_token_owned_topk4_v4" ||
+         name == "cuda_permute_token_owned_topk8_v4";
+}
+
+int shared_routeprep_threads(const std::string& name) {
+  if (name == "cuda_routeprep_shared_rank_t512_v1") return 512;
+  if (name == "cuda_routeprep_shared_rank_t1024_v1") return 1024;
+  return 256;
 }
 
 bool is_from_ids_variant(const std::string& name) {
   return name == "cuda_naive_from_ids" || name == "cuda_candidate_from_ids" ||
          name == "cuda_fused_prepare_token_owned_from_ids" ||
          name == "cuda_fused_prepare_warp_aggregated_from_ids" ||
-         name == "cuda_candidate_v2_from_ids";
+         name == "cuda_candidate_v2_from_ids" || name == "cuda_candidate_v3_from_ids" ||
+         is_shared_routeprep_variant(name);
 }
 
 bool is_fused_prepare_variant(const std::string& name) {
   return name == "cuda_fused_prepare_token_owned_from_ids" ||
          name == "cuda_fused_prepare_warp_aggregated_from_ids" ||
-         name == "cuda_candidate_v2_from_ids";
+         name == "cuda_candidate_v2_from_ids" || name == "cuda_candidate_v3_from_ids";
 }
 
 std::uint32_t optimized_implementation(const std::string& name) {
@@ -60,6 +83,10 @@ std::uint32_t optimized_implementation(const std::string& name) {
   if (name == "cuda_candidate_v2") return ops::kTokenPermuteShapeDispatchedV2Implementation;
   if (name == "cuda_candidate_v2_from_ids")
     return ops::kTokenPermuteShapeDispatchedV2Implementation;
+  if (name == "cuda_token_tile2_direct")
+    return ops::kTokenPermuteTokenTile2DirectImplementation;
+  if (name == "cuda_candidate_v3" || name == "cuda_candidate_v3_from_ids")
+    return ops::kTokenPermuteShapeDispatchedV3Implementation;
   if (name == "cuda_candidate" || name == "cuda_candidate_from_ids")
     return ops::kTokenPermuteCandidateImplementation;
   return 0;
@@ -98,6 +125,9 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
     if (variant_name_ == "cuda_token_tile4_warp_aggregated") {
       return "Four Top-2 tokens per CTA with expert-keyed warp-aggregated cursor atomics";
     }
+    if (variant_name_ == "cuda_token_tile2_direct") {
+      return "Two Top-2 tokens per 64-thread CTA with direct global cursor atomics";
+    }
     if (variant_name_ == "cuda_fused_prepare_token_owned_from_ids") {
       return "Fused single-CTA counts/scan/reset followed by token-owned Top-2 permute";
     }
@@ -110,8 +140,19 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
     if (variant_name_ == "cuda_candidate_v2_from_ids") {
       return "Fused counts/scan/reset followed by the shape-dispatched SM86 v2 candidate";
     }
+    if (variant_name_ == "cuda_candidate_v3") {
+      return "Shape-dispatched SM86 v3 candidate: tile4/tile2 for aligned Top-2, ID4 fallback";
+    }
+    if (variant_name_ == "cuda_candidate_v3_from_ids") {
+      return "Fused counts/scan/reset followed by the shape-dispatched SM86 v3 candidate";
+    }
     if (variant_name_ == "cuda_candidate") {
       return "SM86 v2 shape-dispatched candidate: tile4 direct for large aligned Top-2, token-owned fallback";
+    }
+    if (is_shared_routeprep_variant(variant_name_)) {
+      return is_token_owned_topk_v4(variant_name_)
+                 ? "Single-CTA shared-rank route preparation with token-owned Top-K payload copy"
+                 : "Single-CTA shared-rank route preparation with route-owned payload copy";
     }
     if (variant_name_ == "vllm_moe_permute") {
       return "Adapted vLLM radix-sort mapping and vectorized row expansion";
@@ -148,13 +189,29 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
     distribution_ = get_option(options, "distribution", "uniform");
     zipf_s_ = get_double_option(options, "zipf_s", 1.0);
     materialize_sorted_route_ = get_bool_option(options, "materialize_sorted_route", true);
+    route_trace_path_ = get_option(options, "route_trace_path", "");
+    route_trace_frame_ = get_int_option(options, "route_trace_frame", 0, 0);
     if (experts_ < top_k_ || experts_ > 64) {
       throw std::invalid_argument("current permute adapter requires top_k<=E<=64");
     }
     route_pairs_ = checked_int_product(tokens_, top_k_, "R=T*top_k");
 
     host_x_ = make_random_floats(static_cast<std::size_t>(tokens_) * hidden_, seed);
-    host_ids_ = make_route_ids(tokens_, top_k_, experts_, distribution_, zipf_s_, seed + 1);
+    if (route_trace_path_.empty()) {
+      host_ids_ = make_route_ids(tokens_, top_k_, experts_, distribution_, zipf_s_, seed + 1);
+    } else {
+      const RouteTraceFrame trace = load_route_trace_frame(route_trace_path_, route_trace_frame_);
+      if (trace.tokens != tokens_ || trace.experts != experts_ || trace.top_k != top_k_) {
+        throw std::invalid_argument("route trace shape does not match token_permute params");
+      }
+      host_ids_ = trace.expert_ids;
+      route_trace_id_ = trace.trace_id;
+      route_trace_source_kind_ = trace.source_kind;
+      route_trace_frame_id_ = trace.frame_id;
+      route_trace_frame_count_ = trace.frame_count;
+      distribution_ = "route_trace";
+      zipf_s_ = 0.0;
+    }
     host_counts_ = counts_from_ids(host_ids_, experts_);
     host_offsets_ = offsets_from_counts(host_counts_);
 
@@ -221,6 +278,32 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
       return;
     }
 #endif
+    if (is_shared_routeprep_variant(variant_name_)) {
+      const int required_top_k = variant_name_ == "cuda_permute_token_owned_topk2_v4" ? 2
+                               : variant_name_ == "cuda_permute_token_owned_topk4_v4" ? 4
+                               : variant_name_ == "cuda_permute_token_owned_topk8_v4" ? 8
+                                                                                       : top_k_;
+      if (is_token_owned_topk_v4(variant_name_) && top_k_ != required_top_k) {
+        throw std::invalid_argument("token-owned Top-K v4 variant does not match top_k");
+      }
+      cuda_check(ops::launch_token_permute_routeprep_shared_rank(
+                     ids_.data(), counts_.data(), offsets_.data(), route_pos_.data(),
+                     materialize_sorted_route_ ? sorted_route_.data() : nullptr, tokens_, experts_,
+                     top_k_, shared_routeprep_threads(variant_name_), stream),
+                 "single-CTA shared-rank route preparation");
+      if (is_token_owned_topk_v4(variant_name_)) {
+        cuda_check(ops::launch_token_permute_copy_token_owned_topk(
+                       x_.data(), route_pos_.data(), x_permuted_.data(), tokens_, top_k_, hidden_,
+                       stream),
+                   "token-owned Top-K payload copy");
+      } else {
+        cuda_check(ops::launch_token_permute_copy_from_positions(
+                       x_.data(), route_pos_.data(), x_permuted_.data(), tokens_, top_k_, hidden_,
+                       stream),
+                   "route-owned payload copy after shared-rank route preparation");
+      }
+      return;
+    }
     if (is_from_ids_variant(variant_name_)) {
       if (is_fused_prepare_variant(variant_name_)) {
         cuda_check(ops::launch_token_permute_prepare_offsets_fused(
@@ -293,6 +376,14 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
   }
 
   ValidationResult validate(cudaStream_t stream) override {
+    if (is_shared_routeprep_variant(variant_name_)) {
+      const auto counts = counts_.copy_to_host(stream);
+      if (counts != host_counts_) return {false, "route-prep counts differ from reference", {}, {}};
+      const auto offsets = offsets_.copy_to_host(stream);
+      if (offsets != host_offsets_) {
+        return {false, "route-prep offsets differ from reference", {}, {}};
+      }
+    }
     const auto positions = route_pos_.copy_to_host(stream);
     const auto output = x_permuted_.copy_to_host(stream);
     std::vector<std::int32_t> reverse;
@@ -334,6 +425,13 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
                        {"distribution", distribution_},
                        {"zipf_s", zipf_s_},
                        {"materialize_sorted_route", materialize_sorted_route_}};
+    if (!route_trace_path_.empty()) {
+      config["workload_source"] = route_trace_source_kind_;
+      config["route_trace_id"] = route_trace_id_;
+      config["route_trace_frame_id"] = route_trace_frame_id_;
+      config["route_trace_frame"] = static_cast<std::int64_t>(route_trace_frame_);
+      config["route_trace_frame_count"] = static_cast<std::int64_t>(route_trace_frame_count_);
+    }
     if (is_from_ids_variant(variant_name_) || variant_name_ == "vllm_moe_permute") {
       config["placement_order"] = std::string("unspecified_within_expert");
       config["input_boundary"] = std::string("topk_ids_to_permuted_rows");
@@ -347,6 +445,19 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
     return config;
   }
   FieldMap variant_config() const override {
+    if (is_shared_routeprep_variant(variant_name_)) {
+      return {{"components", std::string("shared_histogram_scan_rank,payload_copy")},
+              {"routeprep_threads",
+               static_cast<std::int64_t>(shared_routeprep_threads(variant_name_))},
+              {"placement", std::string("single_cta_shared_warp_aggregated_rank")},
+              {"copy", std::string(is_token_owned_topk_v4(variant_name_)
+                                       ? "token_owned_topk_float4_fast_scalar_fallback"
+                                       : "route_owned_float4_fast_scalar_fallback")},
+              {"kernel_launches", static_cast<std::int64_t>(2)},
+              {"supported_top_k", std::string(is_token_owned_topk_v4(variant_name_)
+                                                   ? std::to_string(top_k_)
+                                                   : "generic")}};
+    }
     if (variant_name_ == "cuda_naive_from_ids") {
       return {{"components", std::string("histogram,exclusive_scan,token_permute")},
               {"placement", std::string("global_atomic_cursor")},
@@ -365,6 +476,8 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
                                     ? std::string("warp_aggregated_tile4")
                                 : variant_name_ == "cuda_candidate_v2_from_ids"
                                     ? std::string("shape_dispatch_tile4_direct_or_token_owned")
+                                : variant_name_ == "cuda_candidate_v3_from_ids"
+                                    ? std::string("shape_dispatch_tile4_tile2_or_token_owned")
                                     : std::string("token_owned_top2_atomic")},
               {"copy", std::string("float4_fast_scalar_fallback")},
               {"kernel_launches", static_cast<std::int64_t>(2)},
@@ -404,8 +517,25 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
       if (implementation == ops::kTokenPermuteTokenTile4WarpAggregatedImplementation) {
         placement = "token_tile4_warp_aggregated_atomic";
       }
+      if (implementation == ops::kTokenPermuteTokenTile2DirectImplementation) {
+        placement = "token_tile2_direct_atomic";
+        threads = 64;
+      }
       if (implementation == ops::kTokenPermuteShapeDispatchedV2Implementation) {
         placement = "shape_dispatch_tile4_direct_or_token_owned";
+      }
+      if (implementation == ops::kTokenPermuteShapeDispatchedV3Implementation) {
+        const bool aligned_top2 = top_k_ == 2 && hidden_ > 0 && hidden_ % 4 == 0;
+        if (aligned_top2 && tokens_ >= 1024 && tokens_ <= 2048 && hidden_ <= 256) {
+          placement = "shape_dispatch_selected_tile4_direct";
+          threads = 128;
+        } else if (aligned_top2 && (tokens_ >= 2048 || hidden_ >= 512)) {
+          placement = "shape_dispatch_selected_tile2_direct";
+          threads = 64;
+        } else {
+          placement = "shape_dispatch_selected_token_owned";
+          threads = 128;
+        }
       }
       return {{"implementation_id", static_cast<std::int64_t>(implementation)},
               {"threads", threads},
@@ -467,7 +597,8 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
  private:
   static void reject_unknown(const OptionMap& options) {
     const std::set<std::string> allowed = {
-        "T", "E", "top_k", "K", "distribution", "zipf_s", "materialize_sorted_route"};
+        "T", "E", "top_k", "K", "distribution", "zipf_s", "materialize_sorted_route",
+        "route_trace_path", "route_trace_frame"};
     for (const auto& [name, unused] : options) {
       (void)unused;
       if (!allowed.count(name)) throw std::invalid_argument("unknown token_permute param: " + name);
@@ -485,6 +616,8 @@ class TokenPermuteAdapter final : public BenchmarkAdapter {
   double zipf_s_ = 0.0;
   bool materialize_sorted_route_ = true;
   std::string distribution_;
+  std::string route_trace_path_, route_trace_id_, route_trace_source_kind_, route_trace_frame_id_;
+  int route_trace_frame_ = 0, route_trace_frame_count_ = 0;
   std::vector<float> host_x_;
   std::vector<std::int32_t> host_ids_, host_counts_, host_offsets_;
   DeviceBuffer<float> x_, x_permuted_;

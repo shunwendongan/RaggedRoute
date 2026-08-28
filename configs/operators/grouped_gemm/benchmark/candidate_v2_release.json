@@ -1,0 +1,65 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_grouped_gemm_candidate_v2_release_v1",
+  "protocol": "release",
+  "process_runs": 3,
+  "common": {
+    "warmup": 20,
+    "samples": 30,
+    "kernel_repeats": 5,
+    "seed": 20260825,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "grouped_gemm.v2.tail.t17_e8_k13_n11", "operator": "grouped_gemm", "levels": ["l2"],
+      "variants": [{"name": "cutlass_grouped", "promotion_baseline": true}, {"name": "cuda_grouped_sm86_fp32_v1", "promotion_baseline": false}, {"name": "cuda_grouped_sm86_fp32_v2", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}, {"name": "cublas_per_expert", "promotion_baseline": false}],
+      "params": {"T": 17, "E": 8, "top_k": 2, "K": 13, "N": 11, "distribution": "zipf", "zipf_s": 1.0}
+    },
+    {
+      "id": "grouped_gemm.v2.many_empty.t16_e64_k64_n64", "operator": "grouped_gemm", "levels": ["l2"],
+      "variants": [{"name": "cutlass_grouped", "promotion_baseline": true}, {"name": "cuda_grouped_sm86_fp32_v1", "promotion_baseline": false}, {"name": "cuda_grouped_sm86_fp32_v2", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}, {"name": "cublas_per_expert", "promotion_baseline": false}],
+      "params": {"T": 16, "E": 64, "top_k": 2, "K": 64, "N": 64, "distribution": "round_robin", "zipf_s": 0.0}
+    },
+    {
+      "id": "grouped_gemm.v2.uniform.t512_e64_k128_n128", "operator": "grouped_gemm", "levels": ["l2"],
+      "variants": [{"name": "cutlass_grouped", "promotion_baseline": true}, {"name": "cuda_grouped_sm86_fp32_v1", "promotion_baseline": false}, {"name": "cuda_grouped_sm86_fp32_v2", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}, {"name": "cublas_per_expert", "promotion_baseline": false}],
+      "params": {"T": 512, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "grouped_gemm.v2.zipf14.t512_e64_k128_n128", "operator": "grouped_gemm", "levels": ["l2"],
+      "variants": [{"name": "cutlass_grouped", "promotion_baseline": true}, {"name": "cuda_grouped_sm86_fp32_v1", "promotion_baseline": false}, {"name": "cuda_grouped_sm86_fp32_v2", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}, {"name": "cublas_per_expert", "promotion_baseline": false}],
+      "params": {"T": 512, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    },
+    {
+      "id": "grouped_gemm.v2.single_hot.t512_e64_k128_n128", "operator": "grouped_gemm", "levels": ["l2"],
+      "variants": [{"name": "cutlass_grouped", "promotion_baseline": true}, {"name": "cuda_grouped_sm86_fp32_v1", "promotion_baseline": false}, {"name": "cuda_grouped_sm86_fp32_v2", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}, {"name": "cublas_per_expert", "promotion_baseline": false}],
+      "params": {"T": 512, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "single_hot", "zipf_s": 0.0}
+    },
+    {
+      "id": "grouped_gemm.v2.uniform.t512_e16_k128_n256", "operator": "grouped_gemm", "levels": ["l2"],
+      "variants": [{"name": "cutlass_grouped", "promotion_baseline": true}, {"name": "cuda_grouped_sm86_fp32_v1", "promotion_baseline": false}, {"name": "cuda_grouped_sm86_fp32_v2", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}, {"name": "cublas_per_expert", "promotion_baseline": false}],
+      "params": {"T": 512, "E": 16, "top_k": 2, "K": 128, "N": 256, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "grouped_gemm.v2.non_aligned.t512_e64_k127_n129", "operator": "grouped_gemm", "levels": ["l2"],
+      "variants": [{"name": "cutlass_grouped", "promotion_baseline": true}, {"name": "cuda_grouped_sm86_fp32_v1", "promotion_baseline": false}, {"name": "cuda_grouped_sm86_fp32_v2", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}, {"name": "cublas_per_expert", "promotion_baseline": false}],
+      "params": {"T": 512, "E": 64, "top_k": 2, "K": 127, "N": 129, "distribution": "zipf", "zipf_s": 1.4}
+    },
+    {
+      "id": "grouped_gemm.v2.uniform.t2048_e64_k128_n128", "operator": "grouped_gemm", "levels": ["l2"],
+      "variants": [{"name": "cutlass_grouped", "promotion_baseline": true}, {"name": "cuda_grouped_sm86_fp32_v1", "promotion_baseline": false}, {"name": "cuda_grouped_sm86_fp32_v2", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}, {"name": "cublas_per_expert", "promotion_baseline": false}],
+      "params": {"T": 2048, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "grouped_gemm.v2.zipf14.t2048_e64_k128_n128", "operator": "grouped_gemm", "levels": ["l2"],
+      "variants": [{"name": "cutlass_grouped", "promotion_baseline": true}, {"name": "cuda_grouped_sm86_fp32_v1", "promotion_baseline": false}, {"name": "cuda_grouped_sm86_fp32_v2", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}, {"name": "cublas_per_expert", "promotion_baseline": false}],
+      "params": {"T": 2048, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    },
+    {
+      "id": "grouped_gemm.v2.single_expert.t512_e64_k128_n256", "operator": "grouped_gemm", "levels": ["l2"],
+      "variants": [{"name": "cutlass_grouped", "promotion_baseline": true}, {"name": "cuda_grouped_sm86_fp32_v1", "promotion_baseline": false}, {"name": "cuda_grouped_sm86_fp32_v2", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}, {"name": "cublas_per_expert", "promotion_baseline": false}],
+      "params": {"T": 512, "E": 64, "top_k": 1, "K": 128, "N": 256, "distribution": "single_hot", "zipf_s": 0.0}
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "files": [
+    {
+      "bytes": 663,
+      "path": "README.md",
+      "sha256": "006573273aa30e4b704fc345451ca7c8b3a27af1876be42ee49637b5fd31e106"
+    },
+    {
+      "bytes": 1667,
+      "path": "graph-postlogit-fixed-wddm-exception-decision.json",
+      "sha256": "a00188a44eef12d1e764e3b4d52686c9f5c5a321c46bf372b05554312154ee19"
+    },
+    {
+      "bytes": 544,
+      "path": "graph-postlogit-fixed-wddm-exception-decision.md",
+      "sha256": "7aa7e240388f54381220f5b5168a95ecd5d19a2ce17c9020c19f6bc19cd186d2"
+    },
+    {
+      "bytes": 2733,
+      "path": "graph-postroute-fixed-wddm-exception-decision.json",
+      "sha256": "0fa2dd52ef01ec12193c19406b6fe1158990d1ff075ca4157396022ad1fc8219"
+    },
+    {
+      "bytes": 731,
+      "path": "graph-postroute-fixed-wddm-exception-decision.md",
+      "sha256": "27592b97e6bcc503d3c05e77c0aff10035a50c1600e0f58d1db72ba9bf18a67a"
+    }
+  ],
+  "policy": "configs/policies/cuda_graph_wddm_fixed_replay_promotion.json",
+  "schema_version": "raggedroute.cuda_graph_fixed_replay_evidence.v1"
+}

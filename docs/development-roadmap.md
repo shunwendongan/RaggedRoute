@@ -1,14 +1,14 @@
 # RaggedRoute 后续开发路线
 
-> **状态：部分实现；事实基线 `main@354e1ff`，更新于 2026-08-09。** 里程碑 A1/A2 与 B4 的 profiler/text bundle 子集已实现，Histogram 已经过手工门禁晋升为第一个 shape-dispatched `Auto` candidate；A3 通用 promotion evaluator、真实 trace、working-set/plot 仍是计划。当前可执行范围及证据边界以 `implementation-status.md` 为准。
+> **状态：部分实现；本地研究最新证据为 v4 Graph fixed replay（Release `b3429c2`），更新于 2026-08-28。** A1/A2、三态 promotion evaluator、版本化 route-trace 输入、frame working set、shape heatmap 与 compact v3/v4 evidence 已实现；真实 captured/production trace、通用 working-set ring 和 cache sweep 仍是计划。当前可执行范围及证据边界以 `implementation-status.md` 为准。
 
-> **环境边界：** 当前工作区是 macOS，只执行 CPU-only、文档、schema 与证据一致性检查。本路线中的 CUDA correctness、Compute Sanitizer、benchmark、NSYS/NCU 和 promotion 复测暂停，待回到独占 RTX 3080/其他受支持 NVIDIA CUDA 环境后继续；不得用 macOS 结果推断算子能力或性能。
+> **环境边界：** 当前本地分支已在 Windows RTX 3080 / SM86 上完成 clean Release、Compute Sanitizer、NSYS 和 NCU 复测。v3 与非 Graph v4 仍受 WDDM CV 或实际 performance gate 限制；仅 fixed CUDA Graph replay 按可审计的授权 exception policy 晋级为显式实现。不得将 profiler duration 或 synthetic route fixture 写成发布性能。
 
 ## 0. 面向 AI Infra/CUDA 实习的当前优先级
 
 1. **P0：关闭 F2 dispatch 与证据之间的缺口。** `HistogramExclusiveScan` 的 `Auto` 已指向 F2，但已有运行的 CV、fallback 与 L3 门禁失败。下一次 CUDA 窗口先重复 `configs/operators/scan/benchmark/fused_v2_promoted.json` 和对应 L3 suite；若仍失败，撤回默认选择而不是继续包装 speedup。
-2. **P1：把 Grouped GEMM 作为唯一主性能假设。** 最新 L3 诊断中它占 CUDA research chain kernel time 的 `64.4%`；现有候选为 106 registers/thread 且十 shape 对 CUTLASS ratio-of-sums 仅 `0.805x`。后续分别验证 task-map/负载均衡与 live-range/tile，不在一轮同时改多个机制。
-3. **P1：先补 workload，再做自动晋级。** 完成 B1/B2/B3 的 route trace、working set 和 cache 语义后再实现 A3 evaluator，否则三态决策只能是 `inconclusive`。
+2. **P1：把 Grouped GEMM 作为唯一主 kernel 性能假设。** v3 `16x64x16` tile 已实测失败：十 shape 对 CUTLASS ratio-of-sums 为 `0.9141x`；v4 descriptor queue-1024 对 v2 也是 `0.9225x`。下一轮需减少 descriptor mainloop 的 register/barrier metadata 代价，不能再叠加 tile、prepass thread-count 与 queue 机制。
+3. **P1：补真实 workload，而不是扩充 synthetic shape。** route-trace schema、frame working set 和 evaluator 已实现；在匿名 captured/production trace 与通用 cache working set 到位前，real-trace policy 必须返回 `insufficient_evidence`。
 4. **P2：整理真实 L3 证据。** PR #31/#32 合并到实验分支而非 `main`；未来需要以当前 `main` 重整、校验语义和来源后再决定是否合入，当前文档不得把它们写成已发布能力。
 5. **P2：修复 evidence policy 漂移。** 清理 `l3_three_way_20260805` 中直接进入 Git 的 profiler 二进制，并增加扩展名/角色检查；超大 comparison JSON 应压缩为摘要，完整文件进入 immutable Release 资产。
 6. **P3：低精度与新架构。** FP16/BF16 Tensor Core、Linux CUDA CI、H100/Blackwell 实卡验证属于后续增强；完成真实 kernel 与实卡验证前不进入简历成果。
@@ -19,9 +19,9 @@
 
 1. 多 variant suite 与 registry（已实现）；
 2. 可审计聚合与严格配对比较（已实现）；
-3. 版本化 workload、真实 route trace 与 working-set sweep；
-4. 三态 promotion evaluator；
-5. profiler 指标、图表和 release bundle 固化。
+3. 版本化 workload 与 route-trace/frame working set（已实现；真实 trace 待输入）；
+4. 三态 promotion evaluator（已实现）；
+5. profiler 指标、shape heatmap 和 compact bundle（已实现；通用 working-set sweep 待补）。
 
 `raggedroute.suite.v1`、`raggedroute.benchmark.v1` 与 `raggedroute.aggregate.v1` 在迁移期继续可读；v2 不覆盖已有 raw evidence。现有 v1 的计时与结果边界以 [benchmark-architecture.md](benchmark-architecture.md) 为准，本文只定义新增能力。
 
@@ -46,14 +46,14 @@
 
 ### A3. 质量门禁与三态 promotion
 
-> **执行依赖：** A3 的 schema 与 policy 可以提前设计，但只有 B2 的 trace 证据和 B3 的 cache 语义到位后，evaluator 才能产生 `eligible` 或 `rejected`；在此之前一律为 `inconclusive`。
+> **执行边界：** evaluator 已实现；普通 synthetic matrix 可以产生三态结论，要求真实 trace 的 policy 只有在 `workload_source` 为 `captured` 或 `production` 时才有资格 `promote/reject`，否则为 `insufficient_evidence`。
 
-- [ ] 定义 `raggedroute.quality_gate.v1` 和 `raggedroute.promotion_decision.v1`，实现 evaluator，输出仅允许 `eligible`、`rejected`、`inconclusive`。
-- [ ] evaluator 只生成证据和建议，不自动修改 runtime 默认 dispatch。
-- [ ] 高 CV、缺少必需 trace、质量门禁未执行、配对缺失或协议不完整归为 `inconclusive`。
-- [ ] 数据有效但未达到 speedup shape coverage、trace ratio-of-sums、最大单点退化或 workspace 门槛时归为 `rejected`。
+- [x] 定义 `raggedroute.promotion_decision.v1`，实现 evaluator，输出仅允许 `promote`、`reject`、`insufficient_evidence`。
+- [x] evaluator 只生成证据和建议，不自动修改 runtime 默认 dispatch。
+- [x] 高 CV、缺少必需 trace、质量门禁未执行、配对缺失或协议不完整归为 `insufficient_evidence`。
+- [x] 数据有效但未达到 speedup shape coverage、ratio-of-sums、最大单点退化或 workspace 门槛时归为 `reject`。
 - [ ] workspace 门槛固定为：baseline workspace 为 0 时，candidate 最多增加 **64 MiB**；baseline 非零时，增长不超过 **25%**。
-- [ ] 只有 `eligible`、人工 review 通过并完成完整 release 复测后，才能另行提交默认 dispatch 变更。
+- [x] 只有 `promote`、人工 review 通过并完成完整 release 复测后，才能另行提交默认 dispatch 变更。
 
 ## 3. 里程碑 B：完整工作负载与结果管线
 
@@ -65,9 +65,9 @@
 
 ### B2. Route trace
 
-- [ ] 定义 `raggedroute.route_trace.v1`：记录来源与 revision、frame、`T/E/top_k`、route weights、top-k ids 和内容 SHA256。
-- [ ] 加载时校验数组长度、expert id 范围、每个 token 内 expert 去重、权重有效性及 SHA256；任何失败均拒绝运行。
-- [ ] 只有 top-k ids 的 trace 可以真实驱动 Histogram 及后续 post-gate 算子。为 `chain_from_logits` 合成 logits 时必须标记 `synthetic_from_ids`，不得称为真实 router projection 或真实 gate latency。
+- [x] 定义 `raggedroute.route_trace.v1`：记录来源、trace ID、`T/E/top_k` 和多 frame top-k ids；normalized `.rrtrace` 及 run manifest 记录内容 SHA256。
+- [x] 加载时校验数组长度、expert id 范围、每个 token 内 expert 去重、frame/trace ID 与 normalized 内容；任何失败均拒绝运行。
+- [x] top-k ids trace 驱动 Token Permute、Grouped GEMM 与 `chain_from_logits`；`chain_from_tokens` 明确拒绝 trace，fixture 不冒充真实 router projection/gate latency。
 
 ### B3. Working set 与 cache 语义
 
@@ -79,21 +79,21 @@
 
 - [x] 为 NCU/NSYS 报告增加 text sidecar 与 metrics 抽取；不可用指标保存明确状态，不能用 0 代替缺失值。
 - [x] profiler duration 只用于瓶颈诊断，永不进入正式 latency、speedup 或 promotion 计算。
-- [ ] 增加 shape heatmap、working-set sweep、distribution/trace，以及 L1/L2/L3 breakdown 图表脚本；所有图表可追溯到 comparison/aggregate 输入。
+- [x] 增加由 promotion decision 生成的 shape heatmap 与 compact summary；通用 working-set sweep、distribution 和 L1/L2/L3 breakdown 图仍待补。
 - [x] 迁移到 `raggedroute.evidence_bundle.v2`：Git 固化 report、compact summary/comparison、normalized profiler metrics、manifest 与 `SHA256SUMS`；raw JSONL/full aggregate/run manifest/NCU/NSYS/SQLite 进入不可覆盖 Release ZIP，无法恢复的历史文件显式标记 `unavailable`。
 - [ ] 增加仓库级 evidence policy gate：拒绝新的 `.ncu-rep`、`.nsys-rep`、SQLite 和未压缩 full aggregate/comparison 进入 Git；处理 `l3_three_way_20260805` 的既有例外。
-- [ ] 补齐真实 trace 和可追溯图表；现有 v2 bundle 已记录 promotion/拒绝决策，但不因此升级缺失证据的复现等级。
+- [ ] 补齐 captured/production trace；现有 synthetic fixture、可追溯 heatmap 与 v3 bundle 不因此升级真实 workload 的复现等级。
 
 ## 4. 验收测试
 
 - [x] suite v1/v2 兼容；多 variant 复用 case ID、seed、params、协议与计时边界。
 - [x] 公平 join 拒绝矩阵覆盖 GPU、build、case config、math、seed、level、cache、repeats、排除项、candidate/baseline 缺失与重复。
 - [x] comparison 验证单 shape speedup、unweighted geometric mean 和 trace ratio-of-sums；保留 baseline/candidate 原始 latency。
-- [ ] promotion 覆盖三种状态、高 CV、缺 trace、门禁缺失、coverage、最大退化，以及 workspace 的 64 MiB/25% 两条边界。
-- [ ] route trace 覆盖损坏 hash、长度错误、越界 id、token 内重复 expert 与非法权重；`synthetic_from_ids` 标签不可省略。
+- [x] promotion 覆盖三种状态、高 CV、缺真实 trace、provenance 缺失、correctness 优先级、无效 timing 与 JSON `null`。
+- [x] route trace 覆盖 normalization、token 内重复 expert、frame working-set 展开；更完整的损坏输入矩阵仍可继续扩充。
 - [ ] working-set rotation 验证 requested/resolved bytes、副本轮转、L2 元数据和 cold-scrub repeats 约束。
 - [x] profiler metric alias 与缺失指标状态、NSYS/NCU 文本 sidecar、freeze bundle 非覆盖和 `SHA256SUMS` 完整性校验已实现。
-- [ ] shape/working-set/distribution 图表与 plot smoke 尚未实现。
+- [x] shape heatmap 与 deterministic compact ZIP smoke 已实现；working-set/distribution 图仍待补。
 - [x] 首次 clean Release naive/library/NSYS/NCU text evidence bundle 已在 RTX 3080 采集并提交。
 
 ## 5. 基线口径提醒

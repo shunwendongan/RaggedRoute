@@ -1,0 +1,107 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_cuda_graph_postlogit_postroute_release_v1",
+  "protocol": "release",
+  "process_runs": 5,
+  "common": {
+    "warmup": 20,
+    "samples": 30,
+    "kernel_repeats": 1,
+    "seed": 20260828,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "graph.postlogit.steady.fixed",
+      "suite": "chain_from_logits",
+      "levels": ["l4"],
+      "variants": [
+        {"name": "cuda_postlogit_integrated_latest", "promotion_baseline": true},
+        {"name": "cuda_postlogit_graph_fixed_v1", "promotion_baseline": false}
+      ],
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    },
+    {
+      "id": "graph.postlogit.dynamic.update",
+      "suite": "chain_from_logits",
+      "levels": ["l4"],
+      "variants": [
+        {"name": "cuda_postlogit_integrated_latest", "promotion_baseline": true},
+        {"name": "cuda_postlogit_graph_param_update_v2", "promotion_baseline": false},
+        {"name": "cuda_postlogit_graph_exec_update_v3", "promotion_baseline": false}
+      ],
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    },
+    {
+      "id": "graph.postlogit.cache_hit.fixed_shape",
+      "suite": "chain_from_logits",
+      "levels": ["l4"],
+      "variants": [
+        {"name": "cuda_postlogit_integrated_latest", "promotion_baseline": true},
+        {"name": "cuda_postlogit_graph_cache_v4", "promotion_baseline": false}
+      ],
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4, "graph_cache_tokens": "512"}
+    },
+    {
+      "id": "graph.postlogit.cache_miss_lru17",
+      "suite": "chain_from_logits",
+      "levels": ["l4"],
+      "variants": [
+        {"name": "cuda_postlogit_integrated_latest", "promotion_baseline": true},
+        {"name": "cuda_postlogit_graph_cache_v4", "promotion_baseline": false}
+      ],
+      "params": {
+        "T": 512, "E": 64, "K": 128, "N": 128, "distribution": "uniform", "zipf_s": 0.0,
+        "graph_cache_tokens": "496,497,498,499,500,501,502,503,504,505,506,507,508,509,510,511,512"
+      }
+    },
+    {
+      "id": "graph.postroute.steady.fixed.topk248",
+      "suite": "chain_from_route_ids",
+      "levels": ["l4"],
+      "variants": [
+        {"name": "cuda_postroute_current_v1", "promotion_baseline": true},
+        {"name": "cuda_postroute_graph_fixed_v1", "promotion_baseline": false}
+      ],
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4},
+      "matrix": {"top_k": [2, 4, 8]}
+    },
+    {
+      "id": "graph.postroute.dynamic.update.topk248",
+      "suite": "chain_from_route_ids",
+      "levels": ["l4"],
+      "variants": [
+        {"name": "cuda_postroute_current_v1", "promotion_baseline": true},
+        {"name": "cuda_postroute_graph_param_update_v2", "promotion_baseline": false},
+        {"name": "cuda_postroute_graph_exec_update_v3", "promotion_baseline": false}
+      ],
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4},
+      "matrix": {"top_k": [2, 4, 8]}
+    },
+    {
+      "id": "graph.postroute.cache_hit.fixed_shape.topk248",
+      "suite": "chain_from_route_ids",
+      "levels": ["l4"],
+      "variants": [
+        {"name": "cuda_postroute_current_v1", "promotion_baseline": true},
+        {"name": "cuda_postroute_graph_cache_v4", "promotion_baseline": false}
+      ],
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4, "graph_cache_tokens": "512"},
+      "matrix": {"top_k": [2, 4, 8]}
+    },
+    {
+      "id": "graph.postroute.cache_miss_lru17",
+      "suite": "chain_from_route_ids",
+      "levels": ["l4"],
+      "variants": [
+        {"name": "cuda_postroute_current_v1", "promotion_baseline": true},
+        {"name": "cuda_postroute_graph_cache_v4", "promotion_baseline": false}
+      ],
+      "params": {
+        "T": 512, "E": 64, "top_k": 4, "K": 128, "N": 128, "distribution": "uniform", "zipf_s": 0.0,
+        "graph_cache_tokens": "496,497,498,499,500,501,502,503,504,505,506,507,508,509,510,511,512",
+        "graph_cache_topks": "4"
+      }
+    }
+  ]
+}

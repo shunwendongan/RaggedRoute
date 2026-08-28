@@ -3,11 +3,14 @@
 #include <cuda_runtime_api.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdint>
+#include <fstream>
 #include <limits>
 #include <map>
 #include <random>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -170,6 +173,27 @@ inline int checked_int_product(int left, int right, const std::string& label) {
   return left * right;
 }
 
+inline std::vector<int> parse_positive_int_list(const std::string& text,
+                                                const std::string& label) {
+  if (text.empty()) throw std::invalid_argument(label + " must not be empty");
+  std::vector<int> values;
+  std::size_t begin = 0;
+  while (begin <= text.size()) {
+    const std::size_t end = text.find(',', begin);
+    const std::string item = text.substr(begin, end == std::string::npos ? end : end - begin);
+    if (item.empty()) throw std::invalid_argument(label + " contains an empty item");
+    std::size_t consumed = 0;
+    const long long value = std::stoll(item, &consumed);
+    if (consumed != item.size() || value < 1 || value > std::numeric_limits<int>::max()) {
+      throw std::invalid_argument(label + " contains an invalid positive integer: " + item);
+    }
+    values.push_back(static_cast<int>(value));
+    if (end == std::string::npos) break;
+    begin = end + 1;
+  }
+  return values;
+}
+
 inline std::vector<float> make_random_floats(std::size_t count, std::uint64_t seed,
                                              float low = -1.0F, float high = 1.0F) {
   std::mt19937_64 engine(seed);
@@ -186,7 +210,7 @@ inline std::vector<std::int32_t> make_route_ids(int tokens, int top_k, int exper
     throw std::invalid_argument("route shape requires tokens>=1 and experts>=top_k>=1");
   }
   if (distribution != "uniform" && distribution != "zipf" && distribution != "single_hot" &&
-      distribution != "round_robin") {
+      distribution != "round_robin" && distribution != "duplicate_route") {
     throw std::invalid_argument("unsupported distribution: " + distribution);
   }
 
@@ -203,7 +227,9 @@ inline std::vector<std::int32_t> make_route_ids(int tokens, int top_k, int exper
   for (int token = 0; token < tokens; ++token) {
     for (int rank = 0; rank < top_k; ++rank) {
       int candidate = 0;
-      if (distribution == "single_hot") {
+      if (distribution == "duplicate_route") {
+        candidate = 0;
+      } else if (distribution == "single_hot") {
         candidate = rank;
       } else if (distribution == "round_robin") {
         candidate = (token + rank) % experts;
@@ -219,6 +245,80 @@ inline std::vector<std::int32_t> make_route_ids(int tokens, int top_k, int exper
     }
   }
   return ids;
+}
+
+struct RouteTraceFrame {
+  std::string trace_id;
+  std::string source_kind;
+  std::string frame_id;
+  int tokens = 0;
+  int experts = 0;
+  int top_k = 0;
+  int frame_count = 0;
+  std::vector<std::int32_t> expert_ids;
+};
+
+inline bool is_portable_route_trace_id(const std::string& value) {
+  if (value.empty()) return false;
+  return std::all_of(value.begin(), value.end(), [](char character) {
+    const auto byte = static_cast<unsigned char>(character);
+    return std::isalnum(byte) != 0 || character == '.' || character == '_' || character == '-';
+  });
+}
+
+inline RouteTraceFrame load_route_trace_frame(const std::string& path, int requested_frame) {
+  if (path.empty() || requested_frame < 0) {
+    throw std::invalid_argument("route_trace_path and route_trace_frame are invalid");
+  }
+  std::ifstream input(path);
+  if (!input) throw std::invalid_argument("cannot open route trace: " + path);
+  std::string schema;
+  RouteTraceFrame result;
+  if (!std::getline(input, schema) || schema != "raggedroute.route_trace.v1" ||
+      !std::getline(input, result.trace_id) || !std::getline(input, result.source_kind) ||
+      !(input >> result.tokens >> result.experts >> result.top_k >> result.frame_count)) {
+    throw std::invalid_argument("invalid route trace header: " + path);
+  }
+  if (!is_portable_route_trace_id(result.trace_id) ||
+      (result.source_kind != "production" && result.source_kind != "captured" &&
+       result.source_kind != "synthetic_fixture") ||
+      result.tokens < 1 || result.experts < 1 || result.experts > 64 ||
+      result.top_k < 1 || result.top_k > result.experts || result.frame_count < 1 ||
+      requested_frame >= result.frame_count) {
+    throw std::invalid_argument("invalid route trace metadata: " + path);
+  }
+  const std::size_t route_pairs =
+      static_cast<std::size_t>(result.tokens) * static_cast<std::size_t>(result.top_k);
+  std::set<std::string> frame_ids;
+  for (int frame = 0; frame < result.frame_count; ++frame) {
+    std::string frame_id;
+    if (!(input >> frame_id) || !is_portable_route_trace_id(frame_id) ||
+        !frame_ids.insert(frame_id).second) {
+      throw std::invalid_argument("route trace frame id is invalid or duplicated: " + path);
+    }
+    std::vector<std::int32_t> ids(route_pairs);
+    for (std::size_t route = 0; route < route_pairs; ++route) {
+      if (!(input >> ids[route]) || ids[route] < 0 || ids[route] >= result.experts) {
+        throw std::invalid_argument("route trace contains an invalid expert id: " + path);
+      }
+    }
+    for (int token = 0; token < result.tokens; ++token) {
+      const auto begin = ids.begin() + static_cast<std::ptrdiff_t>(token * result.top_k);
+      const auto end = begin + result.top_k;
+      std::vector<std::int32_t> selected(begin, end);
+      std::sort(selected.begin(), selected.end());
+      if (std::adjacent_find(selected.begin(), selected.end()) != selected.end()) {
+        throw std::invalid_argument("route trace repeats an expert within one token: " + path);
+      }
+    }
+    if (frame == requested_frame) {
+      result.frame_id = std::move(frame_id);
+      result.expert_ids = std::move(ids);
+    }
+  }
+  std::string trailing;
+  if (input >> trailing) throw std::invalid_argument("route trace has trailing data: " + path);
+  return result;
 }
 
 inline std::vector<std::int32_t> counts_from_ids(const std::vector<std::int32_t>& ids,

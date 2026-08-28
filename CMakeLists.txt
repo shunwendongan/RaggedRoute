@@ -82,6 +82,8 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     src/grouped_gemm/cuda_naive/baseline.cu
     src/grouped_gemm/cuda_candidate/optimized.cu
     src/grouped_gemm/cuda_candidate/optimized_register.cu
+    src/grouped_gemm/cuda_candidate/optimized_descriptor.cu
+    src/grouped_gemm/cuda_candidate/optimized_wide.cu
     src/unpermute/cuda_naive/baseline.cu
     src/unpermute/cuda_candidate/optimized.cu)
   add_library(RaggedRoute::baseline_ops ALIAS raggedroute_baseline_ops)
@@ -210,7 +212,8 @@ if(RAGGEDROUTE_ENABLE_CUDA)
       benchmarks/adapters/token_permute_adapter.cpp
       benchmarks/adapters/grouped_gemm_adapter.cpp
       benchmarks/adapters/unpermute_adapter.cpp
-      benchmarks/adapters/chain_adapter.cpp)
+      benchmarks/adapters/chain_adapter.cpp
+      benchmarks/adapters/postroute_chain_adapter.cpp)
     target_include_directories(raggedroute_benchmark_core PUBLIC
       "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>")
     target_include_directories(raggedroute_benchmark_core PRIVATE

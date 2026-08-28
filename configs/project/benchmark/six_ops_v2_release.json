@@ -1,0 +1,44 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_six_ops_v2_unified_release_v1",
+  "protocol": "release",
+  "process_runs": 5,
+  "common": {"warmup": 20, "samples": 30, "kernel_repeats": 1, "seed": 20260825, "cache_mode": "warm"},
+  "cases": [
+    {
+      "id": "six_ops.uniform.t64_e16_k64_n64", "suite": "chain_from_logits", "levels": ["l3"], "workload": {"trace_weight": 1.0},
+      "variants": [{"name": "cuda_postlogit_retained_main", "promotion_baseline": true}, {"name": "cuda_postlogit_integrated_latest", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}],
+      "params": {"T": 64, "E": 16, "K": 64, "N": 64, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "six_ops.zipf14.t128_e16_k64_n64", "suite": "chain_from_logits", "levels": ["l3"], "workload": {"trace_weight": 1.0},
+      "variants": [{"name": "cuda_postlogit_retained_main", "promotion_baseline": true}, {"name": "cuda_postlogit_integrated_latest", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}],
+      "params": {"T": 128, "E": 16, "K": 64, "N": 64, "distribution": "zipf", "zipf_s": 1.4}
+    },
+    {
+      "id": "six_ops.uniform.t512_e64_k128_n128", "suite": "chain_from_logits", "levels": ["l3"], "workload": {"trace_weight": 1.0},
+      "variants": [{"name": "cuda_postlogit_retained_main", "promotion_baseline": true}, {"name": "cuda_postlogit_integrated_latest", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}],
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "six_ops.zipf14.t512_e64_k128_n128", "suite": "chain_from_logits", "levels": ["l3"], "workload": {"trace_weight": 1.0},
+      "variants": [{"name": "cuda_postlogit_retained_main", "promotion_baseline": true}, {"name": "cuda_postlogit_integrated_latest", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}],
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    },
+    {
+      "id": "six_ops.uniform.t2048_e64_k128_n128", "suite": "chain_from_logits", "levels": ["l3"], "workload": {"trace_weight": 1.0},
+      "variants": [{"name": "cuda_postlogit_retained_main", "promotion_baseline": true}, {"name": "cuda_postlogit_integrated_latest", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}],
+      "params": {"T": 2048, "E": 64, "K": 128, "N": 128, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "six_ops.zipf14.t2048_e64_k128_n128", "suite": "chain_from_logits", "levels": ["l3"], "workload": {"trace_weight": 1.0},
+      "variants": [{"name": "cuda_postlogit_retained_main", "promotion_baseline": true}, {"name": "cuda_postlogit_integrated_latest", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}],
+      "params": {"T": 2048, "E": 64, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    },
+    {
+      "id": "six_ops.zipf14.t512_e64_k128_n128.cold_scrub", "suite": "chain_from_logits", "levels": ["l3"], "cache_mode": "cold_scrub", "cache_scrub_bytes": 67108864, "kernel_repeats_by_level": {"l3": 1}, "workload": {"trace_weight": 1.0},
+      "variants": [{"name": "cuda_postlogit_retained_main", "promotion_baseline": true}, {"name": "cuda_postlogit_integrated_latest", "promotion_baseline": false}, {"name": "cuda_naive", "promotion_baseline": false}],
+      "params": {"T": 512, "E": 64, "K": 128, "N": 128, "distribution": "zipf", "zipf_s": 1.4}
+    }
+  ]
+}

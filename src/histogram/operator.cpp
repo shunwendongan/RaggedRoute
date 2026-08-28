@@ -34,7 +34,7 @@ Status histogram(const HistogramArgs& args, const RuntimeContext& context) noexc
                                "histogram dispatch selected an unknown kernel");
   }
   if (!optimized || ops::histogram_optimized_requires_external_reset(
-                        decision.kernel.implementation_id, args.route_pairs)) {
+                        decision.kernel.implementation_id, args.route_pairs, args.experts)) {
     status = detail::cuda_status(
         cudaMemsetAsync(args.counts, 0,
                         static_cast<std::size_t>(args.experts) * sizeof(*args.counts),

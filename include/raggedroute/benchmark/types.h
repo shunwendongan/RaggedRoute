@@ -104,6 +104,9 @@ struct BenchmarkRecord {
   WorkEstimate work;
   EnvironmentInfo environment;
   MeasurementSummary timing;
+  std::optional<MeasurementSummary> gpu_span_timing;
+  std::optional<MeasurementSummary> host_time_to_solution_timing;
+  std::optional<MeasurementSummary> cpu_submission_timing;
   ValidationResult validation;
 };
 

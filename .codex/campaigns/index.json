@@ -1,8 +1,11 @@
 {
   "schema_version": "raggedroute.kernel_campaign_index.v1",
-  "active": "topk_gate",
-  "priority": ["topk_gate", "grouped_gemm", "dense_gemm", "permute", "unpermute", "scan", "histogram"],
+  "active": "six_ops_v4_aggressive",
+  "priority": ["six_ops_v4_aggressive", "six_ops_v3", "six_ops_v2", "grouped_gemm", "permute", "topk_gate", "dense_gemm", "unpermute", "scan", "histogram"],
   "campaigns": {
+    "six_ops_v4_aggressive": "six_ops_v4_aggressive.json",
+    "six_ops_v3": "six_ops_v3.json",
+    "six_ops_v2": "six_ops_v2.json",
     "dense_gemm": "dense_gemm.json",
     "topk_gate": "topk_gate.json",
     "histogram": "histogram.json",

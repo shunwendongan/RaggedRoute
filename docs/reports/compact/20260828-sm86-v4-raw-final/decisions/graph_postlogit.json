@@ -1,0 +1,39 @@
+{
+  "baseline": "cuda_postlogit_integrated_latest",
+  "candidate": "cuda_postlogit_graph_fixed_v1",
+  "decision": "insufficient_evidence",
+  "evidence_failures": [
+    "graph.postlogit.steady.fixed/cuda_postlogit_graph_fixed_v1: max CV 0.1745 > 0.1000",
+    "graph.postlogit.steady.fixed/cuda_postlogit_integrated_latest: max CV 0.2978 > 0.1000"
+  ],
+  "performance_failures": [],
+  "reasons": [
+    "graph.postlogit.steady.fixed/cuda_postlogit_graph_fixed_v1: max CV 0.1745 > 0.1000",
+    "graph.postlogit.steady.fixed/cuda_postlogit_integrated_latest: max CV 0.2978 > 0.1000"
+  ],
+  "rows": [
+    {
+      "baseline_p50_us": 84.7500004966,
+      "baseline_p95_us": 124.494999091,
+      "baseline_workspace_bytes": 256,
+      "candidate_p50_us": 52.3000007888,
+      "candidate_p95_us": 62.6750005722,
+      "candidate_workspace_bytes": 256,
+      "case_id": "graph.postlogit.steady.fixed",
+      "p50_regression_fraction": -0.3828908497658573,
+      "p50_speedup": 1.6204588760684902,
+      "p95_regression_fraction": -0.496566118881711,
+      "p95_speedup": 1.9863581644101453
+    }
+  ],
+  "schema_version": "raggedroute.promotion_decision.v1",
+  "summary": {
+    "maximum_p50_regression_fraction": -0.3828908497658573,
+    "maximum_p95_regression_fraction": -0.496566118881711,
+    "maximum_workspace_growth_bytes": 0,
+    "paired_shapes": 1,
+    "ratio_of_sums_p50_speedup": 1.6204588760684902,
+    "shape_balanced_geometric_mean_speedup": 1.6204588760684902,
+    "shape_win_fraction": 1.0
+  }
+}

@@ -47,6 +47,9 @@ package_triton_evidence = load_module(
 package_evidence = load_module(
     "package_evidence", ROOT / "scripts" / "package_evidence.py"
 )
+analyze_histogram_levels = load_module(
+    "analyze_histogram_levels", ROOT / "scripts" / "analyze_histogram_levels.py"
+)
 validate_evidence = load_module(
     "validate_evidence", ROOT / "scripts" / "validate_evidence.py"
 )
@@ -82,6 +85,27 @@ def make_suite_v2() -> dict:
 
 
 class SuiteTests(unittest.TestCase):
+    def test_histogram_level_gap_reports_reset_and_throughput_cost(self) -> None:
+        base = {
+            "operator": "histogram", "case_id": "case", "variant": "candidate",
+            "case_config": {"R": 1000, "E": 8, "distribution": "uniform"},
+            "cache_mode": "warm", "seed": 7, "process_runs": 5, "samples": 30,
+        }
+        l1 = dict(base, measurement_level="L1_kernel_body",
+                  median_of_process_medians_us=10.0, all_samples_p95_us=12.0)
+        l2 = dict(base, measurement_level="L2_operator_steady",
+                  median_of_process_medians_us=12.5, all_samples_p95_us=15.0)
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            first, second = root / "l1.json", root / "l2.json"
+            first.write_text(json.dumps({"groups": [l1]}), encoding="utf-8")
+            second.write_text(json.dumps({"groups": [l2]}), encoding="utf-8")
+            row = analyze_histogram_levels.analyze(first, second)["rows"][0]
+        self.assertAlmostEqual(row["l2_minus_l1_p50_us"], 2.5)
+        self.assertAlmostEqual(row["l2_over_l1_p50_ratio"], 1.25)
+        self.assertAlmostEqual(row["reset_wrapper_share"], 0.2)
+        self.assertAlmostEqual(row["throughput_loss_fraction"], 0.2)
+
     def test_ci_quality_gates_and_sm86_manual_workflow_are_present(self) -> None:
         ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
         gpu = (ROOT / ".github" / "workflows" / "gpu-sm86.yml").read_text(encoding="utf-8")
@@ -182,7 +206,7 @@ class SuiteTests(unittest.TestCase):
         self.assertIn("-DCMAKE_CUDA_COMPILER=%RAGGEDROUTE_NVCC%", configure)
         self.assertIn("-DCMAKE_CUDA_HOST_COMPILER=%RAGGEDROUTE_MSVC_CL%", configure)
         self.assertIn("RAGGEDROUTE_FETCH_REFERENCES", configure)
-        self.assertIn("CMAKE_CXX_COMPILER:FILEPATH", build)
+        self.assertIn("CMAKE_CXX_COMPILER:.*=", build)
         self.assertIn("CMAKE_CUDA_COMPILER", build)
         self.assertIn("CUDA_PATH", build)
         self.assertIn("configure_windows.bat", build)
@@ -199,6 +223,13 @@ class SuiteTests(unittest.TestCase):
         self.assertIn("CUTLASS_ENABLE_TOOLS OFF", dependencies)
         self.assertNotIn("FetchContent_Declare(raggedroute_cccl_source", dependencies)
         self.assertNotIn("FetchContent_Declare(raggedroute_cutlass_source", dependencies)
+
+    def test_release_cuda_settings_include_device_optimization_and_lineinfo(self) -> None:
+        options = (ROOT / "cmake" / "RaggedRouteCompilerOptions.cmake").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("$<NOT:$<CONFIG:Debug>>>:-O3", options)
+        self.assertIn("$<NOT:$<CONFIG:Debug>>>:-lineinfo", options)
 
     def test_smoke_suite_is_versioned_and_unique(self) -> None:
         suite = run_benchmarks.load_suite(

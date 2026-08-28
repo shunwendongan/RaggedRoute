@@ -1,0 +1,49 @@
+{
+  "schema_version": "codex.kernel-research.v1",
+  "commands": {
+    "build": [
+      "cmd /d /c \"set RAGGEDROUTE_FETCH_REFERENCES=ON&& call scripts\\configure_windows.bat rtx3080-sm86-release\"",
+      "cmd /d /c call scripts\\build_windows.bat rtx3080-sm86-release"
+    ],
+    "correctness": [
+      "python scripts\\repository_checks.py",
+      "python -m unittest discover -s tests -p test_*.py",
+      "ctest --preset test-rtx3080-sm86-release --output-on-failure",
+      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\research\\six-ops-v2\\sanitizer"
+    ],
+    "smoke": [
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\project\\benchmark\\six_ops_v2_smoke.json --output out\\research\\six-ops-v2\\six-ops-v2-smoke.jsonl"
+    ],
+    "release": [
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\topk_gate\\benchmark\\release.json --output out\\research\\six-ops-v2\\topk-v4-release.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\histogram\\benchmark\\candidate_v2_final_l1.json --output out\\research\\six-ops-v2\\histogram-v2-l1-release.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\histogram\\benchmark\\candidate_v2_final_l2.json --output out\\research\\six-ops-v2\\histogram-v2-l2-release.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\scan\\benchmark\\fused_v2_promoted.json --output out\\research\\six-ops-v2\\histogram-scan-v2-release.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\permute\\benchmark\\candidate_v2_release.json --output out\\research\\six-ops-v2\\permute-v2-release.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\permute\\benchmark\\candidate_v2_library_release.json --output out\\research\\six-ops-v2\\permute-v2-vllm-release.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\grouped_gemm\\benchmark\\candidate_v2_release.json --output out\\research\\six-ops-v2\\grouped-gemm-v2-release.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\operators\\unpermute\\benchmark\\candidate_release.json --output out\\research\\six-ops-v2\\unpermute-retained-v1-release.jsonl",
+      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\project\\benchmark\\six_ops_v2_release.json --output out\\research\\six-ops-v2\\six-ops-v2-release.jsonl"
+    ]
+  },
+  "benchmark": {
+    "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
+    "profile_config": "configs\\project\\profile\\six_ops_v2.json",
+    "kernel_regex": "topk_gate_local_pair_two_reduce_kernel|histogram_single_bin_write_kernel|histogram_exclusive_scan_fused_subwarp_kernel|token_permute_token_tile4_top2_kernel|grouped_gemm_register16x32_sm86_v2_kernel|unpermute_(warp|cta)_token_vec4_kernel"
+  },
+  "variants": {"baseline": "cuda_postlogit_retained_main", "candidate": "cuda_postlogit_integrated_latest"},
+  "output": {
+    "root": "out\\research\\six-ops-v2",
+    "retention": {"keep_raw_for": ["baseline", "candidate", "final"], "rejected_candidate": "metrics-and-reason"}
+  },
+  "promotion_policy": {
+    "version": "six-ops-v2-unified-l3-v1",
+    "min_processes": 5,
+    "max_cv": 0.10,
+    "ratio_of_sums": 1.03,
+    "min_shape_win_fraction": 0.80,
+    "max_p50_regression": 0.05,
+    "max_p95_regression": 0.03,
+    "max_workspace_growth": 0.0
+  }
+}

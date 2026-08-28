@@ -13,7 +13,7 @@ set "RAGGEDROUTE_RECONFIGURE=0"
 if not exist "%CACHE%" set "RAGGEDROUTE_RECONFIGURE=1"
 
 set "RAGGEDROUTE_CACHED_CXX="
-if exist "%CACHE%" for /f "tokens=1,* delims==" %%A in ('findstr /b "CMAKE_CXX_COMPILER:FILEPATH=" "%CACHE%"') do set "RAGGEDROUTE_CACHED_CXX=%%B"
+if exist "%CACHE%" for /f "tokens=1,* delims==" %%A in ('findstr /r /b "CMAKE_CXX_COMPILER:.*=" "%CACHE%"') do set "RAGGEDROUTE_CACHED_CXX=%%B"
 if not defined RAGGEDROUTE_CACHED_CXX set "RAGGEDROUTE_RECONFIGURE=1"
 if defined RAGGEDROUTE_CACHED_CXX if not exist "%RAGGEDROUTE_CACHED_CXX%" set "RAGGEDROUTE_RECONFIGURE=1"
 

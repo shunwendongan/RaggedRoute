@@ -57,9 +57,82 @@ void run_adapter_case(const Case& test_case, cudaStream_t stream, std::uint64_t 
   }
 }
 
+void run_graph_replay_case(const std::string& suite_name, const std::string& variant,
+                           const rr::OptionMap& options, cudaStream_t stream, std::uint64_t seed,
+                           int replay_count = 1000) {
+  require(replay_count >= 2, "graph replay test requires at least two launches");
+  auto chain = rr::make_suite_adapter(suite_name, variant);
+  chain->setup(options, seed, stream);
+  for (int replay = 0; replay < replay_count; ++replay) {
+    chain->prepare_sample(rr::MeasurementLevel::kChainSteady, stream);
+    chain->enqueue(rr::MeasurementLevel::kChainSteady, stream);
+    // The first two checks make the pointer-rotation cases read both output buffers.
+    // The final check catches replay-state corruption without synchronizing every launch.
+    if (replay < 2 || replay + 1 == replay_count) {
+      rr::cuda_check(cudaStreamSynchronize(stream), "graph replay correctness sync");
+      const auto validation = chain->validate(stream);
+      require(validation.ok, suite_name + "/" + variant + " replay " + std::to_string(replay + 1) +
+                                 ": " + validation.message);
+    }
+  }
+  const auto config = chain->variant_config();
+  require(config.count("graph_kernel_nodes") == 1,
+          suite_name + "/" + variant + " does not report captured graph kernel nodes");
+  require(std::get<std::int64_t>(config.at("graph_kernel_nodes")) > 0,
+          suite_name + "/" + variant + " captured no kernel nodes");
+  if (variant.find("_graph_cache_") != std::string::npos) {
+    require(std::get<std::int64_t>(config.at("graph_cache_entries")) == 1,
+            suite_name + "/" + variant + " should have one fixed-shape cache entry");
+    require(std::get<std::int64_t>(config.at("graph_cache_misses")) == 1,
+            suite_name + "/" + variant + " should miss only on its first replay");
+    require(std::get<std::int64_t>(config.at("graph_cache_hits")) >= replay_count - 1,
+            suite_name + "/" + variant + " did not replay the cached executable");
+  }
+}
+
+void run_graph_cache_eviction_case(const std::string& suite_name, const rr::OptionMap& options,
+                                   cudaStream_t stream, std::uint64_t seed) {
+  auto chain = rr::make_suite_adapter(suite_name, suite_name == "chain_from_logits"
+                                                      ? "cuda_postlogit_graph_cache_v4"
+                                                      : "cuda_postroute_graph_cache_v4");
+  chain->setup(options, seed, stream);
+  // The request list has 17 unique keys. Eighteen launches revisit the first evicted
+  // key, proving that eviction, recapture, and the final requested output remain valid.
+  for (int replay = 0; replay < 18; ++replay) {
+    chain->prepare_sample(rr::MeasurementLevel::kChainSteady, stream);
+    chain->enqueue(rr::MeasurementLevel::kChainSteady, stream);
+  }
+  rr::cuda_check(cudaStreamSynchronize(stream), "graph cache eviction correctness sync");
+  const auto validation = chain->validate(stream);
+  require(validation.ok, suite_name + " graph cache eviction: " + validation.message);
+  const auto config = chain->variant_config();
+  require(std::get<std::int64_t>(config.at("graph_cache_capacity")) == 16,
+          suite_name + " graph cache capacity changed");
+  require(std::get<std::int64_t>(config.at("graph_cache_entries")) == 16,
+          suite_name + " graph cache did not retain exactly 16 entries after eviction");
+  require(std::get<std::int64_t>(config.at("graph_cache_misses")) >= 17,
+          suite_name + " graph cache eviction did not materialize more than its capacity");
+}
+
+void require_graph_logical_case_match(const std::string& suite_name, const std::string& baseline,
+                                      const std::string& graph_variant,
+                                      const rr::OptionMap& options, cudaStream_t stream,
+                                      std::uint64_t seed) {
+  auto direct = rr::make_suite_adapter(suite_name, baseline);
+  auto graph = rr::make_suite_adapter(suite_name, graph_variant);
+  direct->setup(options, seed, stream);
+  graph->setup(options, seed, stream);
+  require(direct->case_config() == graph->case_config(),
+          suite_name + "/" + graph_variant +
+              " changed the logical case boundary relative to its direct baseline");
+}
+
 void run_histogram_candidate_matrix(cudaStream_t stream, std::uint64_t* seed) {
-  const std::vector<int> experts = {1, 8, 16, 31, 32, 33, 64};
-  const std::vector<int> route_pairs = {1, 31, 32, 33, 255, 256, 257, 4096, 65536};
+  // R=0 is exercised through the public operator API because the benchmark adapter
+  // intentionally requires T>=1. Keep every dispatch and vector-tail boundary here.
+  const std::vector<int> experts = {1, 2, 8, 16, 31, 32, 33, 64};
+  const std::vector<int> route_pairs = {1,    31,   32,    33,    255,   256,   257,
+                                        4096, 8192, 16384, 32767, 32768, 65536, 1048576};
   const std::vector<std::pair<std::string, std::string>> distributions = {
       {"uniform", "0.0"}, {"round_robin", "0.0"}, {"zipf", "1.0"},
       {"zipf", "1.4"},    {"zipf", "2.0"},        {"single_hot", "0.0"},
@@ -78,6 +151,8 @@ void run_histogram_candidate_matrix(cudaStream_t stream, std::uint64_t* seed) {
     }
   }
   for (const int route_count : {32, 256, 4096, 65536}) {
+    // top_k=2 with single_hot deterministically targets experts 0 and 1: the
+    // dual-hot distribution required by the Histogram correctness contract.
     run_adapter_case({"histogram",
                       {{"T", std::to_string(route_count / 2)},
                        {"E", "64"},
@@ -85,6 +160,22 @@ void run_histogram_candidate_matrix(cudaStream_t stream, std::uint64_t* seed) {
                        {"distribution", "single_hot"}},
                       "cuda_candidate"},
                      stream, (*seed)++);
+  }
+  for (const std::string& variant : {"cuda_candidate_v1", "cuda_candidate_v2"}) {
+    for (const int route_count : {1, 4096, 8192, 32768, 65536, 1048576}) {
+      run_adapter_case({"histogram",
+                        {{"T", std::to_string(route_count)},
+                         {"E", "1"},
+                         {"top_k", "1"},
+                         {"distribution", "single_hot"}},
+                        variant},
+                       stream, (*seed)++);
+    }
+    run_adapter_case(
+        {"histogram",
+         {{"T", "32768"}, {"E", "64"}, {"top_k", "2"}, {"distribution", "zipf"}, {"zipf_s", "1.4"}},
+         variant},
+        stream, (*seed)++);
   }
 }
 
@@ -196,8 +287,8 @@ int main() {
   try {
     const auto operators = rr::available_operators();
     require(operators.size() == 8, "registry must expose seven stages plus fused metadata API");
-    require(rr::available_suites().size() == 2,
-            "registry must expose the two non-overlapping chain suites");
+    require(rr::available_suites().size() == 3,
+            "registry must expose token, logits, and post-route chain suites");
     const auto summary = rr::summarize_samples({1.0, 2.0, 3.0, 4.0, 5.0});
     require(summary.p50_us == 3.0 && summary.min_us == 1.0,
             "statistics implementation is incorrect");
@@ -366,8 +457,14 @@ int main() {
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "8"}},
            "cuda_token_tile4_warp_aggregated"},
           {"token_permute",
+           {{"T", "2048"}, {"E", "64"}, {"top_k", "2"}, {"K", "512"}},
+           "cuda_token_tile2_direct"},
+          {"token_permute",
            {{"T", "1025"}, {"E", "64"}, {"top_k", "2"}, {"K", "128"}},
            "cuda_candidate_v2"},
+          {"token_permute",
+           {{"T", "4096"}, {"E", "64"}, {"top_k", "2"}, {"K", "1024"}},
+           "cuda_candidate_v3"},
           {"token_permute",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}},
            "cuda_fused_prepare_token_owned_from_ids"},
@@ -378,8 +475,31 @@ int main() {
            {{"T", "1025"}, {"E", "64"}, {"top_k", "2"}, {"K", "128"}},
            "cuda_candidate_v2_from_ids"},
           {"token_permute",
-           {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "8"}},
-           "cuda_candidate"},
+           {{"T", "2048"}, {"E", "64"}, {"top_k", "2"}, {"K", "512"}},
+           "cuda_candidate_v3_from_ids"},
+          {"token_permute",
+           {{"T", "17"},
+            {"E", "16"},
+            {"top_k", "2"},
+            {"K", "19"},
+            {"distribution", "duplicate_route"}},
+           "cuda_routeprep_shared_rank_t256_v1"},
+          {"token_permute",
+           {{"T", "65"},
+            {"E", "16"},
+            {"top_k", "4"},
+            {"K", "64"},
+            {"distribution", "duplicate_route"}},
+           "cuda_permute_token_owned_topk4_v4"},
+          {"token_permute",
+           {{"T", "129"},
+            {"E", "64"},
+            {"top_k", "8"},
+            {"K", "128"},
+            {"distribution", "zipf"},
+            {"zipf_s", "1.4"}},
+           "cuda_permute_token_owned_topk8_v4"},
+          {"token_permute", {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "8"}}, "cuda_candidate"},
           {"token_permute",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}},
            "cuda_candidate_from_ids"},
@@ -395,7 +515,8 @@ int main() {
            "cublas_per_expert"},
           {"grouped_gemm",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
-           "cutlass_grouped", rr::MeasurementLevel::kKernelBody},
+           "cutlass_grouped",
+           rr::MeasurementLevel::kKernelBody},
           {"grouped_gemm",
            {{"T", "5"}, {"E", "4"}, {"top_k", "2"}, {"K", "7"}, {"N", "5"}},
            "cuda_grouped_tiled16_sync_v0"},
@@ -433,30 +554,42 @@ int main() {
       }
       run_histogram_candidate_matrix(stream, &seed);
       const std::vector<rr::OptionMap> unpermute_candidate_shapes = {
-          {{"T", "1"}, {"E", "64"}, {"top_k", "1"}, {"N", "1"},
+          {{"T", "1"}, {"E", "64"}, {"top_k", "1"}, {"N", "1"}, {"distribution", "round_robin"}},
+          {{"T", "17"}, {"E", "64"}, {"top_k", "2"}, {"N", "3"}, {"distribution", "uniform"}},
+          {{"T", "64"}, {"E", "64"}, {"top_k", "4"}, {"N", "4"}, {"distribution", "round_robin"}},
+          {{"T", "512"}, {"E", "64"}, {"top_k", "64"}, {"N", "7"}, {"distribution", "single_hot"}},
+          {{"T", "64"},
+           {"E", "64"},
+           {"top_k", "2"},
+           {"N", "63"},
+           {"distribution", "zipf"},
+           {"zipf_s", "1.4"}},
+          {{"T", "4096"}, {"E", "64"}, {"top_k", "2"}, {"N", "64"}, {"distribution", "uniform"}},
+          {{"T", "17"},
+           {"E", "64"},
+           {"top_k", "2"},
+           {"N", "65"},
+           {"distribution", "zipf"},
+           {"zipf_s", "1.4"}},
+          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"N", "255"}, {"distribution", "uniform"}},
+          {{"T", "1024"},
+           {"E", "64"},
+           {"top_k", "2"},
+           {"N", "256"},
+           {"distribution", "zipf"},
+           {"zipf_s", "1.4"}},
+          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"N", "257"}, {"distribution", "uniform"}},
+          {{"T", "64"},
+           {"E", "64"},
+           {"top_k", "2"},
+           {"N", "1024"},
            {"distribution", "round_robin"}},
-          {{"T", "17"}, {"E", "64"}, {"top_k", "2"}, {"N", "3"},
-           {"distribution", "uniform"}},
-          {{"T", "64"}, {"E", "64"}, {"top_k", "4"}, {"N", "4"},
-           {"distribution", "round_robin"}},
-          {{"T", "512"}, {"E", "64"}, {"top_k", "64"}, {"N", "7"},
-           {"distribution", "single_hot"}},
-          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"N", "63"},
-           {"distribution", "zipf"}, {"zipf_s", "1.4"}},
-          {{"T", "4096"}, {"E", "64"}, {"top_k", "2"}, {"N", "64"},
-           {"distribution", "uniform"}},
-          {{"T", "17"}, {"E", "64"}, {"top_k", "2"}, {"N", "65"},
-           {"distribution", "zipf"}, {"zipf_s", "1.4"}},
-          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"N", "255"},
-           {"distribution", "uniform"}},
-          {{"T", "1024"}, {"E", "64"}, {"top_k", "2"}, {"N", "256"},
-           {"distribution", "zipf"}, {"zipf_s", "1.4"}},
-          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"N", "257"},
-           {"distribution", "uniform"}},
-          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"N", "1024"},
-           {"distribution", "round_robin"}},
-          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"N", "256"},
-           {"distribution", "uniform"}, {"pointer_offset_elements", "1"}},
+          {{"T", "64"},
+           {"E", "64"},
+           {"top_k", "2"},
+           {"N", "256"},
+           {"distribution", "uniform"},
+           {"pointer_offset_elements", "1"}},
       };
       for (const auto& shape : unpermute_candidate_shapes) {
         run_adapter_case({"unpermute", shape, "cuda_warp_token_vec4"}, stream, seed++);
@@ -524,18 +657,42 @@ int main() {
         }
       }
       const std::vector<rr::OptionMap> grouped_edge_shapes = {
-          {{"T", "17"}, {"E", "8"}, {"top_k", "2"}, {"K", "13"}, {"N", "11"},
-           {"distribution", "zipf"}, {"zipf_s", "1.0"}},
-          {{"T", "16"}, {"E", "64"}, {"top_k", "2"}, {"K", "64"}, {"N", "64"},
+          {{"T", "17"},
+           {"E", "8"},
+           {"top_k", "2"},
+           {"K", "13"},
+           {"N", "11"},
+           {"distribution", "zipf"},
+           {"zipf_s", "1.0"}},
+          {{"T", "16"},
+           {"E", "64"},
+           {"top_k", "2"},
+           {"K", "64"},
+           {"N", "64"},
            {"distribution", "round_robin"}},
-          {{"T", "64"}, {"E", "64"}, {"top_k", "2"}, {"K", "128"}, {"N", "128"},
+          {{"T", "64"},
+           {"E", "64"},
+           {"top_k", "2"},
+           {"K", "128"},
+           {"N", "128"},
            {"distribution", "single_hot"}},
       };
       for (const std::string& variant :
            {"cuda_grouped_tiled16_sync_v0", "cuda_grouped_persistent16_v1",
             "cuda_grouped_register16x32_sync_v2", "cuda_grouped_register16x32_async_v3",
-            "cuda_grouped_register16x32_async_full_v4",
-            "cuda_grouped_sm86_fp32_v1"}) {
+            "cuda_grouped_register16x32_async_full_v4", "cuda_grouped_sm86_fp32_v1",
+            "cuda_grouped_sm86_fp32_v2", "cuda_grouped_sm86_fp32_v3"}) {
+        for (const auto& shape : grouped_edge_shapes) {
+          run_adapter_case({"grouped_gemm", shape, variant}, stream, seed++);
+        }
+      }
+      for (const std::string& variant : {"cuda_grouped_sm86_fp32_v4a_desc_static_t256",
+                                         "cuda_grouped_sm86_fp32_v4a_desc_static_t512",
+                                         "cuda_grouped_sm86_fp32_v4a_desc_static_t1024",
+                                         "cuda_grouped_sm86_fp32_v4a_desc_queue_t256",
+                                         "cuda_grouped_sm86_fp32_v4a_desc_queue_t512",
+                                         "cuda_grouped_sm86_fp32_v4a_desc_queue_t1024",
+                                         "cuda_grouped_sm86_fp32_v4b_cache_order"}) {
         for (const auto& shape : grouped_edge_shapes) {
           run_adapter_case({"grouped_gemm", shape, variant}, stream, seed++);
         }
@@ -545,21 +702,95 @@ int main() {
       for (const auto& suite_name : rr::available_suites()) {
         for (const auto& variant : rr::available_suite_variants(suite_name)) {
           auto chain = rr::make_suite_adapter(suite_name, variant);
-          rr::OptionMap options = {{"T", "5"},
-                                   {"E", "4"},
-                                   {"K", "7"},
-                                   {"N", "5"},
-                                   {"distribution", "uniform"}};
+          rr::OptionMap options = {
+              {"T", "5"}, {"E", "4"}, {"K", "7"}, {"N", "5"}, {"distribution", "uniform"}};
           chain->setup(options, seed++, stream);
           chain->prepare_sample(rr::MeasurementLevel::kChainSteady, stream);
           chain->enqueue(rr::MeasurementLevel::kChainSteady, stream);
           rr::cuda_check(cudaStreamSynchronize(stream), "chain correctness sync");
           const auto validation = chain->validate(stream);
           require(validation.ok, suite_name + "/" + variant + ": " + validation.message);
-          std::cout << "PASS " << suite_name << "/" << variant << " - "
-                    << validation.message << '\n';
+          std::cout << "PASS " << suite_name << "/" << variant << " - " << validation.message
+                    << '\n';
         }
       }
+      for (const int top_k : {4, 8}) {
+        for (const std::string& variant :
+             {"cuda_postroute_current_v1", "cuda_postroute_shared_rank_t256_v1",
+              "cuda_postroute_shared_rank_t512_v1", "cuda_postroute_shared_rank_t1024_v1",
+              "cuda_postroute_token_owned_v4", "cuda_postroute_grouped_v4a_desc",
+              "cuda_postroute_gather_grouped_v1"}) {
+          auto chain = rr::make_suite_adapter("chain_from_route_ids", variant);
+          chain->setup({{"T", "17"},
+                        {"E", "16"},
+                        {"top_k", std::to_string(top_k)},
+                        {"K", "64"},
+                        {"N", "64"},
+                        {"distribution", "duplicate_route"}},
+                       seed++, stream);
+          chain->enqueue(rr::MeasurementLevel::kChainSteady, stream);
+          rr::cuda_check(cudaStreamSynchronize(stream), "Top-K post-route correctness sync");
+          const auto validation = chain->validate(stream);
+          require(validation.ok, "chain_from_route_ids/" + variant + ": " + validation.message);
+        }
+      }
+
+      const rr::OptionMap postlogit_graph_options = {
+          {"T", "17"},      {"E", "16"}, {"K", "64"}, {"N", "64"}, {"distribution", "zipf"},
+          {"zipf_s", "1.4"}};
+      for (const std::string& variant :
+           {"cuda_postlogit_graph_fixed_v1", "cuda_postlogit_graph_param_update_v2",
+            "cuda_postlogit_graph_exec_update_v3", "cuda_postlogit_graph_cache_v4"}) {
+        require_graph_logical_case_match("chain_from_logits", "cuda_postlogit_integrated_latest",
+                                         variant, postlogit_graph_options, stream, seed);
+        run_graph_replay_case("chain_from_logits", variant, postlogit_graph_options, stream,
+                              seed++);
+      }
+      run_graph_cache_eviction_case(
+          "chain_from_logits",
+          {{"T", "64"},
+           {"E", "16"},
+           {"K", "64"},
+           {"N", "64"},
+           {"distribution", "uniform"},
+           {"graph_cache_tokens", "64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80"}},
+          stream, seed++);
+
+      const rr::OptionMap postroute_graph_options = {{"T", "17"},      {"E", "16"},
+                                                     {"top_k", "2"},   {"K", "64"},
+                                                     {"N", "64"},      {"distribution", "zipf"},
+                                                     {"zipf_s", "1.4"}};
+      for (const std::string& variant :
+           {"cuda_postroute_graph_fixed_v1", "cuda_postroute_graph_param_update_v2",
+            "cuda_postroute_graph_exec_update_v3", "cuda_postroute_graph_cache_v4"}) {
+        require_graph_logical_case_match("chain_from_route_ids", "cuda_postroute_current_v1",
+                                         variant, postroute_graph_options, stream, seed);
+        run_graph_replay_case("chain_from_route_ids", variant, postroute_graph_options, stream,
+                              seed++);
+      }
+      // The long replay test above establishes graph state stability. These short checks prove
+      // that fixed graph capture also honors the benchmark-only Top-K=4/8 route contracts.
+      for (const int top_k : {4, 8}) {
+        run_graph_replay_case("chain_from_route_ids", "cuda_postroute_graph_fixed_v1",
+                              {{"T", "17"},
+                               {"E", "16"},
+                               {"top_k", std::to_string(top_k)},
+                               {"K", "64"},
+                               {"N", "64"},
+                               {"distribution", "duplicate_route"}},
+                              stream, seed++, 2);
+      }
+      run_graph_cache_eviction_case(
+          "chain_from_route_ids",
+          {{"T", "64"},
+           {"E", "16"},
+           {"top_k", "2"},
+           {"K", "64"},
+           {"N", "64"},
+           {"distribution", "uniform"},
+           {"graph_cache_tokens", "64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80"},
+           {"graph_cache_topks", "2"}},
+          stream, seed++);
 
       auto permute = rr::make_adapter("token_permute", "cuda_naive");
       permute->setup({{"T", "4"}, {"E", "8"}, {"top_k", "2"}, {"K", "4"}}, seed, stream);

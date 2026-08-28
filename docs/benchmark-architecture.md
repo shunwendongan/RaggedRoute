@@ -129,7 +129,7 @@ raw JSONL → run manifest → aggregate.v2 → comparison.v1；该 Debug/tiny c
 - 输出路径必须不存在，脚本拒绝覆盖旧 run；
 - raw JSONL 和 manifest 保留，聚合器不会删除原始样本。
 
-`configs/policies/default_promotion.json` 是候选 variant 未来进入默认 dispatch 时使用的版本化标准草案：正确性必须全过，至少三次独立进程，并检查 CV、获益 shape coverage、trace ratio-of-sums、最大单点退化和 workspace 增长。当前没有 promotion evaluator；不论 naive、library 还是 optimized variant，该文件都不会自动产生晋升结论。
+`configs/policies/` 保存版本化晋级合同：正确性必须全过，并检查独立进程数、clean Release provenance、CV、获益 shape coverage、ratio-of-sums、最大单点退化和 workspace 增长。`scripts/evaluate_promotion.py` 输出 `promote`、`reject` 或 `insufficient_evidence`；缺失/不稳定证据不会被误写为性能失败，正确性失败则直接拒绝。真实 trace policy 还要求 `workload_source` 为 `captured` 或 `production`，仓库内 `synthetic_fixture` 只能验证工具链。
 
 ### Profile
 

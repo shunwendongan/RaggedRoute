@@ -1,0 +1,43 @@
+{
+  "baseline": "cuda_postlogit_integrated_latest",
+  "candidate": "cuda_postlogit_graph_fixed_v1",
+  "decision": "promote",
+  "evidence_failures": [],
+  "measurement": {
+    "cv_field": "cv",
+    "p50_field": "p50_us",
+    "p95_field": "p95_us",
+    "policy_exception": "User-authorized Windows WDDM multimodal-latency exception. The CV gate is waived only for this fixed-shape CUDA Graph host-replay policy; all other evidence, correctness, pairing, and performance gates remain enforced.",
+    "timing_cv_enforced": false,
+    "timing_source": "host_time_to_solution_timing"
+  },
+  "performance_failures": [],
+  "reasons": [
+    "all correctness, stability, performance, and workspace gates passed"
+  ],
+  "rows": [
+    {
+      "baseline_p50_us": 84.7500004966,
+      "baseline_p95_us": 124.494999091,
+      "baseline_workspace_bytes": 256,
+      "candidate_p50_us": 52.3000007888,
+      "candidate_p95_us": 62.6750005722,
+      "candidate_workspace_bytes": 256,
+      "case_id": "graph.postlogit.steady.fixed",
+      "p50_regression_fraction": -0.3828908497658573,
+      "p50_speedup": 1.6204588760684902,
+      "p95_regression_fraction": -0.496566118881711,
+      "p95_speedup": 1.9863581644101453
+    }
+  ],
+  "schema_version": "raggedroute.promotion_decision.v1",
+  "summary": {
+    "maximum_p50_regression_fraction": -0.3828908497658573,
+    "maximum_p95_regression_fraction": -0.496566118881711,
+    "maximum_workspace_growth_bytes": 0,
+    "paired_shapes": 1,
+    "ratio_of_sums_p50_speedup": 1.6204588760684902,
+    "shape_balanced_geometric_mean_speedup": 1.6204588760684902,
+    "shape_win_fraction": 1.0
+  }
+}

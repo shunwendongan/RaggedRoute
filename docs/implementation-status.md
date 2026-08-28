@@ -1,6 +1,6 @@
 # 实现状态与证据边界
 
-更新时间：2026-08-09
+更新时间：2026-08-28
 事实基线：`main@354e1ff0a3aaf602830c8d989eb358cfa857a4c9`。PR #31/#32 合并到实验分支而非 `main`，不计入下列当前能力。
 
 ## 已实现
@@ -28,6 +28,9 @@
 - L1/L2 reset 成本边界、状态型 repeat policy、raw JSONL 和聚合 JSON/CSV；
 - `raggedroute.suite.v2` 多 variant logical case：每个 case 至少两个唯一 variant、恰好一个 `promotion_baseline`，并复用 case ID、seed、params、level、cache 与采样协议；suite v1 与 `raggedroute.benchmark.v1` raw evidence 保持兼容；
 - registry 为 typed adapter 注入标准实现元数据；`raggedroute.aggregate.v2` 从 v2 manifest 保留完整配对字段，`raggedroute.comparison.v1` 对 GPU/build/语义/math/seed/level/cache/repeats/排除项严格 fail-closed，并输出 per-pair speedup、shape geometric mean 和具备权重时的 trace ratio-of-sums；
+- `raggedroute.route_trace.v1`、normalized `.rrtrace`、frame working-set 展开和 trace SHA-256 provenance；Token Permute、Grouped GEMM 与 `chain_from_logits` 可消费固定 frame，`chain_from_tokens` 明确拒绝该研究输入；
+- `raggedroute.promotion_decision.v1` 三态 evaluator：`promote`、`reject`、`insufficient_evidence`，检查 Release/clean SHA、correctness、GPU/case/process 配对、CV、coverage、ratio-of-sums、p50/p95 回退、workspace 与真实 trace provenance；
+- Grouped GEMM v3、Permute v3 与六阶段 research-v3 显式路径，以及由 decision JSON 生成的 compact report、CSV、shape heatmap、manifest、`SHA256SUMS` 和 deterministic ZIP；这些研究路径不修改 `KernelFamily::kAuto`；
 - benchmark-only library/production variants：Dense GEMM `cublaslt`/`cublas`；Histogram `cub_device_histogram`；Scan `cub_device_scan`/`cub_block_scan`/`cub_warp_scan`；Permute `cuda_naive_from_ids`、`vllm_moe_permute` 与 prepared-mapping `vllm_expand_rows`；Grouped GEMM `cublas_per_expert`、可选 `cutlass_grouped` 及 SM86 strict-FP32 C0-C4/final 实验候选；Unpermute `vllm_finalize_routing`。它们不进入 v0.2 runtime dispatch；Grouped final 因十 shape CUTLASS 门禁失败而明确不晋级；Top-K 因 tie/NaN/selected-softmax 合同尚无语义等价库实现，明确不注册伪基线；
 - 每个 `src/<operator>/library_baseline/` 均有来源记录；vLLM 固定 commit `837eae64580c885101ee95b073aafb27a485e7ce` 的改写源码保留 Apache-2.0，CUTLASS 改写入口保留 BSD-3-Clause；不提交 CUDA/cuBLAS 二进制；
 - 新增 `configs/project/benchmark/library_smoke.json`，覆盖六个可严格配对的 library/production 边界；本机 SM86 Debug 已通过 raw JSONL → aggregate.v2 → comparison.v1 全链路及所有后置 reference validation。该 tiny Debug smoke 只验证接口和公平 join，不产生性能结论；
@@ -47,16 +50,18 @@
 - 2026-08-05：Token Permute v2 作为显式研究路径保留，full-from-ids 的五 case 中心结果相对旧 candidate/vLLM 更快，但 pure-permute 28-case 存在全配对高 CV、覆盖不足和最差 shape 大幅退化，因此 `Auto` 保持 naive；
 - 2026-08-05：合入单一固定 workload 的七阶段 L3 三线路诊断报告。Selected CUDA research chain p50 为 `69.734 us`，Triton reference 为 `245.760 us`，但跨工具链比值不具 promotion 资格；该链中 Grouped GEMM 占 NSYS kernel time `64.4%`。报告见 [L3 three-way analysis](reports/l3_three_way_20260805/RaggedRoute_L3_3way_comparison.md)；
 - 2026-08-05：`main@354e1ff` 的 GitHub CI 通过 repository checks、Python tests 与 Windows/Linux CPU-only build/CTest。当前 macOS 工作区只执行 CPU-only/文档检查，不做 CUDA 能力或性能复测。
+- 2026-08-28：SM86 aggressive v4 完成 Grouped descriptor（static/queue 256/512/1024 与 cache-order）、Top-K 2/4/8 route-prep/token-owned copy、postroute gather 与 CUDA Graph 实验。Grouped descriptor、route-prep、token-owned 和 gather 未满足晋级条件，均保留为 research/rejection evidence。两个 fixed CUDA Graph replay variant 在独立的 host-time policy 下晋级为 `promoted_explicit_fixed_shape_only`：该 policy 明确记录了用户授权的 WDDM CV 例外；它只适用于固定 shape、固定 buffer/topology、setup 已完成的 replay，不改公开 API 或 `KernelFamily::kAuto`。见 [v4 Graph report](reports/rtx3080-sm86-v4-graph-promotion.md)。
 
 ## 尚未实现，禁止据此宣称
 
 - 通用的 failure artifact 自动重放、失败用例最小化与随机 GPU fuzz；当前 artifact 只保存和校验诊断信息；
 - 可发布的 Grouped GEMM optimized runtime；现有 `cp.async`/persistent SM86 版本仅为 benchmark-only 失败实验；
 - 与 Top-K tie/NaN/selected-softmax 合同相同的外部库基线；
-- 真实 route trace、working-set rotation 与 distribution-aware shape sweep；当前十 shape synthetic suite 不是完整部署分布；
-- 除 Histogram 与独立 fused Histogram→Scan primitive 外的 shape-aware default dispatch，以及自动 promotion evaluator；当前 Histogram 晋级以手工审计的固定门禁为依据，F2 仍待复测，Grouped GEMM 未晋级结论也由配对报告人工审计；
+- 匿名 captured/production route trace、通用 working-set rotation 与 distribution-aware cache sweep；当前 synthetic fixture 只验证工具链，不是部署分布证据；
+- 除 Histogram 与独立 fused Histogram→Scan primitive 外的 shape-aware default dispatch；自动 evaluator 已实现，但当前 v3 因 WDDM CV 超限为 `insufficient_evidence`，且 aggregate 趋势不支持晋级；
 - H100/Blackwell 实卡支持、正确性或性能；本机 SM90/SM90a 交叉编译不等同于 H100 验证；
 - 完整 MoE FFN、训练、多 GPU 或 All-to-All。
+- 通用 CUDA Graph dispatch、cache-miss/mixed-shape request SLA、param-update/exec-update promotion；当前仅 fixed replay 获得显式晋级，且其 WDDM CV 例外不得外推到其他算子或环境。
 
 因此当前提交仍不是“七个算子已经优化完成”。Grouped GEMM 候选会保留 clean-Git、同机同语义的 Release 证据，但因相对 CUTLASS 的门禁失败而不发布 runtime optimized 路径；后续性能声明仍必须来自相同协议的未 profile A/B。
 

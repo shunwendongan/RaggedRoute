@@ -73,6 +73,11 @@ cudaError_t launch_grouped_gemm_sm86_fp32_v5_balanced_direct(
     float* y_permuted, int experts, int hidden, int output, int max_expert_tokens,
     int route_pairs, cudaStream_t caller_stream);
 
+cudaError_t launch_grouped_gemm_sm86_fp32_v6_balanced_32x128(
+    const float* x_permuted, const float* expert_weights, const std::int32_t* offsets,
+    float* y_permuted, int experts, int hidden, int output, int max_expert_tokens,
+    int route_pairs, cudaStream_t caller_stream);
+
 std::size_t grouped_gemm_descriptor_workspace_size(int experts, int output,
                                                    int max_expert_tokens) noexcept;
 

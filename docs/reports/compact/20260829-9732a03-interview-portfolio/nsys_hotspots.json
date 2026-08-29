@@ -1,0 +1,112 @@
+[
+  {
+    "distribution": "uniform",
+    "kernel": "raggedroute::ops::<unnamed>::grouped_gemm_register16x32_sm86_v2_kernel(const float *, const float *, const int *, float *, int, int, int)",
+    "time_pct": 71.6,
+    "total_time_ns": 499544.0,
+    "instances": 21,
+    "average_ns": 23787.8,
+    "median_ns": 23744.0,
+    "minimum_ns": 23488.0,
+    "maximum_ns": 24512.0
+  },
+  {
+    "distribution": "uniform",
+    "kernel": "void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)",
+    "time_pct": 8.3,
+    "total_time_ns": 58015.0,
+    "instances": 21,
+    "average_ns": 2762.6,
+    "median_ns": 2752.0,
+    "minimum_ns": 2688.0,
+    "maximum_ns": 2880.0
+  },
+  {
+    "distribution": "uniform",
+    "kernel": "void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)64, (int)4>(const float *, int *, float *, int)",
+    "time_pct": 7.0,
+    "total_time_ns": 49055.0,
+    "instances": 21,
+    "average_ns": 2336.0,
+    "median_ns": 2304.0,
+    "minimum_ns": 2272.0,
+    "maximum_ns": 2688.0
+  },
+  {
+    "distribution": "uniform",
+    "kernel": "raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)",
+    "time_pct": 6.6,
+    "total_time_ns": 45886.0,
+    "instances": 21,
+    "average_ns": 2185.0,
+    "median_ns": 2176.0,
+    "minimum_ns": 2175.0,
+    "maximum_ns": 2208.0
+  },
+  {
+    "distribution": "uniform",
+    "kernel": "raggedroute::ops::<unnamed>::unpermute_warp_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)",
+    "time_pct": 6.5,
+    "total_time_ns": 45664.0,
+    "instances": 21,
+    "average_ns": 2174.5,
+    "median_ns": 2176.0,
+    "minimum_ns": 2144.0,
+    "maximum_ns": 2304.0
+  },
+  {
+    "distribution": "zipf14",
+    "kernel": "raggedroute::ops::<unnamed>::grouped_gemm_register16x32_sm86_v2_kernel(const float *, const float *, const int *, float *, int, int, int)",
+    "time_pct": 86.0,
+    "total_time_ns": 1193646.0,
+    "instances": 21,
+    "average_ns": 56840.3,
+    "median_ns": 22111.0,
+    "minimum_ns": 21632.0,
+    "maximum_ns": 752849.0
+  },
+  {
+    "distribution": "zipf14",
+    "kernel": "void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)",
+    "time_pct": 4.1,
+    "total_time_ns": 57278.0,
+    "instances": 21,
+    "average_ns": 2727.5,
+    "median_ns": 2720.0,
+    "minimum_ns": 2656.0,
+    "maximum_ns": 2816.0
+  },
+  {
+    "distribution": "zipf14",
+    "kernel": "void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)64, (int)4>(const float *, int *, float *, int)",
+    "time_pct": 3.6,
+    "total_time_ns": 49951.0,
+    "instances": 21,
+    "average_ns": 2378.6,
+    "median_ns": 2368.0,
+    "minimum_ns": 2272.0,
+    "maximum_ns": 2688.0
+  },
+  {
+    "distribution": "zipf14",
+    "kernel": "raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)",
+    "time_pct": 3.3,
+    "total_time_ns": 45918.0,
+    "instances": 21,
+    "average_ns": 2186.6,
+    "median_ns": 2176.0,
+    "minimum_ns": 2175.0,
+    "maximum_ns": 2208.0
+  },
+  {
+    "distribution": "zipf14",
+    "kernel": "raggedroute::ops::<unnamed>::unpermute_warp_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)",
+    "time_pct": 3.0,
+    "total_time_ns": 41375.0,
+    "instances": 21,
+    "average_ns": 1970.2,
+    "median_ns": 1920.0,
+    "minimum_ns": 1888.0,
+    "maximum_ns": 2368.0
+  }
+]

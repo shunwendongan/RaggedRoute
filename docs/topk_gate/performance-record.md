@@ -1,5 +1,14 @@
 # Top-K Gate performance record
 
+## 2026-08-29 / RTX 3080 统一简历作品集复测
+
+- Evidence SHA：`9732a0343c60f869fc4166a0cc3cabba2fd67bbb`；5-process clean Release，T={32,128,512,2048,4096}、E={2,4,8,16,32,64}。
+- v4 `cuda_local_pair_two_reduce_top2_v4` 对 exact-contract naive 的 L2 ratio-of-sums `1.0972x`、geomean `1.0859x`、21/30 shape 获益；E64/T4096 最大 `1.6934x`，E32/T32 最大 p50 回退 10.88%。
+- 在有限 random-input L1 子域对最快 vLLM/CUB envelope 为 `1.0146x`、18/30 获益；这不是完整 tie/NaN/selected-softmax 合同基线。
+- 本轮 `CV>0.10` 不再自动判证据不足，但最大回退仍阻止无条件晋级；`Auto` 保持 naive，v4 作为高收益显式 research path。
+
+统一证据：[compact report](../reports/compact/20260829-9732a03-interview-portfolio/REPORT.md)；面试卡片：[operator performance](../interview/operator-performance.md#2-top-2-gate)。
+
 ## 2026-08-03 / RTX 3080 strict-FP32 candidate campaign
 
 - Implementation commit: `1ce3398155a9f40bec383dc130ddc1787634d2f8`.

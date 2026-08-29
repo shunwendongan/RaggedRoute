@@ -1,0 +1,11 @@
+distribution,kernel,time_pct,total_time_ns,instances,average_ns,median_ns,minimum_ns,maximum_ns
+uniform,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_sm86_v2_kernel(const float *, const float *, const int *, float *, int, int, int)",71.6,499544.0,21,23787.8,23744.0,23488.0,24512.0
+uniform,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)",8.3,58015.0,21,2762.6,2752.0,2688.0,2880.0
+uniform,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)64, (int)4>(const float *, int *, float *, int)",7.0,49055.0,21,2336.0,2304.0,2272.0,2688.0
+uniform,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)",6.6,45886.0,21,2185.0,2176.0,2175.0,2208.0
+uniform,"raggedroute::ops::<unnamed>::unpermute_warp_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)",6.5,45664.0,21,2174.5,2176.0,2144.0,2304.0
+zipf14,"raggedroute::ops::<unnamed>::grouped_gemm_register16x32_sm86_v2_kernel(const float *, const float *, const int *, float *, int, int, int)",86.0,1193646.0,21,56840.3,22111.0,21632.0,752849.0
+zipf14,"void raggedroute::ops::<unnamed>::token_permute_token_owned_top2_kernel<(int)128, (bool)1>(const float *, const int *, const int *, int *, float *, int *, int *, int, int)",4.1,57278.0,21,2727.5,2720.0,2656.0,2816.0
+zipf14,"void raggedroute::ops::<unnamed>::topk_gate_local_pair_two_reduce_kernel<(int)64, (int)4>(const float *, int *, float *, int)",3.6,49951.0,21,2378.6,2368.0,2272.0,2688.0
+zipf14,"raggedroute::ops::<unnamed>::histogram_exclusive_scan_fused_subwarp_kernel(const int *, int *, int *, int, int)",3.3,45918.0,21,2186.6,2176.0,2175.0,2208.0
+zipf14,"raggedroute::ops::<unnamed>::unpermute_warp_token_vec4_kernel(const float *, const int *, const float *, float *, int, int)",3.0,41375.0,21,1970.2,1920.0,1888.0,2368.0

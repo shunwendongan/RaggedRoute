@@ -1,5 +1,13 @@
 # Expert Histogram 实际性能记录
 
+## 2026-08-29 / v2 统一简历作品集复测
+
+- Evidence SHA：`9732a0343c60f869fc4166a0cc3cabba2fd67bbb`；15-case、5-process clean Release。
+- `cuda_candidate_v2` 对每 shape 最快 shipping v1/CUB/naive envelope 的 ratio-of-sums `1.1016x`、geomean `1.1588x`、9/15 shape 获益、最大回退 5.56%、最大 CV 0.4503；对 shipping v1 为 `1.1070x`、10/15 获益。
+- `E=1` O(1) fast path 的最大收益为 R1M `4.3026x`；E>1 复用 single-CTA / block-private dispatcher。v2 是最新 strongest explicit candidate，但本轮按约束不修改当前 v1 Auto。
+
+统一证据：[compact report](../reports/compact/20260829-9732a03-interview-portfolio/REPORT.md)；面试卡片：[operator performance](../interview/operator-performance.md#3-expert-histogram)。CV 0.50 只适用于本轮作品集口径，不回写历史 shipping promotion。
+
 ## 2026-07-31 / RTX 3080 strict-FP32 baseline
 
 - Git：`a9489abce704`；case `T=2048,E=64,top_k=2,Zipf s=1.4`；counts 与总数不变量精确通过。

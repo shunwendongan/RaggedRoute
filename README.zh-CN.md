@@ -37,25 +37,44 @@ flowchart LR
 
 Benchmark registry 一共暴露八个 adapter：七个语义算子，以及可选的 `histogram_exclusive_scan` 组合 primitive。
 
-## 当前实现
+## 最新七算子性能总览
 
-| 算子 / primitive | SM86 `Auto` | 研究或外部库路径 | 当前结论 |
-|---|---|---|---|
-| Dense GEMM | `cuda_naive` | optimized id 1–7；cuBLASLt/cuBLAS 参考 | v3 是树内大 shape 最强路径，但未默认晋级 |
-| Top-2 Gate | `cuda_naive` | optimized id 1–4；benchmark-only CUB/vLLM 参考 | exact-shape 与连续 bucket 门禁均未形成晋级区间 |
-| Expert Histogram | shape-dispatched `cuda_candidate` | small/sparse/block-private 路径；CUB 参考 | 通过 12-case、五进程门禁后在 SM86 晋级 |
-| Exclusive Scan | `cuda_naive` | CUB Device/Block/Warp Scan 参考 | standalone 实验候选已删除 |
-| Histogram + Scan | `R <= 4096`、`E <= 64` 时使用融合 F2，否则回退两阶段路径 | CUB 组合参考 | 代码路径存在，但仍需 release 级复测 |
-| Token Permute | `cuda_naive` | 显式 v2/v3 shape dispatcher；adapted vLLM 路径 | v3 对 v1 ratio-of-sums 为 0.9938x；CV 门禁下证据不足 |
-| Grouped GEMM | `cuda_naive` | 显式 SM86 v1/v2/v3；CUTLASS/cuBLAS 参考 | v3 对 CUTLASS ratio-of-sums 为 0.9141x；证据不足且不晋级 |
-| Unpermute | `cuda_naive` | benchmark-only warp/CTA candidate；adapted vLLM 参考 | 因 tail 与稳定性门禁失败而拒绝晋级 |
+最新统一证据固定在 `9732a0343c60f869fc4166a0cc3cabba2fd67bbb`：RTX 3080 / SM86、strict FP32、clean Release、5 个独立进程、20 warmup、30 samples/process、seed `20260828`。倍率均来自未插桩 CUDA Event；NSYS/NCU 只解释原因。完整证据见 [compact report](docs/reports/compact/20260829-9732a03-interview-portfolio/REPORT.md)，面试讲法见 [docs/interview](docs/interview/README.md)。
+
+| 算子 | 当前 `Auto` | 最强树内 `cuda_candidate` | 最强可比基线 | 完整预声明矩阵 | 最大局部收益 | 是否进入 Auto |
+|---|---|---|---|---:|---:|---|
+| Dense GEMM | `cuda_naive` | v3 `64x32 cp.async` | 每 shape 最快 cuBLASLt/cuBLAS | `0.8716x` ratio-of-sums，1/3 获益 | 256³ `1.0095x` | 否；库整体胜出 |
+| Top-2 Gate | `cuda_naive` | v4 two-reduction | exact-contract naive | `1.0972x`，21/30 获益 | E64/T4096 `1.6934x` | 否；最大回退 10.88% |
+| Histogram | shape-dispatched v1 | `cuda_candidate_v2` | 每 shape 最快 v1/CUB/naive | `1.1016x`，9/15 获益 | R1M/E1 `4.3026x` | 本轮不改；显式 research winner |
+| Exclusive Scan | `cuda_naive` | 无 retained candidate | CUB Warp/Block/Device | Block `1.0249x`；Warp 子域 `1.0290x` | E33 Block `1.0765x` | 否；tiny launch-bound |
+| Token Permute | `cuda_naive` | v2 full-from-ids | adapted vLLM | `1.5671x`，5/5 获益 | `1.8501x` | 本轮不改；full boundary winner |
+| Grouped GEMM | `cuda_naive` | SM86 v2 `16x32` | 每 shape 最快 CUTLASS/cuBLAS | `0.8697x`，3/10 获益 | single-hot `1.6411x` | 否；强反例失败 |
+| Unpermute | `cuda_naive` | `cuda_warp_token_vec4` | 每 shape 最快 vLLM/naive | `1.0154x`，12/32 获益 | Zipf T4096/N128 `1.2892x` | 否；仅窄 N 局部优势 |
+
+### 每个最强 candidate 的设计与结论
+
+- Dense v3 使用 64x32 register tile 和 Ampere `cp.async` 双缓冲。1024³ NCU 显示 1.506 waves/SM、85 registers/thread、34.63% achieved occupancy、SM/memory 73.26%/74.50%，但 512³/1024³ 仍输给成熟的 cuBLASLt/cuBLAS 调度和数据复用；只能写“256³ 局部持平”，不能写“超过 cuBLAS”。
+- Top-K v4 把 Top-2 pair 保存在寄存器中，用 vector row load 和两次 subgroup reduction 减少比较/归约成本。收益集中在 E64 和较大 T；完整 tie/NaN/selected-softmax 合同对 naive 的矩阵趋势很强，但 E32/T32 是反例。CUB/vLLM 只在有限 random-input 子域作为参考，不能冒充完整合同等价 baseline。
+- Histogram v2 利用 `E=1` 的语义退化，直接写 `counts[0]=R`，避免读取 route IDs 和 atomic；E>1 继续复用 single-CTA shared / block-private dispatcher。其完整矩阵对最强 envelope 仍为正收益，但最大 CV 0.4503，属于 Windows/WDDM 作品集 research 证据，不外推生产 SLA。
+- Scan 的 E 只有 1–64。naive profile 是单 block/单 thread、0.000919 waves/SM，主要受 launch/underfill 限制；CUB Warp/Block 仅小幅领先，DeviceScan 只有 `0.3310x`。因此“不造复杂 standalone candidate”本身是性能工程决策。
+- Permute 必须区分 pure copy 和 full-from-ids。pure v2/v3 对 retained token-owned 只有 `0.9841x/0.9892x`，而 v2 把 counts/scan/cursor preparation 融入完整 L2 后对 adapted vLLM 达 `1.5671x`。该收益来自减少中间准备和 launch，不能写成 copy kernel 普遍更快。
+- Grouped v2 是最新 Release 矩阵最强自研版本，而不是 v3/v4A。single-hot/many-empty 能减少库调度浪费，但 uniform T2048 和 non-aligned 是强反例。NSYS 显示它在 uniform/Zipf L3 中占 GPU kernel time 71.6%/86.0%；v3 detailed NCU 虽 occupancy/L2 hit 更高，却因 issue activity、MIO throttle、barrier 和 long scoreboard 失败。
+- Unpermute vec4 让一个 warp 负责 token 并使用对齐向量访问，在中大型 T、窄 N 有局部优势；完整 32-case coverage 只有 12/32，所以不做全局 Auto dispatch。
+
+### CV 与晋级口径
+
+本作品集政策将 evidence ceiling 放宽为 `CV<=0.50`：`CV>0.10` 继续公开为稳定性风险，但不再单独自动降级为 `insufficient_evidence`。矩阵结论仍同时检查五进程完整性、ratio-of-sums、shape geomean、获益覆盖率、最大回退、workspace 和跨进程方向；不挑选“安静进程”、不手工删离群值，也不把单 shape winner 包装成整体领先。这一口径只服务 Windows/WDDM 简历证据，不外推为生产 SLA。
+
+### 外部基线边界
+
+- cuBLAS/cuBLASLt：仅比较 strict FP32；TF32/Tensor Core 不是等价分母。
+- CUTLASS：Grouped 使用 v4.6.1 strict-FP32 Grouped；cuBLAS per-expert 同时进入强 baseline envelope。
+- CUB：Histogram/Scan 的库 primitive；workspace、reset 和额外 launch 均保留在同一 L2 边界。
+- vLLM：使用仓库内固定来源的 adapted benchmark 路径；Top-K 只在有限随机输入子域可比，Permute/Unpermute 必须写明 mapping 和 preparation 边界。
+- Triton：历史 L3 只作为跨 backend 诊断，不进入本轮七算子强基线排名。
 
 > [!CAUTION]
-> `histogram_exclusive_scan` 在 SM86 上当前会由 `Auto` 选择融合 F2。归档运行受到其他 GPU workload 干扰：融合区域中心结果有潜力，但 CV、fallback 与 L3 门禁均失败。在独占 CUDA 环境复测通过或撤回默认选择之前，应将其视为实验路径。macOS 上没有进行任何新的 CUDA 能力或性能检查。
-
-本轮简历项目迭代只验证两个热点假设。clean、未插桩、五进程 Release 中，Grouped GEMM v3 对 CUTLASS 的 ratio-of-sums 为 `0.9141x`，Permute v3 对保留的 token-owned 路径为 `0.9938x`，六阶段 v3 链对 integrated v2 为 `0.9743x`。WDDM 离群点使所有 case 超过 `CV <= 0.10` 门禁，因此正式状态均为 `insufficient_evidence`；与此同时，不利的 aggregate 趋势已经足以阻止晋级。显式 research ID 和 v2/v1 fallback 继续保留以便复现，`Auto` 不变。仓库内 trace 只是一份 synthetic parser fixture，因此在获得 captured/production 输入前，真实 trace 晋级同样保持 `insufficient_evidence`。
-
-已完成的 v4 轮次保留上述未通过的 kernel 方向，并新增一个刻意收窄的结论：固定 shape 的显式 CUDA Graph replay 在可审计的 Windows WDDM CV 例外下晋级。其 host time-to-solution 在六阶段 postlogit topology 为 `1.6205x`，在 Top-K 2/4/8 postroute 矩阵为 `1.2336x`；capture/instantiate/upload 属于 setup，回本次数为 8–22 次 replay。这不修改 `KernelFamily::kAuto`，不适用于 graph cache miss，也不是 GPU kernel speedup 宣称。详见 [v4 Graph 晋级报告](docs/reports/rtx3080-sm86-v4-graph-promotion.md)。
+> `histogram_exclusive_scan` 是第八个跨算子 primitive，不混入七算子排名。其 SM86 `Auto` 当前选择融合 F2，但历史 fallback/L3 门禁仍需独占环境复核。固定 shape CUDA Graph replay 的 `1.6205x/1.2336x` 是 setup 完成后的 host time-to-solution，不是 kernel speedup，也不修改 `KernelFamily::kAuto`。
 
 ## 工程亮点
 
@@ -78,21 +97,13 @@ Suite v2 将不同 variant 组织在同一个 logical case 下，并声明唯一
 
 ## 证据快照
 
-历史基线报告是 [RTX 3080 七阶段 L3 三线路分析](docs/reports/l3_three_way_20260805/RaggedRoute_L3_3way_comparison.md)。该报告使用一个固定 strict-FP32 workload（`T=512`、`E=64`、`top_k=2`、`K=N=128`），每条路径运行三个独立 Release 进程；最新的有限范围 Graph 结论见独立的 [v4 晋级报告](docs/reports/rtx3080-sm86-v4-graph-promotion.md)：
+正式 Release 共有 3725 条记录、745 个聚合组，每组 5 个独立进程，全部 validation 通过。compact bundle 提交 `summary.json`、逐 shape CSV、NSYS/NCU 归一化指标、环境/命令 manifest 与 `SHA256SUMS`；raw JSONL、完整 aggregate、`.ncu-rep`、`.nsys-rep` 和 SQLite 留在 ignored 输出或不可覆盖资产，不继续膨胀 Git 历史。
 
-| Research chain | 聚合 p50 | p95 | 跨进程 CV | 解释 |
-|---|---:|---:|---:|---|
-| Selected CUDA candidates | 69.734 us | 76.820 us | 0.0605 | 诊断性 research chain，不是公共 `Auto` dispatch |
-| Repository library chain | 94.413 us | 117.412 us | 0.1018 | Top-K 与 host-offset 边界不同，不能严格比较 |
-| Triton reference | 245.760 us | 256.020 us | 0.0236 | 跨工具链参考，不是 promotion 分母 |
+两条 L3 NSYS trace 都把 Grouped v2 判为绝对热点：uniform 占 71.6%（median 23.744 us），Zipf 占 86.0%（median 22.111 us）。Zipf 包含一次 752.849 us 系统长尾，因此 profiler duration 不进入 speedup。Permute v3 的 NCU DRAM throughput 达 86.85%，属于 bandwidth-bound；Scan 和 fused Histogram→Scan 的 grid 都只有一个 CTA，属于 launch/underfill。
 
-观察到的 CUDA/Triton 比值为 `3.524x`，但这里只把它作为跨 backend 诊断，不作为生产 speedup。在 CUDA research chain 中，Grouped GEMM 占 NSYS kernel time 的 `64.4%`。NCU 报告 106 registers/thread、one wave/SM、26.62% achieved occupancy，以及 SM/L2 工作不均，因此 Grouped GEMM 是下一阶段价值最高的优化对象。
+只对 Grouped v3/CUTLASS 升级 detailed。v3 的 achieved occupancy 30.26%、L2 hit 85.45% 都高于 CUTLASS 的 16.98%/50.71%，但 issue active 只有 23.87%（CUTLASS 34.79%），MIO throttle/barrier/long-scoreboard samples 为 716/452/404（CUTLASS 62/60/138）。这证明更高 occupancy 和 cache hit 不能弥补发射、同步与依赖等待损失。下一轮回到 v2 16x32 mainloop，只隔离 task scheduling/load balance。
 
-项目也保留了最强反例：在干净的三进程、十 shape 对比中，Grouped GEMM candidate 相对 CUTLASS 的 ratio-of-sums 只有 `0.805x`，并在 `T=2048,E=64,K=N=128,uniform` 降至 `0.467x`。这项失败本身也是项目结论：局部胜点不足以支持默认发布。
-
-当前本地 `657d29e` v3 campaign 将下一轮失败假设也整理成了可审计证据。Grouped v3 虽减少了 global-load request，但 registers 从 86 增至 96、static shared memory 从 7,952 增至 12,048 bytes，achieved occupancy 与 issue activity 同时下降；Permute tile2 仍受 DRAM 带宽约束，未改善完整矩阵。详见 [v3 诊断报告](docs/reports/rtx3080-six-ops-v3-657d29e.md) 与 [带 SHA-256 的 compact evidence](docs/reports/compact/20260827-657d29e-six-ops-v3/REPORT.md)。
-
-v4 evidence 同样保留失败结果：Grouped descriptor queue-1024 对 v2 为 `0.9225x`，gather fusion 为 `0.8191x` 且增加 workspace。只有 Graph fixed replay 使用上文所述 WDDM 例外；[v4 报告和带校验和的证据](docs/reports/rtx3080-sm86-v4-graph-promotion.md) 同时保留两套 policy decision。
+历史 v3/v4/Graph 与三线路 L3 证据仍保留在 [报告目录](docs/reports/)，但不覆盖本轮统一矩阵。完整面试导向瓶颈分析见 [bottleneck-analysis](docs/interview/bottleneck-analysis.md)。
 
 ## 快速开始
 
@@ -165,15 +176,20 @@ CUDA Event 提供未被 profiler 干扰的 Release latency。NSYS 用于解释 l
 
 ## 当前限制与后续工作
 
-- 在独占 RTX 3080 窗口复测融合 Histogram + Scan F2；若稳定性、fallback 或 L3 门禁仍失败，则撤回其 `Auto`；
-- 只在更低噪声或独占 CUDA 环境重跑已完成的五进程 v3 campaign；当前 aggregate 趋势已不支持晋级，但 WDDM 方差使正式状态保持 `insufficient_evidence`；
+- 回到 Grouped v2 16x32 mainloop，只验证 task scheduling/load balance；不再把更宽 tile、descriptor prepass 和 queue 同时叠加；
+- 对 Top-K v4 预声明 E64/T>=512 区间，并把 full-from-ids Permute v2 放入 L3 做收益归因；这些实验形成证据前不修改 `Auto`；
+- 在独占 RTX 3080 窗口复测融合 Histogram + Scan F2；若 fallback 或 L3 门禁仍失败，则 review 是否撤回该 primitive 的 `Auto`；
 - 在提出任何真实 trace 性能结论前，用匿名 captured/production working set 替换仓库内 synthetic fixture；
-- 在作为 `main` 能力前，整理 realistic/vLLM-semantic stacked evidence 分支；
 - 将原始 profiler binary 和完整 aggregate 放入不可覆盖的 Release asset，并加强仓库规则以防 evidence policy 漂移；
 - 只在未来 CUDA 环境真正实现并测量 FP16/BF16 Tensor Core 路径。H100/Blackwell 支持必须经过实卡 correctness 与性能验证。
 
 ## 文档
 
+- [CUDA / AI Infra 面试入口](docs/interview/README.md)
+- [七算子性能卡片](docs/interview/operator-performance.md)
+- [瓶颈分析](docs/interview/bottleneck-analysis.md)
+- [面试追问题库](docs/interview/question-bank.md)
+- [分支治理与冗余清理 review](docs/cleanup-review.md)
 - [实现状态与声明边界](docs/implementation-status.md)
 - [开发路线图](docs/development-roadmap.md)
 - [Benchmark 架构](docs/benchmark-architecture.md)
@@ -181,7 +197,7 @@ CUDA Event 提供未被 profiler 干扰的 Release latency。NSYS 用于解释 l
 - [正确性框架](docs/correctness-framework.md)
 - [算子优化索引](docs/operator-optimization-index.md)
 - [CI 质量门禁](docs/ci-quality-gates.md)
-- [完整技术设计与历史规划](docs/RaggedRoute-最终产品技术文档.md)
+- [完整技术设计与历史规划（待 review 的历史长文）](docs/RaggedRoute-最终产品技术文档.md)
 - [第三方来源与许可证](THIRD_PARTY_NOTICES.md)
 
 ## 许可证

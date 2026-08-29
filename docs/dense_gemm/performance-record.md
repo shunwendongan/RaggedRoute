@@ -1,5 +1,13 @@
 # Dense GEMM 实际性能记录
 
+## 2026-08-29 / 统一简历作品集复测
+
+- Evidence SHA：`9732a0343c60f869fc4166a0cc3cabba2fd67bbb`；RTX 3080 / SM86、strict FP32、clean Release、5 processes、20 warmup、30 samples/process、seed `20260828`。
+- 最强树内路径仍是 `cuda_register_tiled_v3_64x32_async`。对每 shape 最快 cuBLASLt/cuBLAS envelope，256³/512³/1024³ 为 `1.0095x/0.9588x/0.8514x`；ratio-of-sums `0.8716x`，geomean `0.9376x`，1/3 shape 获益。
+- 1024³ NCU basic：1.506 waves/SM、85 registers/thread、34.63% achieved occupancy、SM/memory `73.26%/74.50%`。结论仍是局部 256³ 持平、完整矩阵库实现胜出；`Auto` 不变，禁止写“整体超过 cuBLAS”。
+
+统一证据：[compact report](../reports/compact/20260829-9732a03-interview-portfolio/REPORT.md)；面试卡片：[operator performance](../interview/operator-performance.md#1-dense-gemm)。本轮作品集 CV ceiling 为 0.50，但历史实验当时的 0.10 policy decision 不回写。
+
 ## 2026-07-31 / RTX 3080 strict-FP32 baseline
 
 - Git：`a9489abce704`（clean Release，`sm_86 + -lineinfo`）；seed `20260729`；warm cache；3 processes × 30 samples。

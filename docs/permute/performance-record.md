@@ -1,5 +1,14 @@
 # Token Permute 实际性能记录
 
+## 2026-08-29 / 统一简历作品集复测
+
+- Evidence SHA：`9732a0343c60f869fc4166a0cc3cabba2fd67bbb`；5-process clean Release。
+- Full-from-ids：`cuda_candidate_v2_from_ids` 对 adapted `vllm_moe_permute` ratio-of-sums `1.5671x`、geomean `1.5885x`、5/5 shape 获益、五进程方向 25/25，逐 shape `1.2896x–1.8501x`；v3 为 `1.5089x`。
+- Pure-permute：v2/v3 对 retained token-owned 仅 `0.9841x/0.9892x`，分别 11/28 shape 获益。收益属于 fused preparation + copy 的完整边界，不能写成 pure copy kernel 普遍领先。
+- v3 representative NCU 的 DRAM throughput 为 86.85%，确认 payload path bandwidth-bound；`Auto` 保持 naive。
+
+统一证据：[compact report](../reports/compact/20260829-9732a03-interview-portfolio/REPORT.md)；面试卡片：[operator performance](../interview/operator-performance.md#5-token-permute)。本轮 CV 0.50 口径不覆盖历史 0.10 promotion decision。
+
 ## 2026-07-31 / RTX 3080 strict-FP32 baseline
 
 - Git：`a9489abce704`；case `T=512,E=64,K=256,top_k=2,Zipf s=1.4`；expert segment、`route_pos`、`sorted_route` 与逐行内容通过。

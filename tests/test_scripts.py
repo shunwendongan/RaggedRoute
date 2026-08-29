@@ -53,6 +53,10 @@ analyze_histogram_levels = load_module(
 validate_evidence = load_module(
     "validate_evidence", ROOT / "scripts" / "validate_evidence.py"
 )
+validate_interview_portfolio_docs = load_module(
+    "validate_interview_portfolio_docs",
+    ROOT / "scripts" / "validate_interview_portfolio_docs.py",
+)
 
 
 def make_suite_v2() -> dict:
@@ -85,6 +89,9 @@ def make_suite_v2() -> dict:
 
 
 class SuiteTests(unittest.TestCase):
+    def test_interview_portfolio_docs_match_frozen_evidence(self) -> None:
+        self.assertEqual(validate_interview_portfolio_docs.validate(ROOT), [])
+
     def test_histogram_level_gap_reports_reset_and_throughput_cost(self) -> None:
         base = {
             "operator": "histogram", "case_id": "case", "variant": "candidate",

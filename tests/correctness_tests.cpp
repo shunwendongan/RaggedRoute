@@ -681,11 +681,22 @@ int main() {
            {"cuda_grouped_tiled16_sync_v0", "cuda_grouped_persistent16_v1",
             "cuda_grouped_register16x32_sync_v2", "cuda_grouped_register16x32_async_v3",
             "cuda_grouped_register16x32_async_full_v4", "cuda_grouped_sm86_fp32_v1",
-            "cuda_grouped_sm86_fp32_v2", "cuda_grouped_sm86_fp32_v3"}) {
+            "cuda_grouped_sm86_fp32_v2", "cuda_grouped_sm86_fp32_v3",
+            "cuda_grouped_sm86_fp32_v5_balanced_direct"}) {
         for (const auto& shape : grouped_edge_shapes) {
           run_adapter_case({"grouped_gemm", shape, variant}, stream, seed++);
         }
       }
+      run_adapter_case(
+          {"grouped_gemm",
+           {{"T", "256"},
+            {"E", "16"},
+            {"top_k", "2"},
+            {"K", "64"},
+            {"N", "64"},
+            {"distribution", "round_robin"}},
+           "cuda_grouped_sm86_fp32_v5_balanced_direct"},
+          stream, seed++);
       for (const std::string& variant : {"cuda_grouped_sm86_fp32_v4a_desc_static_t256",
                                          "cuda_grouped_sm86_fp32_v4a_desc_static_t512",
                                          "cuda_grouped_sm86_fp32_v4a_desc_static_t1024",

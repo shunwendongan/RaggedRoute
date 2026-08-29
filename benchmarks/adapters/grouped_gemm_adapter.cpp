@@ -136,6 +136,9 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
     if (variant_name_ == "cuda_grouped_sm86_fp32_v3") {
       return "SM86 v3 16x64 cp.async large-aligned grouped GEMM (research candidate)";
     }
+    if (variant_name_ == "cuda_grouped_sm86_fp32_v5_balanced_direct") {
+      return "SM86 v5 balanced direct-grid scheduling with the v2 16x32 mainloop";
+    }
     if (is_descriptor_grouped_variant(variant_name_)) {
       return "SM86 v4 descriptor-prepass 16x32 cp.async grouped GEMM (research candidate)";
     }
@@ -264,6 +267,13 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
                      candidate_workspace_bytes_, descriptor_grouped_implementation(variant_name_),
                      stream),
                  "launch_grouped_gemm_sm86_fp32_v4_descriptor benchmark-only candidate");
+      return;
+    }
+    if (variant_name_ == "cuda_grouped_sm86_fp32_v5_balanced_direct") {
+      cuda_check(ops::launch_grouped_gemm_sm86_fp32_v5_balanced_direct(
+                     x_.data(), weights_.data(), offsets_.data(), output_buffer_.data(), experts_,
+                     hidden_, output_, max_expert_tokens_, route_pairs_, stream),
+                 "launch_grouped_gemm_sm86_fp32_v5_balanced_direct benchmark-only candidate");
       return;
     }
     if (is_optimized_grouped_variant(variant_name_)) {
@@ -402,6 +412,22 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
               {"fallback", std::string("cuda_grouped_sm86_fp32_v2")},
               {"math_mode", std::string("strict_fp32")},
                {"runtime_status", std::string("explicit_research_candidate")}};
+    }
+    if (variant_name_ == "cuda_grouped_sm86_fp32_v5_balanced_direct") {
+      return {{"algorithm_id", std::string("balanced_direct_grid_else_v2")},
+              {"tile_m", static_cast<std::int64_t>(16)},
+              {"tile_n", static_cast<std::int64_t>(32)},
+              {"tile_k", static_cast<std::int64_t>(16)},
+              {"threads_per_block", static_cast<std::int64_t>(128)},
+              {"outputs_per_thread", static_cast<std::int64_t>(4)},
+              {"scheduler", std::string("direct_expert_row_column_grid")},
+              {"selection", std::string("ceil_average_ge_8_and_max_le_2x_average")},
+              {"staging", std::string("sm86_cp_async_double_buffered")},
+              {"mainloop_parent", std::string("cuda_grouped_sm86_fp32_v2")},
+              {"fallback", std::string("cuda_grouped_sm86_fp32_v2")},
+              {"workspace_bytes", static_cast<std::int64_t>(0)},
+              {"math_mode", std::string("strict_fp32")},
+              {"runtime_status", std::string("explicit_research_candidate")}};
     }
     if (is_descriptor_grouped_variant(variant_name_)) {
       const bool queue = variant_name_.find("_queue_") != std::string::npos;

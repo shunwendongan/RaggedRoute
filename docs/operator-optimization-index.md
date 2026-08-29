@@ -2,24 +2,23 @@
 
 本目录按 RaggedRoute 的七个语义算子分别保存优化方案、实验决策和实际性能记录；benchmark registry 另有一个 `histogram_exclusive_scan` 融合 adapter，因此当前是七阶段数据流、八个 adapter。
 
-当前统一实测报告：[RTX 3080 七算子 naive benchmark 与 Nsight 分析（a9489ab）](reports/rtx3080-naive-profile-a9489ab.md)；v3 研究轮次见 [六阶段 v3 统一复测（657d29e）](reports/rtx3080-six-ops-v3-657d29e.md)；最新 v4 结论见 [SM86 CUDA Graph fixed replay 晋级记录](reports/rtx3080-sm86-v4-graph-promotion.md)。
+当前统一实测报告：[2026-08-29 / 9732a03 compact evidence](reports/compact/20260829-9732a03-interview-portfolio/REPORT.md)；面试唯一入口见 [docs/interview](interview/README.md)。历史 naive、v3、v4 与 Graph 报告仍保留，但不得覆盖最新五进程矩阵。
 
 | 算子 | 当前 `Auto` | 显式/研究 candidate | 最新决策 |
 |---|---|---|---|
-| Dense GEMM | `cuda_naive` | optimized id 1–7，v3 为大 shape 最快自研路径 | 256³ 方差超限，不晋级 |
-| Top-K Gate | `cuda_naive` | optimized id 1–4 | v4 exact-E/连续 bucket 均无晋级区间 |
-| Histogram | `cuda_candidate` | small/sparse/block-private shape paths | **已晋级** SM86 `Auto` |
-| Exclusive Scan | `cuda_naive` | standalone C2/S1/S2 已删除 | 受 WDDM tail/CV 限制 |
-| Token Permute | `cuda_naive` | optimized id 1–5 与显式 v2/v3 shape dispatcher | v3 为 0.9938x；CV 超限，证据不足且不晋级 |
-| Grouped GEMM | `cuda_naive` | 显式 SM86 v1/v2/v3 candidate | v3 对 CUTLASS 为 0.9141x；证据不足且不晋级 |
-| Unpermute | `cuda_naive` | benchmark-only warp/CTA hybrid | 正式拒绝，不进入 public dispatch |
+| Dense GEMM | `cuda_naive` | v3 64x32 `cp.async` | 对 cuBLAS envelope `0.8716x`；256³ 局部 `1.0095x`，不晋级 |
+| Top-K Gate | `cuda_naive` | v4 two-reduction | 对 strict naive `1.0972x`，E64/T4096 `1.6934x`；最大回退 10.88%，不改 Auto |
+| Histogram | shape-dispatched v1 | v2 E=1 fast path + existing dispatcher | 对 v1/CUB/naive envelope `1.1016x`，显式 research winner；本轮不改 Auto |
+| Exclusive Scan | `cuda_naive` | 无 retained custom candidate | CUB Block/Warp 仅 `1.0249x/1.0290x`，tiny launch-bound |
+| Token Permute | `cuda_naive` | v2 full-from-ids | 对 adapted vLLM `1.5671x`、5/5；pure path 仅 `0.9841x`，不改 Auto |
+| Grouped GEMM | `cuda_naive` | v2 16x32 是最新矩阵最强 | 对 CUTLASS/cuBLAS envelope `0.8697x`；single-hot 局部 `1.6411x`，不晋级 |
+| Unpermute | `cuda_naive` | `cuda_warp_token_vec4` | envelope `1.0154x`、12/32；窄 N 局部 `1.2892x`，不晋级 |
 
-六阶段/五阶段 chain：只有 `cuda_postlogit_graph_fixed_v1` 与 `cuda_postroute_graph_fixed_v1` 在固定 shape、setup 已完成的 host replay 边界获得显式晋级；两者均不进入 `Auto`，后者还应作为包含 gather route-stage 的完整 topology 报告。其余 v4 candidate 保持未晋级，完整口径见 [v4 report](reports/rtx3080-sm86-v4-graph-promotion.md)。
+作品集 CV ceiling 为 0.50：超过 0.10 仍披露为 WDDM 稳定性风险，但不再单独自动判 `insufficient_evidence`；完整矩阵仍需 ratio-of-sums、geomean、coverage、最大回退和跨进程方向共同成立。历史 0.10 policy decision 不回写。
 
-Histogram→Scan 融合：`cuda_fused_histogram_scan`（F2，SM86；`R<=4096` 单 CTA，
-更大 R 回退）已绑定公共 fused API 且当前由该 primitive 的 `Auto` 选择；已有运行未通过
-稳定性、fallback 与 L3 门禁，必须在独占 CUDA 环境复测或撤回默认选择。性能边界见
-[F2 performance report](reports/rtx3080-histogram-scan-fused-sm86-v2.md)。
+六阶段/五阶段 chain：`cuda_postlogit_graph_fixed_v1` 与 `cuda_postroute_graph_fixed_v1` 只在固定 shape、setup 完成的 host replay 边界获得显式晋级；不是 kernel speedup，不进入七算子排名或 `Auto`。完整口径见 [v4 report](reports/rtx3080-sm86-v4-graph-promotion.md)。
+
+Histogram→Scan 融合：`cuda_fused_histogram_scan`（F2，SM86；`R<=4096` 单 CTA，更大 R 回退）是独立跨算子 primitive。当前由该 primitive 的 `Auto` 选择，但历史 fallback/L3 门禁仍需独占环境复测；不得混入 standalone Histogram/Scan 排名。性能边界见 [F2 performance report](reports/rtx3080-histogram-scan-fused-sm86-v2.md)。
 
 | 算子 | 定位 | 优化文档 | 性能记录 |
 |---|---|---|---|

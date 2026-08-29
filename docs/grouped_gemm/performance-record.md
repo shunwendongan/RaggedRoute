@@ -1,5 +1,15 @@
 # Grouped GEMM 实际性能记录
 
+## 2026-08-29 / 统一简历作品集复测与 detailed 归因
+
+- Evidence SHA：`9732a0343c60f869fc4166a0cc3cabba2fd67bbb`；十 shape、5-process clean Release，strict FP32。
+- 最新完整矩阵最强自研是 v2 16x32，不是 v3/v4A。v2 对最快 CUTLASS/cuBLAS envelope ratio-of-sums `0.8697x`、geomean `0.9472x`、3/10 shape 获益；对 CUTLASS 单独为 `0.9259x`、4/10 获益。
+- 局部 winner：single-hot `1.6411x`、many-empty `1.3365x`、Zipf T512 `1.0790x`；关键反例 uniform T2048 `0.5335x`、non-aligned `0.7210x`。不能写整体胜过 CUTLASS。
+- NSYS 中 v2 占 uniform/Zipf L3 GPU kernel time 71.6%/86.0%。为诊断失败机制升级的 v3/CUTLASS detailed 显示：v3 occupancy/L2 hit 更高，但 issue active 23.87% 对 34.79%，MIO/barrier/long-scoreboard 716/452/404 对 62/60/138。
+- 决策：所有 candidate 继续 benchmark-only；下一轮回到 v2 mainloop，只隔离 scheduling/load-balance。
+
+统一证据：[compact report](../reports/compact/20260829-9732a03-interview-portfolio/REPORT.md)；瓶颈分析：[interview bottleneck analysis](../interview/bottleneck-analysis.md)。
+
 ## 2026-07-31 / RTX 3080 strict-FP32 ragged baseline
 
 - Git：`a9489abce704`；case `T=512,E=64,K=N=128,top_k=2,Zipf s=1.4`；逐 expert CPU GEMM 与空 expert 合同通过。

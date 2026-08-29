@@ -12,6 +12,7 @@ import sys
 from urllib.parse import unquote
 
 import validate_evidence
+import validate_interview_portfolio_docs
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -143,6 +144,7 @@ def run_checks(selected: set[str]) -> list[str]:
         "large-files": lambda: check_large_files(files),
         "public-manifests": lambda: check_public_manifests(files),
         "evidence": lambda: validate_evidence.validate_root(ROOT / "docs" / "reports" / "artifacts"),
+        "portfolio": lambda: validate_interview_portfolio_docs.validate(ROOT),
     }
     errors = []
     for name, function in checks.items():
@@ -158,7 +160,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--check", action="append",
-        choices=["all", "json", "links", "layout", "gitkeep", "large-files", "public-manifests", "evidence"],
+        choices=["all", "json", "links", "layout", "gitkeep", "large-files", "public-manifests", "evidence", "portfolio"],
         default=[],
     )
     args = parser.parse_args()

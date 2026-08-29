@@ -37,25 +37,26 @@ The two L3 entry points make the timing boundary explicit:
 
 The benchmark registry exposes eight adapters: the seven semantic operators plus the optional `histogram_exclusive_scan` composite primitive.
 
-## What is implemented
+## Latest seven-operator matrix
 
-| Operator / primitive | SM86 `Auto` | Research or library paths | Current decision |
-|---|---|---|---|
-| Dense GEMM | `cuda_naive` | optimized ids 1–7; cuBLASLt/cuBLAS references | v3 is the strongest in-tree large-shape path, but no default promotion |
-| Top-2 Gate | `cuda_naive` | optimized ids 1–4; benchmark-only CUB/vLLM references | exact-shape and continuous-bucket gates produced no promoted interval |
-| Expert Histogram | shape-dispatched `cuda_candidate` | small/sparse/block-private paths; CUB reference | promoted on SM86 after a 12-case five-process gate |
-| Exclusive Scan | `cuda_naive` | CUB Device/Block/Warp Scan references | standalone experimental candidates were removed |
-| Histogram + Scan | fused F2 for `R <= 4096`, `E <= 64`; otherwise separate fallback | CUB composite references | code path exists, but release-quality revalidation is still required |
-| Token Permute | `cuda_naive` | explicit shape-dispatched v2/v3; adapted vLLM paths | v3 reached 0.9938x ratio-of-sums vs v1; insufficient evidence under the CV gate |
-| Grouped GEMM | `cuda_naive` | explicit SM86 v1/v2/v3; CUTLASS/cuBLAS references | v3 reached 0.9141x ratio-of-sums vs CUTLASS; insufficient evidence and no default promotion |
-| Unpermute | `cuda_naive` | benchmark-only warp/CTA candidate; adapted vLLM reference | rejected because tail and stability gates failed |
+The latest evidence is frozen at `9732a0343c60f869fc4166a0cc3cabba2fd67bbb`: RTX 3080/SM86, strict FP32, clean Release, five independent processes, 20 warmups and 30 samples per process. Speedups come from unprofiled CUDA Event measurements; NSYS/NCU durations are diagnostic only. See the [compact evidence](docs/reports/compact/20260829-9732a03-interview-portfolio/REPORT.md) and the detailed [Chinese interview guide](docs/interview/README.md).
+
+| Operator | SM86 `Auto` | Strongest in-tree candidate | Strongest comparable baseline | Full declared matrix | Best local shape | Auto decision |
+|---|---|---|---|---:|---:|---|
+| Dense GEMM | `cuda_naive` | v3 64x32 `cp.async` | fastest cuBLASLt/cuBLAS per shape | `0.8716x`, 1/3 wins | 256³ `1.0095x` | no; libraries win overall |
+| Top-2 Gate | `cuda_naive` | v4 two-reduction | exact-contract naive | `1.0972x`, 21/30 wins | E64/T4096 `1.6934x` | no; 10.88% max regression |
+| Histogram | shape-dispatched v1 | `cuda_candidate_v2` | fastest v1/CUB/naive per shape | `1.1016x`, 9/15 wins | R1M/E1 `4.3026x` | unchanged; research winner |
+| Exclusive Scan | `cuda_naive` | no retained custom candidate | CUB Warp/Block/Device | Block `1.0249x`; Warp subset `1.0290x` | E33 Block `1.0765x` | no; tiny launch-bound work |
+| Token Permute | `cuda_naive` | v2 full-from-ids | adapted vLLM | `1.5671x`, 5/5 wins | `1.8501x` | unchanged; full-boundary winner |
+| Grouped GEMM | `cuda_naive` | SM86 v2 16x32 | fastest CUTLASS/cuBLAS per shape | `0.8697x`, 3/10 wins | single-hot `1.6411x` | no; counterexamples fail |
+| Unpermute | `cuda_naive` | `cuda_warp_token_vec4` | fastest vLLM/naive per shape | `1.0154x`, 12/32 wins | Zipf T4096/N128 `1.2892x` | no; narrow-N local benefit |
+
+The portfolio evidence ceiling is now `CV<=0.50`: values above 0.10 remain disclosed WDDM stability risks but no longer cause an automatic `insufficient_evidence` label. Matrix claims still require complete five-process evidence, ratio-of-sums, shape geomean, coverage, maximum regression, workspace, and cross-process direction checks. This policy is not a production SLA.
+
+cuBLAS/cuBLASLt comparisons keep the strict-FP32 contract; CUTLASS Grouped and cuBLAS per-expert form the Grouped GEMM reference envelope; CUB includes its workspace and launch boundary; adapted vLLM results state their mapping and input-domain limits. Top-K external CUB/vLLM numbers are comparable only on a limited random-input subdomain, not the full tie/NaN/selected-softmax contract.
 
 > [!CAUTION]
-> `histogram_exclusive_scan` currently resolves `Auto` to the fused F2 implementation on SM86. The archived run was affected by competing GPU workloads: fused-region center results were promising, but CV, fallback, and L3 gates failed. Treat this path as experimental until it is rerun in an exclusive CUDA environment or demoted. No new CUDA capability or performance check is performed on macOS.
-
-The latest local portfolio round deliberately tested only two hotspot hypotheses. On clean, uninstrumented five-process Release data, Grouped GEMM v3 reached `0.9141x` ratio-of-sums versus CUTLASS, Permute v3 reached `0.9938x` versus the retained token-owned path, and the six-stage v3 chain reached `0.9743x` versus integrated v2. Every decision is `insufficient_evidence` because WDDM outliers exceeded the `CV <= 0.10` gate; the unfavorable aggregate trends independently rule out promotion. The explicit research IDs and v2/v1 fallbacks remain reproducible, while `Auto` is unchanged. The tracked route trace is only a synthetic parser fixture, so real-trace promotion also remains `insufficient_evidence` until captured input is supplied.
-
-The completed v4 round retains those rejected kernel directions and adds one deliberately narrow result: explicit fixed-shape CUDA Graph replay is promoted under an auditable Windows WDDM CV exception. Its host time-to-solution is `1.6205x` for the six-stage postlogit topology and `1.2336x` over the Top-K 2/4/8 postroute matrix; capture/instantiate/upload are setup work and break-even is 8–22 replays. This does not change `KernelFamily::kAuto`, apply to graph cache misses, or claim a GPU kernel speedup. See the [v4 Graph promotion report](docs/reports/rtx3080-sm86-v4-graph-promotion.md).
+> `histogram_exclusive_scan` is a separate cross-operator primitive and is not ranked as an eighth semantic operator. Fixed-shape CUDA Graph results (`1.6205x` postlogit and `1.2336x` postroute) are setup-complete host time-to-solution replay results—not kernel speedups—and do not change `KernelFamily::kAuto`.
 
 ## Engineering highlights
 
@@ -78,21 +79,11 @@ Suite v2 groups variants under one logical case and one declared promotion basel
 
 ## Evidence snapshot
 
-The historical baseline report is the [RTX 3080 seven-stage L3 three-way analysis](docs/reports/l3_three_way_20260805/RaggedRoute_L3_3way_comparison.md). It evaluates one strict-FP32 workload (`T=512`, `E=64`, `top_k=2`, `K=N=128`) with three independent release processes per path; the latest scoped Graph conclusion is documented separately in the [v4 promotion report](docs/reports/rtx3080-sm86-v4-graph-promotion.md):
+The formal Release run contains 3,725 validated records and 745 aggregate groups, with five independent processes per group. The tracked compact bundle contains matrix summaries, per-shape CSV, normalized NSYS/NCU metrics, an environment/command manifest, and SHA-256 checksums. Raw JSONL, full aggregates, `.ncu-rep`, `.nsys-rep`, and SQLite stay in ignored output or immutable release assets.
 
-| Research chain | Aggregate p50 | p95 | Cross-process CV | Interpretation |
-|---|---:|---:|---:|---|
-| Selected CUDA candidates | 69.734 us | 76.820 us | 0.0605 | diagnostic research chain; not public `Auto` dispatch |
-| Repository library chain | 94.413 us | 117.412 us | 0.1018 | not strictly comparable because of Top-K and host-offset boundaries |
-| Triton reference | 245.760 us | 256.020 us | 0.0236 | cross-toolchain reference, not a promotion denominator |
+NSYS identifies Grouped v2 as the dominant L3 kernel: 71.6% of uniform GPU kernel time (23.744 us median) and 86.0% of Zipf time (22.111 us median). The Zipf trace includes one 752.849 us system outlier, so profiler duration is not used as Release evidence. NCU classifies Permute v3 as bandwidth-bound at 86.85% DRAM throughput, while Scan and fused Histogram→Scan are one-CTA underfill cases.
 
-The observed CUDA/Triton ratio is `3.524x`, but it is deliberately reported as a cross-backend diagnostic rather than a production speedup. In the CUDA research chain, Grouped GEMM accounts for `64.4%` of NSYS kernel time. NCU reports 106 registers/thread, one wave/SM, 26.62% achieved occupancy, and SM/L2 work imbalance—making Grouped GEMM the highest-value next optimization target.
-
-The strongest counterexample is also preserved: the clean three-process Grouped GEMM candidate reached only `0.805x` ratio-of-sums versus CUTLASS across ten shapes and fell to `0.467x` at `T=2048,E=64,K=N=128,uniform`. That failure is part of the project result: local wins did not justify a default path.
-
-The current local v3 campaign at `657d29e` preserves the next failed hypotheses as compact evidence. Grouped v3 reduced measured global-load requests but raised registers from 86 to 96 and static shared memory from 7,952 to 12,048 bytes; achieved occupancy and issue activity fell. Permute tile2 remained DRAM-bound and did not improve the full matrix. See the [v3 diagnosis](docs/reports/rtx3080-six-ops-v3-657d29e.md) and [SHA-256 compact evidence](docs/reports/compact/20260827-657d29e-six-ops-v3/REPORT.md).
-
-The v4 evidence also preserves negative results: Grouped descriptor queue-1024 is `0.9225x` versus v2 and gather fusion is `0.8191x` with additional workspace. Only the Graph fixed-replay result uses the stated WDDM exception; the [v4 report and checksummed evidence](docs/reports/rtx3080-sm86-v4-graph-promotion.md) keep both policy decisions visible.
+Only Grouped v3/CUTLASS was escalated from basic to detailed NCU. V3 achieved higher occupancy and L2 hit rate (30.26% and 85.45%) than CUTLASS (16.98% and 50.71%) but lower issue activity (23.87% versus 34.79%) and much larger MIO-throttle/barrier/long-scoreboard samples. The next experiment therefore returns to the v2 16x32 mainloop and isolates scheduling/load balance instead of stacking a wider tile and descriptor queue.
 
 ## Quick start
 
@@ -165,15 +156,20 @@ CUDA Events provide unprofiled release latency. NSYS explains launch gaps and st
 
 ## Current limitations and next work
 
-- Rerun fused Histogram + Scan F2 in an exclusive RTX 3080 window; demote `Auto` if it still fails stability, fallback, or L3 gates.
-- Repeat the completed five-process v3 campaign only in a lower-noise or exclusive CUDA environment; current aggregate trends do not justify promotion even though WDDM variance makes the formal state `insufficient_evidence`.
+- Return to the Grouped v2 16x32 mainloop and change only task scheduling/load balance; do not stack a wider tile, descriptor prepass, and queue again.
+- Predeclare a Top-K v4 E64/T>=512 interval and test full-from-ids Permute v2 at L3 before considering any `Auto` change.
+- Rerun fused Histogram + Scan F2 in an exclusive RTX 3080 window and review its primitive-specific `Auto` if fallback or L3 gates still fail.
 - Replace the tracked synthetic route fixture with an anonymized captured/production working set before making any real-trace claim.
-- Reconcile the realistic/vLLM-semantic stacked evidence branches before treating them as `main` capabilities.
 - Keep raw profiler binaries and full aggregates in immutable release assets; tighten repository checks against evidence-policy drift.
 - Implement and measure FP16/BF16 Tensor Core paths only in a future CUDA environment. H100/Blackwell support requires real-hardware correctness and performance validation.
 
 ## Documentation
 
+- [CUDA / AI Infra interview entry (Chinese)](docs/interview/README.md)
+- [Seven operator performance cards](docs/interview/operator-performance.md)
+- [Bottleneck analysis](docs/interview/bottleneck-analysis.md)
+- [Interview question bank](docs/interview/question-bank.md)
+- [Branch governance and cleanup review](docs/cleanup-review.md)
 - [Implementation status and claim boundary](docs/implementation-status.md)
 - [Development roadmap](docs/development-roadmap.md)
 - [Benchmark architecture](docs/benchmark-architecture.md)
@@ -181,7 +177,7 @@ CUDA Events provide unprofiled release latency. NSYS explains launch gaps and st
 - [Correctness framework](docs/correctness-framework.md)
 - [Operator optimization index](docs/operator-optimization-index.md)
 - [CI quality gates](docs/ci-quality-gates.md)
-- [Full technical design and historical plan](docs/RaggedRoute-最终产品技术文档.md)
+- [Full technical design and historical plan (review-held legacy document)](docs/RaggedRoute-最终产品技术文档.md)
 - [Third-party provenance](THIRD_PARTY_NOTICES.md)
 
 ## License

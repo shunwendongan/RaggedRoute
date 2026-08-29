@@ -1,5 +1,14 @@
 # Exclusive Scan 实际性能记录
 
+## 2026-08-29 / 统一简历作品集复测
+
+- Evidence SHA：`9732a0343c60f869fc4166a0cc3cabba2fd67bbb`；E={1,31,32,33,64}、5-process clean Release。
+- CUB BlockScan 对 naive ratio-of-sums `1.0249x`、4/5 shape 获益；CUB WarpScan 在 E<=32 子域为 `1.0290x`、3/3 获益；DeviceScan 仅 `0.3310x`。
+- Naive NCU 为单 block/单 thread、0.000919 waves/SM、2.08% achieved occupancy，确认 tiny metadata 主要 launch/underfill-bound。没有 retained 自研 candidate，`Auto` 保持 naive。
+- Histogram→Scan fusion 是独立跨算子 primitive，不混入 standalone Scan 排名；其历史 Graph/fusion 证据单独保留。
+
+统一证据：[compact report](../reports/compact/20260829-9732a03-interview-portfolio/REPORT.md)；面试卡片：[operator performance](../interview/operator-performance.md#4-exclusive-scan)。
+
 ## 2026-07-31 / RTX 3080 int32 metadata baseline
 
 - Git：`a9489abce704`；case `E=64,R=4096`；`offsets[0]`、`offsets[E]` 与全部相邻差分精确通过。

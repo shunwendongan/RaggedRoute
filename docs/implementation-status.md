@@ -1,7 +1,7 @@
 # 实现状态与证据边界
 
-更新时间：2026-08-28
-事实基线：`main@354e1ff0a3aaf602830c8d989eb358cfa857a4c9`。PR #31/#32 合并到实验分支而非 `main`，不计入下列当前能力。
+更新时间：2026-08-29
+公开事实基线：`main@3597731de8ddbdf0238574cb99b58be90226c2ce`。最新统一性能证据固定在任务分支 clean SHA `9732a0343c60f869fc4166a0cc3cabba2fd67bbb`；该轮不修改公共 API、算子实现或 `KernelFamily::kAuto`。
 
 ## 已实现
 
@@ -51,6 +51,7 @@
 - 2026-08-05：合入单一固定 workload 的七阶段 L3 三线路诊断报告。Selected CUDA research chain p50 为 `69.734 us`，Triton reference 为 `245.760 us`，但跨工具链比值不具 promotion 资格；该链中 Grouped GEMM 占 NSYS kernel time `64.4%`。报告见 [L3 three-way analysis](reports/l3_three_way_20260805/RaggedRoute_L3_3way_comparison.md)；
 - 2026-08-05：`main@354e1ff` 的 GitHub CI 通过 repository checks、Python tests 与 Windows/Linux CPU-only build/CTest。当前 macOS 工作区只执行 CPU-only/文档检查，不做 CUDA 能力或性能复测。
 - 2026-08-28：SM86 aggressive v4 完成 Grouped descriptor（static/queue 256/512/1024 与 cache-order）、Top-K 2/4/8 route-prep/token-owned copy、postroute gather 与 CUDA Graph 实验。Grouped descriptor、route-prep、token-owned 和 gather 未满足晋级条件，均保留为 research/rejection evidence。两个 fixed CUDA Graph replay variant 在独立的 host-time policy 下晋级为 `promoted_explicit_fixed_shape_only`：该 policy 明确记录了用户授权的 WDDM CV 例外；它只适用于固定 shape、固定 buffer/topology、setup 已完成的 replay，不改公开 API 或 `KernelFamily::kAuto`。见 [v4 Graph report](reports/rtx3080-sm86-v4-graph-promotion.md)。
+- 2026-08-29：完成七算子 RTX 3080 统一作品集复测：3725/3725 Release records、745 aggregate groups、五进程完整且 validation 全过；两条 L3 NSYS 和 candidate/baseline NCU basic 全覆盖，只有 Grouped v3/CUTLASS 升级 detailed。最新 strongest candidate 结论为：Dense v3 对 cuBLAS envelope `0.8716x`；Top-K v4 对 strict naive `1.0972x`；Histogram v2 对 v1/CUB/naive envelope `1.1016x`；Scan 无 retained candidate；Permute v2 full-from-ids 对 vLLM `1.5671x`；Grouped v2 对 CUTLASS/cuBLAS envelope `0.8697x`；Unpermute vec4 对 vLLM/naive envelope `1.0154x`。作品集 policy 将 CV ceiling 调整为 0.50，超过 0.10 继续披露风险但不自动降级；历史 policy decision 保持不变。证据见 [compact bundle](reports/compact/20260829-9732a03-interview-portfolio/REPORT.md) 与 [面试入口](interview/README.md)。
 
 ## 尚未实现，禁止据此宣称
 
@@ -58,7 +59,7 @@
 - 可发布的 Grouped GEMM optimized runtime；现有 `cp.async`/persistent SM86 版本仅为 benchmark-only 失败实验；
 - 与 Top-K tie/NaN/selected-softmax 合同相同的外部库基线；
 - 匿名 captured/production route trace、通用 working-set rotation 与 distribution-aware cache sweep；当前 synthetic fixture 只验证工具链，不是部署分布证据；
-- 除 Histogram 与独立 fused Histogram→Scan primitive 外的 shape-aware default dispatch；自动 evaluator 已实现，但当前 v3 因 WDDM CV 超限为 `insufficient_evidence`，且 aggregate 趋势不支持晋级；
+- 除 Histogram 与独立 fused Histogram→Scan primitive 外的 shape-aware default dispatch；最新统一矩阵中的 Top-K、Permute full-from-ids、Histogram v2 research winner 都未在本轮修改 `Auto`，Grouped/Dense/Unpermute 也没有完整矩阵晋级证据；
 - H100/Blackwell 实卡支持、正确性或性能；本机 SM90/SM90a 交叉编译不等同于 H100 验证；
 - 完整 MoE FFN、训练、多 GPU 或 All-to-All。
 - 通用 CUDA Graph dispatch、cache-miss/mixed-shape request SLA、param-update/exec-update promotion；当前仅 fixed replay 获得显式晋级，且其 WDDM CV 例外不得外推到其他算子或环境。

@@ -68,7 +68,7 @@
       "seed": 20260828,
       "set": "basic",
       "cache_control": "none",
-      "kernel_pattern": "histogram_(single_cta_shared|naive)_kernel",
+      "kernel_pattern": "histogram_single_cta_shared_kernel",
       "params": {"R": 4096, "E": 64, "distribution": "zipf", "zipf_s": 1.4}
     },
     {

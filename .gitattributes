@@ -11,3 +11,4 @@ CMakeLists.txt text eol=lf
 docs/reports/artifacts/** text eol=lf
 docs/reports/compact/20260828-sm86-v4-raw-final/** -text
 docs/reports/compact/20260828-sm86-v4-graph-promotion/** -text
+docs/reports/compact/20260829-9732a03-interview-portfolio/** -text

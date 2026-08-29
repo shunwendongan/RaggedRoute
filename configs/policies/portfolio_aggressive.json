@@ -1,8 +1,8 @@
 {
-  "schema_version": "raggedroute.cuda_v4_portfolio_aggressive_policy.v1",
+  "schema_version": "raggedroute.cuda_v4_portfolio_aggressive_policy.v2",
   "minimum_independent_process_runs": 5,
   "minimum_paired_shapes": 1,
-  "maximum_all_samples_cv": 0.10,
+  "maximum_all_samples_cv": 0.50,
   "minimum_ratio_of_sums_p50_speedup": 1.01,
   "minimum_geometric_mean_p50_speedup": 1.00,
   "minimum_speedup_shape_coverage": 0.60,

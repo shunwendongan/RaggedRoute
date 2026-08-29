@@ -1,5 +1,14 @@
 # Unpermute 实际性能记录
 
+## 2026-08-29 / 统一简历作品集复测
+
+- Evidence SHA：`9732a0343c60f869fc4166a0cc3cabba2fd67bbb`；T={64,512,1024,4096}、N={64,128,256,1024}、uniform/Zipf，5-process clean Release。
+- `cuda_warp_token_vec4` 对最快 vLLM/naive envelope ratio-of-sums `1.0154x`、geomean `1.0172x`、12/32 shape 获益、最大回退 8.03%；对 vLLM 单独为 `1.0369x`、15/32 获益。
+- 局部优势集中在中大型 T、窄 N：Zipf T4096/N128 `1.2892x`、uniform T4096/N128 `1.2487x`、Zipf T4096/N64 `1.2405x`。
+- Candidate NCU 为 0.314 waves/SM、26.90% occupancy、34 registers/thread、Memory/DRAM 45.72%。结论是局部 shape winner，仍不足以进入全局 Auto。
+
+统一证据：[compact report](../reports/compact/20260829-9732a03-interview-portfolio/REPORT.md)；面试卡片：[operator performance](../interview/operator-performance.md#7-unpermute)。
+
 ## 2026-07-31 / RTX 3080 strict-FP32 baseline
 
 - Git：`a9489abce704`；case `T=1024,E=64,N=256,top_k=2,uniform`；weighted reduce 与 token-owned CPU reference 通过，未使用 global atomic。

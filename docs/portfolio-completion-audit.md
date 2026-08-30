@@ -2,7 +2,7 @@
 
 审计日期：2026-08-30（Asia/Shanghai）
 
-仓库快照：PR #38 合并后的 `main@b74616e445938e077743c997835a8eb7ec177b7d`
+仓库快照：PR #39 合并后的 `main@2366acec5d2ab6552e6112e5019ac948a51fbf34`
 
 统一七算子证据：`9732a0343c60f869fc4166a0cc3cabba2fd67bbb`
 
@@ -21,7 +21,7 @@ Grouped follow-up：`c2205ed1ba1063fccce3cd417fd671798dbfb66f`、`dea7c066a83a5d
 | 套餐项 | 状态 | 可核验结果 | 边界 |
 |---|---|---|---|
 | 远端分支治理 | 完成 | live 远端只剩 `main` 与 review-held `codex/grouped-gemm-sm86-v2`；4 个 evidence tag 保留 | 本地分支、5 个 worktree、1 个 stash 均未删除 |
-| 合并后自动清理 | 完成 | GitHub `delete_branch_on_merge=true`；PR #38 已合并且远端任务分支已删除 | 私有仓库套餐不支持 branch protection，继续使用 CI/PR 门禁 |
+| 合并后自动清理 | 完成 | GitHub `delete_branch_on_merge=true`；PR #38/#39 已合并且远端任务分支已删除 | 私有仓库套餐不支持 branch protection，继续使用 CI/PR 门禁 |
 | 七算子统一 Release | 完成 | 3725/3725 records、745 aggregate groups、5 个独立进程、20 warmup、30 samples、固定 seed，validation 全过 | strict FP32、RTX 3080 / SM86、Windows/WDDM |
 | CV 口径 | 完成 | 现行 `default_promotion` 与 portfolio policy 的 evidence ceiling 均为 `0.50` | `CV>0.10` 只披露风险；`CV>0.50` 才因 CV 自动降级，历史 decision 不回写 |
 | NSYS 关键路径 | 完成 | uniform/Zipf 各一条 L3 trace；均抽取 5 个阶段热点，kernel time 占比各自合计 100% | profiler duration 不进入正式 speedup |

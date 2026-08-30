@@ -1,13 +1,13 @@
 # RaggedRoute 后续开发路线
 
-> **状态：部分实现；本地研究最新证据为 v4 Graph fixed replay（Release `b3429c2`），更新于 2026-08-28。** A1/A2、三态 promotion evaluator、版本化 route-trace 输入、frame working set、shape heatmap 与 compact v3/v4 evidence 已实现；真实 captured/production trace、通用 working-set ring 和 cache sweep 仍是计划。当前可执行范围及证据边界以 `implementation-status.md` 为准。
+> **状态：部分实现；最新 Grouped GEMM 研究证据为 v5/v6 clean Release `c2205ed`，更新于 2026-08-30。** 七算子统一 portfolio 仍以 `9732a03` 为基线；A1/A2、三态 promotion evaluator、版本化 route-trace 输入、frame working set、shape heatmap 与 compact evidence 已实现；真实 captured/production trace、通用 working-set ring 和 cache sweep 仍是计划。当前可执行范围及证据边界以 `implementation-status.md` 为准。
 
 > **环境边界：** 当前本地分支已在 Windows RTX 3080 / SM86 上完成 clean Release、Compute Sanitizer、NSYS 和 NCU 复测。v3 与非 Graph v4 仍受 WDDM CV 或实际 performance gate 限制；仅 fixed CUDA Graph replay 按可审计的授权 exception policy 晋级为显式实现。不得将 profiler duration 或 synthetic route fixture 写成发布性能。
 
 ## 0. 面向 AI Infra/CUDA 实习的当前优先级
 
 1. **P0：关闭 F2 dispatch 与证据之间的缺口。** `HistogramExclusiveScan` 的 `Auto` 已指向 F2，但已有运行的 CV、fallback 与 L3 门禁失败。下一次 CUDA 窗口先重复 `configs/operators/scan/benchmark/fused_v2_promoted.json` 和对应 L3 suite；若仍失败，撤回默认选择而不是继续包装 speedup。
-2. **P1：把 Grouped GEMM 作为唯一主 kernel 性能假设。** v3 `16x64x16` tile 已实测失败：十 shape 对 CUTLASS ratio-of-sums 为 `0.9141x`；v4 descriptor queue-1024 对 v2 也是 `0.9225x`。下一轮需减少 descriptor mainloop 的 register/barrier metadata 代价，不能再叠加 tile、prepass thread-count 与 queue 机制。
+2. **P1：把 Grouped GEMM 作为唯一主 kernel 性能假设。** v5 direct-grid 已去掉 balanced workload 的 prefix/binary-search persistent traversal，v6 `32x128x16` 又将 global load/store requests 相对 v5 降低 43.4%/75.5%，在 uniform T512 对 CUTLASS 达 `1.2257x`。但完整 library envelope 仍只有 `0.9946x`，T2048 为 `0.7534x`；下一轮必须固定 v6 mainloop，只隔离 selector/tail-wave 映射，不再放大 tile 或叠加 descriptor queue。
 3. **P1：补真实 workload，而不是扩充 synthetic shape。** route-trace schema、frame working set 和 evaluator 已实现；在匿名 captured/production trace 与通用 cache working set 到位前，real-trace policy 必须返回 `insufficient_evidence`。
 4. **P2：整理真实 L3 证据。** PR #31/#32 合并到实验分支而非 `main`；未来需要以当前 `main` 重整、校验语义和来源后再决定是否合入，当前文档不得把它们写成已发布能力。
 5. **P2：修复 evidence policy 漂移。** 清理 `l3_three_way_20260805` 中直接进入 Git 的 profiler 二进制，并增加扩展名/角色检查；超大 comparison JSON 应压缩为摘要，完整文件进入 immutable Release 资产。

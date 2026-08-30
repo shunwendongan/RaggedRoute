@@ -39,7 +39,7 @@ The benchmark registry exposes eight adapters: the seven semantic operators plus
 
 ## Latest seven-operator matrix
 
-The latest evidence is frozen at `9732a0343c60f869fc4166a0cc3cabba2fd67bbb`: RTX 3080/SM86, strict FP32, clean Release, five independent processes, 20 warmups and 30 samples per process. Speedups come from unprofiled CUDA Event measurements; NSYS/NCU durations are diagnostic only. See the [compact evidence](docs/reports/compact/20260829-9732a03-interview-portfolio/REPORT.md) and the detailed [Chinese interview guide](docs/interview/README.md).
+The seven-operator portfolio is frozen at clean SHA `9732a0343c60f869fc4166a0cc3cabba2fd67bbb`: RTX 3080/SM86, strict FP32, five independent processes, 20 warmups, and 30 samples per process. A newer Grouped-GEMM-only follow-up is frozen at clean SHA `c2205ed1ba1063fccce3cd417fd671798dbfb66f`; it evaluates v5/v6 on the same hardware and numerical contract without rewriting the other six matrices. Speedups come from unprofiled CUDA Event measurements; NSYS/NCU durations are diagnostic only. See the [portfolio evidence](docs/reports/compact/20260829-9732a03-interview-portfolio/REPORT.md), [Grouped v5/v6 evidence](docs/reports/compact/20260830-c2205ed-grouped-v6/REPORT.md), and the detailed [Chinese interview guide](docs/interview/README.md).
 
 | Operator | SM86 `Auto` | Strongest in-tree candidate | Strongest comparable baseline | Full declared matrix | Best local shape | Auto decision |
 |---|---|---|---|---:|---:|---|
@@ -48,7 +48,7 @@ The latest evidence is frozen at `9732a0343c60f869fc4166a0cc3cabba2fd67bbb`: RTX
 | Histogram | shape-dispatched v1 | `cuda_candidate_v2` | fastest v1/CUB/naive per shape | `1.1016x`, 9/15 wins | R1M/E1 `4.3026x` | unchanged; research winner |
 | Exclusive Scan | `cuda_naive` | no retained custom candidate | CUB Warp/Block/Device | Block `1.0249x`; Warp subset `1.0290x` | E33 Block `1.0765x` | no; tiny launch-bound work |
 | Token Permute | `cuda_naive` | v2 full-from-ids | adapted vLLM | `1.5671x`, 5/5 wins | `1.8501x` | unchanged; full-boundary winner |
-| Grouped GEMM | `cuda_naive` | SM86 v2 16x32 | fastest CUTLASS/cuBLAS per shape | `0.8697x`, 3/10 wins | single-hot `1.6411x` | no; counterexamples fail |
+| Grouped GEMM | `cuda_naive` | v6 hybrid 32x128 / v5 fallback | fastest CUTLASS/cuBLAS per shape | `0.9946x`, 5/10 wins | uniform T512/CUTLASS `1.2257x`; single-hot/library `1.7762x` | no; T2048 counterexample `0.7534x` |
 | Unpermute | `cuda_naive` | `cuda_warp_token_vec4` | fastest vLLM/naive per shape | `1.0154x`, 12/32 wins | Zipf T4096/N128 `1.2892x` | no; narrow-N local benefit |
 
 The portfolio evidence ceiling is now `CV<=0.50`: values above 0.10 remain disclosed WDDM stability risks but no longer cause an automatic `insufficient_evidence` label. Matrix claims still require complete five-process evidence, ratio-of-sums, shape geomean, coverage, maximum regression, workspace, and cross-process direction checks. This policy is not a production SLA.
@@ -83,7 +83,7 @@ The formal Release run contains 3,725 validated records and 745 aggregate groups
 
 NSYS identifies Grouped v2 as the dominant L3 kernel: 71.6% of uniform GPU kernel time (23.744 us median) and 86.0% of Zipf time (22.111 us median). The Zipf trace includes one 752.849 us system outlier, so profiler duration is not used as Release evidence. NCU classifies Permute v3 as bandwidth-bound at 86.85% DRAM throughput, while Scan and fused Histogram→Scan are one-CTA underfill cases.
 
-Only Grouped v3/CUTLASS was escalated from basic to detailed NCU. V3 achieved higher occupancy and L2 hit rate (30.26% and 85.45%) than CUTLASS (16.98% and 50.71%) but lower issue activity (23.87% versus 34.79%) and much larger MIO-throttle/barrier/long-scoreboard samples. The next experiment therefore returns to the v2 16x32 mainloop and isolates scheduling/load balance instead of stacking a wider tile and descriptor queue.
+The follow-up keeps the v2 `16x32` mainloop in v5 but replaces balanced-workload prefix/binary-search persistent traversal with a direct grid. V6 changes only that balanced path to a `32x128x16` tile, 256 threads, per-thread `4x4` outer products, aligned `float4` stores, and two-stage Ampere `cp.async`, with v5 fallback elsewhere. Against v5, NCU shows 43.4%/75.5% fewer global load/store requests and 82.7% fewer DRAM writes. At uniform T2048, however, v6 has only 0.941 waves/SM and 31.28% issue activity, with the least-active SM 54.17% below the mean. The remaining bottleneck is underfill/work imbalance and issue efficiency, not spills; local load/store instructions are zero.
 
 ## Quick start
 
@@ -156,7 +156,7 @@ CUDA Events provide unprofiled release latency. NSYS explains launch gaps and st
 
 ## Current limitations and next work
 
-- Return to the Grouped v2 16x32 mainloop and change only task scheduling/load balance; do not stack a wider tile, descriptor prepass, and queue again.
+- Hold the Grouped v6 32x128 mainloop fixed and change only its selector bucket or tail-wave task mapping; do not enlarge the tile or stack a descriptor prepass/queue.
 - Predeclare a Top-K v4 E64/T>=512 interval and test full-from-ids Permute v2 at L3 before considering any `Auto` change.
 - Rerun fused Histogram + Scan F2 in an exclusive RTX 3080 window and review its primitive-specific `Auto` if fallback or L3 gates still fail.
 - Replace the tracked synthetic route fixture with an anonymized captured/production working set before making any real-trace claim.

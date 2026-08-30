@@ -12,6 +12,23 @@ import pathlib
 
 EVIDENCE_SHA = "9732a0343c60f869fc4166a0cc3cabba2fd67bbb"
 BUNDLE = pathlib.Path("docs/reports/compact/20260829-9732a03-interview-portfolio")
+GROUPED_EVIDENCE_SHA = "c2205ed1ba1063fccce3cd417fd671798dbfb66f"
+GROUPED_BUNDLE = pathlib.Path("docs/reports/compact/20260830-c2205ed-grouped-v6")
+GROUPED_REQUIRED_FILES = {
+    "commands.md",
+    "decision-v6-vs-cublas-per-expert.json",
+    "decision-v6-vs-cuda-grouped-sm86-fp32-v2.json",
+    "decision-v6-vs-cuda-grouped-sm86-fp32-v5-balanced-direct.json",
+    "decision-v6-vs-cutlass-grouped.json",
+    "environment.json",
+    "profiler-metrics.json",
+    "REPORT.md",
+    "v5-matrix-rows.csv",
+    "v5-matrix-summary.json",
+    "v6-matrix-rows.csv",
+    "v6-matrix-summary.json",
+    "SHA256SUMS",
+}
 PRIMARY_EXPECTED = {
     "dense_v3_vs_library_envelope": (0.871553, 1.009524),
     "topk_v4_vs_exact_naive": (1.097225, 1.693444),
@@ -160,11 +177,105 @@ def validate(root: pathlib.Path) -> list[str]:
             if environment.get(field) != expected:
                 errors.append(f"environment {field} does not equal {expected!r}")
 
+    grouped_bundle = root / GROUPED_BUNDLE
+    if not grouped_bundle.is_dir():
+        errors.append(f"missing Grouped v6 bundle: {GROUPED_BUNDLE.as_posix()}")
+    else:
+        grouped_found = {path.name for path in grouped_bundle.iterdir() if path.is_file()}
+        if grouped_found != GROUPED_REQUIRED_FILES:
+            errors.append(
+                "Grouped v6 bundle file set mismatch: "
+                f"missing={sorted(GROUPED_REQUIRED_FILES - grouped_found)}, "
+                f"extra={sorted(grouped_found - GROUPED_REQUIRED_FILES)}"
+            )
+        grouped_forbidden = [
+            path.relative_to(root).as_posix()
+            for path in grouped_bundle.rglob("*")
+            if path.is_file()
+            and path.suffix.lower() in {".jsonl", ".ncu-rep", ".nsys-rep", ".sqlite", ".zip"}
+        ]
+        if grouped_forbidden:
+            errors.append(f"raw or binary artifacts are tracked in Grouped bundle: {grouped_forbidden}")
+        grouped_sums = grouped_bundle / "SHA256SUMS"
+        if grouped_sums.is_file():
+            checksums: dict[str, str] = {}
+            for line in grouped_sums.read_text(encoding="utf-8").splitlines():
+                parts = line.split("  ", 1)
+                if len(parts) != 2:
+                    errors.append(f"malformed Grouped checksum line: {line!r}")
+                    continue
+                checksums[parts[1]] = parts[0]
+            expected_names = GROUPED_REQUIRED_FILES - {"SHA256SUMS"}
+            if set(checksums) != expected_names:
+                errors.append("Grouped SHA256SUMS does not cover the exact compact file set")
+            for name, expected_hash in checksums.items():
+                path = grouped_bundle / name
+                if path.is_file() and digest(path) != expected_hash:
+                    errors.append(f"checksum mismatch: {(GROUPED_BUNDLE / name).as_posix()}")
+
+        grouped_summary_path = grouped_bundle / "v6-matrix-summary.json"
+        if grouped_summary_path.is_file():
+            grouped_summary = load_json(grouped_summary_path)
+            expected_summary = {
+                "candidate": "cuda_grouped_sm86_fp32_v6_balanced_32x128",
+                "record_count": 250,
+                "case_count": 10,
+                "variant_count": 5,
+            }
+            for field, expected in expected_summary.items():
+                if grouped_summary.get(field) != expected:
+                    errors.append(f"Grouped summary {field} does not equal {expected!r}")
+            quality = grouped_summary.get("evidence_quality", {})
+            if quality.get("all_validation_ok") is not True or quality.get("all_clean_build") is not True:
+                errors.append("Grouped v6 evidence is not validated clean Release evidence")
+            if not close(quality.get("maximum_process_cv"), 0.496793366473):
+                errors.append("Grouped v6 maximum CV drift")
+            if quality.get("groups_above_cv_evidence_ceiling") != 0:
+                errors.append("Grouped v6 contains a CV evidence-ceiling violation")
+            envelope = grouped_summary.get("comparisons", {}).get(
+                "fastest_library_envelope", {}
+            ).get("summary", {})
+            if not close(envelope.get("ratio_of_sums_p50_speedup"), 0.9945583293423579):
+                errors.append("Grouped v6 library-envelope ratio drift")
+            if not close(envelope.get("shape_geomean_p50_speedup"), 1.0351901128615002):
+                errors.append("Grouped v6 library-envelope geomean drift")
+
+        grouped_rows_path = grouped_bundle / "v6-matrix-rows.csv"
+        if grouped_rows_path.is_file():
+            with grouped_rows_path.open("r", encoding="utf-8", newline="") as handle:
+                grouped_rows = list(csv.DictReader(handle))
+            envelope_rows = {
+                row["case_id"]: row
+                for row in grouped_rows
+                if row.get("baseline") == "fastest_library_envelope"
+            }
+            expected_shapes = {
+                "grouped.v6.uniform.t512_e64_k128_n128": 1.225734862846226,
+                "grouped.v6.single_hot.t512_e64_k128_n128": 1.7762180325280665,
+                "grouped.v6.uniform.t2048_e64_k128_n128": 0.7533617836250541,
+            }
+            for case_id, expected in expected_shapes.items():
+                if not close(envelope_rows.get(case_id, {}).get("p50_speedup"), expected):
+                    errors.append(f"Grouped v6 headline shape drift: {case_id}")
+
+        grouped_environment_path = grouped_bundle / "environment.json"
+        if grouped_environment_path.is_file():
+            grouped_environment = load_json(grouped_environment_path)
+            if grouped_environment.get("source_commit") != GROUPED_EVIDENCE_SHA:
+                errors.append("Grouped environment source commit drift")
+            if grouped_environment.get("source_clean") is not True:
+                errors.append("Grouped environment is not clean")
+
     policy = load_json(root / "configs/policies/portfolio_aggressive.json")
     if policy.get("schema_version") != "raggedroute.cuda_v4_portfolio_aggressive_policy.v2":
         errors.append("portfolio policy schema was not advanced to v2")
     if not close(policy.get("maximum_all_samples_cv"), 0.50):
         errors.append("portfolio policy maximum_all_samples_cv is not 0.50")
+    default_policy = load_json(root / "configs/policies/default_promotion.json")
+    if default_policy.get("schema_version") != "raggedroute.promotion_policy.v2":
+        errors.append("default promotion policy schema was not advanced to v2")
+    if not close(default_policy.get("maximum_all_samples_cv"), 0.50):
+        errors.append("default promotion policy maximum_all_samples_cv is not 0.50")
 
     profile = load_json(root / "configs/project/profile/interview_portfolio_baselines.json")
     fused_baseline = next(
@@ -186,6 +297,8 @@ def validate(root: pathlib.Path) -> list[str]:
     for relative in ("README.md", "README.zh-CN.md", "docs/interview/README.md", "docs/interview/operator-performance.md", "docs/interview/bottleneck-analysis.md", "docs/implementation-status.md"):
         if relative in texts and EVIDENCE_SHA not in texts[relative]:
             errors.append(f"canonical document does not cite full evidence SHA: {relative}")
+        if relative in texts and GROUPED_EVIDENCE_SHA not in texts[relative]:
+            errors.append(f"canonical document does not cite Grouped evidence SHA: {relative}")
     for relative in PERFORMANCE_RECORDS:
         if relative in texts and "2026-08-29" not in texts[relative]:
             errors.append(f"performance record lacks latest date: {relative}")
@@ -193,14 +306,14 @@ def validate(root: pathlib.Path) -> list[str]:
             errors.append(f"performance record lacks evidence SHA: {relative}")
 
     required_claims = {
-        "README.md": ("0.8716x", "1.0972x", "1.1016x", "1.5671x", "0.8697x", "1.0154x", "CV<=0.50"),
-        "README.zh-CN.md": ("0.8716x", "1.0972x", "1.1016x", "1.5671x", "0.8697x", "1.0154x", "CV<=0.50"),
+        "README.md": ("0.8716x", "1.0972x", "1.1016x", "1.5671x", "0.9946x", "1.2257x", "1.7762x", "0.7534x", "1.0154x", "CV<=0.50"),
+        "README.zh-CN.md": ("0.8716x", "1.0972x", "1.1016x", "1.5671x", "0.9946x", "1.2257x", "1.7762x", "0.7534x", "1.0154x", "CV<=0.50"),
         "docs/interview/operator-performance.md": (
             "cuda_register_tiled_v3_64x32_async",
             "cuda_local_pair_two_reduce_top2_v4",
             "cuda_candidate_v2",
             "cuda_candidate_v2_from_ids",
-            "cuda_grouped_sm86_fp32_v2",
+            "cuda_grouped_sm86_fp32_v6_balanced_32x128",
             "cuda_warp_token_vec4",
         ),
     }

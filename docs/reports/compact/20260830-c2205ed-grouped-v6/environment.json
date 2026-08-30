@@ -1,0 +1,45 @@
+{
+  "schema_version": "raggedroute.compact_environment.v1",
+  "evidence_date": "2026-08-30",
+  "source_commit": "c2205ed1ba1063fccce3cd417fd671798dbfb66f",
+  "source_branch": "codex/grouped-v2-scheduling-portfolio",
+  "source_clean": true,
+  "build_type": "Release",
+  "cuda_compiler": "13.3.73",
+  "cuda_driver": "616.56",
+  "ncu": "2026.2.1",
+  "nsys": "2026.1.3",
+  "cutlass": "4.6.1",
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 3080",
+    "compute_capability": "8.6",
+    "sm_count": 68,
+    "memory_mib": 10240,
+    "uuid": "GPU-7c5e95c0-e5a4-15d8-24a0-c8c8b58d6f39"
+  },
+  "release_protocol": {
+    "measurement_level": "L2_operator_steady",
+    "math_mode": "strict_fp32",
+    "cache_mode": "warm",
+    "process_runs": 5,
+    "warmup": 20,
+    "samples_per_process": 30,
+    "kernel_repeats": 50,
+    "seed": 20260829,
+    "cases": 10,
+    "variants": 5,
+    "records": 250
+  },
+  "quality": {
+    "all_validation_ok": true,
+    "all_release": true,
+    "all_clean_build": true,
+    "maximum_process_cv": 0.496793366473,
+    "cv_risk_disclosure_threshold": 0.10,
+    "cv_evidence_ceiling": 0.50,
+    "groups_above_risk_threshold": 44,
+    "groups_above_evidence_ceiling": 0,
+    "workspace_bytes": 0
+  },
+  "raw_retention": "Raw JSONL, full aggregates, .ncu-rep, .nsys-rep, SQLite and sanitizer logs remain under ignored out/."
+}

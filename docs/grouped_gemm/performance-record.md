@@ -1,12 +1,24 @@
 # Grouped GEMM 实际性能记录
 
+## 2026-08-30 / SM86 v5 direct-grid 与 v6 32x128 follow-up
+
+- 正式证据固定在 clean SHA `c2205ed1ba1063fccce3cd417fd671798dbfb66f`：RTX 3080 / SM86、strict FP32、10 shape、5 个独立进程、20 warmup、30 samples/process、50 repeats、seed `20260829`；250/250 records 通过 CPU oracle。最大 process CV 为 `0.4968`，44/50 groups 超过 `0.10` WDDM 风险线，0 个超过 `0.50` evidence ceiling，未删除离群点。
+- v5 `cuda_grouped_sm86_fp32_v5_balanced_direct` 保留 v2 `16x32x16` `cp.async` mainloop，对 balanced workload 以 direct `(column,row,expert)` grid 取代 CTA prefix/binary search/persistent serial traversal。
+- v6 `cuda_grouped_sm86_fp32_v6_balanced_32x128` 将 balanced path 改为 `32x128x16`、256 threads、每线程 `4x4` outer product、aligned `float4` store 和 Ampere 两级 `cp.async`；只在 average rows、skew、K/N 对齐条件满足时进入，其余回退 v5，workspace 为 0。
+- 对最快 CUTLASS/cuBLAS envelope，v6 ratio-of-sums `0.9946x`、geomean `1.0352x`、5/10 shape 获益，最大 p50/p95 回退 32.74%/86.90%，因此是 `reject`，不能写成整体超过库实现。v6 对 v5 仅 `1.0116x` ratio-of-sums，且 p95 gate 失败。
+- 可用于简历的限定结果：uniform `T512/E64/K128/N128` 为 `18.4627 us` 对 CUTLASS `22.6304 us`，即 `1.2257x`；single-hot 为 `12.4006 us` 对最快 library `22.0262 us`，即 `1.7762x`；两者都是 5/5 process pairs 同向。必须同时披露 uniform T2048 `0.7534x`、non-aligned `0.8380x` 和 single-expert 对 cuBLAS `0.7835x` 反例。
+- NCU detailed 验证了大 tile 确实减少 request amplification：v6 相对 v5 的 global load/store requests 减少 43.4%/75.5%，DRAM writes 减少 82.7%；但 v6 只有 0.941 waves/SM、31.60% achieved occupancy 和 31.28% issue active，SM active-cycle minimum 比均值低 54.17%。当前剩余瓶颈是 underfill/work imbalance 与 issue efficiency，不是 spill（local load/store 都为 0）。
+- v7 `64x128` 只做了 dirty 三进程 smoke；uniform T2048 比 v6 慢约 6.6%，因 accumulator live range 和 tail-row 同步代价撤回，不作为正式性能声明。
+
+决策：v6 作为 zero-workspace、benchmark-only 的 SM86 高性能研究 candidate 保留，`KernelFamily::kAuto` 不变。统一七算子 portfolio 仍以 `9732a0343c60f869fc4166a0cc3cabba2fd67bbb` 为事实基线；本小节是只针对 Grouped GEMM 的后续 clean 证据。完整数据见 [v5/v6 compact report](../reports/compact/20260830-c2205ed-grouped-v6/REPORT.md)。
+
 ## 2026-08-29 / 统一简历作品集复测与 detailed 归因
 
 - Evidence SHA：`9732a0343c60f869fc4166a0cc3cabba2fd67bbb`；十 shape、5-process clean Release，strict FP32。
-- 最新完整矩阵最强自研是 v2 16x32，不是 v3/v4A。v2 对最快 CUTLASS/cuBLAS envelope ratio-of-sums `0.8697x`、geomean `0.9472x`、3/10 shape 获益；对 CUTLASS 单独为 `0.9259x`、4/10 获益。
+- 该轮完整矩阵的最强自研是 v2 16x32，不是 v3/v4A。v2 对最快 CUTLASS/cuBLAS envelope ratio-of-sums `0.8697x`、geomean `0.9472x`、3/10 shape 获益；对 CUTLASS 单独为 `0.9259x`、4/10 获益。
 - 局部 winner：single-hot `1.6411x`、many-empty `1.3365x`、Zipf T512 `1.0790x`；关键反例 uniform T2048 `0.5335x`、non-aligned `0.7210x`。不能写整体胜过 CUTLASS。
 - NSYS 中 v2 占 uniform/Zipf L3 GPU kernel time 71.6%/86.0%。为诊断失败机制升级的 v3/CUTLASS detailed 显示：v3 occupancy/L2 hit 更高，但 issue active 23.87% 对 34.79%，MIO/barrier/long-scoreboard 716/452/404 对 62/60/138。
-- 决策：所有 candidate 继续 benchmark-only；下一轮回到 v2 mainloop，只隔离 scheduling/load-balance。
+- 当时决策：所有 candidate 继续 benchmark-only；后续回到 v2 mainloop，只隔离 scheduling/load-balance，这直接导向了上方 v5/v6 实验。
 
 统一证据：[compact report](../reports/compact/20260829-9732a03-interview-portfolio/REPORT.md)；瓶颈分析：[interview bottleneck analysis](../interview/bottleneck-analysis.md)。
 

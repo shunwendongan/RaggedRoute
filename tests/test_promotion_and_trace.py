@@ -20,6 +20,9 @@ def load_module(name: str, path: pathlib.Path):
 
 
 promotion = load_module("evaluate_promotion", ROOT / "scripts" / "evaluate_promotion.py")
+candidate_matrix = load_module(
+    "summarize_candidate_matrix", ROOT / "scripts" / "summarize_candidate_matrix.py"
+)
 portfolio = load_module(
     "build_v3_portfolio_evidence", ROOT / "scripts" / "build_v3_portfolio_evidence.py"
 )
@@ -83,6 +86,43 @@ class PromotionAndTraceTests(unittest.TestCase):
         unstable[-1]["timing"]["cv"] = 0.5
         insufficient = promotion.evaluate(unstable, "base", "candidate", self.policy())
         self.assertEqual(insufficient["decision"], "insufficient_evidence")
+
+    def test_default_cv_policy_discloses_point_one_and_caps_at_point_five(self) -> None:
+        policy = self.policy()
+        policy.pop("maximum_all_samples_cv")
+        disclosed = self.paired()
+        disclosed[-1]["timing"]["cv"] = 0.20
+        decision = promotion.evaluate(disclosed, "base", "candidate", policy)
+        self.assertEqual(decision["decision"], "promote")
+        unstable = self.paired()
+        unstable[-1]["timing"]["cv"] = 0.5001
+        decision = promotion.evaluate(unstable, "base", "candidate", policy)
+        self.assertEqual(decision["decision"], "insufficient_evidence")
+        self.assertTrue(any("0.5000" in reason for reason in decision["reasons"]))
+
+    def test_candidate_matrix_selects_envelope_and_counts_process_direction(self) -> None:
+        records = []
+        timings = {
+            "shape-a": {"candidate": (8.0, 8.5), "lib-a": (10.0, 10.5), "lib-b": (9.0, 9.5)},
+            "shape-b": {"candidate": (11.0, 11.5), "lib-a": (10.0, 10.5), "lib-b": (12.0, 12.5)},
+        }
+        for case_id, variants in timings.items():
+            for variant, (p50, p95) in variants.items():
+                for process in (1, 2):
+                    record = self.record(case_id, variant, process, p50, p95)
+                    record["timing"]["cv"] = 0.20
+                    records.append(record)
+        groups = candidate_matrix.group_records(records)
+        rows = candidate_matrix.library_envelope_rows(
+            groups, ["shape-a", "shape-b"], ["lib-a", "lib-b"], "candidate"
+        )
+        self.assertEqual([row["envelope_winner"] for row in rows], ["lib-b", "lib-a"])
+        self.assertEqual(rows[0]["candidate_faster_processes"], 2)
+        self.assertEqual(rows[1]["candidate_faster_processes"], 0)
+        summary = candidate_matrix.summarize(rows)
+        self.assertEqual(summary["candidate_faster_process_pairs"], 2)
+        self.assertEqual(summary["paired_process_pairs"], 4)
+        self.assertAlmostEqual(summary["shape_win_fraction"], 0.5)
 
     def test_real_trace_gate_rejects_synthetic_as_insufficient(self) -> None:
         records = self.paired()

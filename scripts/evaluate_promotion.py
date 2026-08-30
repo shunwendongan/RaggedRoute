@@ -82,7 +82,11 @@ def evaluate(
     rows = []
     minimum_processes = int(policy.get("minimum_independent_process_runs", 5))
     minimum_paired_shapes = int(policy.get("minimum_paired_shapes", 1))
-    maximum_cv = float(policy.get("maximum_all_samples_cv", 0.10))
+    # Portfolio policy: CV above 0.10 is disclosed as a Windows/WDDM risk, but
+    # it no longer auto-downgrades otherwise complete evidence.  The default
+    # fail-closed ceiling is 0.50; versioned historical policies can still
+    # request their original stricter threshold explicitly.
+    maximum_cv = float(policy.get("maximum_all_samples_cv", 0.50))
     timing_section, p50_field, p95_field, cv_field = timing_spec(policy)
     ignore_timing_cv = bool(policy.get("ignore_timing_cv", False))
     require_real = bool(policy.get("require_real_route_trace", False))

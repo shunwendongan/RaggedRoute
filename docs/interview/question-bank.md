@@ -84,7 +84,7 @@ Pure path只比较已有 mapping 后的 payload copy，v2/v3 和 token-owned 基
 
 ### 19. Grouped GEMM 为什么最难？
 
-它同时有小 expert、empty expert、Zipf skew、tail wave、non-aligned K/N 和严格 FP32 math。局部 single-hot 可以减少库调度开销，但 uniform 大 shape 更看重成熟 tile、发射和复用。v2 有 `1.641x` 局部 winner，完整 external envelope 只有 `0.870x`，说明不能用一个调度策略覆盖全部分布。
+它同时有小 expert、empty expert、Zipf skew、tail wave、non-aligned K/N 和严格 FP32 math。局部 single-hot 可以减少库调度开销，但 uniform 大 shape 更看重 tile reuse、resident waves、发射和跨 SM 均衡。最新 v6 在 uniform T512 对 CUTLASS `1.2257x`、single-hot 对最快 library `1.7762x`，但完整 envelope 仅 `0.9946x`，T2048 只有 `0.7534x`。这说明最强 candidate 必须是 shape/distribution-aware 的 hybrid portfolio，不能用单一 tile 或单点 winner 代表全部分布。
 
 ### 20. Dense 为什么不直接写“超过 cuBLAS”？
 
@@ -106,11 +106,11 @@ NSYS 先回答端到端哪一段占比最高，避免对非热点做深 profile�
 
 ### 24. Grouped detailed 最关键的三个指标是什么？
 
-Issue active：v3 23.87% 对 CUTLASS 34.79%；MIO throttle：716 对 62；barrier：452 对 60。再结合 long scoreboard 404 对 138，可以说明候选虽 occupancy/L2 hit 更高，但同步、memory instruction pipeline 和依赖等待阻碍持续发射。
+v6 follow-up 里我首先看 request amplification：global load/store requests 相对 v5 下降 43.4%/75.5%，证明 `32x128` 大 tile 机制有效。然后看并行覆盖与发射：v6 仅 0.941 waves/SM、31.28% issue active，CUTLASS issue active 为 53.65%。最后看不均衡：v6 的 SM active-cycle minimum 比均值低 54.17%。再结合 local load/store 都为 0，可以排除 spill，把剩余瓶颈收敛到 underfill/work imbalance 与 issue efficiency。
 
 ### 25. 下一轮你会怎么优化？
 
-优先回到 Grouped v2 16x32 mainloop，只改变 task mapping/load balance，沿用十 shape 和 external envelope；第二是预声明 Top-K E64/T>=512 区间；第三是把 full-from-ids Permute 放入 L3 验证收益能否穿透 Grouped 热点。每轮只改一个机制。
+优先固定 Grouped v6 `32x128` mainloop，只改 selector bucket 或 tail-wave task mapping，沿用十 shape 和 external envelope；第二是预声明 Top-K E64/T>=512 区间；第三是把 full-from-ids Permute 放入 L3 验证收益能否穿透 Grouped 热点。每轮只改一个机制，不再用 v7 那样继续盲目放大 tile。
 
 ### 26. CUDA Graph 的 1.62x 能写成 kernel speedup 吗？
 

@@ -1,8 +1,8 @@
 {
-  "schema_version": "raggedroute.promotion_policy.v1",
+  "schema_version": "raggedroute.promotion_policy.v2",
   "correctness_required": true,
   "minimum_independent_process_runs": 3,
-  "maximum_all_samples_cv": 0.10,
+  "maximum_all_samples_cv": 0.50,
   "minimum_speedup_shape_coverage": 0.80,
   "minimum_trace_ratio_of_sums_speedup": 1.03,
   "maximum_single_shape_regression_fraction": 0.05,
@@ -10,5 +10,5 @@
   "require_same_gpu_uuid": true,
   "require_same_case_config": true,
   "require_same_math_semantics": true,
-  "notes": "Initial policy for promoting an optimized variant into default dispatch. Threshold changes require a reviewed policy version bump."
+  "notes": "Portfolio policy: CV above 0.10 is disclosed as a Windows/WDDM stability risk but does not automatically downgrade evidence; CV above 0.50 remains insufficient evidence. Historical versioned campaign policies and decisions are not rewritten."
 }

@@ -64,12 +64,13 @@
 
 - 语义：对每个 expert 的 ragged token segment 执行 strict-FP32 GEMM；覆盖 tail、empty、uniform、Zipf、single-hot、non-aligned 与较大 shape。
 - 当前 Auto：`cuda_naive`；所有 SM86 candidate 都是 benchmark-only research path。
-- 最新矩阵最强自研：`cuda_grouped_sm86_fp32_v2`，16x32 register tile、`cp.async` staging 与 ragged expert scheduling。
-- 强基线：每 shape 最快 CUTLASS Grouped / cuBLAS per-expert envelope。v2 ratio-of-sums `0.8697x`、geomean `0.9472x`、3/10 获益；对 CUTLASS 单独为 `0.9259x`、geomean `1.0345x`、4/10 获益。
-- 局部 winner：single-hot 对 external envelope `1.6411x`，many-empty `1.3365x`，Zipf T512 `1.0790x`。反例：uniform T2048 `0.5335x`，non-aligned `0.7210x`。
-- 版本消融：v3 16x64 把 tile、shared memory 和 registers 一起放大，v4A queue-1024 又叠加 descriptor scheduling，均弱于 v2。最新 detailed profile 选择 v3/CUTLASS 是为了诊断失败机制，不代表 v3 是 Release winner。
-- Profiler：L3 uniform/Zipf 中 v2 占 GPU kernel time `71.6%/86.0%`。v3 detailed 为 96 registers/thread、12,048 B shared、30.26% occupancy、85.45% L2 hit、issue active 23.87%；CUTLASS 为 144 registers/thread、17.0% occupancy、issue active 34.79%。v3 的 MIO throttle/barrier/long-scoreboard samples 为 716/452/404，CUTLASS 为 62/60/138。
-- 决策：局部 skew winner，但完整矩阵库实现胜出。下一轮回到 v2 16x32 mainloop，只隔离 task scheduling / load balance，不再同时叠加更宽 tile和 descriptor queue。
+- 统一七算子基线：`9732a0343c60f869fc4166a0cc3cabba2fd67bbb` 中最强是 v2，对 CUTLASS/cuBLAS envelope 只有 `0.8697x`。Grouped-only follow-up 在 clean `c2205ed1ba1063fccce3cd417fd671798dbfb66f` 上又测得了 v5/v6，不覆写其他六算子的旧证据。
+- 最强新候选：`cuda_grouped_sm86_fp32_v6_balanced_32x128`。v5 先在 balanced workload 上以 direct `(column,row,expert)` grid 取代 prefix/binary-search persistent traversal；v6 再把 balanced path 改为 `32x128x16`、256 threads、每线程 `4x4` outer product、aligned `float4` store 和两级 `cp.async`，skew/tiny/non-aligned 回退 v5，workspace 为 0。
+- 强基线：每 shape 最快 CUTLASS Grouped / cuBLAS per-expert envelope。v6 完整 10-shape ratio-of-sums `0.9946x`、geomean `1.0352x`、5/10 获益；对 CUTLASS 单独为 `1.0652x`，但最大反例 32.74%，不是可晋级结论。v6 对 v5 只有 `1.0116x` ratio-of-sums，p95 最大回退 27.96%。
+- 简历安全的限定结果：uniform `T512/E64/K128/N128` 对 CUTLASS `1.2257x`，single-hot 对最快 library envelope `1.7762x`，many-empty 对 CUTLASS `1.2478x`；前两个关键 headline 均为 5/5 process pairs 同向。反例是 uniform T2048 `0.7534x`、non-aligned `0.8380x`和 single-expert 对 cuBLAS `0.7835x`。
+- Profiler：v6 相对 v5 将 global load/store requests 降低 43.4%/75.5%，DRAM writes 降低 82.7%，证明大 tile 修复了 request amplification。但 uniform T2048 仅 0.941 waves/SM、31.60% achieved occupancy、31.28% issue active，SM active-cycle minimum 比均值低 54.17%；CUTLASS issue active 为 53.65%。local load/store 均为 0，所以剩余主瓶颈是 underfill/work imbalance 与 issue efficiency，不是 spill。
+- 失败消融：v3 16x64 资源生存期过长，v4A descriptor queue 增加 prepass/mainloop 代价，v7 `64x128` dirty smoke 在 T2048 又比 v6 慢约 6.6% 而撤回。这条 v2→v5→v6→v7 链路展示了调度、tile、资源与 tail wave 的设计取舍。
+- 决策：v6 是当前最强 SM86 research candidate，但完整 library envelope 仍为 `0.9946x`，因 coverage/p95/最大反例拒绝晋级，`Auto` 不变。证据见 [Grouped v5/v6 compact report](../reports/compact/20260830-c2205ed-grouped-v6/REPORT.md)。
 
 ## 7. Unpermute
 

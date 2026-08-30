@@ -389,6 +389,66 @@ __global__ __launch_bounds__(kThreads, 5) void grouped_gemm_register16x32_sm86_v
   }
 }
 
+// Scheduling-only research kernel: the 16x32 mainloop, staging, accumulator, and store path are
+// identical to v2. A balanced workload can expose one logical tile per CTA and let the hardware
+// scheduler distribute the grid, avoiding the per-CTA prefix construction, binary search, and
+// serial persistent-task loop. Skewed workloads never launch this grid and retain the v2 path.
+__global__ __launch_bounds__(kThreads, 5)
+void grouped_gemm_register16x32_sm86_v5_balanced_direct_kernel(
+    const float* x_permuted, const float* expert_weights, const std::int32_t* offsets,
+    float* y_permuted, int hidden, int output) {
+  const int expert = static_cast<int>(blockIdx.z);
+  const int begin = offsets[expert];
+  const int rows = offsets[expert + 1] - begin;
+  const int tile_row = static_cast<int>(blockIdx.y);
+  if (tile_row * kBlockRows >= rows) return;
+  const int tile_column = static_cast<int>(blockIdx.x);
+
+  __align__(16) __shared__ float x_tiles[2][kBlockRows][kSharedAStride];
+  __align__(16) __shared__ float weight_tiles[2][kBlockDepth][kBlockColumns];
+
+  int local_row = 0;
+  int local_column = 0;
+  thread_output_coordinates(&local_row, &local_column);
+  const bool full_rows = (tile_row + 1) * kBlockRows <= rows;
+  float accumulator[kRowsPerThread][kColumnsPerThread] = {};
+
+  if (!full_rows) {
+    for (int k_base = 0; k_base < hidden; k_base += kBlockDepth) {
+      stage_sync(x_permuted, expert_weights, expert, begin, rows, hidden, output, tile_row,
+                 tile_column, k_base, &x_tiles[0][0][0], &weight_tiles[0][0][0]);
+      __syncthreads();
+      accumulate(&x_tiles[0][0][0], &weight_tiles[0][0][0], kBlockDepth, local_row,
+                 local_column, accumulator);
+      __syncthreads();
+    }
+  } else if (hidden > 0) {
+    stage_async(x_permuted, expert_weights, expert, begin, hidden, output, tile_row,
+                tile_column, 0, &x_tiles[0][0][0], &weight_tiles[0][0][0]);
+    wait_async_group();
+    __syncthreads();
+    int stage = 0;
+    for (int k_base = 0; k_base < hidden; k_base += kBlockDepth) {
+      const int next_k = k_base + kBlockDepth;
+      if (next_k < hidden) {
+        stage_async(x_permuted, expert_weights, expert, begin, hidden, output, tile_row,
+                    tile_column, next_k, &x_tiles[stage ^ 1][0][0],
+                    &weight_tiles[stage ^ 1][0][0]);
+      }
+      accumulate(&x_tiles[stage][0][0], &weight_tiles[stage][0][0], kBlockDepth, local_row,
+                 local_column, accumulator);
+      if (next_k < hidden) {
+        wait_async_group();
+        __syncthreads();
+        stage ^= 1;
+      }
+    }
+    __syncthreads();
+  }
+  store(y_permuted, begin, rows, output, tile_row, tile_column, local_row, local_column,
+        accumulator);
+}
+
 template <typename Kernel>
 cudaError_t persistent_grid_limit(Kernel kernel, int resident_block_cap, std::atomic<int>* cache,
                                   int* grid_limit) {
@@ -455,6 +515,47 @@ cudaError_t launch_grouped_gemm_sm86_fp32_v2(
   if (error != cudaSuccess || blocks == 0) return error;
   grouped_gemm_register16x32_sm86_v2_kernel<<<blocks, kThreads, 0, caller_stream>>>(
       x_permuted, expert_weights, offsets, y_permuted, experts, hidden, output);
+  return cudaGetLastError();
+}
+
+cudaError_t launch_grouped_gemm_sm86_fp32_v5_balanced_direct(
+    const float* x_permuted, const float* expert_weights, const std::int32_t* offsets,
+    float* y_permuted, int experts, int hidden, int output, int max_expert_tokens,
+    int route_pairs, cudaStream_t caller_stream) {
+  const cudaError_t validation = validate_arguments(x_permuted, expert_weights, offsets,
+                                                    y_permuted, experts, hidden, output,
+                                                    max_expert_tokens);
+  if (validation != cudaSuccess || max_expert_tokens == 0 || output == 0) return validation;
+  if (route_pairs <= 0 || max_expert_tokens > route_pairs) return cudaErrorInvalidValue;
+
+  // Predeclared balance gate: direct scheduling is allowed only when the hottest expert has at
+  // most twice the ceil-average route count. Everything else preserves the exact v2 path.
+  const std::int64_t average_ceiling =
+      (static_cast<std::int64_t>(route_pairs) + experts - 1) / experts;
+  const bool balanced =
+      average_ceiling >= 8 && static_cast<std::int64_t>(max_expert_tokens) <=
+                                  2LL * average_ceiling;
+  if (!balanced || hidden == 0 || hidden % kBlockDepth != 0 ||
+      output % kBlockColumns != 0 || !aligned_16(x_permuted) ||
+      !aligned_16(expert_weights) || !aligned_16(y_permuted)) {
+    return launch_grouped_gemm_sm86_fp32_v2(
+        x_permuted, expert_weights, offsets, y_permuted, experts, hidden, output,
+        max_expert_tokens, caller_stream);
+  }
+
+  const std::size_t grid_x = static_cast<std::size_t>(output) / kBlockColumns;
+  const std::size_t grid_y =
+      (static_cast<std::size_t>(max_expert_tokens) + kBlockRows - 1) / kBlockRows;
+  if (grid_x == 0 || grid_y == 0 ||
+      grid_x > static_cast<std::size_t>(std::numeric_limits<unsigned int>::max()) ||
+      grid_y > 65535U) {
+    return cudaErrorInvalidConfiguration;
+  }
+  grouped_gemm_register16x32_sm86_v5_balanced_direct_kernel<<<
+      dim3(static_cast<unsigned int>(grid_x), static_cast<unsigned int>(grid_y),
+           static_cast<unsigned int>(experts)),
+      kThreads, 0, caller_stream>>>(x_permuted, expert_weights, offsets, y_permuted, hidden,
+                                    output);
   return cudaGetLastError();
 }
 

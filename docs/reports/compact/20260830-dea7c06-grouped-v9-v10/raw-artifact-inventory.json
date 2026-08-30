@@ -1,0 +1,16 @@
+{
+  "schema_version": "raggedroute.raw_artifact_inventory.v1",
+  "policy": "Raw JSONL and Nsight binary reports remain in ignored output and are not committed.",
+  "files": [
+    {"name": "release-dea7c06.jsonl", "bytes": 1868414, "sha256": "4a75fd1a81e19877446a6780b13402fae9a88cefea1df1f102a8f187a6761378", "storage": "ignored_output"},
+    {"name": "release-dea7c06.jsonl.manifest.json", "bytes": 465702, "sha256": "ed973b9d5b4f607a76af49241a6a92428801e62d61ecbf8b37d1d8412a0f641c", "storage": "ignored_output"},
+    {"name": "grouped.v10.cutlass.t4096_e64_k128_n64.basic.ncu-rep", "bytes": 345809, "sha256": "38cdb27dfbe090fdb85a83430d39747cc7c68d22112ac36d45f1390c295dc925", "storage": "ignored_output"},
+    {"name": "grouped.v10.v6_portfolio_fallback.t4096_e64_k128_n64.basic.ncu-rep", "bytes": 295096, "sha256": "6b7a46d18d4a139aae04786c8749956e9523a8ae882815f82e25981d3dbf6a89", "storage": "ignored_output"},
+    {"name": "grouped.v10.v9_32x64.t4096_e64_k128_n64.basic.ncu-rep", "bytes": 319148, "sha256": "50fe8f5d9045bd7f16386b7ea8924ee0849a9d04224eca3fb087bd48b20ef41b", "storage": "ignored_output"},
+    {"name": "grouped.v10.v6_portfolio_fallback.t4096_e64_k128_n64.detailed.ncu-rep", "bytes": 596275, "sha256": "1f5e122b264993d35be047beef0bcaf03888a57c302b363684bc97372b73d986", "storage": "ignored_output"},
+    {"name": "grouped.v10.v9_32x64.t4096_e64_k128_n64.detailed.ncu-rep", "bytes": 712540, "sha256": "ea391c7041a00299998d6ef06f90fc7ece5135ed83ec2a1d88c4702562af72df", "storage": "ignored_output"},
+    {"name": "cuda_grouped_sm86_fp32_v6_balanced_32x128.nsys-rep", "bytes": 67231, "sha256": "12f300d91db42d44911d8378ee51aa40886d1e65f0f4245a76a2beb135762fd5", "storage": "ignored_output"},
+    {"name": "cuda_grouped_sm86_fp32_v9_balanced_32x64.nsys-rep", "bytes": 67248, "sha256": "f772a4d3cae909925bbfe5262a606914b5a040939c140ab7a7df8162b6900225", "storage": "ignored_output"},
+    {"name": "cutlass_grouped.nsys-rep", "bytes": 69418, "sha256": "daa1d9bd7cc34e81268cfaaac06847695ac969c2a9602d11733ec7e9846f65e1", "storage": "ignored_output"}
+  ]
+}

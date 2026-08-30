@@ -2,7 +2,7 @@
 
 ## 结论先行
 
-端到端价值最高的热点是 Grouped GEMM，而不是某个最容易写的 metadata kernel。统一 portfolio 的 uniform/Zipf L3 中它占 GPU kernel time `71.6%/86.0%`，因此后续实验聚焦该算子。v5 direct-grid 与 v6 `32x128` 已证明可以减少调度和 request amplification，但 v6 完整 library envelope 仍只有 `0.9946x`；其中 `1.2257x/1.7762x` 局部赢家来自 v5/v2 fallback，不是 wide kernel。wide T2048 的瓶颈是 underfill/work imbalance 与 issue efficiency。Permute 是高 DRAM 压力，Scan/Fused Histogram→Scan 则是单 CTA underfill。
+端到端价值最高的热点是 Grouped GEMM，而不是某个最容易写的 metadata kernel。统一 portfolio 的 uniform/Zipf L3 中它占 GPU kernel time `71.6%/86.0%`，因此后续实验聚焦该算子。v5/v6 先证明 direct grid 和大 tile可降低调度与 request amplification；最新 V9 `32x64` 再在 narrow-N shape 对 CUTLASS 达 `1.8819x/1.4366x/1.3661x`，代表点相对 V5 fallback 将 CTA 降低 75%、global load/store requests 降低 37.9%/50.5%。但 K256、N128、non-aligned 仍显著回退，V10 wave-aware selector 也被正式拒绝，所以 V9 是有边界的 research candidate，不是通用 Auto。Permute 是高 DRAM 压力，Scan/Fused Histogram→Scan 则是单 CTA underfill。
 
 ## 环境与证据边界
 
@@ -13,6 +13,26 @@
 - Profiler duration 只用于机制诊断；所有性能倍率来自未插桩五进程 Release。
 
 Grouped-only follow-up 另固定在 clean SHA `c2205ed1ba1063fccce3cd417fd671798dbfb66f`，沿用 RTX 3080 / strict FP32 合同，对 v2/v5/v6/CUTLASS/cuBLAS 执行 10 shape、5 process、20 warmup、30 samples/process 的未插桩 Release 复测。它只更新 Grouped GEMM，不改写其他六算子的 `9732a03` 统一矩阵。完整证据见 [v5/v6 compact report](../reports/compact/20260830-c2205ed-grouped-v6/REPORT.md)。
+
+最新 V9/V10 follow-up 固定在 clean SHA `dea7c066a83a5df700aa60c03fd51446c6b4c5e5`：15 shape、5 process、375/375 validation 通过。一个 CUTLASS tail process `CV=0.5041` 越过 0.50 ceiling，原样保留，因此完整 aggregate 只作为 research trend；下方 V9 headline shape 均 5/5 process pairs 同向且未越过 ceiling。完整证据见 [V9/V10 compact report](../reports/compact/20260830-dea7c06-grouped-v9-v10/REPORT.md)。
+
+## V9 32x64：减少 over-partitioning，而不是追 occupancy
+
+| Metric | V5 16x32 fallback | V9 32x64 | CUTLASS Grouped | 解释 |
+|---|---:|---:|---:|---|
+| Grid / block / waves per SM | 1280 / 128 / 2.689 | 320 / 256 / 1.569 | 68 / 256 / 1.000 | V9 合并过细工作；CUTLASS 在窄 N 下只有一 wave |
+| Registers/thread | 68 | 78 | 144 | V9 增加 accumulator state，但无极端 register pressure |
+| Shared memory/block | 7,680 B | 14,336 B | 17,680 B | 双缓冲 `32x64x16` staging 成本可控 |
+| Achieved occupancy | 48.44% | 41.54% | 16.66% | V9 occupancy 更低仍更快，否定 occupancy 单指标优化 |
+| Global load requests | 75,824 | 47,096 | basic 未采集 | V9 `-37.9%` |
+| Global store requests | 16,552 | 8,192 | basic 未采集 | V9 `-50.5%` |
+| DRAM read/write | 6.31 / 2.94 MB | 6.42 / 2.61 MB | basic 未采集 | raw DRAM read 未下降，不能包装成带宽减少 |
+| L2 hit rate | 80.64% | 64.94% | basic 未采集 | V9 更快不是因为更高 cache hit |
+| Local load/store | 0 / 0 | 0 / 0 | basic 未采集 | 没有 spill 证据 |
+
+两组独立信号支持机制判断：第一，V9 将 CTA 与 global requests 大幅减少；第二，它的 occupancy 和 L2 hit 反而更低、DRAM read 近似不降，却在未插桩 Release 中把代表 T4096/N64 从 CUTLASS 的 39.1680 us 降到 28.6720 us，并相对 V6/V5 portfolio 获得 `1.0999x`。因此主收益是减少 `16x32` fallback 的 over-partitioning、重复请求和 scheduling/tail cost。CUTLASS 的 `128x128` 通用 tile 只产生 68 CTA，144 registers/thread 把理论/实际 occupancy 限在约 16.7%，解释了其窄 N underfill。
+
+V9 的边界同样清楚：K256/N64 为 `0.9072x`，T2048/N128 为 `0.7736x` p50 / `0.5459x` p95，non-aligned 为 `0.7508x`。V10 仅根据 68-SM CTA window 在 V9/V6 间切换，但对 V9 ratio-of-sums `0.9775x`，说明 dirty screen 得到的区间不能直接当发布 selector；下一次 dispatch 必须使用新的 held-out matrix，而不是事后移动阈值。
 
 ## Grouped v6 follow-up：修复 request amplification 后的新瓶颈
 
@@ -92,12 +112,12 @@ V8 保持 v6 的 N128、K16、256 threads、两级 `cp.async`、direct grid、se
 
 ## 下一轮最多三个实验
 
-### 1. Grouped 32x64 几何单变量实验
+### 1. Grouped V9 held-out dispatch validation
 
-- 固定：v6 的 tile-M=32、K16、256 threads、strict FP32、direct grid、两级 `cp.async`、selector/fallback、zero workspace 和计时边界。
-- 唯一变量：tile-N 128→64，thread micro-tile `4x4`→`4x2`。它同样增加 CTA，但额外 N tile 重复加载的是较小 A tile，避免 v8 为每个额外 M tile 重复加载更大的 weight tile；同时降低 accumulator 与 shared-weight footprint。
-- 预声明矩阵：先复用 v8 四个 balanced shape做 3-process screening；只有方向清晰才进入原十 shape、五进程 clean Release。fallback portfolio 的 T512/E64/single-hot headline 只能作为回归保护，不能归因给 32x64 kernel。
-- Keep 条件：相对 v6 在 active shapes ratio-of-sums >=1.03、至少 3/4 shapes 和多数 process pairs 获益；再要求对 CUTLASS/cuBLAS envelope coverage、最大回退和 p95 共同通过。失败即停止，不同时修改 selector。
+- 固定：V9/V6/CUTLASS 实现、strict FP32、zero workspace、L2 边界与五进程 protocol；不再修改 kernel。
+- 唯一变量：预先声明 dispatch region。候选区域是 aligned `N=64,K<=128` 的 V9，K256/N128/non-aligned 使用强 library reference 或保留 fallback；不得用当前 15 shape 的事后 candidate envelope充当验证。
+- 新证据：围绕 T/E/K/N 边界生成未参与 V10 selector 的 held-out uniform/Zipf/empty/skew shape，记录实际 kernel path；任何 `CV>0.50` group 保留并降级对应结论。
+- Keep 条件：held-out ratio-of-sums >=1.03、所有关键反例不超过预声明回退、至少 80% shape 和多数 process pairs 获益。满足前仍只做 benchmark-only hybrid；公共 Auto 需要真实 trace 与 L3 复测。
 
 ### 2. Top-K E64 / large-T 明确分区
 

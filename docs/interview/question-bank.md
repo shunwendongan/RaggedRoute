@@ -84,7 +84,7 @@ Pure path只比较已有 mapping 后的 payload copy，v2/v3 和 token-owned 基
 
 ### 19. Grouped GEMM 为什么最难？
 
-它同时有小 expert、empty expert、Zipf skew、tail wave、non-aligned K/N 和严格 FP32 math。局部 single-hot 可以减少库调度开销，但 uniform 大 shape 更看重 tile reuse、resident waves、发射和跨 SM 均衡。最新 v6 hybrid 在 uniform T512/single-hot 为 `1.2257x/1.7762x`，但这两点实际走 v5/v2 fallback；`32x128` wide 直接激活的 T2048 只有 `0.7534x`，完整 envelope `0.9946x`。这说明最强 candidate 必须是 shape/distribution-aware portfolio，也说明回答性能时必须区分 variant 名、实际 dispatch 路径和单个 kernel。
+它同时有小 expert、empty expert、Zipf skew、tail wave、non-aligned K/N 和严格 FP32 math。最新 V9 `32x64` 在 uniform T512/E32/N64 和 T4096/E64/N64 对 CUTLASS 达 `1.8819x/1.3661x`，但 K256、N128、non-aligned 分别只有 `0.9072x/0.7736x/0.7508x`。15-shape ratio-of-sums 虽为 `1.0916x`，一个 CUTLASS tail group 又越过 0.50 CV ceiling，因此只能写 narrow-N、moderate-K 的 research winner。回答性能时必须同时区分 variant 名、实际 dispatch kernel、shape 适用区间和证据质量。
 
 ### 20. Dense 为什么不直接写“超过 cuBLAS”？
 
@@ -106,11 +106,11 @@ NSYS 先回答端到端哪一段占比最高，避免对非热点做深 profile�
 
 ### 24. Grouped detailed 最关键的三个指标是什么？
 
-v6 follow-up 里我首先看 request amplification：global load/store requests 相对 v5 下降 43.4%/75.5%，证明 `32x128` 大 tile 机制有效。然后看并行覆盖与发射：v6 仅 0.941 waves/SM、31.28% issue active，CUTLASS issue active 为 53.65%。最后看不均衡：v6 的 SM active-cycle minimum 比均值低 54.17%。再结合 local load/store 都为 0，可以排除 spill，把剩余瓶颈收敛到 underfill/work imbalance 与 issue efficiency。
+V9 follow-up 里我先看 launch geometry：代表 T4096/N64 的 V5 fallback、V9、CUTLASS 分别是 1280/320/68 CTA。再看 request amplification：V9 相对 V5 将 global load/store requests 从 75,824/16,552 降到 47,096/8,192。最后看资源反例：V9 achieved occupancy 从 48.44% 降到 41.54% 仍更快，且 local load/store 都为 0，因此可以排除“更高 occupancy”与 spill，把收益收敛到减少 over-partitioning、重复 request 和 tail/scheduling 成本。CUTLASS 的 68 CTA、16.66% occupancy 则解释其通用大 tile在窄 N ragged shape 的 underfill。
 
 ### 25. 下一轮你会怎么优化？
 
-Grouped v8 已把 tile-M 从 32 降到 16 做了单变量反证：对 v6/CUTLASS aggregate 只有约 `0.93x/0.81x`，主要代价是额外 M tiles 重复加载更大的 weight tile。所以下一轮若继续 Grouped，只测 `32x64`，通过 N 方向增加 CTA、缩短 accumulator 和 shared-weight footprint；第二是预声明 Top-K E64/T>=512 区间；第三是把 full-from-ids Permute 放入 L3。每轮只改一个机制，形成 clean Release 证据前不改 Auto。
+V9 `32x64` 已完成并证明 narrow-N 收益；V10 的 68-SM CTA-window selector也已被 clean Release 否定。下一轮若继续 Grouped，不会用同一矩阵事后调阈值，而是先预声明 held-out shape：对 N64/K<=128 的 V9 区域和 K256/N128/non-aligned 的 library-favorable 区域验证 dispatch，再决定是否值得做 benchmark-only hybrid。第二是预声明 Top-K E64/T>=512 区间；第三是把 full-from-ids Permute 放入 L3。每轮只改一个机制，形成新 clean Release 证据前不改 Auto。
 
 ### 26. CUDA Graph 的 1.62x 能写成 kernel speedup 吗？
 

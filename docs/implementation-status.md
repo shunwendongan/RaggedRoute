@@ -1,7 +1,7 @@
 # 实现状态与证据边界
 
 更新时间：2026-08-30
-当前分支事实基线：`main@9782740138998330e9ac3e3a1b8c46a05fa4f830`。七算子统一性能证据固定在 clean SHA `9732a0343c60f869fc4166a0cc3cabba2fd67bbb`；Grouped GEMM v5/v6 follow-up 另固定在 clean SHA `c2205ed1ba1063fccce3cd417fd671798dbfb66f`。后者只更新 Grouped 的 benchmark-only candidate 证据，不改写其他六算子矩阵，不修改公共 API 或 `KernelFamily::kAuto`；v8 只增加 benchmark-only rejection evidence。
+当前分支事实基线：`main@9782740138998330e9ac3e3a1b8c46a05fa4f830`。七算子统一性能证据固定在 clean SHA `9732a0343c60f869fc4166a0cc3cabba2fd67bbb`；Grouped GEMM follow-up 依次固定在 clean SHA `c2205ed1ba1063fccce3cd417fd671798dbfb66f` 与 `dea7c066a83a5df700aa60c03fd51446c6b4c5e5`。后两者只更新 Grouped 的 benchmark-only candidate 证据，不改写其他六算子矩阵，也不修改公共 API 或 `KernelFamily::kAuto`；V9 是当前 strongest measured in-tree candidate，V10 只增加 hardware-aware selector rejection evidence。
 
 ## 已实现
 
@@ -53,11 +53,12 @@
 - 2026-08-28：SM86 aggressive v4 完成 Grouped descriptor（static/queue 256/512/1024 与 cache-order）、Top-K 2/4/8 route-prep/token-owned copy、postroute gather 与 CUDA Graph 实验。Grouped descriptor、route-prep、token-owned 和 gather 未满足晋级条件，均保留为 research/rejection evidence。两个 fixed CUDA Graph replay variant 在独立的 host-time policy 下晋级为 `promoted_explicit_fixed_shape_only`：该 policy 明确记录了用户授权的 WDDM CV 例外；它只适用于固定 shape、固定 buffer/topology、setup 已完成的 replay，不改公开 API 或 `KernelFamily::kAuto`。见 [v4 Graph report](reports/rtx3080-sm86-v4-graph-promotion.md)。
 - 2026-08-29：完成七算子 RTX 3080 统一作品集复测：3725/3725 Release records、745 aggregate groups、五进程完整且 validation 全过；两条 L3 NSYS 和 candidate/baseline NCU basic 全覆盖，只有 Grouped v3/CUTLASS 升级 detailed。最新 strongest candidate 结论为：Dense v3 对 cuBLAS envelope `0.8716x`；Top-K v4 对 strict naive `1.0972x`；Histogram v2 对 v1/CUB/naive envelope `1.1016x`；Scan 无 retained candidate；Permute v2 full-from-ids 对 vLLM `1.5671x`；Grouped v2 对 CUTLASS/cuBLAS envelope `0.8697x`；Unpermute vec4 对 vLLM/naive envelope `1.0154x`。作品集 policy 将 CV ceiling 调整为 0.50，超过 0.10 继续披露风险但不自动降级；历史 policy decision 保持不变。证据见 [compact bundle](reports/compact/20260829-9732a03-interview-portfolio/REPORT.md) 与 [面试入口](interview/README.md)。
 - 2026-08-30：完成 Grouped GEMM v5 direct-grid / v6 `32x128` follow-up。10 shape、5 process 的 250/250 Release records 全部通过 CPU oracle，最大 CV `0.4968`，未超过 0.50 evidence ceiling。v6 hybrid 对最快 CUTLASS/cuBLAS envelope ratio-of-sums `0.9946x`，不晋级；uniform T512 `1.2257x` 与 single-hot `1.7762x` 是 hybrid 的 v5/v2 fallback portfolio 成绩，不是 wide kernel 本身。wide 直接激活的 T512/E16/N256 为 `1.0120x`，T2048/E64/N128 为 `0.7534x`。NCU 显示 v6 wide 相对 v5 将 global load/store requests 降低 43.4%/75.5%、DRAM writes 降低 82.7%，但 T2048 仍受 0.941 waves/SM、work imbalance 与低 issue efficiency 限制。v7 `64x128` dirty smoke 退化约 6.6%；v8 `16x128` 四 shape diagnostic screen 对 v6/CUTLASS 仅约 `0.93x/0.81x`，两者均拒绝。证据见 [Grouped v5/v6 compact bundle](reports/compact/20260830-c2205ed-grouped-v6/REPORT.md) 与 [Grouped 性能记录](grouped_gemm/performance-record.md)。
+- 2026-08-30：完成 Grouped GEMM V9 `32x64` 与 V10 wave-aware selector follow-up。clean `dea7c066a83a5df700aa60c03fd51446c6b4c5e5` 上 15 shape、5 variant、5 process 的 375/375 Release records 全部通过 CPU oracle；V9 对最快 CUTLASS/cuBLAS envelope ratio-of-sums/geomean 为 `1.0916x/1.1397x`、11/15 p50 获益，但一个 CUTLASS tail process `CV=0.5041` 越过 0.50 ceiling，因此完整矩阵只作 research trend。真正执行 V9 kernel 且 5/5 process pairs 同向的 uniform T512/E32/N64、Zipf T2048/E64/N64、uniform T4096/E64/N64 分别为 `1.8819x/1.4366x/1.3661x`；K256/N128/non-aligned 反例为 `0.9072x/0.7736x/0.7508x`。代表 T4096/N64 的 NCU 显示相对 V5 fallback CTA 减少 75%、global load/store requests 减少 37.9%/50.5%，occupancy 从 48.44% 降到 41.54% 仍更快，主机制是减少 over-partitioning、重复请求和调度/尾波成本。V10 对 V9 aggregate 仅 `0.9775x`，正式拒绝。V9/V10 targeted 四类 Compute Sanitizer 24/24 通过；证据见 [V9/V10 compact bundle](reports/compact/20260830-dea7c06-grouped-v9-v10/REPORT.md)。
 
 ## 尚未实现，禁止据此宣称
 
 - 通用的 failure artifact 自动重放、失败用例最小化与随机 GPU fuzz；当前 artifact 只保存和校验诊断信息；
-- 可发布的 Grouped GEMM optimized runtime；现有 `cp.async`/persistent SM86 版本仅为 benchmark-only 失败实验；
+- 可发布的 Grouped GEMM optimized runtime；V9 `32x64` 已是有 clean Release、Sanitizer 与 Nsight 归因的 benchmark-only research winner，但 K256/N128/non-aligned 回退、一个 CV ceiling violation 和失败的 V10 selector 阻止其成为通用 `Auto`；
 - 与 Top-K tie/NaN/selected-softmax 合同相同的外部库基线；
 - 匿名 captured/production route trace、通用 working-set rotation 与 distribution-aware cache sweep；当前 synthetic fixture 只验证工具链，不是部署分布证据；
 - 除 Histogram 与独立 fused Histogram→Scan primitive 外的 shape-aware default dispatch；最新统一矩阵中的 Top-K、Permute full-from-ids、Histogram v2 research winner 都未在本轮修改 `Auto`，Grouped/Dense/Unpermute 也没有完整矩阵晋级证据；
@@ -65,6 +66,6 @@
 - 完整 MoE FFN、训练、多 GPU 或 All-to-All。
 - 通用 CUDA Graph dispatch、cache-miss/mixed-shape request SLA、param-update/exec-update promotion；当前仅 fixed replay 获得显式晋级，且其 WDDM CV 例外不得外推到其他算子或环境。
 
-因此当前提交仍不是“七个算子已经优化完成”。Grouped GEMM 候选会保留 clean-Git、同机同语义的 Release 证据，但因相对 CUTLASS 的门禁失败而不发布 runtime optimized 路径；后续性能声明仍必须来自相同协议的未 profile A/B。
+因此当前提交仍不是“七个算子已经优化完成”。Grouped V9 可以作为 narrow-N、moderate-K 的强 research candidate 和简历亮点，但不能包装成对 CUTLASS 的无条件替代；在新的 held-out dispatch matrix、完整 L3 复测和人工 review 通过前，不发布 runtime optimized 路径。后续性能声明仍必须来自相同协议的未 profile A/B。
 
 候选 variant 评估闭环、trace/working-set workload 与图表的后续实施顺序见 [development-roadmap.md](development-roadmap.md)。未勾选项不属于上方“已实现”事实。

@@ -2,7 +2,7 @@
 
 本目录按 RaggedRoute 的七个语义算子分别保存优化方案、实验决策和实际性能记录；benchmark registry 另有一个 `histogram_exclusive_scan` 融合 adapter，因此当前是七阶段数据流、八个 adapter。
 
-当前统一实测报告：[2026-08-29 / 9732a03 compact evidence](reports/compact/20260829-9732a03-interview-portfolio/REPORT.md)；Grouped GEMM 的更新 follow-up 见 [2026-08-30 / c2205ed v5/v6 evidence](reports/compact/20260830-c2205ed-grouped-v6/REPORT.md)。后者不改写其他六算子矩阵。面试唯一入口见 [docs/interview](interview/README.md)。
+当前统一实测报告：[2026-08-29 / 9732a0343c60f869fc4166a0cc3cabba2fd67bbb compact evidence](reports/compact/20260829-9732a03-interview-portfolio/REPORT.md)；Grouped GEMM 的 follow-up 依次固定在 [2026-08-30 / c2205ed1ba1063fccce3cd417fd671798dbfb66f v5/v6 evidence](reports/compact/20260830-c2205ed-grouped-v6/REPORT.md) 与 [2026-08-30 / dea7c066a83a5df700aa60c03fd51446c6b4c5e5 V9/V10 evidence](reports/compact/20260830-dea7c06-grouped-v9-v10/REPORT.md)。两轮都不改写其他六算子矩阵。面试唯一入口见 [docs/interview](interview/README.md)。
 
 | 算子 | 当前 `Auto` | 显式/研究 candidate | 最新决策 |
 |---|---|---|---|
@@ -11,7 +11,7 @@
 | Histogram | shape-dispatched v1 | v2 E=1 fast path + existing dispatcher | 对 v1/CUB/naive envelope `1.1016x`，显式 research winner；本轮不改 Auto |
 | Exclusive Scan | `cuda_naive` | 无 retained custom candidate | CUB Block/Warp 仅 `1.0249x/1.0290x`，tiny launch-bound |
 | Token Permute | `cuda_naive` | v2 full-from-ids | 对 adapted vLLM `1.5671x`、5/5；pure path 仅 `0.9841x`，不改 Auto |
-| Grouped GEMM | `cuda_naive` | v6 hybrid `32x128` balanced / v5-v2 fallback | envelope `0.9946x`；fallback portfolio 在 uniform T512/single-hot 为 `1.2257x/1.7762x`，wide 本身 T2048 `0.7534x`；v8 16x128 screening rejected |
+| Grouped GEMM | `cuda_naive` | V9 `32x64x16 cp.async` / V6-V5-V2 fallback | 对 CUTLASS/cuBLAS envelope 为 `1.0916x` research trend、11/15 获益；V9 kernel 在 T512/E32/N64、Zipf T2048/E64/N64、T4096/E64/N64 为 `1.8819x/1.4366x/1.3661x`，K256/N128/non-aligned 为 `0.9072x/0.7736x/0.7508x`；V10 selector rejected |
 | Unpermute | `cuda_naive` | `cuda_warp_token_vec4` | envelope `1.0154x`、12/32；窄 N 局部 `1.2892x`，不晋级 |
 
 作品集 CV ceiling 为 0.50：超过 0.10 仍披露为 WDDM 稳定性风险，但不再单独自动判 `insufficient_evidence`；完整矩阵仍需 ratio-of-sums、geomean、coverage、最大回退和跨进程方向共同成立。历史 0.10 policy decision 不回写。

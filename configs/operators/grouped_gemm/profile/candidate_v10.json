@@ -1,0 +1,43 @@
+{
+  "schema_version": "raggedroute.profile_suite.v1",
+  "suite_id": "rtx3080_grouped_gemm_v10_wave_aware_profile_v1",
+  "note": "NCU basic on the clean V10 headline shape after NSYS identified the actual V5 fallback, V9 32x64, and CUTLASS kernels. Profiler duration is diagnostic only.",
+  "cases": [
+    {
+      "id": "grouped.v10.v6_portfolio_fallback.t4096_e64_k128_n64",
+      "operator": "grouped_gemm",
+      "variant": "cuda_grouped_sm86_fp32_v6_balanced_32x128",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260830,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "grouped_gemm_register16x32_sm86_v5_balanced_direct_kernel",
+      "params": {"T": 4096, "E": 64, "top_k": 2, "K": 128, "N": 64, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "grouped.v10.v9_32x64.t4096_e64_k128_n64",
+      "operator": "grouped_gemm",
+      "variant": "cuda_grouped_sm86_fp32_v9_balanced_32x64",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260830,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "grouped_gemm_sm86_balanced_wide_kernel.*32.*64",
+      "params": {"T": 4096, "E": 64, "top_k": 2, "K": 128, "N": 64, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "grouped.v10.cutlass.t4096_e64_k128_n64",
+      "operator": "grouped_gemm",
+      "variant": "cutlass_grouped",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260830,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "cutlass::Kernel",
+      "params": {"T": 4096, "E": 64, "top_k": 2, "K": 128, "N": 64, "distribution": "uniform", "zipf_s": 0.0}
+    }
+  ]
+}

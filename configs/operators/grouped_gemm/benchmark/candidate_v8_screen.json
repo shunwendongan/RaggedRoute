@@ -1,0 +1,63 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "rtx3080_grouped_gemm_v8_balanced_16x128_screen_v1",
+  "protocol": "smoke",
+  "process_runs": 3,
+  "common": {
+    "warmup": 20,
+    "samples": 30,
+    "kernel_repeats": 50,
+    "seed": 20260830,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "grouped.v8.screen.uniform.t1024_e64_k128_n128",
+      "operator": "grouped_gemm",
+      "levels": ["l2"],
+      "variants": [
+        {"name": "cutlass_grouped", "promotion_baseline": true},
+        {"name": "cuda_grouped_sm86_fp32_v5_balanced_direct", "promotion_baseline": false},
+        {"name": "cuda_grouped_sm86_fp32_v6_balanced_32x128", "promotion_baseline": false},
+        {"name": "cuda_grouped_sm86_fp32_v8_balanced_16x128", "promotion_baseline": false}
+      ],
+      "params": {"T": 1024, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "grouped.v8.screen.uniform.t2048_e64_k128_n128",
+      "operator": "grouped_gemm",
+      "levels": ["l2"],
+      "variants": [
+        {"name": "cutlass_grouped", "promotion_baseline": true},
+        {"name": "cuda_grouped_sm86_fp32_v5_balanced_direct", "promotion_baseline": false},
+        {"name": "cuda_grouped_sm86_fp32_v6_balanced_32x128", "promotion_baseline": false},
+        {"name": "cuda_grouped_sm86_fp32_v8_balanced_16x128", "promotion_baseline": false}
+      ],
+      "params": {"T": 2048, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "grouped.v8.screen.uniform.t4096_e64_k128_n128",
+      "operator": "grouped_gemm",
+      "levels": ["l2"],
+      "variants": [
+        {"name": "cutlass_grouped", "promotion_baseline": true},
+        {"name": "cuda_grouped_sm86_fp32_v5_balanced_direct", "promotion_baseline": false},
+        {"name": "cuda_grouped_sm86_fp32_v6_balanced_32x128", "promotion_baseline": false},
+        {"name": "cuda_grouped_sm86_fp32_v8_balanced_16x128", "promotion_baseline": false}
+      ],
+      "params": {"T": 4096, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "uniform", "zipf_s": 0.0}
+    },
+    {
+      "id": "grouped.v8.screen.uniform.t2048_e64_k128_n256",
+      "operator": "grouped_gemm",
+      "levels": ["l2"],
+      "variants": [
+        {"name": "cutlass_grouped", "promotion_baseline": true},
+        {"name": "cuda_grouped_sm86_fp32_v5_balanced_direct", "promotion_baseline": false},
+        {"name": "cuda_grouped_sm86_fp32_v6_balanced_32x128", "promotion_baseline": false},
+        {"name": "cuda_grouped_sm86_fp32_v8_balanced_16x128", "promotion_baseline": false}
+      ],
+      "params": {"T": 2048, "E": 64, "top_k": 2, "K": 128, "N": 256, "distribution": "uniform", "zipf_s": 0.0}
+    }
+  ]
+}

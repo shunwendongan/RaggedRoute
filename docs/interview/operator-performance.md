@@ -64,13 +64,14 @@
 
 - 语义：对每个 expert 的 ragged token segment 执行 strict-FP32 GEMM；覆盖 tail、empty、uniform、Zipf、single-hot、non-aligned 与较大 shape。
 - 当前 Auto：`cuda_naive`；所有 SM86 candidate 都是 benchmark-only research path。
-- 统一七算子基线：`9732a0343c60f869fc4166a0cc3cabba2fd67bbb` 中最强是 v2，对 CUTLASS/cuBLAS envelope 只有 `0.8697x`。Grouped-only follow-up 在 clean `c2205ed1ba1063fccce3cd417fd671798dbfb66f` 上又测得了 v5/v6，不覆写其他六算子的旧证据。
-- 最强新候选：`cuda_grouped_sm86_fp32_v6_balanced_32x128`。v5 先在 balanced workload 上以 direct `(column,row,expert)` grid 取代 prefix/binary-search persistent traversal；v6 再把 balanced path 改为 `32x128x16`、256 threads、每线程 `4x4` outer product、aligned `float4` store 和两级 `cp.async`，skew/tiny/non-aligned 回退 v5，workspace 为 0。
-- 强基线：每 shape 最快 CUTLASS Grouped / cuBLAS per-expert envelope。v6 完整 10-shape ratio-of-sums `0.9946x`、geomean `1.0352x`、5/10 获益；对 CUTLASS 单独为 `1.0652x`，但最大反例 32.74%，不是可晋级结论。v6 对 v5 只有 `1.0116x` ratio-of-sums，p95 最大回退 27.96%。
-- 简历安全的限定结果：uniform `T512/E64/K128/N128` 对 CUTLASS `1.2257x`，single-hot 对最快 library envelope `1.7762x`，many-empty 对 CUTLASS `1.2478x`；前两个关键 headline 均为 5/5 process pairs 同向。反例是 uniform T2048 `0.7534x`、non-aligned `0.8380x`和 single-expert 对 cuBLAS `0.7835x`。
-- Profiler：v6 相对 v5 将 global load/store requests 降低 43.4%/75.5%，DRAM writes 降低 82.7%，证明大 tile 修复了 request amplification。但 uniform T2048 仅 0.941 waves/SM、31.60% achieved occupancy、31.28% issue active，SM active-cycle minimum 比均值低 54.17%；CUTLASS issue active 为 53.65%。local load/store 均为 0，所以剩余主瓶颈是 underfill/work imbalance 与 issue efficiency，不是 spill。
-- 失败消融：v3 16x64 资源生存期过长，v4A descriptor queue 增加 prepass/mainloop 代价，v7 `64x128` dirty smoke 在 T2048 又比 v6 慢约 6.6% 而撤回。这条 v2→v5→v6→v7 链路展示了调度、tile、资源与 tail wave 的设计取舍。
-- 决策：v6 是当前最强 SM86 research candidate，但完整 library envelope 仍为 `0.9946x`，因 coverage/p95/最大反例拒绝晋级，`Auto` 不变。证据见 [Grouped v5/v6 compact report](../reports/compact/20260830-c2205ed-grouped-v6/REPORT.md)。
+- 证据演进：统一七算子 clean `9732a0343c60f869fc4166a0cc3cabba2fd67bbb` 中 v2 对 library envelope 为 `0.8697x`；clean `c2205ed1ba1063fccce3cd417fd671798dbfb66f` 的 v5/v6 follow-up 将其推进到 `0.9946x`；最新 clean `dea7c066a83a5df700aa60c03fd51446c6b4c5e5` 固定 15 shape、5 process 评估 V9/V10，不改写其他六算子矩阵。
+- 最强树内候选：`cuda_grouped_sm86_fp32_v9_balanced_32x64`。它保持 V6 的 tile-M=32、K16、256 threads、direct grid、两级 `cp.async`、strict FP32 和 zero-workspace fallback chain，只把 tile-N 128→64、每线程 outer product `4x4`→`4x2`。相比被否定的 V8 `16x128`，V9 从 N 方向增加 CTA，不为每个额外 M tile 重复加载完整 `Kx128` weight tile。
+- 强基线：每 shape 最快 CUTLASS Grouped / cuBLAS per-active-expert envelope；15 个 shape 实际均由 CUTLASS SIMT FP32 胜出。V9 对该 envelope 的 ratio-of-sums `1.0916x`、geomean `1.1397x`、11/15 p50 获益、53/75 process pairs 获益；对 V6 portfolio 为 `1.0486x`、12/15 获益。一个 CUTLASS tail process `CV=0.5041` 超过 0.50 ceiling，因此全矩阵只写 research trend，不写 promotion-grade overall win。
+- 简历安全的 V9 kernel 结果：uniform `T512/E32/K128/N64` 对 CUTLASS `1.8819x`，Zipf1.4 `T2048/E64/K128/N64` 为 `1.4366x`，uniform `T4096/E64/K128/N64` 为 `1.3661x`；三者均真正执行 `32x64` kernel、5/5 process pairs 同向且未越过 CV ceiling。
+- 反例：K256/N64 为 `0.9072x`，T2048/N128 为 `0.7736x` p50 / `0.5459x` p95，non-aligned K127/N129 为 `0.7508x`。因此 V9 是 narrow-N、moderate-K 组件，不是 CUTLASS 通用替代。
+- Profiler：代表 T4096/N64 中 V6 实际回退 V5 `16x32`。V9 将 CTA 从 1280 降到 320，global load/store requests 从 75,824/16,552 降到 47,096/8,192（`-37.9%/-50.5%`），local load/store 均为 0。Achieved occupancy 从 48.44% 降到 41.54% 仍更快，证明机制是减少 over-partitioning、重复 request 和调度/尾波成本，而不是追 occupancy；CUTLASS 仅 68 CTA、约 16.66% occupancy，暴露通用 `128x128` tile 在窄 N ragged shape 的 underfill。
+- 失败消融：v3 `16x64` 资源/发射代价过高；v4A descriptor queue 增加 prepass/mainloop；v7 `64x128` T2048 退化约 6.6%；v8 `16x128` 对 v6/CUTLASS 约 `0.93x/0.81x`；V10 `cuda_grouped_sm86_fp32_v10_wave_aware_portfolio` 只改 68-SM CTA-window selector，但对直接 V9 只有 `0.9775x` ratio-of-sums，正式拒绝。V10 的 T512/E32 成绩走 V6 fallback，不能归因给 V9。
+- 决策：V9 是当前 strongest measured in-tree Grouped candidate；V10 selector 保留为失败 STAR。两者均 benchmark-only，`Auto` 与公共 API 不变。证据见 [V9/V10 compact report](../reports/compact/20260830-dea7c06-grouped-v9-v10/REPORT.md)、[v5/v6 report](../reports/compact/20260830-c2205ed-grouped-v6/REPORT.md) 与 [Grouped 性能记录](../grouped_gemm/performance-record.md)。
 
 ## 7. Unpermute
 

@@ -1,16 +1,39 @@
 # Grouped GEMM 实际性能记录
 
+## 2026-08-30 / V9 `32x64` clean Release 与 V10 wave-aware selector（V9 保留，V10 拒绝）
+
+- 正式证据固定在 clean SHA `dea7c066a83a5df700aa60c03fd51446c6b4c5e5`：RTX 3080 / SM86、strict FP32、15 个预声明 shape、5 个独立进程、20 warmup、30 samples/process、50 repeats、seed `20260830`；375/375 records 匹配 CPU oracle，GPU UUID、clean SHA 与 workspace 均一致。
+- V9 `cuda_grouped_sm86_fp32_v9_balanced_32x64` 保持 v6 的 tile-M=32、K16、256 threads、direct grid、两级 `cp.async`、balanced/alignment selector 和 V6→V5→V2 fallback，只把 tile-N 128→64、每线程 outer product `4x4`→`4x2`。相对 v8 从 M 方向增 CTA，V9 在 N 方向切分，避免为额外 row tile 重复加载完整 `Kx128` weight tile。
+- V10 `cuda_grouped_sm86_fp32_v10_wave_aware_portfolio` 不改 kernel，只依据 68-SM CTA window 在 V9/V6 间选择。正式结果否定了这一 selector：V10 对 V9 ratio-of-sums/geomean 为 `0.9775x/0.9895x`，只有 6/15 p50 shape 获益，因此 V10 作为失败的硬件感知 dispatch 实验保留。
+- V9 对 V6 portfolio 为 `1.0486x` ratio-of-sums、`1.0386x` geomean、12/15 p50 获益；对最快 CUTLASS/cuBLAS envelope 为 `1.0916x/1.1397x`、11/15 p50 获益、53/75 process pairs 获益。矩阵有一个 CUTLASS tail process `CV=0.5041`，超过 0.50 ceiling；它没有被删除，因此全矩阵只作为 research trend，不作为 promotion-grade 结论。
+- 可直接归因给 V9 `32x64` kernel 的 clean 五进程结果：uniform `T512/E32/K128/N64` 为 `12.4826 us` 对 CUTLASS `23.4906 us`，即 `1.8819x`；Zipf1.4 `T2048/E64/K128/N64` 为 `1.4366x`；uniform `T4096/E64/K128/N64` 为 `1.3661x`，三者均 5/5 process pairs 同向。V10 在 T512/E32 会回退 V6，所以其同 shape 数字不能归因给 V9。
+- 反例必须同时披露：K256/N64 为 `0.9072x`，T2048/N128 为 `0.7736x` p50 / `0.5459x` p95，non-aligned K127/N129 为 `0.7508x`。V9 是 narrow-N、moderate-K 的 portfolio component，不是 CUTLASS 的无条件替代。
+- 代表 T4096/N64 的 NSYS/NCU 显示：V6 因 N64 实际回退 V5 `16x32`，grid 为 1280 CTA；V9 grid 为 320 CTA，CUTLASS 为 68 CTA。V9 相对 V5 将 global load/store requests 从 75,824/16,552 降到 47,096/8,192（`-37.9%/-50.5%`），local load/store 均为 0。V9 achieved occupancy 从 48.44% 降到 41.54% 仍更快，说明收益来自减少 over-partitioning、重复请求和调度/尾波成本，不是追求更高 occupancy；CUTLASS 的通用 128x128 tile 在该窄 N case 只有约 16.66% occupancy。
+- V9 active N64/N128 与 V10 small-grid/K256/large-grid/non-aligned fallback 共 24 个 targeted memcheck/initcheck/racecheck/synccheck 组合全部通过。
+
+决策：V9 是当前最强 measured in-tree Grouped GEMM candidate；V10 selector 拒绝；两者都保持 benchmark-only，公共 API 与 `KernelFamily::kAuto` 不变。完整证据见 [V9/V10 compact report](../reports/compact/20260830-dea7c06-grouped-v9-v10/REPORT.md)。
+
+## 2026-08-30 / v8 16x128 单变量 screening（拒绝）
+
+- 假设：v6 `32x128` 在 uniform T2048 只有 0.941 waves/SM；保持 N128、K16、256 threads、strict FP32、两级 `cp.async`、direct grid、selector、zero workspace 与 v6→v5→v2 fallback 全部不变，只把 tile-M 从 32 减到 16、thread micro-tile 从 `4x4` 减到 `2x4`，用更多 CTA 和更短 accumulator live range缓解 68-SM underfill。
+- Correctness：Release 增量构建与 CTest 8/8 通过；smoke 覆盖 active T2048 及 tail/non-aligned/T512 fallback，全部匹配 CPU oracle。
+- Diagnostic screen：预声明 uniform `T={1024,2048,4096},E64,K128,N128` 与 `T2048/E64/K128/N256`，比较 CUTLASS、v5、v6、v8；3 个独立进程、20 warmup、30 samples、50 repeats、seed `20260830`。48/48 records validation 通过，最大 process CV `0.3278`，33/48 超过 0.10 风险线、0 个超过 0.50 ceiling，没有删除离群点。
+- 结果：v8 对 v5 的四 shape ratio-of-sums/geomean 约 `1.06x/1.05x`，但对 v6 只有 `0.93x/0.96x`，对 CUTLASS 只有 `0.81x/0.82x`。逐 shape 对 v6 为 T1024 `1.17x`、T2048/N128 `0.99x`、T2048/N256 `0.92x`、T4096 `0.81x`；后三个关键 shape 的 3/3 process pairs 都不如 v6。
+- 解释：减少 M tile 的确增加 CTA 并在 T1024 缓解 v6 的粗粒度损失，但每个额外 M tile 都重复加载相同的 `Kx128` weight tile；随着 token rows 或 N 增大，额外 weight traffic 与更差复用压过 underfill 收益。该反例随后直接导向 V9 `32x64`：从 N 方向增加 CTA，重复更小的 A tile，而不是更大的 weight tile；正式结果见本文顶部 V9/V10 章节。
+
+决策：v8 保留为 benchmark-only rejection candidate 与可复现实验配置，不进入正式五进程 headline、不采集升级版 profiler、不修改 `KernelFamily::kAuto`。本节数据是 dirty-tree diagnostic screening，不能替代下方 clean SHA `c2205ed1` 的正式 v5/v6 Release 证据。
+
 ## 2026-08-30 / SM86 v5 direct-grid 与 v6 32x128 follow-up
 
 - 正式证据固定在 clean SHA `c2205ed1ba1063fccce3cd417fd671798dbfb66f`：RTX 3080 / SM86、strict FP32、10 shape、5 个独立进程、20 warmup、30 samples/process、50 repeats、seed `20260829`；250/250 records 通过 CPU oracle。最大 process CV 为 `0.4968`，44/50 groups 超过 `0.10` WDDM 风险线，0 个超过 `0.50` evidence ceiling，未删除离群点。
 - v5 `cuda_grouped_sm86_fp32_v5_balanced_direct` 保留 v2 `16x32x16` `cp.async` mainloop，对 balanced workload 以 direct `(column,row,expert)` grid 取代 CTA prefix/binary search/persistent serial traversal。
 - v6 `cuda_grouped_sm86_fp32_v6_balanced_32x128` 将 balanced path 改为 `32x128x16`、256 threads、每线程 `4x4` outer product、aligned `float4` store 和 Ampere 两级 `cp.async`；只在 average rows、skew、K/N 对齐条件满足时进入，其余回退 v5，workspace 为 0。
 - 对最快 CUTLASS/cuBLAS envelope，v6 ratio-of-sums `0.9946x`、geomean `1.0352x`、5/10 shape 获益，最大 p50/p95 回退 32.74%/86.90%，因此是 `reject`，不能写成整体超过库实现。v6 对 v5 仅 `1.0116x` ratio-of-sums，且 p95 gate 失败。
-- 可用于简历的限定结果：uniform `T512/E64/K128/N128` 为 `18.4627 us` 对 CUTLASS `22.6304 us`，即 `1.2257x`；single-hot 为 `12.4006 us` 对最快 library `22.0262 us`，即 `1.7762x`；两者都是 5/5 process pairs 同向。必须同时披露 uniform T2048 `0.7534x`、non-aligned `0.8380x` 和 single-expert 对 cuBLAS `0.7835x` 反例。
+- 可用于简历的限定 portfolio 结果：uniform `T512/E64/K128/N128` 为 `18.4627 us` 对 CUTLASS `22.6304 us`，即 `1.2257x`；single-hot 为 `12.4006 us` 对最快 library `22.0262 us`，即 `1.7762x`；两者都是 5/5 process pairs 同向。必须明确它们都未满足 v6 wide selector，实际走 v5/v2 fallback chain。`32x128` wide 本身直接激活的 uniform `T512/E16/N256` 为 `1.0120x`，uniform `T2048/E64/N128` 为 `0.7534x`。还须披露 non-aligned `0.8380x` 和 single-expert 对 cuBLAS `0.7835x` 反例。
 - NCU detailed 验证了大 tile 确实减少 request amplification：v6 相对 v5 的 global load/store requests 减少 43.4%/75.5%，DRAM writes 减少 82.7%；但 v6 只有 0.941 waves/SM、31.60% achieved occupancy 和 31.28% issue active，SM active-cycle minimum 比均值低 54.17%。当前剩余瓶颈是 underfill/work imbalance 与 issue efficiency，不是 spill（local load/store 都为 0）。
 - v7 `64x128` 只做了 dirty 三进程 smoke；uniform T2048 比 v6 慢约 6.6%，因 accumulator live range 和 tail-row 同步代价撤回，不作为正式性能声明。
 
-决策：v6 作为 zero-workspace、benchmark-only 的 SM86 高性能研究 candidate 保留，`KernelFamily::kAuto` 不变。统一七算子 portfolio 仍以 `9732a0343c60f869fc4166a0cc3cabba2fd67bbb` 为事实基线；本小节是只针对 Grouped GEMM 的后续 clean 证据。完整数据见 [v5/v6 compact report](../reports/compact/20260830-c2205ed-grouped-v6/REPORT.md)。
+决策：v6 作为 zero-workspace、benchmark-only 的 SM86 高性能 hybrid portfolio 保留，`KernelFamily::kAuto` 不变。统一七算子 portfolio 仍以 `9732a0343c60f869fc4166a0cc3cabba2fd67bbb` 为事实基线；本小节是只针对 Grouped GEMM 的后续 clean 证据。完整数据见 [v5/v6 compact report](../reports/compact/20260830-c2205ed-grouped-v6/REPORT.md)。
 
 ## 2026-08-29 / 统一简历作品集复测与 detailed 归因
 

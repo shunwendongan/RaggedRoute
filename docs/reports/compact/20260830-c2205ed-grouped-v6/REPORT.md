@@ -16,11 +16,13 @@ The formal evidence is `c2205ed1ba1063fccce3cd417fd671798dbfb66f`, clean Release
 | v6 vs cuBLAS per-expert | `18.0552x` | `10.2548x` | 9/10 | 46/50 | 27.63% / 86.90% | not a headline; host-loop launch amplification |
 | v6 vs fastest CUTLASS/cuBLAS envelope | `0.9946x` | `1.0352x` | 5/10 | 26/50 | 32.74% / 86.90% | reject |
 
-The strongest interview-safe local shapes are:
+The strongest interview-safe local shapes belong to the callable v6 hybrid portfolio:
 
 - Uniform `T512/E64/K128/N128`: v6 `18.4627 us` versus CUTLASS `22.6304 us`, or `1.2257x`; all 5/5 process pairs agree.
 - Single-hot `T512/E64/K128/N128`: v6 `12.4006 us` versus the fastest library result, cuBLAS per-expert `22.0262 us`, or `1.7762x`; all 5/5 process pairs agree.
 - Many-empty `T16/E64/K64/N64`: v6 `10.2912 us` versus CUTLASS `12.8410 us`, or `1.2478x`; all 5/5 process pairs agree.
+
+Attribution matters: none of those three shapes enters the `32x128` wide kernel. Uniform T512/E64 fails the `ceil-average >= 32` condition; single-hot fails the skew condition; many-empty fails the average-row condition. They execute the v5/v2 fallback chain. The wide kernel itself is selected for uniform T512/E16/N256 (`1.0120x` versus CUTLASS) and uniform T2048/E64/N128 (`0.7534x`). Therefore the local numbers support a shape-aware hybrid portfolio claim, not a claim that the `32x128` kernel beats CUTLASS.
 
 The required counterexamples are uniform `T2048/E64/K128/N128` (`0.7534x` versus CUTLASS), non-aligned `K127/N129` (`0.8380x`), and the single-expert cuBLAS shape (`0.7835x`). Therefore neither a single local winner nor the CUTLASS-only aggregate is presented as an overall library win.
 
@@ -38,6 +40,6 @@ The tradeoff is visible in the same NCU launch: v6 has 72 registers/thread, 22,5
 
 ## Resume framing
 
-A defensible bullet is: “Designed an SM86 hybrid Grouped GEMM scheduler and `32x128x16` `cp.async` kernel; on RTX 3080 strict FP32 achieved `1.226x` over CUTLASS at uniform T512 and `1.776x` over the fastest library baseline on single-hot routing, while five-process/10-shape gating exposed a `0.995x` full-envelope ratio and prevented unsafe default promotion. NCU verified 43% fewer global load requests and identified T2048 underfill/issue efficiency as the remaining bottleneck.”
+A defensible bullet is: “Designed an SM86 shape-aware Grouped GEMM portfolio with direct-grid and `32x128x16` `cp.async` paths; its v5/v2 fallback regions reached `1.226x` over CUTLASS at uniform T512 and `1.776x` over the fastest library baseline on single-hot routing, while five-process/10-shape gating exposed a `0.995x` full-envelope ratio and prevented unsafe default promotion. NCU separately verified 43% fewer global load requests in the wide path and identified T2048 underfill/issue efficiency as the remaining bottleneck.”
 
 Artifacts: [v6 summary](v6-matrix-summary.json), [v6 rows](v6-matrix-rows.csv), [v5 ablation](v5-matrix-summary.json), [profiler metrics](profiler-metrics.json), [environment](environment.json), [commands](commands.md), and evaluator decisions in this directory.

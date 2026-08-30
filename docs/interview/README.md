@@ -78,4 +78,5 @@ RaggedRoute 是我围绕 Top-2 MoE 路由做的 CUDA 性能工程项目，包含
 4. [compact evidence](../reports/compact/20260829-9732a03-interview-portfolio/REPORT.md)
 5. [Grouped v5/v6 follow-up evidence](../reports/compact/20260830-c2205ed-grouped-v6/REPORT.md)
 6. [Grouped V9/V10 follow-up evidence](../reports/compact/20260830-dea7c06-grouped-v9-v10/REPORT.md)
-7. [分支与冗余清理 review](../cleanup-review.md)
+7. [原套餐逐项完成审计](../portfolio-completion-audit.md)
+8. [分支与冗余清理 review](../cleanup-review.md)

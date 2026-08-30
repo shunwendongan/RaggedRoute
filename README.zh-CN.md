@@ -109,20 +109,7 @@ V9/V10 Release 共 375/375 validation 通过；62/75 groups 超过 0.10 风险�
 
 ## 快速开始
 
-### CPU-only 验证（包括 macOS）
-
-CPU-only preset 不启用 CUDA language。它用于验证 host-side schema、证据工具和仓库规则，不能验证 CUDA 算子能力或性能。
-
-要求：CMake 3.24+、Ninja、Python 3 和 C++17 编译器。
-
-```bash
-cmake --preset cpu-release
-cmake --build --preset build-cpu-release --parallel
-ctest --preset test-cpu-release
-python scripts/repository_checks.py
-```
-
-### RTX 3080 / SM86 CUDA 验证
+### RTX 3080 / SM86 CUDA-first 验证
 
 现有实测环境为 Windows，安装 CUDA Toolkit、Visual Studio 2022 Build Tools、CMake、Ninja 和 Python。以下命令只能在受支持的 NVIDIA CUDA 系统运行：
 
@@ -143,6 +130,8 @@ python scripts\run_benchmarks.py `
 ```powershell
 out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --list
 ```
+
+CPU-only preset 仍保留给 CI 与 host-side schema 检查，但它不能验证本页 CUDA 能力或性能声明，因此不再放入主快速开始流程。
 
 ### 作为 CMake package 安装
 
@@ -191,6 +180,7 @@ CUDA Event 提供未被 profiler 干扰的 Release latency。NSYS 用于解释 l
 - [七算子性能卡片](docs/interview/operator-performance.md)
 - [瓶颈分析](docs/interview/bottleneck-analysis.md)
 - [面试追问题库](docs/interview/question-bank.md)
+- [原套餐逐项完成审计](docs/portfolio-completion-audit.md)
 - [分支治理与冗余清理 review](docs/cleanup-review.md)
 - [实现状态与声明边界](docs/implementation-status.md)
 - [开发路线图](docs/development-roadmap.md)

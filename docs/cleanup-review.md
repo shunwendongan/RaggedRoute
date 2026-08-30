@@ -2,10 +2,10 @@
 
 初始快照时间：2026-08-28（Asia/Shanghai）
 初始事实基线：`main@3597731de8ddbdf0238574cb99b58be90226c2ce`
-最新 live 复核：2026-08-30（Asia/Shanghai），`main@9782740138998330e9ac3e3a1b8c46a05fa4f830`
-治理分支：`codex/repo-governance-performance-docs`（本轮从 `dea7c066a83a5df700aa60c03fd51446c6b4c5e5` 创建）
+最新 live 复核：2026-08-30（Asia/Shanghai），`main@b74616e445938e077743c997835a8eb7ec177b7d`
+治理结果：`codex/repo-governance-performance-docs` 已通过 [PR #38](https://github.com/shunwendongan/RaggedRoute/pull/38) 合入 `main`，远端任务分支已自动删除；本次完成审计使用本地分支 `codex/portfolio-completion-audit`，从该 merge commit 创建。
 
-执行结果：初轮 29 个 merged-PR 远端分支已按 live SHA 和 `merged_at` 复核后删除；后续 PR #36/#37 的任务分支由 `delete_branch_on_merge=true` 自动清理。2026-08-30 重新读取 `git ls-remote` 和全部 PR 后，远端仍只保留 `main` 与无关联 PR 的 `codex/grouped-gemm-sm86-v2`，因此本轮没有新的远端删除目标。4 个 evidence tag 不变。本地 44 个分支、5 个 worktree、1 个 stash 和未跟踪实验文件均未删除。
+执行结果：初轮 29 个 merged-PR 远端分支已按 live SHA 和 `merged_at` 复核后删除；后续 PR #36/#37/#38 的任务分支由 `delete_branch_on_merge=true` 自动清理。2026-08-30 再次读取 `git ls-remote`、PR #38 和仓库设置后，远端仍只保留 `main` 与无关联 PR 的 `codex/grouped-gemm-sm86-v2`，因此本次审计没有新的远端删除目标。4 个 evidence tag 不变。本地 45 个分支、5 个 worktree、1 个 stash 和未跟踪实验文件均未删除。
 
 本文件是两阶段清理的审计账本。第一阶段只删除 GitHub 上已经合并、没有打开 PR、且 live tip 与本表一致的远端分支。任何本地分支、worktree、stash、未跟踪实验文件和文档/证据冗余都必须经过人工 review 后才能进入第二阶段。
 
@@ -13,13 +13,13 @@
 
 | Ref / 分支 | Live tip | PR 状态 | 相对 `main` 独有提交 | worktree | 当前动作 |
 |---|---|---|---:|---|---|
-| `main` | `978274013899` | 默认分支 | 0 | 无 | 保留 |
+| `main` | `b74616e44593` | 默认分支；PR #38 已合并 | 0 | 无 | 保留 |
 | `codex/grouped-gemm-sm86-v2` | `f9f5e7eb8a68` | 无关联 PR、无 open PR | 2 | 无 | **保留并人工 review** |
-| `codex/repo-governance-performance-docs` | `dea7c066a83a`（提交文档前） | 本轮任务，尚未推送/建 PR | 2 | `RaggedRoute-six-ops-v2-eval` | 完成门禁后推送并建 PR；合并后自动删除远端 |
+| `codex/portfolio-completion-audit` | `b74616e44593`（修改前） | 本地完成审计分支；尚无远端 ref/open PR | 0 | `RaggedRoute-six-ops-v2-eval` | 完成门禁后推送并建 PR；合并后自动删除远端 |
 
 本地旧 `codex/repo-governance-performance-docs@a47169d19ba4` 对应已合并 PR #36，但 squash 历史使其不是当前 `main` 的 ancestor。为避免删除本地 ref，本轮将其保留为 `codex/cleanup-safety/repo-governance-performance-docs-pr36`，再创建新的治理分支。`git fetch --prune` 只清理了已不存在的 remote-tracking refs，没有删除本地分支。
 
-当前非任务 worktree 中有 3 个 dirty 实验 worktree，内容与初始治理范围一致：Histogram 为 4 modified + 2 untracked，L3 为 5 untracked，vLLM industrial correction 为 2 modified + 1 untracked。当前任务 worktree 的文档/evidence 改动将在本 PR 提交，不计入第二阶段冗余清理；其余 dirty 内容原样保留。
+当前非任务 worktree 中有 3 个 dirty 实验 worktree，内容与初始治理范围一致：Histogram 为 4 modified + 2 untracked，L3 为 5 untracked，vLLM industrial correction 为 2 modified + 1 untracked。当前完成审计 worktree 在修改前 clean；本 PR 只提交审计、文档事实同步和自动校验，不计入第二阶段冗余清理。其余 dirty 内容原样保留。
 
 ## 1. 远端分支快照
 
@@ -73,11 +73,11 @@
 
 | 路径 / 对象 | 状态 | Review 建议 |
 |---|---|---|
-| `RaggedRoute` worktree | `codex/unpermute-sm86-v2`，clean，落后 `origin/main` 35 commits | 等当前 PR 合并后决定移除 worktree 或重新指向 main |
+| `RaggedRoute` worktree | `codex/unpermute-sm86-v2`，clean，落后 `origin/main` 40 commits | 等当前 PR 合并后决定移除 worktree 或重新指向 main |
 | `RaggedRoute-histogram-v2` worktree | 4 个 modified 文件、2 组未跟踪报告/制品 | 先查看 diff 与 evidence 完整性；可选择归档到独立分支或丢弃 |
 | `RaggedRoute-l3-eval-8d4c281` worktree | 5 个未跟踪 L3/vLLM 报告目录 | 与 main 的 L3 报告去重后决定归档或删除 |
 | `RaggedRoute-vllm-industrial-correction` worktree | 2 个 modified 脚本、1 个未跟踪同步脚本 | 需要代码 review，不得随 stacked branch 清理 |
-| `RaggedRoute-six-ops-v2-eval` worktree | 当前治理/性能文档任务；V9/V10 compact evidence 与文档待提交 | 本轮 PR 正常提交；不得混入其他 worktree 的实验内容 |
+| `RaggedRoute-six-ops-v2-eval` worktree | `codex/portfolio-completion-audit`；从 PR #38 merge commit 创建，修改前 clean | 本轮只提交完成审计与事实同步；不得混入其他 worktree 的实验内容 |
 | `RaggedRoute-unpermute-v2` 独立 clone | clean，旧 `codex/unpermute-sm86-v2` | 可在确认无独立 object/evidence 后删除候选 |
 | `RaggedRoute-histogram-candidate` 普通目录 | 非 RaggedRoute Git worktree，含历史源码/报告/out | 先做文件级 manifest，再判断是否与 Git 历史重复 |
 | `stash@{0}` | `histogram-v2 accidental shared-worktree edits` | 必须单独 review；禁止自动 drop |

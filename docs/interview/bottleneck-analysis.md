@@ -9,7 +9,7 @@
 - Evidence SHA：`9732a0343c60f869fc4166a0cc3cabba2fd67bbb`，Release、clean、`-lineinfo`。
 - GPU：RTX 3080，CC 8.6，68 SM，10 GiB；CUDA 13.3.73，driver 616.56，NCU 2026.2.1，NSYS 2026.1.3。
 - NSYS：`chain_from_logits`，T512/E64/K128/N128，20 warmup 后采集一次 postlogit path；分别使用 uniform 和 Zipf s=1.4。
-- NCU：七算子 candidate/baseline 各一个 post-warmup basic launch；只有 Grouped v3/CUTLASS 因 basic 证据不足升级 detailed。
+- NCU：七个语义算子加融合 primitive 的 candidate/strong-reference 各一个 post-warmup basic launch，共 16 个 basic；只有当时的 Grouped v3/CUTLASS 因 basic 证据不足升级 detailed。这里的 profile variant 是 `9732a03` 冻结时的诊断选择，不保证等于每项 primary Release winner：Top-K strong-reference profile 使用有限子域 vLLM、Permute profile 使用 v3 pure path、Grouped profile 使用 v3，而正式矩阵结论分别来自 exact naive、v2 full-from-ids 和 v2/library envelope。后续 strongest Grouped V9 另有 CUTLASS/V5/V9 basic 与 V5/V9 detailed，不能把旧 v3 profile 冒充 V9 归因。
 - Profiler duration 只用于机制诊断；所有性能倍率来自未插桩五进程 Release。
 
 Grouped-only follow-up 另固定在 clean SHA `c2205ed1ba1063fccce3cd417fd671798dbfb66f`，沿用 RTX 3080 / strict FP32 合同，对 v2/v5/v6/CUTLASS/cuBLAS 执行 10 shape、5 process、20 warmup、30 samples/process 的未插桩 Release 复测。它只更新 Grouped GEMM，不改写其他六算子的 `9732a03` 统一矩阵。完整证据见 [v5/v6 compact report](../reports/compact/20260830-c2205ed-grouped-v6/REPORT.md)。

@@ -12,6 +12,7 @@ import pathlib
 
 EVIDENCE_SHA = "9732a0343c60f869fc4166a0cc3cabba2fd67bbb"
 BUNDLE = pathlib.Path("docs/reports/compact/20260829-9732a03-interview-portfolio")
+GOVERNANCE_BASE_SHA = "b74616e445938e077743c997835a8eb7ec177b7d"
 GROUPED_EVIDENCE_SHA = "c2205ed1ba1063fccce3cd417fd671798dbfb66f"
 GROUPED_BUNDLE = pathlib.Path("docs/reports/compact/20260830-c2205ed-grouped-v6")
 GROUPED_REQUIRED_FILES = {
@@ -61,6 +62,34 @@ PRIMARY_EXPECTED = {
     "grouped_v2_vs_external_envelope": (0.869669, 1.641089),
     "unpermute_vec4_vs_reference_envelope": (1.015376, 1.289228),
 }
+EXPECTED_NCU_CASES = {
+    ("candidate", "dense.candidate.m1024", "basic"),
+    ("candidate", "topk.candidate.t2048_e64", "basic"),
+    ("candidate", "histogram.candidate.r1m_e64", "basic"),
+    ("candidate", "histogram_scan.candidate.r4096_e64", "basic"),
+    ("candidate", "scan.candidate.e64", "basic"),
+    ("candidate", "permute.candidate.t4096_k1024", "basic"),
+    ("candidate", "grouped.candidate.t2048_zipf14", "basic"),
+    ("candidate", "unpermute.candidate.t1024_n256", "basic"),
+    ("baseline", "dense.baseline.m1024", "basic"),
+    ("baseline", "topk.baseline.t2048_e64", "basic"),
+    ("baseline", "histogram.baseline.r1m_e64", "basic"),
+    ("baseline", "histogram_scan.baseline.r4096_e64", "basic"),
+    ("baseline", "scan.baseline.e64", "basic"),
+    ("baseline", "permute.baseline.t2048_k256", "basic"),
+    ("baseline", "grouped.baseline.t2048_zipf14", "basic"),
+    ("baseline", "unpermute.baseline.t1024_n256", "basic"),
+    ("candidate", "grouped.candidate.t2048_zipf14", "detailed"),
+    ("baseline", "grouped.baseline.t2048_zipf14", "detailed"),
+}
+EXPECTED_NSYS_KERNELS = {
+    "grouped_gemm",
+    "token_permute",
+    "topk_gate",
+    "histogram_exclusive_scan",
+    "unpermute",
+}
+ALLOWED_METRIC_STATUSES = {"collected", "not_collected", "unsupported_or_unknown"}
 PERFORMANCE_RECORDS = (
     "docs/dense_gemm/performance-record.md",
     "docs/topk_gate/performance-record.md",
@@ -77,6 +106,7 @@ CANONICAL_DOCS = (
     "docs/interview/operator-performance.md",
     "docs/interview/bottleneck-analysis.md",
     "docs/interview/question-bank.md",
+    "docs/portfolio-completion-audit.md",
     "docs/implementation-status.md",
     "docs/operator-optimization-index.md",
     "docs/development-roadmap.md",
@@ -200,6 +230,69 @@ def validate(root: pathlib.Path) -> list[str]:
         for field, expected in expected_environment.items():
             if environment.get(field) != expected:
                 errors.append(f"environment {field} does not equal {expected!r}")
+
+    ncu_path = bundle / "ncu_metrics.json"
+    if ncu_path.is_file():
+        ncu_records = load_json(ncu_path)
+        observed_ncu_cases = {
+            (record.get("role"), record.get("case_id"), record.get("profile_set"))
+            for record in ncu_records
+        }
+        if observed_ncu_cases != EXPECTED_NCU_CASES:
+            errors.append(
+                "portfolio NCU coverage mismatch: "
+                f"missing={sorted(EXPECTED_NCU_CASES - observed_ncu_cases)}, "
+                f"extra={sorted(observed_ncu_cases - EXPECTED_NCU_CASES)}"
+            )
+        if len(ncu_records) != len(EXPECTED_NCU_CASES):
+            errors.append("portfolio NCU records contain duplicate case/set entries")
+        for record in ncu_records:
+            metrics = record.get("metrics", {})
+            device = metrics.get("device_name", {})
+            cc_major = metrics.get("cc_major", {})
+            cc_minor = metrics.get("cc_minor", {})
+            if device.get("status") != "collected" or device.get("value") != "NVIDIA GeForce RTX 3080":
+                errors.append(f"NCU device drift: {record.get('case_id')}")
+            if cc_major.get("value") != 8 or cc_minor.get("value") != 6:
+                errors.append(f"NCU compute capability drift: {record.get('case_id')}")
+            for concept, metric in metrics.items():
+                status = metric.get("status")
+                if status not in ALLOWED_METRIC_STATUSES:
+                    errors.append(
+                        f"invalid NCU metric status {status!r}: {record.get('case_id')}:{concept}"
+                    )
+                elif status == "collected" and (
+                    metric.get("metric") is None or metric.get("value") is None
+                ):
+                    errors.append(
+                        f"collected NCU concept lacks metric/value: {record.get('case_id')}:{concept}"
+                    )
+                elif status != "collected" and metric.get("value") is not None:
+                    errors.append(
+                        f"unavailable NCU concept has numeric value: {record.get('case_id')}:{concept}"
+                    )
+
+    nsys_path = bundle / "nsys_hotspots.json"
+    if nsys_path.is_file():
+        nsys_records = load_json(nsys_path)
+        distributions = {record.get("distribution") for record in nsys_records}
+        if distributions != {"uniform", "zipf14"}:
+            errors.append(f"portfolio NSYS distribution coverage drift: {sorted(distributions)}")
+        for distribution in ("uniform", "zipf14"):
+            records = [
+                record for record in nsys_records if record.get("distribution") == distribution
+            ]
+            if len(records) != 5:
+                errors.append(f"{distribution} NSYS hotspot count is not 5")
+                continue
+            kernels = {record.get("kernel", "") for record in records}
+            for expected_kernel in EXPECTED_NSYS_KERNELS:
+                if not any(expected_kernel in kernel for kernel in kernels):
+                    errors.append(
+                        f"{distribution} NSYS is missing {expected_kernel} hotspot"
+                    )
+            if not close(sum(float(record.get("time_pct", 0.0)) for record in records), 100.0, 0.05):
+                errors.append(f"{distribution} NSYS hotspot percentages do not sum to 100")
 
     grouped_bundle = root / GROUPED_BUNDLE
     if not grouped_bundle.is_dir():
@@ -468,6 +561,38 @@ def validate(root: pathlib.Path) -> list[str]:
                         f"Grouped V9/V10 environment GPU {field} does not equal {expected!r}"
                     )
 
+        expected_v9_basic = {
+            "grouped.v10.cutlass.t4096_e64_k128_n64",
+            "grouped.v10.v6_portfolio_fallback.t4096_e64_k128_n64",
+            "grouped.v10.v9_32x64.t4096_e64_k128_n64",
+        }
+        expected_v9_detailed = {
+            "grouped.v10.v6_portfolio_fallback.t4096_e64_k128_n64",
+            "grouped.v10.v9_32x64.t4096_e64_k128_n64",
+        }
+        for name, profile_set, expected_cases in (
+            ("ncu-basic.json", "basic", expected_v9_basic),
+            ("ncu-detailed.json", "detailed", expected_v9_detailed),
+        ):
+            path = latest_grouped_bundle / name
+            if not path.is_file():
+                continue
+            records = load_json(path)
+            observed_cases = {record.get("case_id") for record in records}
+            if observed_cases != expected_cases or len(records) != len(expected_cases):
+                errors.append(f"Grouped V9/V10 {profile_set} NCU coverage drift")
+            for record in records:
+                if record.get("profile_set") != profile_set:
+                    errors.append(
+                        f"Grouped V9/V10 NCU set drift: {record.get('case_id')}"
+                    )
+                for concept, metric in record.get("metrics", {}).items():
+                    if metric.get("status") not in ALLOWED_METRIC_STATUSES:
+                        errors.append(
+                            "invalid Grouped V9/V10 NCU metric status: "
+                            f"{record.get('case_id')}:{concept}"
+                        )
+
         sanitizer_path = latest_grouped_bundle / "sanitizer-summary.csv"
         if sanitizer_path.is_file():
             with sanitizer_path.open("r", encoding="utf-8", newline="") as handle:
@@ -528,6 +653,17 @@ def validate(root: pathlib.Path) -> list[str]:
             errors.append(f"performance record lacks latest date: {relative}")
         if relative in texts and EVIDENCE_SHA not in texts[relative]:
             errors.append(f"performance record lacks evidence SHA: {relative}")
+    for relative in (
+        "docs/portfolio-completion-audit.md",
+        "docs/implementation-status.md",
+    ):
+        if relative in texts and GOVERNANCE_BASE_SHA not in texts[relative]:
+            errors.append(f"completion document lacks PR #38 merge SHA: {relative}")
+    cleanup_path = root / "docs/cleanup-review.md"
+    if cleanup_path.is_file():
+        cleanup_text = cleanup_path.read_text(encoding="utf-8")
+        if GOVERNANCE_BASE_SHA not in cleanup_text or "PR #38" not in cleanup_text:
+            errors.append("cleanup review does not record the merged governance baseline")
 
     required_claims = {
         "README.md": (

@@ -89,20 +89,7 @@ NCU on the T4096/N64 shape shows that V9 reduces the actual V5 fallback grid fro
 
 ## Quick start
 
-### CPU-only validation (including macOS)
-
-CPU-only presets do not enable the CUDA language. They validate host-side schemas, evidence tooling, and repository checks; they do not validate CUDA operator capability or performance.
-
-Requirements: CMake 3.24+, Ninja, Python 3, and a C++17 compiler.
-
-```bash
-cmake --preset cpu-release
-cmake --build --preset build-cpu-release --parallel
-ctest --preset test-cpu-release
-python scripts/repository_checks.py
-```
-
-### RTX 3080 / SM86 CUDA validation
+### RTX 3080 / SM86 CUDA-first validation
 
 The measured environment is Windows with CUDA Toolkit, Visual Studio 2022 Build Tools, CMake, Ninja, and Python. Run this only on a supported NVIDIA CUDA system:
 
@@ -123,6 +110,8 @@ List every adapter and variant:
 ```powershell
 out\build\rtx3080-sm86-release\raggedroute_benchmark.exe --list
 ```
+
+CPU-only presets remain available for CI and host-side schema checks, but they do not validate the CUDA capability or performance claims on this page and are intentionally omitted from the primary quick start.
 
 ### Install as a CMake package
 
@@ -171,6 +160,7 @@ CUDA Events provide unprofiled release latency. NSYS explains launch gaps and st
 - [Seven operator performance cards](docs/interview/operator-performance.md)
 - [Bottleneck analysis](docs/interview/bottleneck-analysis.md)
 - [Interview question bank](docs/interview/question-bank.md)
+- [Original plan completion audit](docs/portfolio-completion-audit.md)
 - [Branch governance and cleanup review](docs/cleanup-review.md)
 - [Implementation status and claim boundary](docs/implementation-status.md)
 - [Development roadmap](docs/development-roadmap.md)

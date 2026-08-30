@@ -50,7 +50,7 @@
 
 - [x] 定义 `raggedroute.promotion_decision.v1`，实现 evaluator，输出仅允许 `promote`、`reject`、`insufficient_evidence`。
 - [x] evaluator 只生成证据和建议，不自动修改 runtime 默认 dispatch。
-- [x] 高 CV、缺少必需 trace、质量门禁未执行、配对缺失或协议不完整归为 `insufficient_evidence`。
+- [x] 现行作品集 policy 中 `CV>0.10` 只做 WDDM 风险披露，不自动降级；只有 `CV>0.50`、缺少必需 trace、质量门禁未执行、配对缺失或协议不完整才归为 `insufficient_evidence`。历史版本化 policy 与既有 decision 不回写。
 - [x] 数据有效但未达到 speedup shape coverage、ratio-of-sums、最大单点退化或 workspace 门槛时归为 `reject`。
 - [ ] workspace 门槛固定为：baseline workspace 为 0 时，candidate 最多增加 **64 MiB**；baseline 非零时，增长不超过 **25%**。
 - [x] 只有 `promote`、人工 review 通过并完成完整 release 复测后，才能另行提交默认 dispatch 变更。

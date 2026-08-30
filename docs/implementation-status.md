@@ -1,7 +1,7 @@
 # 实现状态与证据边界
 
 更新时间：2026-08-30
-本次完成审计的仓库基线是 PR #38 合并后的 `main@b74616e445938e077743c997835a8eb7ec177b7d`。七算子统一性能证据固定在 clean SHA `9732a0343c60f869fc4166a0cc3cabba2fd67bbb`；Grouped GEMM follow-up 依次固定在 clean SHA `c2205ed1ba1063fccce3cd417fd671798dbfb66f` 与 `dea7c066a83a5df700aa60c03fd51446c6b4c5e5`。后两者只更新 Grouped 的 benchmark-only candidate 证据，不改写其他六算子矩阵，也不修改公共 API 或 `KernelFamily::kAuto`；V9 是当前 strongest measured in-tree candidate，V10 只增加 hardware-aware selector rejection evidence。逐项完成状态见 [套餐完成审计](portfolio-completion-audit.md)。
+本次完成审计的仓库基线是 PR #39 合并后的 `main@2366acec5d2ab6552e6112e5019ac948a51fbf34`。七算子统一性能证据固定在 clean SHA `9732a0343c60f869fc4166a0cc3cabba2fd67bbb`；Grouped GEMM follow-up 依次固定在 clean SHA `c2205ed1ba1063fccce3cd417fd671798dbfb66f` 与 `dea7c066a83a5df700aa60c03fd51446c6b4c5e5`。后两者只更新 Grouped 的 benchmark-only candidate 证据，不改写其他六算子矩阵，也不修改公共 API 或 `KernelFamily::kAuto`；V9 是当前 strongest measured in-tree candidate，V10 只增加 hardware-aware selector rejection evidence。逐项完成状态见 [套餐完成审计](portfolio-completion-audit.md)。
 
 ## 已实现
 
@@ -55,6 +55,7 @@
 - 2026-08-30：完成 Grouped GEMM v5 direct-grid / v6 `32x128` follow-up。10 shape、5 process 的 250/250 Release records 全部通过 CPU oracle，最大 CV `0.4968`，未超过 0.50 evidence ceiling。v6 hybrid 对最快 CUTLASS/cuBLAS envelope ratio-of-sums `0.9946x`，不晋级；uniform T512 `1.2257x` 与 single-hot `1.7762x` 是 hybrid 的 v5/v2 fallback portfolio 成绩，不是 wide kernel 本身。wide 直接激活的 T512/E16/N256 为 `1.0120x`，T2048/E64/N128 为 `0.7534x`。NCU 显示 v6 wide 相对 v5 将 global load/store requests 降低 43.4%/75.5%、DRAM writes 降低 82.7%，但 T2048 仍受 0.941 waves/SM、work imbalance 与低 issue efficiency 限制。v7 `64x128` dirty smoke 退化约 6.6%；v8 `16x128` 四 shape diagnostic screen 对 v6/CUTLASS 仅约 `0.93x/0.81x`，两者均拒绝。证据见 [Grouped v5/v6 compact bundle](reports/compact/20260830-c2205ed-grouped-v6/REPORT.md) 与 [Grouped 性能记录](grouped_gemm/performance-record.md)。
 - 2026-08-30：完成 Grouped GEMM V9 `32x64` 与 V10 wave-aware selector follow-up。clean `dea7c066a83a5df700aa60c03fd51446c6b4c5e5` 上 15 shape、5 variant、5 process 的 375/375 Release records 全部通过 CPU oracle；V9 对最快 CUTLASS/cuBLAS envelope ratio-of-sums/geomean 为 `1.0916x/1.1397x`、11/15 p50 获益，但一个 CUTLASS tail process `CV=0.5041` 越过 0.50 ceiling，因此完整矩阵只作 research trend。真正执行 V9 kernel 且 5/5 process pairs 同向的 uniform T512/E32/N64、Zipf T2048/E64/N64、uniform T4096/E64/N64 分别为 `1.8819x/1.4366x/1.3661x`；K256/N128/non-aligned 反例为 `0.9072x/0.7736x/0.7508x`。代表 T4096/N64 的 NCU 显示相对 V5 fallback CTA 减少 75%、global load/store requests 减少 37.9%/50.5%，occupancy 从 48.44% 降到 41.54% 仍更快，主机制是减少 over-partitioning、重复请求和调度/尾波成本。V10 对 V9 aggregate 仅 `0.9775x`，正式拒绝。V9/V10 targeted 四类 Compute Sanitizer 24/24 通过；证据见 [V9/V10 compact bundle](reports/compact/20260830-dea7c06-grouped-v9-v10/REPORT.md)。
 - 2026-08-30：分支治理、统一性能文档和 Grouped V9/V10 证据通过 [PR #38](https://github.com/shunwendongan/RaggedRoute/pull/38) 合入 `main@b74616e445938e077743c997835a8eb7ec177b7d`；GitHub `delete_branch_on_merge=true`，远端任务分支已自动删除。live 远端只保留 `main` 与 review-held `codex/grouped-gemm-sm86-v2`；本地 worktree、stash 和冗余 evidence 未进入第二阶段删除。
+- 2026-08-30：性能优先的套餐完成审计、CUDA-first quick start 和 Profiler coverage 自动校验通过 [PR #39](https://github.com/shunwendongan/RaggedRoute/pull/39) 合入 `main@2366acec5d2ab6552e6112e5019ac948a51fbf34`；5 个 CI jobs 全通过，远端任务分支自动删除。该 PR 未修改 CUDA/C++、公共 API、dispatch、benchmark config 或 frozen evidence。
 
 ## 尚未实现，禁止据此宣称
 

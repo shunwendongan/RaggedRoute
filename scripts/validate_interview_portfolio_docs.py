@@ -13,6 +13,7 @@ import pathlib
 EVIDENCE_SHA = "9732a0343c60f869fc4166a0cc3cabba2fd67bbb"
 BUNDLE = pathlib.Path("docs/reports/compact/20260829-9732a03-interview-portfolio")
 GOVERNANCE_BASE_SHA = "b74616e445938e077743c997835a8eb7ec177b7d"
+COMPLETION_MERGE_SHA = "2366acec5d2ab6552e6112e5019ac948a51fbf34"
 GROUPED_EVIDENCE_SHA = "c2205ed1ba1063fccce3cd417fd671798dbfb66f"
 GROUPED_BUNDLE = pathlib.Path("docs/reports/compact/20260830-c2205ed-grouped-v6")
 GROUPED_REQUIRED_FILES = {
@@ -657,13 +658,18 @@ def validate(root: pathlib.Path) -> list[str]:
         "docs/portfolio-completion-audit.md",
         "docs/implementation-status.md",
     ):
-        if relative in texts and GOVERNANCE_BASE_SHA not in texts[relative]:
-            errors.append(f"completion document lacks PR #38 merge SHA: {relative}")
+        if relative in texts and COMPLETION_MERGE_SHA not in texts[relative]:
+            errors.append(f"completion document lacks PR #39 merge SHA: {relative}")
+    if (
+        "docs/implementation-status.md" in texts
+        and GOVERNANCE_BASE_SHA not in texts["docs/implementation-status.md"]
+    ):
+        errors.append("implementation status lost the PR #38 governance baseline")
     cleanup_path = root / "docs/cleanup-review.md"
     if cleanup_path.is_file():
         cleanup_text = cleanup_path.read_text(encoding="utf-8")
-        if GOVERNANCE_BASE_SHA not in cleanup_text or "PR #38" not in cleanup_text:
-            errors.append("cleanup review does not record the merged governance baseline")
+        if COMPLETION_MERGE_SHA not in cleanup_text or "PR #39" not in cleanup_text:
+            errors.append("cleanup review does not record the merged completion baseline")
 
     required_claims = {
         "README.md": (

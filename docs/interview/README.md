@@ -8,13 +8,13 @@
 
 - 设计并实现单 GPU Top-2 MoE 七阶段 CUDA 流水线，统一 v0.2 C++ runtime、CPU oracle、八个 benchmark adapter 与 L1/L2/L3 计时边界；在 RTX 3080 上完成 5 进程 Release、CTest、四类 Compute Sanitizer、NSYS 与 NCU 可复现验证。
 - 面向 Ampere SM86 设计 Top-K 两级子组归约、Histogram shape dispatcher / `E=1` fast path、Token Permute fused route preparation 等候选：Top-K v4 对严格 naive 的 30-shape ratio-of-sums 为 `1.0972x`、峰值 `1.6934x`；Histogram v2 对最强参考 envelope 为 `1.1016x`、峰值 `4.3026x`；Permute v2 full-from-ids 对 adapted vLLM 为 `1.5671x` 且 5/5 shape 获益。
-- 用 NSYS 定位 Grouped GEMM 占 uniform/Zipf L3 GPU kernel time `71.6%/86.0%`，设计 v5 direct-grid 调度与 v6 `32x128x16`/`4x4` micro-tile/`cp.async` 混合路径；RTX 3080 strict FP32 上 uniform T512 对 CUTLASS `1.2257x`、single-hot 对最快 library `1.7762x`。NCU 验证 global load requests 下降 43.4%，并用完整 envelope `0.9946x` 及 T2048 `0.7534x` 反例拒绝默认晋级。
+- 用 NSYS 定位 Grouped GEMM 占 uniform/Zipf L3 GPU kernel time `71.6%/86.0%`，设计 v5 direct-grid、v6 `32x128x16` `cp.async` 与 v5/v2 fallback 的 shape-aware portfolio；fallback 区间在 RTX 3080 strict FP32 上分别取得 uniform T512/CUTLASS `1.2257x`、single-hot/fastest-library `1.7762x`。NCU 独立验证 wide path 的 global load requests 下降 43.4%，并用完整 envelope `0.9946x` 及 wide T2048 `0.7534x` 反例拒绝默认晋级。
 
 简历空间紧张时优先保留第二、第三条。所有倍率都必须和比较对象、shape 范围、计时边界一起出现。
 
 ## 30 秒介绍
 
-RaggedRoute 是我围绕 Top-2 MoE 路由做的 CUDA 性能工程项目，包含从 router GEMM、Top-K、Histogram/Scan、Token Permute、ragged Grouped GEMM 到 Unpermute 的七阶段流水线。我在 RTX 3080 上固定 strict FP32 合同，用五个独立 Release 进程公平对比 cuBLAS、CUTLASS、CUB 和 adapted vLLM。强结果包括 Permute full-from-ids 对 vLLM `1.567x`、Histogram 完整矩阵 `1.102x`、Top-K 局部 `1.693x`，以及自研 Grouped v6 在 uniform T512 对 CUTLASS `1.226x`、single-hot 对最快库 `1.776x`。我也保留了 Grouped 完整 envelope `0.995x` 的失败结论，用 NCU 解释 request amplification、underfill 和 issue efficiency，而不用单点 winner 包装整体。
+RaggedRoute 是我围绕 Top-2 MoE 路由做的 CUDA 性能工程项目，包含从 router GEMM、Top-K、Histogram/Scan、Token Permute、ragged Grouped GEMM 到 Unpermute 的七阶段流水线。我在 RTX 3080 上固定 strict FP32 合同，用五个独立 Release 进程公平对比 cuBLAS、CUTLASS、CUB 和 adapted vLLM。强结果包括 Permute full-from-ids 对 vLLM `1.567x`、Histogram 完整矩阵 `1.102x`、Top-K 局部 `1.693x`，以及 Grouped hybrid 的 fallback 区间在 uniform T512/single-hot 达 `1.226x/1.776x`。我同时披露 Grouped 完整 envelope `0.995x` 和 wide T2048 `0.753x`，用 NCU 解释 request amplification、underfill 和 issue efficiency，而不用 fallback 成绩冒充某个 wide kernel 的成绩。
 
 ## 3 分钟介绍
 
@@ -24,7 +24,7 @@ RaggedRoute 是我围绕 Top-2 MoE 路由做的 CUDA 性能工程项目，包含
 
 第三层是算子设计。Top-K v4 用寄存器局部 pair 和两级 subgroup reduction，E64/T4096 达到 `1.693x`，但小 shape 最大回退 10.88%，因此不改 Auto。Histogram v2 对 `E=1` 直接写 `counts[0]=R`，其余 shape 复用 single-CTA / block-private dispatcher，完整 15-case ratio-of-sums `1.102x`。Permute 的 pure-copy v2/v3 没有全面超过保留路径，但把 route preparation 纳入 full-from-ids 边界后，v2 对 adapted vLLM 达到 `1.567x` 且五个 shape 全胜，说明收益来自消除中间准备开销，而不是只优化 copy kernel。
 
-第四层是热点迭代与失败诊断。NSYS 显示 Grouped GEMM 是绝对热点；v5 保留 v2 `16x32` mainloop，用 direct grid 去掉 prefix/binary-search/persistent traversal，v6 在 balanced path 使用 `32x128` tile 降低 global load/store requests 43.4%/75.5%。局部因此对 CUTLASS 达 `1.226x`，但 T2048 只有 0.941 waves/SM、31.28% issue active，对 CUTLASS 反而 `0.753x`；整体 envelope 只有 `0.995x`。v7 `64x128` dirty smoke 又在 T2048 退化约 6.6%，所以撤回。这条过程说明我能把调度、tile、request amplification、tail wave 和硬件资源放在同一个证据链里做取舍。
+第四层是热点迭代与失败诊断。NSYS 显示 Grouped GEMM 是绝对热点；v5 保留 v2 `16x32` mainloop，用 direct grid 去掉 prefix/binary-search/persistent traversal，v6 在 balanced path 使用 `32x128` tile，将该激活路径的 global load/store requests 降低 43.4%/75.5%。但 T512 `1.226x` 与 single-hot `1.776x` 都来自 v5/v2 fallback；wide T2048 只有 0.941 waves/SM、31.28% issue active，对 CUTLASS `0.753x`，整体 envelope `0.995x`。v7 `64x128` 退化约 6.6%，v8 `16x128` 四 shape screen 对 v6/CUTLASS 也只有约 `0.93x/0.81x`，因此都拒绝。这条过程说明我能把 dispatch 归因、调度、tile、request amplification、tail wave 和硬件资源放在同一证据链里做取舍。
 
 ## STAR 案例
 
@@ -49,12 +49,12 @@ RaggedRoute 是我围绕 Top-2 MoE 路由做的 CUDA 性能工程项目，包含
 - Action：用寄存器局部 Top-2 pair、vector row load 与两级归约，并分别对严格 naive 的完整合同和 external random-input 子域做矩阵评估。
 - Result：严格 30-shape ratio-of-sums `1.0972x`、geomean `1.0859x`、21/30 获益，E64/T4096 为 `1.6934x`；但 E32/T32 回退 10.88%，所以保留显式 v4，不改 Auto。这个案例展示“找到最大收益，同时守住反例门禁”。
 
-### 成功与失败共存：Grouped GEMM v3 → v5 → v6 → v7
+### 成功与失败共存：Grouped GEMM v3 → v5 → v6 → v7/v8
 
 - Situation：Grouped GEMM 占 L3 GPU kernel time 70% 以上，v2 在 skew/single-hot 有优势，但 uniform 和大 shape 失败。
 - Task：在 strict FP32、zero workspace 和不改 Auto 的约束下，分离验证 tile geometry、direct-grid scheduling 和 balanced/skew selector。
-- Action：v3 `16x64` 暴露资源/发射代价后，v5 回到 `16x32` mainloop，仅将 balanced workload 改为 direct grid；v6 只将 balanced path 改为 `32x128x16`/`4x4` micro-tile/float4 store，其余回退 v5。用十 shape、五进程 Release 和 detailed NCU 评估，再用 v7 dirty smoke 单独筛查 `64x128` 假设。
-- Result：v6 在 uniform T512 对 CUTLASS `1.2257x`、single-hot 对最快 library `1.7762x`，NCU 确认 global load requests 下降 43.4%；但完整 envelope `0.9946x`、T2048 `0.7534x`，v7 T2048 又退化约 6.6%。因此 v6 作为最强 benchmark-only candidate 保留，v7 撤回，Auto 不变。
+- Action：v3 `16x64` 暴露资源/发射代价后，v5 回到 `16x32` mainloop，仅将 balanced workload 改为 direct grid；v6 只将 balanced path 改为 `32x128x16`/`4x4` micro-tile/float4 store，其余回退 v5。用十 shape、五进程 Release 和 detailed NCU 评估；再分别用 v7 `64x128` 与 v8 `16x128` screening 隔离 tile-M 放大/缩小假设。
+- Result：v6 hybrid 的 fallback 区间在 uniform T512/single-hot 为 `1.2257x/1.7762x`；NCU 确认 wide path 的 global load requests 下降 43.4%，但它在 T2048 只有 `0.7534x`，完整 envelope `0.9946x`。v7 T2048 退化约 6.6%；v8 对 v6/CUTLASS aggregate 约 `0.93x/0.81x`。因此只保留 v6 benchmark-only portfolio，两个后续几何都拒绝，Auto 不变。
 
 ### 失败：Dense GEMM v3
 

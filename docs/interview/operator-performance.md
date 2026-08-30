@@ -67,10 +67,10 @@
 - 统一七算子基线：`9732a0343c60f869fc4166a0cc3cabba2fd67bbb` 中最强是 v2，对 CUTLASS/cuBLAS envelope 只有 `0.8697x`。Grouped-only follow-up 在 clean `c2205ed1ba1063fccce3cd417fd671798dbfb66f` 上又测得了 v5/v6，不覆写其他六算子的旧证据。
 - 最强新候选：`cuda_grouped_sm86_fp32_v6_balanced_32x128`。v5 先在 balanced workload 上以 direct `(column,row,expert)` grid 取代 prefix/binary-search persistent traversal；v6 再把 balanced path 改为 `32x128x16`、256 threads、每线程 `4x4` outer product、aligned `float4` store 和两级 `cp.async`，skew/tiny/non-aligned 回退 v5，workspace 为 0。
 - 强基线：每 shape 最快 CUTLASS Grouped / cuBLAS per-expert envelope。v6 完整 10-shape ratio-of-sums `0.9946x`、geomean `1.0352x`、5/10 获益；对 CUTLASS 单独为 `1.0652x`，但最大反例 32.74%，不是可晋级结论。v6 对 v5 只有 `1.0116x` ratio-of-sums，p95 最大回退 27.96%。
-- 简历安全的限定结果：uniform `T512/E64/K128/N128` 对 CUTLASS `1.2257x`，single-hot 对最快 library envelope `1.7762x`，many-empty 对 CUTLASS `1.2478x`；前两个关键 headline 均为 5/5 process pairs 同向。反例是 uniform T2048 `0.7534x`、non-aligned `0.8380x`和 single-expert 对 cuBLAS `0.7835x`。
+- 简历安全的限定结果：v6 hybrid portfolio 在 uniform `T512/E64/K128/N128` 对 CUTLASS `1.2257x`，single-hot 对最快 library envelope `1.7762x`，many-empty 对 CUTLASS `1.2478x`；前两个关键 headline 均为 5/5 process pairs 同向。但三者均未进入 `32x128` wide path，实际来自 v5/v2 fallback。wide 本身直接激活的 uniform T512/E16/N256 为 `1.0120x`，uniform T2048 为 `0.7534x`；另有 non-aligned `0.8380x` 和 single-expert/cuBLAS `0.7835x` 反例。
 - Profiler：v6 相对 v5 将 global load/store requests 降低 43.4%/75.5%，DRAM writes 降低 82.7%，证明大 tile 修复了 request amplification。但 uniform T2048 仅 0.941 waves/SM、31.60% achieved occupancy、31.28% issue active，SM active-cycle minimum 比均值低 54.17%；CUTLASS issue active 为 53.65%。local load/store 均为 0，所以剩余主瓶颈是 underfill/work imbalance 与 issue efficiency，不是 spill。
-- 失败消融：v3 16x64 资源生存期过长，v4A descriptor queue 增加 prepass/mainloop 代价，v7 `64x128` dirty smoke 在 T2048 又比 v6 慢约 6.6% 而撤回。这条 v2→v5→v6→v7 链路展示了调度、tile、资源与 tail wave 的设计取舍。
-- 决策：v6 是当前最强 SM86 research candidate，但完整 library envelope 仍为 `0.9946x`，因 coverage/p95/最大反例拒绝晋级，`Auto` 不变。证据见 [Grouped v5/v6 compact report](../reports/compact/20260830-c2205ed-grouped-v6/REPORT.md)。
+- 失败消融：v3 16x64 资源生存期过长，v4A descriptor queue 增加 prepass/mainloop 代价，v7 `64x128` 在 T2048 比 v6 慢约 6.6%；v8 固定 N128 只把 tile-M 降至 16，四 shape screening 对 v6/CUTLASS 仅约 `0.93x/0.81x`。v8 说明更多 M tiles 带来的 weight-tile 重复加载会抵消并行覆盖收益。
+- 决策：v6 是当前最强 SM86 research portfolio，但完整 library envelope 仍为 `0.9946x`，因 coverage/p95/最大反例拒绝晋级，`Auto` 不变。v8 只保留为 benchmark-only rejection candidate。证据见 [Grouped v5/v6 compact report](../reports/compact/20260830-c2205ed-grouped-v6/REPORT.md) 与 [Grouped 性能记录](../grouped_gemm/performance-record.md)。
 
 ## 7. Unpermute
 

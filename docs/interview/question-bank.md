@@ -84,7 +84,7 @@ Pure path只比较已有 mapping 后的 payload copy，v2/v3 和 token-owned 基
 
 ### 19. Grouped GEMM 为什么最难？
 
-它同时有小 expert、empty expert、Zipf skew、tail wave、non-aligned K/N 和严格 FP32 math。局部 single-hot 可以减少库调度开销，但 uniform 大 shape 更看重 tile reuse、resident waves、发射和跨 SM 均衡。最新 v6 在 uniform T512 对 CUTLASS `1.2257x`、single-hot 对最快 library `1.7762x`，但完整 envelope 仅 `0.9946x`，T2048 只有 `0.7534x`。这说明最强 candidate 必须是 shape/distribution-aware 的 hybrid portfolio，不能用单一 tile 或单点 winner 代表全部分布。
+它同时有小 expert、empty expert、Zipf skew、tail wave、non-aligned K/N 和严格 FP32 math。局部 single-hot 可以减少库调度开销，但 uniform 大 shape 更看重 tile reuse、resident waves、发射和跨 SM 均衡。最新 v6 hybrid 在 uniform T512/single-hot 为 `1.2257x/1.7762x`，但这两点实际走 v5/v2 fallback；`32x128` wide 直接激活的 T2048 只有 `0.7534x`，完整 envelope `0.9946x`。这说明最强 candidate 必须是 shape/distribution-aware portfolio，也说明回答性能时必须区分 variant 名、实际 dispatch 路径和单个 kernel。
 
 ### 20. Dense 为什么不直接写“超过 cuBLAS”？
 
@@ -110,7 +110,7 @@ v6 follow-up 里我首先看 request amplification：global load/store requests 
 
 ### 25. 下一轮你会怎么优化？
 
-优先固定 Grouped v6 `32x128` mainloop，只改 selector bucket 或 tail-wave task mapping，沿用十 shape 和 external envelope；第二是预声明 Top-K E64/T>=512 区间；第三是把 full-from-ids Permute 放入 L3 验证收益能否穿透 Grouped 热点。每轮只改一个机制，不再用 v7 那样继续盲目放大 tile。
+Grouped v8 已把 tile-M 从 32 降到 16 做了单变量反证：对 v6/CUTLASS aggregate 只有约 `0.93x/0.81x`，主要代价是额外 M tiles 重复加载更大的 weight tile。所以下一轮若继续 Grouped，只测 `32x64`，通过 N 方向增加 CTA、缩短 accumulator 和 shared-weight footprint；第二是预声明 Top-K E64/T>=512 区间；第三是把 full-from-ids Permute 放入 L3。每轮只改一个机制，形成 clean Release 证据前不改 Auto。
 
 ### 26. CUDA Graph 的 1.62x 能写成 kernel speedup 吗？
 

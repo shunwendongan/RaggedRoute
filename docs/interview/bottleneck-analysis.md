@@ -2,7 +2,7 @@
 
 ## 结论先行
 
-端到端价值最高的热点是 Grouped GEMM，而不是某个最容易写的 metadata kernel。统一 portfolio 的 uniform/Zipf L3 中它占 GPU kernel time `71.6%/86.0%`，因此后续实验聚焦该算子。v5 direct-grid 与 v6 `32x128` 已证明可以减少调度和 request amplification，但 v6 完整 library envelope 仍只有 `0.9946x`；当前瓶颈已转为 T2048 的 underfill/work imbalance 与 issue efficiency。Permute 是高 DRAM 压力，Scan/Fused Histogram→Scan 则是单 CTA underfill。
+端到端价值最高的热点是 Grouped GEMM，而不是某个最容易写的 metadata kernel。统一 portfolio 的 uniform/Zipf L3 中它占 GPU kernel time `71.6%/86.0%`，因此后续实验聚焦该算子。v5 direct-grid 与 v6 `32x128` 已证明可以减少调度和 request amplification，但 v6 完整 library envelope 仍只有 `0.9946x`；其中 `1.2257x/1.7762x` 局部赢家来自 v5/v2 fallback，不是 wide kernel。wide T2048 的瓶颈是 underfill/work imbalance 与 issue efficiency。Permute 是高 DRAM 压力，Scan/Fused Histogram→Scan 则是单 CTA underfill。
 
 ## 环境与证据边界
 
@@ -29,6 +29,14 @@ Grouped-only follow-up 另固定在 clean SHA `c2205ed1ba1063fccce3cd417fd671798
 | Local load/store | 0 / 0 | 0 / 0 | 0 / 0 | 没有 spill 证据 |
 
 两组独立信号支持该诊断：第一，v6 明显减少 global request 与 DRAM write，证明 `32x128` tile 修复了 v5 的 request amplification；第二，它仍只有 0.941 waves/SM、31.28% issue active，且 SM active-cycle minimum 比均值低 54.17%，同时 T2048 Release 对 CUTLASS 只有 `0.7534x`。所以下一轮不应继续盲目放大 tile，而要限定 v6 selector 适用区间并减少最后 partial wave/跨 SM 不均。
+
+归因审计进一步收紧了结论：v6 的 `ceil-average >= 32`、skew 和对齐 selector 会让 uniform T512/E64、single-hot、many-empty 分别回退到 v5/v2，它们的 `1.2257x/1.7762x/1.2478x` 是 hybrid portfolio 的收益。wide kernel 直接激活的两个正式 shape 是 uniform T512/E16/N256（`1.0120x`）和 uniform T2048/E64/N128（`0.7534x`）。这说明 selector/fallback 本身是设计的一部分，但不能用 variant 外层名称替代实际 kernel 归因。
+
+## V8 16x128：underfill 假设的反证
+
+V8 保持 v6 的 N128、K16、256 threads、两级 `cp.async`、direct grid、selector、strict FP32、zero workspace 和 fallback 不变，只把 tile-M 32→16、thread micro-tile `4x4`→`2x4`。在四个预声明 balanced shape 的三进程 diagnostic screen 中，48/48 validation 通过，最大 CV `0.3278`、0 个超过 0.50；v8 对 v5/v6/CUTLASS 的 ratio-of-sums 约为 `1.06x/0.93x/0.81x`。它只在 T1024 对 v6 为 `1.17x`，T2048/N128、T2048/N256、T4096 分别为 `0.99x/0.92x/0.81x`，关键退化均 3/3 进程同向。
+
+因此“增加 CTA 数量”不是充分条件。M tile 减半会让每个新 row tile 重复加载相同的 `Kx128` weight tile；在更大 T/N 上，这个 traffic/reuse 代价大于更高 wave coverage。V8 是 dirty-tree screening，只用于拒绝假设，不进入正式 speedup headline，也不需要用 profiler duration包装结论。
 
 ## NSYS 关键路径
 
@@ -77,18 +85,19 @@ Grouped-only follow-up 另固定在 clean SHA `c2205ed1ba1063fccce3cd417fd671798
 2. “更宽 tile + 更多 `cp.async` 能摊薄开销”：v3 16x64 比 v2 16x32 更弱，96 registers 与 12,048 B shared 扩大了 live state，issue activity 下降。
 3. “descriptor queue 能自动解决 ragged imbalance”：v4A queue-1024 对 external envelope 仅 `0.7799x`，且 prepass 本身单 CTA underfill。
 4. “继续放大到 64x128 能进一步摊薄 request”：v7 dirty smoke 在 uniform T2048 比 v6 慢约 6.6%，accumulator live range 和 tail-row 同步代价抵消了局部 T512/E16 收益，因此已撤回。
-5. “Pure Permute copy 越宽越能赢”：v2/v3 pure matrix 都低于 retained token-owned；真正的 `1.567x` 来自 full-from-ids 边界减少中间准备开销。
-6. “Scan 应该直接用 DeviceScan”：E<=64 时 DeviceScan 只有 naive 的 `0.331x`，workspace 和额外 launch 无法摊销。
-7. “Profiler duration 可以直接证明 speedup”：NCU replay/serialization 和 NSYS tracing 会改变时序，正式结论必须回到未插桩 Release。
+5. “把 tile-M 减半就能用更多 CTA 修复 underfill”：v8 `16x128` 对 v6/CUTLASS aggregate 只有约 `0.93x/0.81x`；额外 row tiles 重复加载大 weight tile，T4096 对 v6 退化到 `0.81x`。
+6. “Pure Permute copy 越宽越能赢”：v2/v3 pure matrix 都低于 retained token-owned；真正的 `1.567x` 来自 full-from-ids 边界减少中间准备开销。
+7. “Scan 应该直接用 DeviceScan”：E<=64 时 DeviceScan 只有 naive 的 `0.331x`，workspace 和额外 launch 无法摊销。
+8. “Profiler duration 可以直接证明 speedup”：NCU replay/serialization 和 NSYS tracing 会改变时序，正式结论必须回到未插桩 Release。
 
 ## 下一轮最多三个实验
 
-### 1. Grouped v6 selector 与 tail-wave 调度
+### 1. Grouped 32x64 几何单变量实验
 
-- 固定：v6 `32x128x16` strict-FP32 mainloop、`4x4` micro-tile、aligned vector store、zero workspace 和计时边界。
-- 唯一变量：分开调整 v6 的 selector bucket 或 CTA 到 expert-row tile 的 tail-wave 映射；不再放大 tile，不叠加 descriptor prepass。
-- 预声明矩阵：沿用十 shape，重点保护 uniform T512 `1.2257x`、single-hot `1.7762x`，同时修复 T2048 `0.7534x` 和 non-aligned `0.8380x` 反例。
-- Keep 条件：对 CUTLASS/cuBLAS envelope ratio-of-sums >=1.01、coverage >=60%、最大 p50 回退 <=10%、p95 门禁通过，且 L3 absolute Release latency 同向改善。
+- 固定：v6 的 tile-M=32、K16、256 threads、strict FP32、direct grid、两级 `cp.async`、selector/fallback、zero workspace 和计时边界。
+- 唯一变量：tile-N 128→64，thread micro-tile `4x4`→`4x2`。它同样增加 CTA，但额外 N tile 重复加载的是较小 A tile，避免 v8 为每个额外 M tile 重复加载更大的 weight tile；同时降低 accumulator 与 shared-weight footprint。
+- 预声明矩阵：先复用 v8 四个 balanced shape做 3-process screening；只有方向清晰才进入原十 shape、五进程 clean Release。fallback portfolio 的 T512/E64/single-hot headline 只能作为回归保护，不能归因给 32x64 kernel。
+- Keep 条件：相对 v6 在 active shapes ratio-of-sums >=1.03、至少 3/4 shapes 和多数 process pairs 获益；再要求对 CUTLASS/cuBLAS envelope coverage、最大回退和 p95 共同通过。失败即停止，不同时修改 selector。
 
 ### 2. Top-K E64 / large-T 明确分区
 

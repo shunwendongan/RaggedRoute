@@ -1,7 +1,7 @@
 # 实现状态与证据边界
 
 更新时间：2026-08-30
-公开事实基线：`main@3597731de8ddbdf0238574cb99b58be90226c2ce`。七算子统一性能证据固定在任务分支 clean SHA `9732a0343c60f869fc4166a0cc3cabba2fd67bbb`；Grouped GEMM v5/v6 follow-up 另固定在 clean SHA `c2205ed1ba1063fccce3cd417fd671798dbfb66f`。后者只更新 Grouped 的 benchmark-only candidate 证据，不改写其他六算子矩阵，不修改公共 API 或 `KernelFamily::kAuto`。
+当前分支事实基线：`main@9782740138998330e9ac3e3a1b8c46a05fa4f830`。七算子统一性能证据固定在 clean SHA `9732a0343c60f869fc4166a0cc3cabba2fd67bbb`；Grouped GEMM v5/v6 follow-up 另固定在 clean SHA `c2205ed1ba1063fccce3cd417fd671798dbfb66f`。后者只更新 Grouped 的 benchmark-only candidate 证据，不改写其他六算子矩阵，不修改公共 API 或 `KernelFamily::kAuto`；v8 只增加 benchmark-only rejection evidence。
 
 ## 已实现
 
@@ -52,7 +52,7 @@
 - 2026-08-05：`main@354e1ff` 的 GitHub CI 通过 repository checks、Python tests 与 Windows/Linux CPU-only build/CTest。当前 macOS 工作区只执行 CPU-only/文档检查，不做 CUDA 能力或性能复测。
 - 2026-08-28：SM86 aggressive v4 完成 Grouped descriptor（static/queue 256/512/1024 与 cache-order）、Top-K 2/4/8 route-prep/token-owned copy、postroute gather 与 CUDA Graph 实验。Grouped descriptor、route-prep、token-owned 和 gather 未满足晋级条件，均保留为 research/rejection evidence。两个 fixed CUDA Graph replay variant 在独立的 host-time policy 下晋级为 `promoted_explicit_fixed_shape_only`：该 policy 明确记录了用户授权的 WDDM CV 例外；它只适用于固定 shape、固定 buffer/topology、setup 已完成的 replay，不改公开 API 或 `KernelFamily::kAuto`。见 [v4 Graph report](reports/rtx3080-sm86-v4-graph-promotion.md)。
 - 2026-08-29：完成七算子 RTX 3080 统一作品集复测：3725/3725 Release records、745 aggregate groups、五进程完整且 validation 全过；两条 L3 NSYS 和 candidate/baseline NCU basic 全覆盖，只有 Grouped v3/CUTLASS 升级 detailed。最新 strongest candidate 结论为：Dense v3 对 cuBLAS envelope `0.8716x`；Top-K v4 对 strict naive `1.0972x`；Histogram v2 对 v1/CUB/naive envelope `1.1016x`；Scan 无 retained candidate；Permute v2 full-from-ids 对 vLLM `1.5671x`；Grouped v2 对 CUTLASS/cuBLAS envelope `0.8697x`；Unpermute vec4 对 vLLM/naive envelope `1.0154x`。作品集 policy 将 CV ceiling 调整为 0.50，超过 0.10 继续披露风险但不自动降级；历史 policy decision 保持不变。证据见 [compact bundle](reports/compact/20260829-9732a03-interview-portfolio/REPORT.md) 与 [面试入口](interview/README.md)。
-- 2026-08-30：完成 Grouped GEMM v5 direct-grid / v6 `32x128` follow-up。10 shape、5 process 的 250/250 Release records 全部通过 CPU oracle，最大 CV `0.4968`，未超过 0.50 evidence ceiling。v6 对最快 CUTLASS/cuBLAS envelope ratio-of-sums `0.9946x`，不晋级；但 uniform T512 对 CUTLASS `1.2257x`、single-hot 对最快 library `1.7762x`，两者 5/5 process pairs 同向。NCU 显示 v6 相对 v5 将 global load/store requests 降低 43.4%/75.5%、DRAM writes 降低 82.7%，但 T2048 仍受 0.941 waves/SM、work imbalance 与低 issue efficiency 限制。v7 `64x128` 只有 dirty smoke 且 T2048 退化约 6.6%，已撤回。证据见 [Grouped v5/v6 compact bundle](reports/compact/20260830-c2205ed-grouped-v6/REPORT.md)。
+- 2026-08-30：完成 Grouped GEMM v5 direct-grid / v6 `32x128` follow-up。10 shape、5 process 的 250/250 Release records 全部通过 CPU oracle，最大 CV `0.4968`，未超过 0.50 evidence ceiling。v6 hybrid 对最快 CUTLASS/cuBLAS envelope ratio-of-sums `0.9946x`，不晋级；uniform T512 `1.2257x` 与 single-hot `1.7762x` 是 hybrid 的 v5/v2 fallback portfolio 成绩，不是 wide kernel 本身。wide 直接激活的 T512/E16/N256 为 `1.0120x`，T2048/E64/N128 为 `0.7534x`。NCU 显示 v6 wide 相对 v5 将 global load/store requests 降低 43.4%/75.5%、DRAM writes 降低 82.7%，但 T2048 仍受 0.941 waves/SM、work imbalance 与低 issue efficiency 限制。v7 `64x128` dirty smoke 退化约 6.6%；v8 `16x128` 四 shape diagnostic screen 对 v6/CUTLASS 仅约 `0.93x/0.81x`，两者均拒绝。证据见 [Grouped v5/v6 compact bundle](reports/compact/20260830-c2205ed-grouped-v6/REPORT.md) 与 [Grouped 性能记录](grouped_gemm/performance-record.md)。
 
 ## 尚未实现，禁止据此宣称
 

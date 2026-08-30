@@ -11,7 +11,7 @@
 | Histogram | shape-dispatched v1 | v2 E=1 fast path + existing dispatcher | 对 v1/CUB/naive envelope `1.1016x`，显式 research winner；本轮不改 Auto |
 | Exclusive Scan | `cuda_naive` | 无 retained custom candidate | CUB Block/Warp 仅 `1.0249x/1.0290x`，tiny launch-bound |
 | Token Permute | `cuda_naive` | v2 full-from-ids | 对 adapted vLLM `1.5671x`、5/5；pure path 仅 `0.9841x`，不改 Auto |
-| Grouped GEMM | `cuda_naive` | v6 hybrid `32x128` balanced / v5 fallback | 对 CUTLASS/cuBLAS envelope `0.9946x`；uniform T512 对 CUTLASS `1.2257x`、single-hot 对最快 library `1.7762x`，但 T2048 `0.7534x`，不晋级 |
+| Grouped GEMM | `cuda_naive` | v6 hybrid `32x128` balanced / v5-v2 fallback | envelope `0.9946x`；fallback portfolio 在 uniform T512/single-hot 为 `1.2257x/1.7762x`，wide 本身 T2048 `0.7534x`；v8 16x128 screening rejected |
 | Unpermute | `cuda_naive` | `cuda_warp_token_vec4` | envelope `1.0154x`、12/32；窄 N 局部 `1.2892x`，不晋级 |
 
 作品集 CV ceiling 为 0.50：超过 0.10 仍披露为 WDDM 稳定性风险，但不再单独自动判 `insufficient_evidence`；完整矩阵仍需 ratio-of-sums、geomean、coverage、最大回退和跨进程方向共同成立。历史 0.10 policy decision 不回写。

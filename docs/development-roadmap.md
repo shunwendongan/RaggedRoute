@@ -7,7 +7,7 @@
 ## 0. 面向 AI Infra/CUDA 实习的当前优先级
 
 1. **P0：关闭 F2 dispatch 与证据之间的缺口。** `HistogramExclusiveScan` 的 `Auto` 已指向 F2，但已有运行的 CV、fallback 与 L3 门禁失败。下一次 CUDA 窗口先重复 `configs/operators/scan/benchmark/fused_v2_promoted.json` 和对应 L3 suite；若仍失败，撤回默认选择而不是继续包装 speedup。
-2. **P1：把 Grouped GEMM 作为唯一主 kernel 性能假设。** v5 direct-grid 已去掉 balanced workload 的 prefix/binary-search persistent traversal，v6 `32x128x16` 又将 global load/store requests 相对 v5 降低 43.4%/75.5%，在 uniform T512 对 CUTLASS 达 `1.2257x`。但完整 library envelope 仍只有 `0.9946x`，T2048 为 `0.7534x`；下一轮必须固定 v6 mainloop，只隔离 selector/tail-wave 映射，不再放大 tile 或叠加 descriptor queue。
+2. **P1：把 Grouped GEMM 作为唯一主 kernel 性能假设。** v5 direct-grid 已去掉 balanced workload 的 prefix/binary-search persistent traversal，v6 `32x128x16` 又将 global load/store requests 相对 v5 降低 43.4%/75.5%。uniform T512 的 `1.2257x` 实际来自 v5 fallback portfolio；wide 直接激活的 T2048 只有 `0.7534x`。v8 `16x128` 已反证“只增加 M 方向 CTA”的方向；下一轮只隔离 `32x64` 几何，在不重复加载大 weight tile 的前提下增加 CTA，不叠加 descriptor queue 或修改 Auto。
 3. **P1：补真实 workload，而不是扩充 synthetic shape。** route-trace schema、frame working set 和 evaluator 已实现；在匿名 captured/production trace 与通用 cache working set 到位前，real-trace policy 必须返回 `insufficient_evidence`。
 4. **P2：整理真实 L3 证据。** PR #31/#32 合并到实验分支而非 `main`；未来需要以当前 `main` 重整、校验语义和来源后再决定是否合入，当前文档不得把它们写成已发布能力。
 5. **P2：修复 evidence policy 漂移。** 清理 `l3_three_way_20260805` 中直接进入 Git 的 profiler 二进制，并增加扩展名/角色检查；超大 comparison JSON 应压缩为摘要，完整文件进入 immutable Release 资产。

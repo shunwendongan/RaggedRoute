@@ -48,7 +48,7 @@ Benchmark registry 一共暴露八个 adapter：七个语义算子，以及可�
 | Histogram | shape-dispatched v1 | `cuda_candidate_v2` | 每 shape 最快 v1/CUB/naive | `1.1016x`，9/15 获益 | R1M/E1 `4.3026x` | 本轮不改；显式 research winner |
 | Exclusive Scan | `cuda_naive` | 无 retained candidate | CUB Warp/Block/Device | Block `1.0249x`；Warp 子域 `1.0290x` | E33 Block `1.0765x` | 否；tiny launch-bound |
 | Token Permute | `cuda_naive` | v2 full-from-ids | adapted vLLM | `1.5671x`，5/5 获益 | `1.8501x` | 本轮不改；full boundary winner |
-| Grouped GEMM | `cuda_naive` | v6 hybrid `32x128` / v5 fallback | 每 shape 最快 CUTLASS/cuBLAS | `0.9946x`，5/10 获益 | uniform T512/CUTLASS `1.2257x`；single-hot/library `1.7762x` | 否；T2048 反例 `0.7534x` |
+| Grouped GEMM | `cuda_naive` | v6 hybrid `32x128` / v5-v2 fallback | 每 shape 最快 CUTLASS/cuBLAS | `0.9946x`，5/10 获益 | fallback portfolio：uniform T512 `1.2257x`；single-hot `1.7762x` | 否；wide 激活路径 T2048 `0.7534x` |
 | Unpermute | `cuda_naive` | `cuda_warp_token_vec4` | 每 shape 最快 vLLM/naive | `1.0154x`，12/32 获益 | Zipf T4096/N128 `1.2892x` | 否；仅窄 N 局部优势 |
 
 ### 每个最强 candidate 的设计与结论
@@ -58,7 +58,7 @@ Benchmark registry 一共暴露八个 adapter：七个语义算子，以及可�
 - Histogram v2 利用 `E=1` 的语义退化，直接写 `counts[0]=R`，避免读取 route IDs 和 atomic；E>1 继续复用 single-CTA shared / block-private dispatcher。其完整矩阵对最强 envelope 仍为正收益，但最大 CV 0.4503，属于 Windows/WDDM 作品集 research 证据，不外推生产 SLA。
 - Scan 的 E 只有 1–64。naive profile 是单 block/单 thread、0.000919 waves/SM，主要受 launch/underfill 限制；CUB Warp/Block 仅小幅领先，DeviceScan 只有 `0.3310x`。因此“不造复杂 standalone candidate”本身是性能工程决策。
 - Permute 必须区分 pure copy 和 full-from-ids。pure v2/v3 对 retained token-owned 只有 `0.9841x/0.9892x`，而 v2 把 counts/scan/cursor preparation 融入完整 L2 后对 adapted vLLM 达 `1.5671x`。该收益来自减少中间准备和 launch，不能写成 copy kernel 普遍更快。
-- Grouped 的统一 portfolio 基线中 v2 对 library envelope 为 `0.8697x`；后续 v5 在 balanced workload 上用 direct `(column,row,expert)` grid 去掉 prefix/binary-search/persistent traversal，v6 将 balanced path 改为 `32x128x16`、256 threads、每线程 `4x4` outer product、aligned float4 store 与两级 `cp.async`，其他 shape 回退 v5。v6 对 v5 的 global load/store requests 减少 43.4%/75.5%，但完整 library envelope 仍只有 `0.9946x`；它是最强 benchmark-only research candidate，不是可无条件发布的 Auto。
+- Grouped 的统一 portfolio 基线中 v2 对 library envelope 为 `0.8697x`；后续 v5 在 balanced workload 上用 direct `(column,row,expert)` grid 去掉 prefix/binary-search/persistent traversal，v6 将 balanced path 改为 `32x128x16`、256 threads、每线程 `4x4` outer product、aligned float4 store 与两级 `cp.async`，其他 shape 回退 v5。v6 对 v5 的 global load/store requests 减少 43.4%/75.5%，但完整 library envelope 仍只有 `0.9946x`。必须区分 hybrid 与 kernel 归因：uniform T512/E64 的 `1.2257x` 和 single-hot 的 `1.7762x` 都未满足 wide selector，实际来自 v5/v2 fallback portfolio；`32x128` wide 本身在直接激活的 uniform T512/E16/N256 为 `1.0120x`，在 T2048/E64/N128 仅 `0.7534x`。因此 v6 是最强 benchmark-only portfolio，不是可无条件发布的 Auto。
 - Unpermute vec4 让一个 warp 负责 token 并使用对齐向量访问，在中大型 T、窄 N 有局部优势；完整 32-case coverage 只有 12/32，所以不做全局 Auto dispatch。
 
 ### CV 与晋级口径
@@ -102,6 +102,8 @@ Suite v2 将不同 variant 组织在同一个 logical case 下，并声明唯一
 两条 L3 NSYS trace 都把 Grouped v2 判为绝对热点：uniform 占 71.6%（median 23.744 us），Zipf 占 86.0%（median 22.111 us）。Zipf 包含一次 752.849 us 系统长尾，因此 profiler duration 不进入 speedup。Permute v3 的 NCU DRAM throughput 达 86.85%，属于 bandwidth-bound；Scan 和 fused Histogram→Scan 的 grid 都只有一个 CTA，属于 launch/underfill。
 
 最新 Grouped v6 detailed 在 uniform T2048 中为 0.941 waves/SM、72 registers/thread、22,528 B shared、31.60% achieved occupancy 和 31.28% issue active；CUTLASS issue active 为 53.65%。v6 虽已修复 request amplification，SM active-cycle minimum 仍比均值低 54.17%，且 local load/store 为 0。因此剩余瓶颈是 underfill/work imbalance 和 issue efficiency，不是 spill；下一轮应固定 v6 mainloop，只隔离 selector/tail-wave mapping。
+
+后续 v8 单变量筛选保持 N128、K16、256 threads、两级 `cp.async`、selector 与 fallback 不变，只把 tile-M 从 32 减到 16。四个 balanced shape、3 个独立进程、每进程 20 warmup/30 samples/50 repeats 的 diagnostic screen 中，48/48 validation 通过，最大 CV 0.328、无 `CV>0.50`；但 v8 对 v6/CUTLASS 的四 shape ratio-of-sums 约为 `0.93x/0.81x`，因此拒绝。该数据来自 benchmark screening，不作为 clean Release headline；它反证了“仅靠增加 M 方向 CTA 就能修复 underfill”的假设。
 
 历史 v3/v4/Graph 与三线路 L3 证据仍保留在 [报告目录](docs/reports/)，但不覆盖本轮统一矩阵。完整面试导向瓶颈分析见 [bottleneck-analysis](docs/interview/bottleneck-analysis.md)。
 
@@ -176,7 +178,7 @@ CUDA Event 提供未被 profiler 干扰的 Release latency。NSYS 用于解释 l
 
 ## 当前限制与后续工作
 
-- 固定 Grouped v6 `32x128` mainloop，只验证 selector bucket 或 tail-wave task mapping；不再放大 tile 或叠加 descriptor prepass/queue；
+- 将 v5/v2 fallback 的局部赢家作为当前 Grouped portfolio 亮点；v8 已否定固定 N128 时将 tile-M 减半的方向。下一轮只筛选 `32x64` 几何：用 N 方向增加 CTA，避免像 `16x128` 那样为额外 M tile 重复加载更大的 weight tile，形成证据前不改 selector/Auto；
 - 对 Top-K v4 预声明 E64/T>=512 区间，并把 full-from-ids Permute v2 放入 L3 做收益归因；这些实验形成证据前不修改 `Auto`；
 - 在独占 RTX 3080 窗口复测融合 Histogram + Scan F2；若 fallback 或 L3 门禁仍失败，则 review 是否撤回该 primitive 的 `Auto`；
 - 在提出任何真实 trace 性能结论前，用匿名 captured/production working set 替换仓库内 synthetic fixture；

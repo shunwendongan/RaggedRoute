@@ -19,7 +19,7 @@ constexpr int kMaxExperts = 64;
 template <int BlockRows>
 struct WideConfig {
   static constexpr int kRowsPerThread = BlockRows / 8;
-  static_assert(BlockRows == 32);
+  static_assert(BlockRows == 16 || BlockRows == 32);
   static_assert(kThreads * kRowsPerThread * kColumnsPerThread == BlockRows * kColumns);
 };
 
@@ -274,6 +274,36 @@ cudaError_t launch_grouped_gemm_sm86_fp32_v6_balanced_32x128(
   }
 
   return launch_balanced_wide_kernel<32>(x_permuted, expert_weights, offsets, y_permuted, experts,
+                                         hidden, output, max_expert_tokens, caller_stream);
+}
+
+// Single-variable v8 experiment: keep the v6 128-column reuse, direct grid, strict-FP32
+// mainloop, two-stage cp.async pipeline, and selector, but halve tile-M from 32 to 16.  On the
+// RTX 3080 the v6 T2048 case launches too few useful row tiles to fill 68 SMs; this variant trades
+// additional weight-tile loads for more CTAs and a shorter accumulator live range.  Non-selected
+// shapes retain the complete v6 hybrid portfolio, including its v5/v2 fallbacks.
+cudaError_t launch_grouped_gemm_sm86_fp32_v8_balanced_16x128(
+    const float* x_permuted, const float* expert_weights, const std::int32_t* offsets,
+    float* y_permuted, int experts, int hidden, int output, int max_expert_tokens, int route_pairs,
+    cudaStream_t caller_stream) {
+  const cudaError_t validation = validate_wide_arguments(
+      x_permuted, expert_weights, offsets, y_permuted, experts, hidden, output, max_expert_tokens);
+  if (validation != cudaSuccess || max_expert_tokens == 0 || output == 0) return validation;
+  if (route_pairs <= 0 || max_expert_tokens > route_pairs) return cudaErrorInvalidValue;
+
+  const std::int64_t average_ceiling =
+      (static_cast<std::int64_t>(route_pairs) + experts - 1) / experts;
+  const bool balanced = average_ceiling >= 32 &&
+                        static_cast<std::int64_t>(max_expert_tokens) <= 2LL * average_ceiling;
+  if (!balanced || hidden == 0 || hidden % kDepth != 0 || output % kColumns != 0 ||
+      !aligned_16_wide(x_permuted) || !aligned_16_wide(expert_weights) ||
+      !aligned_16_wide(y_permuted)) {
+    return launch_grouped_gemm_sm86_fp32_v6_balanced_32x128(
+        x_permuted, expert_weights, offsets, y_permuted, experts, hidden, output, max_expert_tokens,
+        route_pairs, caller_stream);
+  }
+
+  return launch_balanced_wide_kernel<16>(x_permuted, expert_weights, offsets, y_permuted, experts,
                                          hidden, output, max_expert_tokens, caller_stream);
 }
 

@@ -367,6 +367,10 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
                                   "in_tree_cuda_research",
                                   "raggedroute.grouped.cuda_candidate.v6", "not_applicable",
                                   "balanced_32x128_direct_else_v5"));
+    variants.push_back(descriptor("cuda_grouped_sm86_fp32_v8_balanced_16x128",
+                                  "in_tree_cuda_research",
+                                  "raggedroute.grouped.cuda_candidate.v8", "not_applicable",
+                                  "balanced_16x128_direct_else_v6"));
     for (const auto& [name, version, scheduler] :
          std::vector<std::tuple<std::string, std::string, std::string>>{
              {"cuda_grouped_sm86_fp32_v4a_desc_static_t256", "v4a-static-t256",

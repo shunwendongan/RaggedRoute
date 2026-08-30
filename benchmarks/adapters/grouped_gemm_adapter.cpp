@@ -142,6 +142,9 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
     if (variant_name_ == "cuda_grouped_sm86_fp32_v6_balanced_32x128") {
       return "SM86 v6 balanced 32x128 direct-grid cp.async grouped GEMM";
     }
+    if (variant_name_ == "cuda_grouped_sm86_fp32_v8_balanced_16x128") {
+      return "SM86 v8 balanced 16x128 direct-grid cp.async grouped GEMM";
+    }
     if (is_descriptor_grouped_variant(variant_name_)) {
       return "SM86 v4 descriptor-prepass 16x32 cp.async grouped GEMM (research candidate)";
     }
@@ -284,6 +287,13 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
                      x_.data(), weights_.data(), offsets_.data(), output_buffer_.data(), experts_,
                      hidden_, output_, max_expert_tokens_, route_pairs_, stream),
                  "launch_grouped_gemm_sm86_fp32_v6_balanced_32x128 benchmark-only candidate");
+      return;
+    }
+    if (variant_name_ == "cuda_grouped_sm86_fp32_v8_balanced_16x128") {
+      cuda_check(ops::launch_grouped_gemm_sm86_fp32_v8_balanced_16x128(
+                     x_.data(), weights_.data(), offsets_.data(), output_buffer_.data(), experts_,
+                     hidden_, output_, max_expert_tokens_, route_pairs_, stream),
+                 "launch_grouped_gemm_sm86_fp32_v8_balanced_16x128 benchmark-only candidate");
       return;
     }
     if (is_optimized_grouped_variant(variant_name_)) {
@@ -451,6 +461,23 @@ class GroupedGemmAdapter final : public BenchmarkAdapter {
               {"staging", std::string("sm86_cp_async_double_buffered")},
               {"micro_tile", std::string("thread_outer_product_4x4")},
               {"fallback", std::string("cuda_grouped_sm86_fp32_v5_balanced_direct")},
+              {"workspace_bytes", static_cast<std::int64_t>(0)},
+              {"math_mode", std::string("strict_fp32")},
+              {"runtime_status", std::string("explicit_research_candidate")}};
+    }
+    if (variant_name_ == "cuda_grouped_sm86_fp32_v8_balanced_16x128") {
+      return {{"algorithm_id", std::string("balanced_16x128_direct_else_v6")},
+              {"tile_m", static_cast<std::int64_t>(16)},
+              {"tile_n", static_cast<std::int64_t>(128)},
+              {"tile_k", static_cast<std::int64_t>(16)},
+              {"threads_per_block", static_cast<std::int64_t>(256)},
+              {"outputs_per_thread", static_cast<std::int64_t>(8)},
+              {"scheduler", std::string("direct_expert_row_column_grid")},
+              {"selection", std::string("ceil_average_ge_32_and_max_le_2x_average")},
+              {"staging", std::string("sm86_cp_async_double_buffered")},
+              {"micro_tile", std::string("thread_outer_product_2x4")},
+              {"single_variable", std::string("tile_m_32_to_16")},
+              {"fallback", std::string("cuda_grouped_sm86_fp32_v6_balanced_32x128")},
               {"workspace_bytes", static_cast<std::int64_t>(0)},
               {"math_mode", std::string("strict_fp32")},
               {"runtime_status", std::string("explicit_research_candidate")}};

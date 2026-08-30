@@ -1,0 +1,18 @@
+{
+  "schema_version": "raggedroute.profile_suite.v1",
+  "suite_id": "rtx3080_grouped_gemm_v8_balanced_16x128_profile_v1",
+  "cases": [
+    {
+      "id": "grouped.v8.uniform.t2048.basic",
+      "operator": "grouped_gemm",
+      "variant": "cuda_grouped_sm86_fp32_v8_balanced_16x128",
+      "level": "l2",
+      "warmup": 20,
+      "seed": 20260830,
+      "set": "basic",
+      "cache_control": "none",
+      "kernel_pattern": "grouped_gemm_sm86_balanced_wide_kernel.*16",
+      "params": {"T": 2048, "E": 64, "top_k": 2, "K": 128, "N": 128, "distribution": "uniform", "zipf_s": 0.0}
+    }
+  ]
+}

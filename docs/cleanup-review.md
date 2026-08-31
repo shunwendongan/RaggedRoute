@@ -27,7 +27,7 @@
 - S1：tag `archive/histogram-h5-h6-stash-a5e64f2-20260831` 已精确指向原两父提交 stash `a5e64f206cdba2af7f4d58e0dbabecaac4a5df9e`；远端复核成功后已 drop，本地 stash 数量为 0。
 - C1：clean 独立 clone `RaggedRoute-unpermute-v2` 已移入 Windows 回收站，仍可恢复。
 - E3/E4：重复正文已改为 canonical-reference 文件；两个 evidence manifest 与 `SHA256SUMS` 同步更新。Scan canonical 位于 `scan-library-main-927c585`，Permute sanitizer canonical 位于 `20260803T071455Z-af4947f-permute-selected-token-owned-v1`。
-- W1 未强制执行：`C:\Users\Administrator\Documents\Playground\RaggedRoute` 是承载所有 linked worktree 元数据的主工作树，`git worktree remove` 明确拒绝。递归删除它会同时破坏当前任务 checkout 和本地 refs，所以保持原样；`codex/unpermute-sm86-v2` 也因此保留。
+- W1 已安全完成：主工作树已切回 `main@193de56`，旧本地 `codex/unpermute-sm86-v2` 已删除；主工作树目录保留，以避免破坏 Git linked-worktree 元数据。
 - C2、E1、E2、D1/D2、B4、W5 及其他未获批准对象均保持不动。
 
 W3 本地 ZIP 与七个远端 archive tag 的校验清单位于 `C:\Users\Administrator\Documents\Playground\RaggedRoute-local-archives\20260831-approved-cleanup\README.md`。

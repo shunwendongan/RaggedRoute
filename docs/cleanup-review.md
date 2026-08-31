@@ -13,7 +13,24 @@
 
 ## 0. 2026-08-31 第二阶段精确审计与批准表
 
-本节只记录事实与建议，**尚未执行任何删除、移动、stash drop、branch/tag 改写或 evidence 压缩**。Git dirty 状态与审计前一致。本文的目录树 SHA-256 定义为：按相对路径排序文件，以 Git for Windows `sha256sum` 生成逐文件 manifest，再对 manifest 原始字节计算 SHA-256；它用于确认归档前后文件集合没有被悄悄改变。
+0.1 及后续小节保留批准前的事实快照与建议；实际执行状态以 0.0 为准。本文的目录树 SHA-256 定义为：按相对路径排序文件，以 Git for Windows `sha256sum` 生成逐文件 manifest，再对 manifest 原始字节计算 SHA-256；它用于确认归档前后文件集合没有被悄悄改变。
+
+### 0.0 2026-08-31 用户批准后的执行结果
+
+用户明确批准：`R1、B1、B2、B3、C1、E3、E4；W2/W3/W4/S1 归档后删除；其余继续观察`。执行时仍逐项复核 live SHA、PR、dirty 状态和归档 hash；结果如下：
+
+- R1：已创建并推送 `archive/grouped-gemm-sm86-v2-f9f5e7e`，peeled target 为 `f9f5e7eb8a68987efa562b83024e19a333422853`；远端和本地同名 branch 已删除。远端 branch 现只剩 `main`。
+- B1/B2/B3：14 + 14 + 7，共 35 个批准的旧本地 branch 已删除。B2 复核发现 `dense-gemm-optimization` 有 1 个、`topk-gate-optimization` 有 5 个 PR head 未覆盖的后续提交，因此先额外创建 `archive/dense-gemm-post-pr12-af5ff73-20260831` 和 `archive/topk-post-pr19-712dc89-20260831`，再删除 branch；没有丢弃未受保护的提交。
+- W2：4 个 modified 与 51 个 non-ignored R3 evidence files 已提交为 `632286842d3b347c089eb18105cdeed4ba68b2a2`，推送 tag `archive/histogram-v2-w2-105a7dd-20260831` 后移除 worktree；ignored build/profile/benchmark 输出按批准删除。
+- W3：stacked branch tip 已由 `archive/vllm-semantic-moe-chain-052f32c-20260831` 保留；`final2 + verified + raw profiler` 共 113 files / 9,473,572 uncompressed bytes 已归档为本地 ZIP，SHA-256 `94b3601dce2eb329fd657a2c64319968127fb8f267708396679542678c20fbe9`，随后移除 worktree及约 697.7 MB ignored 输出。
+- W4：三个脚本已提交为 `8454ebd7f3cd4f74e75b426a889bd08eceb28766`，推送 tag `archive/vllm-industrial-correction-1bf8ece-20260831` 后移除 worktree。
+- S1：tag `archive/histogram-h5-h6-stash-a5e64f2-20260831` 已精确指向原两父提交 stash `a5e64f206cdba2af7f4d58e0dbabecaac4a5df9e`；远端复核成功后已 drop，本地 stash 数量为 0。
+- C1：clean 独立 clone `RaggedRoute-unpermute-v2` 已移入 Windows 回收站，仍可恢复。
+- E3/E4：重复正文已改为 canonical-reference 文件；两个 evidence manifest 与 `SHA256SUMS` 同步更新。Scan canonical 位于 `scan-library-main-927c585`，Permute sanitizer canonical 位于 `20260803T071455Z-af4947f-permute-selected-token-owned-v1`。
+- W1 未强制执行：`C:\Users\Administrator\Documents\Playground\RaggedRoute` 是承载所有 linked worktree 元数据的主工作树，`git worktree remove` 明确拒绝。递归删除它会同时破坏当前任务 checkout 和本地 refs，所以保持原样；`codex/unpermute-sm86-v2` 也因此保留。
+- C2、E1、E2、D1/D2、B4、W5 及其他未获批准对象均保持不动。
+
+W3 本地 ZIP 与七个远端 archive tag 的校验清单位于 `C:\Users\Administrator\Documents\Playground\RaggedRoute-local-archives\20260831-approved-cleanup\README.md`。
 
 ### 0.1 可直接回复的批准表
 

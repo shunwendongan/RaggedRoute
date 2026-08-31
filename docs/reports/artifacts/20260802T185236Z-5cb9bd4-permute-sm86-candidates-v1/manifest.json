@@ -202,31 +202,10 @@
       "storage": "git"
     },
     {
-      "bytes": 4396,
-      "path": "sanitizer/initcheck.log",
+      "bytes": 707,
+      "path": "sanitizer/CANONICAL_SANITIZER_REFERENCE.md",
       "role": "correctness_validation",
-      "sha256": "b0df618c6053bde0dc4c2fa7bcbe7d8b4de9cabd96d095cc42f37b152af0dee1",
-      "storage": "git"
-    },
-    {
-      "bytes": 4395,
-      "path": "sanitizer/memcheck.log",
-      "role": "correctness_validation",
-      "sha256": "a6c4c55f8cb0b18f43e0b711e1c28018a7baa087386ca5a5be49a093131d6be9",
-      "storage": "git"
-    },
-    {
-      "bytes": 4434,
-      "path": "sanitizer/racecheck.log",
-      "role": "correctness_validation",
-      "sha256": "a98144b152220604f532c604619e206ece1795ee50709cd1310efb711386b808",
-      "storage": "git"
-    },
-    {
-      "bytes": 4396,
-      "path": "sanitizer/synccheck.log",
-      "role": "correctness_validation",
-      "sha256": "4f9cd93d495cb575b344d8e5c46b1011d2ef3b1c010255ee2ea0e4b5fab60ae2",
+      "sha256": "5bff1d56223c8772afec2d88b117bf59743c79ce3cc6137247a6753fe5e119ef",
       "storage": "git"
     },
     {

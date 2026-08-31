@@ -196,6 +196,18 @@ class SuiteTests(unittest.TestCase):
             with self.assertRaises(FileExistsError):
                 package_evidence.deterministic_zip(first, [item], "run")
 
+    def test_evidence_packager_resolves_absolute_profile_source(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            profile = root / "profile"
+            report = profile / "reports" / "kernel.basic.ncu-rep"
+            report.parent.mkdir(parents=True)
+            report.write_bytes(b"ncu")
+            resolved = package_evidence.resolve_inventory_item(
+                {"name": report.name}, {"profile_source": str(profile)}, []
+            )
+        self.assertEqual(resolved, report)
+
     def test_unavailable_evidence_requires_a_reason(self) -> None:
         bundle = pathlib.Path("bundle")
         manifest = {

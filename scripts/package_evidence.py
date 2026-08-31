@@ -327,6 +327,15 @@ def resolve_inventory_item(item: dict, legacy: dict, roots: list[pathlib.Path]) 
     if not isinstance(name, str):
         return None
     sources = [legacy.get("benchmark_source"), legacy.get("profile_source")]
+    for source in sources:
+        if isinstance(source, str):
+            source_path = pathlib.Path(source)
+            for candidate in (
+                source_path / pathlib.PurePosixPath(name.replace("\\", "/")),
+                source_path / "reports" / pathlib.PurePosixPath(name.replace("\\", "/")),
+            ):
+                if candidate.is_file():
+                    return candidate
     for root in roots:
         for source in sources:
             if isinstance(source, str):

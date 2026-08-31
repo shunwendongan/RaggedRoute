@@ -68,3 +68,24 @@ NSYS：small trace 中 21 次 single-CTA kernel、无逐次 L2 reset；large tra
 结论：H2/H3 shape dispatcher 晋升为 SM86 Histogram `kAuto`；H1/H4 和不稳定交叉区间候选不进入 shipping path。
 
 完整证据：[中央报告](../reports/rtx3080-histogram-candidate-cb02617.md)；[artifact bundle](../reports/artifacts/20260803T0708Z-cb02617-histogram-candidate-v1/)。
+
+## 2026-08-04 / `cuda_candidate` v2：single-bin direct write
+
+- shipping source SHA：`105a7ddddcd2`；clean Release `sm_86`；RTX 3080 / CUDA 13.3.73 / driver 591.86。
+- v2 仅在 `E==1` 选择 `counts[0]=R`，不读取 ids、不执行 atomic 或 external reset；`E>1` 发射与 v1 相同的 GPU path。workspace 保持 0。
+- 协议：5 independent processes、warm cache、warmup 20、30 samples/process、seed `20260729`、case/variant 顺序随机。CTest 8/8 和 Compute Sanitizer 的四个工具均 PASS。
+
+| L2 `E==1` case | strongest p50 (us) | v2 p50 / p95 (us) | speedup | v2 Gitems/s |
+|---|---:|---:|---:|---:|
+| `R=128,single-hot` | 8.151 | 7.649 / 8.615 | 1.066x | 0.017 |
+| `R=4096,single-hot` | 10.004 | 7.823 / 8.715 | 1.279x | 0.524 |
+| `R=65536,single-hot` | 14.234 | 7.859 / 9.062 | 1.811x | 8.339 |
+| `R=1M,single-hot` | 14.797 | 5.478 / 9.216 | 2.701x | 191.402 |
+
+四个 `E==1` case 都是 5/5 process 方向一致。L1→L2 的绝对差距约为 wrapper/dispatch 的微秒级固定成本；虽然该差距的相对占比在极短 direct-write body 上增大，完整 L2 仍显著获益，且没有把必要 output write 移出 L1。
+
+H6 CTA-cap 实验不进入最终源码：它在 uniform 大 R 有正收益，但对 `R=1M,E=64,Zipf-1.4` 的 cap384 smoke 为 -6.59%，不能在不扫描 runtime skew 的前提下安全 dispatch。H7 vector/RLE 因此不实施。
+
+NSYS 采集了 v2/v1/naive/CUB 的 small、crossover、large trace；NCU basic 采集其真实热点。small v2 是 1 thread、1 block、0.000919 waves/SM、16 registers/thread 的 direct-write kernel；small v1 为 256-thread shared histogram（0.002451 waves/SM、28 registers/thread）。CUB 的完整 L2 由 init+sweep kernels 构成，故不虚构其 L1。NCU/NSYS duration 仅作机制诊断，表中速度均来自未插桩 release。
+
+完整证据：[v2 报告](../reports/rtx3080-histogram-candidate-v2-105a7dd.md)；[artifact bundle](../reports/artifacts/20260804T0410Z-105a7dd-histogram-candidate-v2-r3/)。

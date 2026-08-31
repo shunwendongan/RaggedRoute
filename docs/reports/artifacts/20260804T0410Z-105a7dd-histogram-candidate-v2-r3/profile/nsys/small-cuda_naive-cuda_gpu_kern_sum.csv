@@ -1,0 +1,3 @@
+﻿Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+100.0,74336,21,3539.8,3520.0,3520,3840,69.7,"raggedroute::ops::<unnamed>::histogram_naive_kernel(const int *, int *, int, int)"
+

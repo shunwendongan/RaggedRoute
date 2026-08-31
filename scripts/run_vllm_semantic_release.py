@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the pinned vLLM-semantic chain in independent Docker processes.
+"""Run the pinned vLLM component-semantic adapter in independent processes.
 
 The worker is intentionally invoked once per case/process. No CUDA context is
 shared between records, and the manifest retains the exact command and GPU
@@ -36,16 +36,20 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", type=pathlib.Path, default=pathlib.Path(__file__).resolve().parents[1])
     parser.add_argument("--docker", type=pathlib.Path, default=pathlib.Path("C:/Program Files/Docker/Docker/resources/bin/docker.exe"))
-    parser.add_argument("--image", default="vllm/vllm-openai:latest")
+    parser.add_argument(
+        "--image",
+        default="vllm/vllm-openai@sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+    )
     parser.add_argument("--output", type=pathlib.Path, required=True)
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--git-sha", required=True)
     parser.add_argument("--git-dirty", action="store_true")
     parser.add_argument("--warmup", type=int, default=20)
-    parser.add_argument("--samples", type=int, default=30)
+    parser.add_argument("--samples", type=int, default=100)
     parser.add_argument("--kernel-repeats", type=int, default=3)
     parser.add_argument("--seed", type=int, default=20260805)
-    parser.add_argument("--start-process", type=int, default=1, choices=(1, 2, 3))
+    parser.add_argument("--process-runs", type=int, default=5)
+    parser.add_argument("--start-process", type=int, default=1)
     args = parser.parse_args()
     repo = args.repo.resolve()
     docker = args.docker.resolve()
@@ -66,10 +70,12 @@ def main() -> int:
         "repo": str(repo),
         "git_sha": args.git_sha,
         "git_dirty": args.git_dirty,
-        "upstream_commit": "66b3c0e61f1e477820212201adf1ed871df7ee98",
+        "source_ref": "v0.26.0",
+        "source_tag_commit": "568afb3a13806beb53bb2e6bd518269357b237c0",
+        "image_digest": "sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
         "image": args.image,
         "output": str(output_path),
-        "contract": {"warmup": args.warmup, "samples": args.samples, "kernel_repeats": args.kernel_repeats, "process_runs": 3, "seed": args.seed, "cache_mode": "warm"},
+        "contract": {"warmup": args.warmup, "samples": args.samples, "kernel_repeats": args.kernel_repeats, "process_runs": args.process_runs, "seed": args.seed, "cache_mode": "warm"},
         "gpu_snapshot_start": output(gpu_query, repo),
         "commands": [],
         "results": [],
@@ -79,7 +85,7 @@ def main() -> int:
     if output_path.exists():
         existing_records = [json.loads(line) for line in output_path.read_text(encoding="utf-8").splitlines() if line.strip()]
         manifest["results"].extend({"process_run": row.get("process_run"), "case_id": row.get("case_id"), "variant": row.get("variant")} for row in existing_records)
-    for process_run in range(1, 4):
+    for process_run in range(1, args.process_runs + 1):
         for case_id, params in CASES:
             command = [
                 str(docker), "run", "--rm", "--gpus", "all", "--ipc=host",
@@ -87,7 +93,7 @@ def main() -> int:
                 "-e", "TRITON_F32_DEFAULT=ieee",
                 "-e", f"RAGGEDROUTE_BUILD_GIT_SHA={args.git_sha[:12]}",
                 "-e", f"RAGGEDROUTE_BUILD_GIT_DIRTY={dirty_value}",
-                "-e", f"VLLM_UPSTREAM_COMMIT=66b3c0e61f1e477820212201adf1ed871df7ee98",
+                "-e", "VLLM_SOURCE_REF=v0.26.0",
                 "-e", f"TRITON_CACHE_DIR={container_cache}",
                 "-v", f"{repo}:/workspace", "-w", "/workspace",
                 "--entrypoint", "/usr/bin/python3", args.image,
@@ -105,7 +111,7 @@ def main() -> int:
                 continue
             print("+", shlex.join(command), flush=True)
             subprocess.run(command, cwd=repo, check=True)
-            manifest["results"].append({"process_run": process_run, "case_id": case_id, "variant": "vllm_semantic_chain"})
+            manifest["results"].append({"process_run": process_run, "case_id": case_id, "variant": "vllm_component_semantic_adapter"})
     manifest["gpu_snapshot_end"] = output(gpu_query, repo)
     manifest_path = pathlib.Path(str(output_path) + ".manifest.json")
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")

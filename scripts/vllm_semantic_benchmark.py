@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run a source-faithful vLLM MoE path under the pinned vLLM container.
+"""Run a vLLM component-semantic MoE adapter under a pinned container.
 
 The worker keeps vLLM's production semantics for top-k routing, alignment and
 fused MoE GEMM, while adapting tensor layouts and the timing contract to
@@ -31,8 +31,10 @@ from vllm.model_executor.layers.fused_moe.router.fused_topk_router import vllm_t
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-VARIANT = "vllm_semantic_chain"
-UPSTREAM_COMMIT = os.environ.get("VLLM_UPSTREAM_COMMIT", "66b3c0e61f1e477820212201adf1ed871df7ee98")
+VARIANT = "vllm_component_semantic_adapter"
+VLLM_SOURCE_REF = os.environ.get("VLLM_SOURCE_REF", "v0.26.0")
+VLLM_SOURCE_TAG_COMMIT = "568afb3a13806beb53bb2e6bd518269357b237c0"
+VLLM_IMAGE_DIGEST = "sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52"
 LEVEL_NAME = "L3_chain_steady"
 
 
@@ -96,7 +98,9 @@ def environment() -> dict[str, Any]:
         "torch": torch.__version__,
         "triton": __import__('triton').__version__,
         "vllm": __import__('vllm').__version__,
-        "vllm_upstream_commit": UPSTREAM_COMMIT,
+        "vllm_source_ref": VLLM_SOURCE_REF,
+        "vllm_source_tag_commit": VLLM_SOURCE_TAG_COMMIT,
+        "vllm_image_digest": VLLM_IMAGE_DIGEST,
     }
 
 
@@ -152,7 +156,7 @@ class Prepared:
     block_size: int = 32
 
     def launch(self) -> None:
-        self.logits.copy_(torch.mm(self.x, self.router_weights))
+        torch.mm(self.x, self.router_weights, out=self.logits)
         vllm_topk_softmax(self.topk_weights, self.topk_ids, self.token_expert_indices, self.logits, True)
         ops.moe_align_block_size(
             self.topk_ids, self.params["E"], self.block_size,
@@ -303,14 +307,19 @@ def run(args: argparse.Namespace) -> dict[str, Any] | None:
         "excluded_steps": ["input_generation", "cpu_reference", "h2d_copy", "workspace_allocation", "jit_compilation", "autotune"],
         "case_config": prepared.params,
         "variant_config": {
-            "implementation_category": "vllm_source_faithful_adapted",
-            "implementation_version": "vllm.fused_moe.sm86.fp32.adapted.v1",
+            "implementation_category": "vllm_component_semantic_adapter",
+            "implementation_version": "vllm.component_moe.sm86.fp32.v2",
             "upstream_repository": "https://github.com/vllm-project/vllm",
-            "upstream_commit": UPSTREAM_COMMIT,
-            "source_files": ["vllm/model_executor/layers/fused_moe/fused_moe.py", "moe_align_block_size.py", "moe_permute_unpermute.py", "router/fused_topk_router.py"],
+            "source_ref": VLLM_SOURCE_REF,
+            "source_tag_commit": VLLM_SOURCE_TAG_COMMIT,
+            "image_digest": VLLM_IMAGE_DIGEST,
+            "executed_vllm_components": ["vllm_topk_softmax", "moe_align_block_size", "invoke_fused_moe_triton_kernel"],
+            "non_vllm_components": ["torch.mm router projection", "torch.sum weighted reduction"],
             "math_mode": "strict_fp32", "layout_adaptation": "RaggedRoute [E,K,N] weights transposed to vLLM [E,N,K]",
             "vllm_alignment": "device-side moe_align_block_size with block_size=32; padding included in L3",
-            "grouped_kernel": "vllm fused_moe_kernel Triton path",
+            "grouped_kernel": "vllm fused_moe_kernel Triton component path",
+            "production_full_ffn": False,
+            "sm86_config_policy": "fixed compatibility tile 32x32x32; not vLLM production config lookup",
         },
         "environment": environment(), "work": {**prepared.work, "effective_gbps_batch_p50": None, "tflops_batch_p50": None},
         "timing": summarize(samples), "validation": validation,

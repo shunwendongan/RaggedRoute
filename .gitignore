@@ -13,3 +13,4 @@ __pycache__/
 /reports/sanitizer/
 /profile/
 .DS_Store
+.ua/

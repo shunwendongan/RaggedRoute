@@ -4,6 +4,9 @@
 
 #include <cstdint>
 
+// token permute 的 implementation id 和启动函数。
+// 优化 kernel 先根据 expert ids / offsets 构造 route position，
+// 再把 token row 拷贝到 expert 分组后的输出缓冲区。
 namespace raggedroute::ops {
 
 constexpr std::uint32_t kTokenPermuteAtomicVectorized128Implementation = 1;

@@ -9,6 +9,9 @@
 #include "../scan/cuda_candidate/optimized_internal.h"
 #include "operator_internal.h"
 
+// v0.2 运行时的统一派发逻辑。
+// 先解析当前 GPU 架构，再检查张量角色、dtype 和 layout 是否满足契约，
+// 最后给出具体的 kernel family 和 implementation id。
 namespace raggedroute {
 namespace {
 

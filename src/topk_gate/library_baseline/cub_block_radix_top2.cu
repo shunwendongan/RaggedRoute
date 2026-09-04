@@ -7,6 +7,9 @@
 
 #include "raggedroute/benchmark/library_baselines.h"
 
+// Block-radix Top-2 gate baseline.
+// Shape is logits[T,E] -> expert_ids[T,2] and weights[T,2], with the expert
+// order determined by deterministic FP32 compare and the repository NaN policy.
 namespace raggedroute::benchmark::library_baseline {
 namespace {
 

@@ -3,6 +3,9 @@
 
 #include "raggedroute/correctness/framework.h"
 
+// histogram 的 CPU 参考实现。
+// 形状是 expert_ids[route_pairs] -> counts[experts]，每个 expert 一个计数槽，
+// 并且遵守运行时路径相同的 E<=64 契约。
 namespace raggedroute::correctness {
 
 std::vector<std::int32_t> histogram_reference(const std::vector<std::int32_t>& ids, int experts) {

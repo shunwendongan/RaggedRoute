@@ -6,6 +6,9 @@
 
 #include "optimized_internal.h"
 
+// dense GEMM 的优化 kernel 集合。
+// 统一处理 A[M,K] x B[K,N] -> C[M,N] 的行主序 FP32 计算，implementation id
+// 只切换 tile / register / staging 策略；公共 wrapper 只接受 alpha=1、beta=0。
 namespace raggedroute::ops {
 namespace {
 

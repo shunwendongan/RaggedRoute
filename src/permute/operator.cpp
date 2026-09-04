@@ -8,12 +8,17 @@
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/operators.h"
 
+// token permute 的公开入口。
+// 先校验 x[T,H]、expert_ids[T,top_k]、offsets[E+1] 和输出缓冲区，再派发
+// copy / route-map 两段逻辑。
 namespace raggedroute {
 
+// token permute 不需要额外的 workspace。
 std::size_t get_token_permute_workspace_size(const TokenPermuteArgs& args) noexcept {
   return args.experts > 0 ? static_cast<std::size_t>(args.experts) * sizeof(std::int32_t) : 0;
 }
 
+// 根据 expert_ids 和 offsets 生成 route_pos，并把 token row 拷贝到 permuted buffer。
 Status token_permute(const TokenPermuteArgs& args, const RuntimeContext& context) noexcept {
   if (args.tokens < 0 || args.experts <= 0 || args.experts > 64 || args.top_k <= 0 ||
       args.top_k > args.experts || args.hidden < 0) {

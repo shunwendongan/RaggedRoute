@@ -2,6 +2,8 @@
 
 #include "raggedroute/correctness/framework.h"
 
+// exclusive scan 的 CPU 参考实现。
+// 形状是 counts[E] -> offsets[E+1]，其中 offsets[0] = 0，最后一格保存总路由数。
 namespace raggedroute::correctness {
 
 std::vector<std::int32_t> exclusive_scan_reference(const std::vector<std::int32_t>& counts) {

@@ -2,6 +2,9 @@
 
 #include "raggedroute/benchmark/library_baselines.h"
 
+// CUB histogram baseline for routing metadata.
+// Input is expert_ids[route_pairs]; output is counts[experts], one slot per
+// expert, with the range limited to the v0.2 E<=64 contract.
 namespace raggedroute::benchmark::library_baseline {
 
 cudaError_t query_cub_histogram_workspace(std::size_t route_pairs, int experts,

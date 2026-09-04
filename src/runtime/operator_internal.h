@@ -1,5 +1,8 @@
 #pragma once
 
+// 运行时侧给各算子 wrapper 共用的辅助工具。
+// 这里集中放 dispatch、参数校验和对齐检查，避免每个算子入口重复写同样的边界逻辑。
+
 #include <cuda_runtime_api.h>
 
 #include <cstddef>

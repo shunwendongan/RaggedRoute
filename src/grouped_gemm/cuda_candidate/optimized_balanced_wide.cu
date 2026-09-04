@@ -9,6 +9,10 @@
 namespace raggedroute::ops {
 namespace {
 
+// grouped GEMM 的 balanced-wide 版本。
+// 输入输出契约仍是 x_permuted[R,H] 和 expert_weights[E,H,O]，只是在 expert
+// 行数比较均衡时更偏向宽输出 tile 的 CTA 布局。
+
 constexpr int kDepth = 16;
 constexpr int kAStride = 20;
 constexpr int kThreads = 256;

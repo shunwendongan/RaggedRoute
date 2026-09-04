@@ -4,6 +4,9 @@
 
 #include "raggedroute/baseline_ops.h"
 
+// dense GEMM 的朴素 CUDA baseline。
+// 计算 C[M,N] = A[M,K] x B[K,N]，采用最直接的行主序 FP32 实现，
+// 作为优化版本的保守回退和对照基线。
 namespace raggedroute::ops {
 namespace {
 

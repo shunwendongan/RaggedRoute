@@ -3,13 +3,18 @@
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/operators.h"
 
+// Top-K gate 的公开入口。
+// 先校验 logits[T,E]、强制 top_k=2，再派发到确定性的 Top-2 selected-softmax
+// kernel family。
 namespace raggedroute {
 
+// Top-K gate 不需要额外的 workspace。
 std::size_t get_topk_gate_workspace_size(const TopKGateArgs& args) noexcept {
   (void)args;
   return 0;
 }
 
+// 选择每个 token 的前 2 个 expert，并写出 ids 与 selected-softmax 权重。
 Status topk_gate(const TopKGateArgs& args, const RuntimeContext& context) noexcept {
   if (args.tokens < 0 || args.experts < 2 || args.experts > 64 || args.top_k != 2) {
     return detail::invalid_argument("topk_gate requires tokens>=0, 2<=E<=64, and top_k=2");

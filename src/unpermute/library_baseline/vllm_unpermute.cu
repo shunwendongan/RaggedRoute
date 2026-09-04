@@ -1,8 +1,9 @@
-// Adapted from vLLM commit 837eae64580c885101ee95b073aafb27a485e7ce.
-// Original files: moe_permute_unpermute_kernel.{h,inl}.
-// Copyright The vLLM Team. Licensed under Apache-2.0.
-// Modified for a standalone FP32 benchmark baseline and a scalar fallback for
-// output widths that do not satisfy the upstream 16-byte vector contract.
+// 改写自 vLLM commit 837eae64580c885101ee95b073aafb27a485e7ce。
+// 原始文件：moe_permute_unpermute_kernel.{h,inl}。
+// Copyright The vLLM Team. Licensed under Apache-2.0。
+// 修改为独立的 FP32 benchmark baseline，并为不满足上游 16 字节向量契约的
+// 输出宽度提供标量回退。
+// 形状：y_permuted[T*top_k,O]、route_pos[T*top_k]、route_weights[T*top_k] -> y[T,O]。
 
 #include <cstdint>
 

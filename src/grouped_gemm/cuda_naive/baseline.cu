@@ -2,6 +2,9 @@
 
 #include "raggedroute/baseline_ops.h"
 
+// grouped GEMM 的朴素 baseline。
+// 计算 x_permuted[R,H] x expert_weights[E,H,O] -> y_permuted[R,O]，
+// offsets 定义每个 expert 的行段，max_expert_tokens 用来限制网格规模。
 namespace raggedroute::ops {
 namespace {
 

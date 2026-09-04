@@ -2,9 +2,9 @@
 # Copyright contributors to the vLLM project
 # SPDX-License-Identifier: Apache-2.0
 #
-# Adapted for RaggedRoute from TransformerEngine's _unpermute_kernel and
-# vLLM's moe_fused_mul_sum_kernel. Modifications add route_pos indirection,
-# fixed Top-K FP32 accumulation, and preallocated caller-stream output.
+# 改写自 TransformerEngine 的 _unpermute_kernel 和 vLLM 的 moe_fused_mul_sum_kernel。
+# 修改点：增加 route_pos 间接索引、固定 Top-K 的 FP32 累加，并支持预分配的
+# caller-stream 输出缓冲区。
 
 from __future__ import annotations
 
@@ -60,7 +60,7 @@ def launch_unpermute(
     *,
     stream: torch.cuda.Stream | None = None,
 ) -> None:
-    """Gather routed rows and perform a strict-FP32 Top-K weighted reduction."""
+    """收集 routed rows，并执行严格 FP32 的 Top-K 加权归约。"""
     if any(t.dtype != torch.float32 for t in (y_permuted, route_weights, out)) or route_pos.dtype != torch.int32:
         raise TypeError("unpermute requires FP32 payload/weights and int32 route_pos")
     if not all(t.is_cuda and t.is_contiguous() for t in (y_permuted, route_pos, route_weights, out)):

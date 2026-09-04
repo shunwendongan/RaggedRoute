@@ -2,6 +2,9 @@
 
 #include "raggedroute/correctness/framework.h"
 
+// dense GEMM 的 CPU 参考实现。
+// 张量形状固定为 A[M,K]、B[K,N]、C[M,N]；保留 alpha / beta 参数，
+// 方便 correctness runner 直接对照严格 FP32、行主序的运行时契约。
 namespace raggedroute::correctness {
 
 std::vector<double> dense_gemm_reference(const std::vector<double>& a, const std::vector<double>& b,

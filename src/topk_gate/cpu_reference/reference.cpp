@@ -4,6 +4,9 @@
 
 #include "raggedroute/correctness/framework.h"
 
+// Top-K gate 的 CPU 参考实现。
+// 形状是 logits[T,E] -> ids[T,2] 和 weights[T,2]，严格遵守仓库里的确定性
+// selected-softmax、tie-break 和 NaN 语义。
 namespace raggedroute::correctness {
 
 Top2Reference top2_selected_softmax_reference(const std::vector<double>& logits, int tokens,

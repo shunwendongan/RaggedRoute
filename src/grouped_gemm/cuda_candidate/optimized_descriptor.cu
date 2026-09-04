@@ -11,6 +11,10 @@
 namespace raggedroute::ops {
 namespace {
 
+// grouped GEMM 的 descriptor 版本。
+// 逻辑契约仍然是 x_permuted[R,H] x weights[E,H,O] -> y_permuted[R,O]，
+// 差别只在于 expert tile 的排程方式和 workspace 里的描述结构。
+
 constexpr int kBlockRows = 16;
 constexpr int kBlockColumns = 32;
 constexpr int kBlockDepth = 16;

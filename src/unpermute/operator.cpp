@@ -4,13 +4,18 @@
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/operators.h"
 
+// token unpermute 的公开入口。
+// 先校验 y_permuted[T*top_k,O]、route_pos[T*top_k]、route_weights[T*top_k]
+// 和输出缓冲区，再派发加权 gather / reduce 路径。
 namespace raggedroute {
 
+// token unpermute 不需要额外的 workspace。
 std::size_t get_unpermute_workspace_size(const UnpermuteArgs& args) noexcept {
   (void)args;
   return 0;
 }
 
+// 按 route_pos 把 routed rows 拉回 token 输出，并用 route_weights 做加权归约。
 Status unpermute(const UnpermuteArgs& args, const RuntimeContext& context) noexcept {
   if (args.tokens < 0 || args.top_k <= 0 || args.top_k > 64 || args.output < 0) {
     return detail::invalid_argument("unpermute requires tokens>=0, 1<=top_k<=64, and output>=0");

@@ -3,13 +3,18 @@
 #include "raggedroute/baseline_ops.h"
 #include "raggedroute/operators.h"
 
+// dense GEMM 的公开入口。
+// 先校验 [M,K] x [K,N] -> [M,N] 的 FP32 契约，再做架构与 kernel 派发，
+// 最后启动 naive 或 optimized 分支。
 namespace raggedroute {
 
+// dense GEMM 不需要额外的 workspace。
 std::size_t get_dense_gemm_workspace_size(const DenseGemmArgs& args) noexcept {
   (void)args;
   return 0;
 }
 
+// 校验 dense GEMM 的输入形状、dtype 和派发条件，并启动对应 kernel。
 Status dense_gemm(const DenseGemmArgs& args, const RuntimeContext& context) noexcept {
   if (args.m < 0 || args.n < 0 || args.k < 0) {
     return detail::invalid_argument("dense_gemm dimensions must be non-negative");

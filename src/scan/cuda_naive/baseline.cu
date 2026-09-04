@@ -4,6 +4,8 @@
 
 #include "raggedroute/baseline_ops.h"
 
+// exclusive scan 的朴素 baseline。
+// 在单个 CTA 上完成 counts[E] -> offsets[E+1] 的前缀和，主要作为保守回退路径。
 namespace raggedroute::ops {
 namespace {
 

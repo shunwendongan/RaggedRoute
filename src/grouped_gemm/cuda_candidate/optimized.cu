@@ -11,6 +11,10 @@
 namespace raggedroute::ops {
 namespace {
 
+// grouped GEMM 的主优化 kernel。
+// 处理的形状是 x_permuted[R,H]、expert_weights[E,H,O] 和 offsets[E+1]，
+// 输出为 y_permuted[R,O]；每个 expert 只消费 [offsets[e], offsets[e+1]) 的行。
+
 constexpr int kTile = 16;
 constexpr int kThreads = kTile * kTile;
 constexpr int kMaxExperts = 64;

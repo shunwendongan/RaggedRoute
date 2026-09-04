@@ -4,6 +4,9 @@
 
 #include "raggedroute/baseline_ops.h"
 
+// token unpermute 的朴素 baseline。
+// 逐条遍历 routed row，把 y_permuted[T*top_k,O] 按 route_weights 加权累加，
+// 最后还原成 y[T,O]。
 namespace raggedroute::ops {
 namespace {
 

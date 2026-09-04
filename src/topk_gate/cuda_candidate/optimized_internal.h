@@ -4,6 +4,9 @@
 
 #include <cstdint>
 
+// Top-K gate 的 implementation id 和启动函数。
+// 优化 kernel 会为每个 token 选出 top-2 expert，并把 expert id 和
+// selected-softmax 权重写入预分配输出。
 namespace raggedroute::ops {
 
 constexpr std::uint32_t kTopKGateWarpPairV1Implementation = 1;

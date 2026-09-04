@@ -5,6 +5,9 @@
 
 #include "raggedroute/baseline_ops.h"
 
+// histogram 的朴素 baseline。
+// 把 expert_ids[route_pairs] 计数到 counts[experts] 中，沿用和高性能版本一致的
+// E<=64 路由契约。
 namespace raggedroute::ops {
 namespace {
 

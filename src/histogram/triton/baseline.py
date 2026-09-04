@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2026 OpenAI
 # SPDX-License-Identifier: MIT
 #
-# RaggedRoute adaptation of Triton's tl.histogram primitive.
+# RaggedRoute 对 Triton `tl.histogram` primitive 的改写。
 
 from __future__ import annotations
 

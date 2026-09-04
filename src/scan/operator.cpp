@@ -6,6 +6,9 @@
 #include <cstddef>
 #include <cstdint>
 
+// exclusive scan 的公开入口。
+// 先校验 counts[E] 和 offsets[E+1]，再处理 fused histogram+scan 的回退逻辑，
+// 最后把请求派发到对应的 kernel family。
 namespace raggedroute {
 namespace {
 
@@ -38,11 +41,13 @@ Status launch_histogram_scan_separate(const HistogramExclusiveScanArgs& args,
 
 }  // namespace
 
+// exclusive scan 不需要额外的 workspace。
 std::size_t get_exclusive_scan_workspace_size(const ExclusiveScanArgs& args) noexcept {
   (void)args;
   return 0;
 }
 
+// 计算 counts[E] -> offsets[E+1]，必要时走 fused histogram+scan 回退路径。
 Status exclusive_scan(const ExclusiveScanArgs& args, const RuntimeContext& context) noexcept {
   if (args.experts <= 0 || args.experts > 64) {
     return detail::invalid_argument("exclusive_scan requires 1<=E<=64");
@@ -68,12 +73,14 @@ Status exclusive_scan(const ExclusiveScanArgs& args, const RuntimeContext& conte
                              "exclusive_scan dispatch selected an unknown kernel");
 }
 
+// fused histogram+scan 不需要额外的 workspace。
 std::size_t get_histogram_exclusive_scan_workspace_size(
     const HistogramExclusiveScanArgs& args) noexcept {
   (void)args;
   return 0;
 }
 
+// 一次性完成 histogram + exclusive scan，生成 counts 和 offsets 两份路由元数据。
 Status histogram_exclusive_scan(const HistogramExclusiveScanArgs& args,
                                 const RuntimeContext& context) noexcept {
   if (args.route_pairs < 0 || args.experts <= 0 || args.experts > 64) {

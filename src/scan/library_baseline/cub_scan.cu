@@ -4,6 +4,9 @@
 
 #include "raggedroute/benchmark/library_baselines.h"
 
+// CUB exclusive-scan baseline for counts[experts] -> offsets[experts+1].
+// The final offset slot stores the total route count, matching the routing
+// metadata contract used by the fused histogram+scan path.
 namespace raggedroute::benchmark::library_baseline {
 namespace {
 

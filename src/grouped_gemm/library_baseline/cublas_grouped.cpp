@@ -5,6 +5,9 @@
 
 #include "raggedroute/benchmark/library_baselines.h"
 
+// grouped GEMM 的按 expert 切分 cuBLAS baseline。
+// 每个 expert 取 offsets[e] 到 offsets[e+1] 的行段，把 x[rows,H] 乘上 weights[H,O]，
+// 再写入 output[rows,O] 的对应切片。
 namespace raggedroute::benchmark::library_baseline {
 namespace {
 

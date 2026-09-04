@@ -5,6 +5,9 @@
 
 #include "raggedroute/baseline_ops.h"
 
+// 缓存扰动基准辅助 kernel。
+// 输入是一个扁平的 uint32_t buffer[N]，每个线程原地改写部分元素，
+// 目的不是计算结果，而是把后续 benchmark 拉回到更接近冷缓存的状态。
 namespace raggedroute::ops {
 namespace {
 

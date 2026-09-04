@@ -1,12 +1,12 @@
 /*
- * Adapted from vLLM csrc/libtorch_stable/moe/topk_softmax_kernels.cu at
- * 55c98e370aa058f567a9e682dc0652bdfba6b0bb.
+ * 改写自 vLLM csrc/libtorch_stable/moe/topk_softmax_kernels.cu
+ * （55c98e370aa058f567a9e682dc0652bdfba6b0bb）。
  * Copyright 2025 The vLLM team.
  * SPDX-License-Identifier: Apache-2.0
  *
- * RaggedRoute modification: retain the row-packed vector-load and iterative
- * argmax organization, but select raw FP32 logits and apply the repository's
- * deterministic Top-2 selected-softmax/NaN contract.
+ * RaggedRoute 的修改：保留 row-packed 的向量加载和迭代式 argmax 结构，
+ * 但直接处理原始 FP32 logits，并应用仓库里确定性的 Top-2 selected-softmax / NaN 契约。
+ * 形状：logits[T,E] -> expert_ids[T,2] 和 weights[T,2]。
  */
 
 #include <cuda_runtime.h>

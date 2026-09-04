@@ -2,6 +2,9 @@
 
 #include "raggedroute/correctness/framework.h"
 
+// grouped GEMM 的 CPU 参考实现。
+// 路由后的输入存为 x[R,H]，expert 权重存为 [E,H,O]，offsets[E+1]
+// 负责把 R 行切成每个 expert 对应的局部切片，最终输出 y[R,O]。
 namespace raggedroute::correctness {
 
 std::vector<double> grouped_gemm_reference(const std::vector<double>& x,

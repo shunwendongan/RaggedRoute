@@ -1,8 +1,10 @@
-// Adapted from vLLM commit 837eae64580c885101ee95b073aafb27a485e7ce.
-// Original files: moe_permute_unpermute_kernel.{h,inl,cu}.
+// 改写自 vLLM commit 837eae64580c885101ee95b073aafb27a485e7ce。
+// 原始文件：moe_permute_unpermute_kernel.{h,inl,cu}。
 // Copyright The vLLM Team. Licensed under Apache-2.0.
-// Modified for a standalone FP32 benchmark baseline, explicit workspace ownership,
-// and a scalar fallback for rows that do not satisfy the upstream 16-byte contract.
+// 修改为独立的 FP32 benchmark baseline、显式 workspace 归属，
+// 并为不满足上游 16 字节契约的行提供标量回退。
+// 形状：x[T,H]、expert_ids[T,top_k]、offsets[E+1] -> x_permuted[T*top_k,H]，
+// 另外还会写 route_pos[T*top_k] 和可选的 sorted_route[T*top_k]。
 
 #include <cstdint>
 #include <cub/device/device_radix_sort.cuh>

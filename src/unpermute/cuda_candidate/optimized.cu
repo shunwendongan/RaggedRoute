@@ -7,6 +7,9 @@
 
 #include "raggedroute/baseline_ops.h"
 
+// token unpermute 的优化 kernel 家族。
+// 处理 y_permuted[T*top_k,O]、route_pos[T*top_k] 和 route_weights[T*top_k]
+// -> y[T,O]，并为常见的 top_k=2 场景准备了更快的路径。
 namespace raggedroute::ops {
 namespace {
 

@@ -14,6 +14,9 @@
 
 #include "raggedroute/correctness/framework.h"
 
+// 正确性框架的支撑代码。
+// 这里负责标量类型 round-trip、参考数据构造，以及验证器要用到的 dtype/shape
+// 工具函数，所有 case 的校验都依赖这一层。
 namespace raggedroute::correctness {
 namespace {
 

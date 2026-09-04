@@ -1,9 +1,9 @@
 # Copyright (c) 2022-2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Adapted for RaggedRoute from TransformerEngine's Triton permutation kernels.
-# Modifications: consume Top-K ids plus offsets directly, generate a stable
-# route map with per-expert scans, and expose preallocated FP32 outputs.
+# 改写自 TransformerEngine 的 Triton permutation kernels。
+# 修改点：直接消费 Top-K ids 和 offsets，生成带 per-expert scan 的稳定 route map，
+# 并暴露预分配的 FP32 输出缓冲区。
 
 from __future__ import annotations
 

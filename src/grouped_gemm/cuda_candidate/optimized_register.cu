@@ -11,6 +11,10 @@
 namespace raggedroute::ops {
 namespace {
 
+// grouped GEMM 的寄存器分块版本。
+// 通过 offsets[E+1] 切出每个 expert 的局部行段，再把 x_permuted[R,H]
+// 与 expert_weights[E,H,O] 相乘并写回 y_permuted[R,O]。
+
 constexpr int kBlockRows = 16;
 constexpr int kBlockColumns = 32;
 constexpr int kBlockDepth = 16;

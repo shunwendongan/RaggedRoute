@@ -5,6 +5,8 @@
 #include <cstddef>
 #include <cstdint>
 
+// exclusive scan 的优化 kernel 家族。
+// 把 counts[E] 转成 offsets[E+1]，并把最后一格保留为总计数，方便直接接路由元数据路径。
 namespace raggedroute::ops {
 namespace {
 

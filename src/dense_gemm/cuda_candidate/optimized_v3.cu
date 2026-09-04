@@ -6,6 +6,9 @@
 
 #include "optimized_internal.h"
 
+// dense GEMM 优化 v3 版本。
+// 矩阵形状仍然是 A[M,K] x B[K,N] -> C[M,N]，这里只改变 CTA 几何和寄存器分块，
+// 目标是提高 A / B 的复用率。
 namespace raggedroute::ops {
 namespace {
 

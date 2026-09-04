@@ -6,6 +6,9 @@
 
 #include "raggedroute/baseline_ops.h"
 
+// Top-K gate 的朴素 baseline。
+// 按和优化版本相同的 deterministic selected-softmax 契约，把 logits[T,E]
+// 计算成 expert_ids[T,2] 和 weights[T,2]。
 namespace raggedroute::ops {
 namespace {
 

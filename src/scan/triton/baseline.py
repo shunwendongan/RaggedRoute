@@ -1,8 +1,8 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
 #
-# Adapted for RaggedRoute from FlagGems cumsum kernels.
-# Modifications: small-E int32 exclusive scan and terminal offset output.
+# 改写自 FlagGems 的 cumsum kernels。
+# 修改点：支持小 E 的 int32 exclusive scan，并把最后一个 offset 位置写成总计数。
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ def launch_exclusive_scan(
     *,
     stream: torch.cuda.Stream | None = None,
 ) -> None:
-    """Write ``offsets[0]=0`` and the inclusive prefix into ``offsets[1:]``."""
+    """写入 ``offsets[0]=0``，并把前缀和结果放到 ``offsets[1:]``。"""
     if counts.dtype != torch.int32 or offsets.dtype != torch.int32:
         raise TypeError("exclusive_scan requires int32 tensors")
     if not (counts.is_cuda and offsets.is_cuda):

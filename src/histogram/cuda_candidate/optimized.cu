@@ -6,6 +6,9 @@
 #include "optimized_internal.h"
 #include "raggedroute/baseline_ops.h"
 
+// histogram 的优化 kernel 家族。
+// 输入是 expert_ids[route_pairs]，输出是 counts[experts]，每个 expert 一个 bin，
+// 同时对小 E 和单 expert 情况做了单独处理。
 namespace raggedroute::ops {
 namespace {
 

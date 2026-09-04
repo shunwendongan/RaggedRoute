@@ -6,6 +6,9 @@
 
 #include "optimized_internal.h"
 
+// dense GEMM 优化 v2 版本。
+// 计算契约仍是 A[M,K] x B[K,N] -> C[M,N] 的行主序 FP32，只调整 tiling、
+// shared memory staging 和寄存器分配方式。
 namespace raggedroute::ops {
 namespace {
 

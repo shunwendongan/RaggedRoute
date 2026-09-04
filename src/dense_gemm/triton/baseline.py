@@ -1,9 +1,9 @@
 # Copyright (c) 2019-2026 OpenAI
 # SPDX-License-Identifier: MIT
 #
-# Adapted for RaggedRoute from Triton's matrix-multiplication tutorial.
-# Modifications: strict IEEE FP32, SM86-safe configs, preallocated output,
-# caller-stream support, and complete boundary masking.
+# 改写自 Triton 的矩阵乘法教程。
+# 修改点：严格 IEEE FP32、SM86 安全配置、预分配输出、支持 caller stream，
+# 并补齐所有边界 masking。
 
 from __future__ import annotations
 

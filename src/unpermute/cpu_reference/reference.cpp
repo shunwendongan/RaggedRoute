@@ -2,6 +2,9 @@
 
 #include "raggedroute/correctness/framework.h"
 
+// token unpermute 的 CPU 参考实现。
+// 形状是 y_permuted[T*top_k,O]、route_pos[T*top_k] 和 route_weights[T*top_k]，
+// 最终通过加权求和还原出 y[T,O]。
 namespace raggedroute::correctness {
 
 std::vector<double> unpermute_reference(const std::vector<double>& y_permuted,

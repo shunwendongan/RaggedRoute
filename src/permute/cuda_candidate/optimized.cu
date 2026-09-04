@@ -6,6 +6,9 @@
 
 #include "optimized_internal.h"
 
+// token permute 的优化 kernel 家族。
+// 输入是 x[T,H]、expert_ids[T*top_k]、offsets[E+1]，输出是 x_permuted[T*top_k,H]、
+// route_pos[T*top_k]，以及可选的 sorted_route[T*top_k]。
 namespace raggedroute::ops {
 namespace {
 

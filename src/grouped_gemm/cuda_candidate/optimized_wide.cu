@@ -11,6 +11,10 @@
 namespace raggedroute::ops {
 namespace {
 
+// grouped GEMM 的宽 tile 版本。
+// 仍然消费 x_permuted[R,H] 和 expert_weights[E,H,O]，只是当输出宽度 O
+// 足够大时更偏向宽 tile 的分块和 staging 策略。
+
 constexpr int kWideBlockRows = 16;
 constexpr int kWideBlockColumns = 64;
 constexpr int kWideBlockDepth = 16;

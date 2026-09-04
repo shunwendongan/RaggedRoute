@@ -8,6 +8,8 @@
 
 #include "raggedroute/correctness/framework.h"
 
+// correctness case 与 report 的 JSON 序列化 / 反序列化。
+// 这个文件故意偏字符串处理，因为它是运行器和离线分析工具之间稳定的交换层。
 namespace raggedroute::correctness {
 namespace {
 

@@ -1,9 +1,9 @@
 # Copyright (c) 2019-2026 OpenAI
 # SPDX-License-Identifier: MIT
 #
-# Adapted for RaggedRoute from Triton's portable grouped-GEMM tutorial.
-# Modifications: direct contiguous expert storage, device offsets, ragged/empty
-# expert masking, strict IEEE FP32, preallocated output, and no TMA path.
+# 改写自 Triton 的 portable grouped-GEMM 教程。
+# 修改点：直接使用连续 expert 存储、device 侧 offsets、ragged / empty expert masking、
+# 严格 IEEE FP32、预分配输出，并去掉 TMA 路径。
 
 from __future__ import annotations
 

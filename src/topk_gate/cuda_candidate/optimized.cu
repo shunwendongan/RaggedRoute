@@ -6,6 +6,9 @@
 
 #include "optimized_internal.h"
 
+// Top-K gate 的优化 kernel 家族。
+// 负责把 logits[T,E] 转成 expert_ids[T,2] 和 weights[T,2]，并保持 deterministic
+// top-2 选择、selected-softmax 和 NaN 语义完全一致。
 namespace raggedroute::ops {
 namespace {
 

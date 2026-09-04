@@ -2,8 +2,10 @@
  * Copyright (c) 2017 - 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  *
- * Adapted from NVIDIA CUTLASS example 24 at tag v4.6.1. This standalone plan keeps only the
- * device-scheduled FP32 row-major grouped GEMM path needed by RaggedRoute.
+ * 改写自 NVIDIA CUTLASS example 24（v4.6.1）。
+ * RaggedRoute 的形状契约是 x_permuted[R,H]、expert_weights[E,H,O]、
+ * offsets[E+1] 和 y_permuted[R,O]，这里每个 expert slice 对应一次 GEMM。
+ * 这个独立 plan 只保留 RaggedRoute 需要的 device-scheduled FP32 row-major 路径。
  **************************************************************************************************/
 
 #include <cutlass/epilogue/thread/linear_combination.h>

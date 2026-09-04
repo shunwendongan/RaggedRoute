@@ -1,9 +1,9 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
 #
-# Adapted for RaggedRoute from FlagGems topk_gating_softmax_kernel.
-# Modifications: fixed Top-2 selected-softmax and RaggedRoute's exact tie,
-# NaN, all-NaN, and infinity semantics.
+# 改写自 FlagGems 的 topk_gating_softmax_kernel。
+# 修改点：固定为 Top-2 selected-softmax，并对齐 RaggedRoute 的 tie、NaN、
+# all-NaN 和 infinity 语义。
 
 from __future__ import annotations
 

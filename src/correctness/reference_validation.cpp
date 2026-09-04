@@ -4,6 +4,8 @@
 
 #include "raggedroute/correctness/framework.h"
 
+// 正确性结果比较与报告生成辅助函数。
+// 这里把原始输出转换成结构化的 pass/fail 报告，检查 shape、数值类别和误差界。
 namespace raggedroute::correctness {
 namespace {
 

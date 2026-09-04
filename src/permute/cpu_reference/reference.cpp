@@ -3,6 +3,9 @@
 
 #include "raggedroute/correctness/framework.h"
 
+// token permute 的 CPU 参考实现。
+// 输入是 x[T,H]、ids[T,top_k] 和 offsets[E+1]，输出为 x_permuted[T*top_k,H]
+// 以及反向路径要用的 route position 信息。
 namespace raggedroute::correctness {
 namespace {
 

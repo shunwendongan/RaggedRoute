@@ -4,6 +4,9 @@
 
 #include "raggedroute/baseline_ops.h"
 
+// token permute 的朴素 baseline。
+// 按 expert_ids[T,top_k] 把 x[T,H] 拷贝到 x_permuted[T*top_k,H]，并同步记录
+// route_pos / sorted_route。
 namespace raggedroute::ops {
 namespace {
 

@@ -6,6 +6,9 @@
 
 #include "raggedroute/benchmark/library_baselines.h"
 
+// dense GEMM 的 cuBLAS SGEMM benchmark baseline。
+// 计算 C[M,N] = A[M,K] x B[K,N]，每次调用绑定 caller stream，并使用 pedantic
+// FP32 math，保证和运行时的严格数值契约一致。
 namespace raggedroute::benchmark::library_baseline {
 namespace {
 

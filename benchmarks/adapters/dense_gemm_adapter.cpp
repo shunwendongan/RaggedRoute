@@ -81,12 +81,16 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
     expected_.assign(static_cast<std::size_t>(m_) * n_, 0.0F);
     for (int row = 0; row < m_; ++row) {
       for (int column = 0; column < n_; ++column) {
-        float accumulator = 0.0F;
+        // Keep the benchmark oracle independent of the GPU reduction order.  The strict
+        // FP32 kernels are allowed to accumulate in FP32, while cuBLASLt's pedantic path
+        // can use a different (but valid) association of FP32 products.  A double reference
+        // prevents cancellation-heavy large-K cases from being rejected by a float oracle.
+        double accumulator = 0.0;
         for (int inner = 0; inner < k_; ++inner) {
-          accumulator += a_host_[static_cast<std::size_t>(row) * k_ + inner] *
-                         b_host_[static_cast<std::size_t>(inner) * n_ + column];
+          accumulator += static_cast<double>(a_host_[static_cast<std::size_t>(row) * k_ + inner]) *
+                         static_cast<double>(b_host_[static_cast<std::size_t>(inner) * n_ + column]);
         }
-        expected_[static_cast<std::size_t>(row) * n_ + column] = accumulator;
+        expected_[static_cast<std::size_t>(row) * n_ + column] = static_cast<float>(accumulator);
       }
     }
     a_.resize(a_host_.size());
@@ -164,6 +168,7 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
             {"K", static_cast<std::int64_t>(k_)},
             {"dtype", std::string("fp32")},
             {"accumulator_dtype", std::string("fp32")},
+            {"oracle_accumulator_dtype", std::string("fp64")},
             {"layout_a", std::string("row_major")},
             {"layout_b", std::string("row_major")},
             {"layout_c", std::string("row_major")},

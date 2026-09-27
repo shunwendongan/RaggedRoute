@@ -647,6 +647,13 @@ int main() {
           {{"M", "31"}, {"N", "33"}, {"K", "65"}},
           {{"M", "256"}, {"N", "256"}, {"K", "256"}},
       };
+      // Regression: cancellation at (759,1018) with this seed made the old FP32
+      // CPU oracle reject a valid pedantic cuBLASLt result. Keep the original
+      // tolerance and data; the benchmark reference must use double products/sums.
+      if (has_variant("dense_gemm", "cublaslt")) {
+        run_adapter_case({"dense_gemm", {{"M", "1024"}, {"N", "1024"}, {"K", "1024"}},
+                          "cublaslt"}, stream, 20260926);
+      }
       for (const std::string& variant :
            {"cuda_tiled_scalar", "cuda_2d_mapping", "cuda_tiled_vector", "cuda_combined",
             "cuda_register_tiled_v2_sync", "cuda_register_tiled_v2_async",

@@ -118,6 +118,9 @@ class ChainAdapter final : public BenchmarkAdapter {
     if (variant_name_ == "cuda_postlogit_research_v3") {
       return prefix + " with Permute v3 and Grouped GEMM v3 research candidates";
     }
+    if (variant_name_ == "cuda_postlogit_grouped_v10") {
+      return prefix + " with the integrated post-logit candidates and SM86 Grouped GEMM v10";
+    }
     if (variant_name_ == "library_all_baselines_chain") {
       return prefix + " with repository library baselines (diagnostic contract)";
     }
@@ -264,9 +267,10 @@ class ChainAdapter final : public BenchmarkAdapter {
     const bool retained_postlogit = variant_name_ == "cuda_postlogit_retained_main";
     const bool integrated_postlogit = variant_name_ == "cuda_postlogit_integrated_latest";
     const bool research_v3 = variant_name_ == "cuda_postlogit_research_v3";
+    const bool grouped_v10 = variant_name_ == "cuda_postlogit_grouped_v10";
     const bool postlogit_graph = is_postlogit_graph_variant(variant_name_);
-    const bool unified_postlogit =
-        retained_postlogit || integrated_postlogit || research_v3 || postlogit_graph;
+    const bool unified_postlogit = retained_postlogit || integrated_postlogit || research_v3 ||
+                                   grouped_v10 || postlogit_graph;
     if (include_router_projection_ && all_libraries) {
 #if RAGGEDROUTE_HAS_CUBLAS
       library_baseline::launch_dense_cublaslt(
@@ -409,13 +413,23 @@ class ChainAdapter final : public BenchmarkAdapter {
           research_v3                               ? ops::kGroupedGemmSm86Fp32V3Implementation
           : integrated_postlogit || postlogit_graph ? ops::kGroupedGemmSm86Fp32V2Implementation
                                                     : ops::kGroupedGemmSm86Fp32V1Implementation;
-      cuda_check(ops::launch_grouped_gemm_optimized(
-                     static_cast<const float*>(grouped_args.x_permuted.data),
-                     static_cast<const float*>(grouped_args.expert_weights.data),
-                     grouped_args.offsets, static_cast<float*>(grouped_args.y_permuted.data),
-                     grouped_args.experts, grouped_args.hidden, grouped_args.output,
-                     grouped_args.max_expert_tokens, grouped_implementation, stream),
-                 "chain benchmark-only grouped_gemm candidate");
+      if (grouped_v10) {
+        cuda_check(ops::launch_grouped_gemm_sm86_fp32_v10_wave_aware_portfolio(
+                       static_cast<const float*>(grouped_args.x_permuted.data),
+                       static_cast<const float*>(grouped_args.expert_weights.data),
+                       grouped_args.offsets, static_cast<float*>(grouped_args.y_permuted.data),
+                       grouped_args.experts, grouped_args.hidden, grouped_args.output,
+                       grouped_args.max_expert_tokens, route_pairs_, stream),
+                   "chain benchmark-only grouped_gemm v10 candidate");
+      } else {
+        cuda_check(ops::launch_grouped_gemm_optimized(
+                       static_cast<const float*>(grouped_args.x_permuted.data),
+                       static_cast<const float*>(grouped_args.expert_weights.data),
+                       grouped_args.offsets, static_cast<float*>(grouped_args.y_permuted.data),
+                       grouped_args.experts, grouped_args.hidden, grouped_args.output,
+                       grouped_args.max_expert_tokens, grouped_implementation, stream),
+                   "chain benchmark-only grouped_gemm candidate");
+      }
     } else {
       operator_check(grouped_gemm(grouped_args, context), "chain grouped_gemm operator");
     }
@@ -509,9 +523,10 @@ class ChainAdapter final : public BenchmarkAdapter {
     const bool retained_postlogit = variant_name_ == "cuda_postlogit_retained_main";
     const bool integrated_postlogit = variant_name_ == "cuda_postlogit_integrated_latest";
     const bool research_v3 = variant_name_ == "cuda_postlogit_research_v3";
+    const bool grouped_v10 = variant_name_ == "cuda_postlogit_grouped_v10";
     const bool postlogit_graph = is_postlogit_graph_variant(variant_name_);
-    const bool unified_postlogit =
-        retained_postlogit || integrated_postlogit || research_v3 || postlogit_graph;
+    const bool unified_postlogit = retained_postlogit || integrated_postlogit || research_v3 ||
+                                   grouped_v10 || postlogit_graph;
     FieldMap config = {
         {"components",
          include_router_projection_
@@ -521,6 +536,7 @@ class ChainAdapter final : public BenchmarkAdapter {
                    "topk_gate,histogram,exclusive_scan,token_permute,grouped_gemm,unpermute")},
         {"component_variant",
          research_v3 ? std::string("postlogit_research_permute_v3_grouped_v3")
+         : grouped_v10 ? std::string("postlogit_integrated_permute_v2_grouped_v10")
          : integrated_postlogit || postlogit_graph
              ? std::string("postlogit_integrated_latest_grouped_v2")
          : retained_postlogit ? std::string("postlogit_retained_main_grouped_v1")
@@ -560,6 +576,7 @@ class ChainAdapter final : public BenchmarkAdapter {
                                                           : std::string("cuda_naive")},
         {"grouped_variant",
          research_v3                                    ? std::string("cuda_grouped_sm86_fp32_v3")
+         : grouped_v10                                  ? std::string("cuda_grouped_sm86_fp32_v10_wave_aware")
          : integrated_postlogit || postlogit_graph      ? std::string("cuda_grouped_sm86_fp32_v2")
          : retained_postlogit                           ? std::string("cuda_grouped_sm86_fp32_v1")
          : variant_name_ == "cuda_all_candidates_chain" ? std::string("cuda_grouped_sm86_fp32_v1")
@@ -676,6 +693,7 @@ class ChainAdapter final : public BenchmarkAdapter {
                                       variant_name_ == "cuda_postlogit_retained_main" ||
                                       variant_name_ == "cuda_postlogit_integrated_latest" ||
                                       variant_name_ == "cuda_postlogit_research_v3" ||
+                                      variant_name_ == "cuda_postlogit_grouped_v10" ||
                                       is_postlogit_graph_variant(variant_name_) ||
                                       variant_name_ == "cuda_all_candidates_chain";
     work.operator_metrics["kernel_launches"] =

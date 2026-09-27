@@ -499,6 +499,10 @@ std::vector<VariantDescriptor> available_suite_variant_descriptors(const std::st
           "raggedroute.chain.postlogit_research_v3.v1", "not_applicable",
           "topk_v4_fused_hist_scan_v2_permute_v3_grouped_v3_unpermute_retained_v1"));
       variants.push_back(descriptor(
+          "cuda_postlogit_grouped_v10", "in_tree_cuda_research",
+          "raggedroute.chain.postlogit_grouped_v10.v1", "not_applicable",
+          "topk_v4_fused_hist_scan_v2_permute_v2_grouped_sm86_v10_unpermute_retained_v1"));
+      variants.push_back(descriptor(
           "cuda_postlogit_graph_fixed_v1", "in_tree_cuda_promoted_explicit_fixed_shape_only",
           "raggedroute.chain.postlogit.graph.fixed.v1", "not_applicable",
           "fixed_capture_uploaded_integrated_latest"));

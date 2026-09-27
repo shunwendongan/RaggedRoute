@@ -55,6 +55,10 @@ The benchmark-only code is retained to reproduce these negative results.
 
 ## Campaign status correction
 
+Update: [the completed Dense Release matrix](rtx3080-20260927-dense-portfolio-release.md)
+rejects the broad selector; `ea400b9` restores original v3 and isolates the
+candidate. The paragraph below records the earlier provisional state.
+
 Dense's committed narrow selector in `0b21ab8` is experimental, **not a completed
 release promotion**. Earlier cross-session smoke comparisons and three-process
 medians do not prove the claimed 17% gain over its entire M>=256,N<=64,K<=256

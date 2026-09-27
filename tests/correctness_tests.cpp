@@ -658,6 +658,18 @@ int main() {
           {{"M", "31"}, {"N", "33"}, {"K", "65"}},
           {{"M", "256"}, {"N", "256"}, {"K", "256"}},
       };
+      require(has_variant("dense_gemm", "cuda_narrow_portfolio_v4"),
+              "dense narrow portfolio must be registered explicitly");
+      for (const auto& shape : dense_tiled_edge_shapes) {
+        run_adapter_case({"dense_gemm", shape, "cuda_narrow_portfolio_v4"}, stream, seed++);
+      }
+      for (const int rows : {192, 256, 512, 4096}) {
+        for (const int depth : {16, 128, 256, 272}) {
+          run_adapter_case({"dense_gemm", {{"M", std::to_string(rows)}, {"N", "64"},
+                                          {"K", std::to_string(depth)}},
+                            "cuda_narrow_portfolio_v4"}, stream, seed++, false);
+        }
+      }
       // Regression: cancellation at (759,1018) with this seed made the old FP32
       // CPU oracle reject a valid pedantic cuBLASLt result. Keep the original
       // tolerance and data; the benchmark reference must use double products/sums.

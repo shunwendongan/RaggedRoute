@@ -266,13 +266,6 @@ cudaError_t launch_dense_gemm_optimized(const float* a, const float* b, float* c
                  ? launch_tiled_vector(a, b, c, m, n, k, caller_stream)
                  : launch_tiled_scalar(a, b, c, m, n, k, caller_stream);
     }
-    // The 64x32 CTA is the best shape for square/large-N GEMMs, but its wide
-    // output tile under-fills narrow projections.  L2 screening on sm_86
-    // showed the 32x32 async kernel winning for large-M, N<=64, K<=256.
-    // Keep this deliberately narrow so the v3 square-matrix path is unchanged.
-    if (m >= 256 && n <= 64 && k <= 256 && can_use_register_tiled_v2(a, b, c, m, n, k)) {
-      return launch_dense_gemm_register_tiled_v2_async(a, b, c, m, n, k, caller_stream);
-    }
     return launch_dense_gemm_register_tiled_v3_64x32_async(a, b, c, m, n, k, caller_stream);
   }
   return cudaErrorInvalidValue;

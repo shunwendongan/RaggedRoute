@@ -18,7 +18,8 @@ bool is_optimized_dense_variant(const std::string& variant_name) {
          variant_name == "cuda_tiled_vector" || variant_name == "cuda_combined" ||
          variant_name == "cuda_register_tiled_v2_sync" ||
          variant_name == "cuda_register_tiled_v2_async" ||
-         variant_name == "cuda_register_tiled_v3_64x32_async";
+         variant_name == "cuda_register_tiled_v3_64x32_async" ||
+         variant_name == "cuda_narrow_portfolio_v4";
 }
 
 std::uint32_t optimized_dense_implementation(const std::string& variant_name) {
@@ -50,6 +51,9 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
   std::string operator_name() const override { return "dense_gemm"; }
   std::string variant_name() const override { return variant_name_; }
   std::string description() const override {
+    if (variant_name_ == "cuda_narrow_portfolio_v4") {
+      return "Benchmark-only narrow-projection v2/v3 strict-FP32 portfolio";
+    }
     if (variant_name_ == "cuda_tiled_scalar") return "16x16 shared-memory tiled strict-FP32 CUDA GEMM";
     if (variant_name_ == "cuda_2d_mapping") return "2D-mapped strict-FP32 CUDA GEMM";
     if (variant_name_ == "cuda_tiled_vector") return "16x16 float4-staged strict-FP32 CUDA GEMM";
@@ -125,7 +129,7 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
     }
 #endif
     if (is_optimized_dense_variant(variant_name_)) {
-      const std::uint32_t implementation = optimized_dense_implementation(variant_name_);
+      const std::uint32_t implementation = optimized_dense_implementation(selected_variant());
       if (level == MeasurementLevel::kKernelBody) {
         cuda_check(ops::launch_dense_gemm_optimized(a_.data(), b_.data(), c_.data(), m_, n_, k_,
                                                      implementation, stream),
@@ -176,6 +180,16 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
             {"beta", 0.0}};
   }
   FieldMap variant_config() const override {
+    if (variant_name_ == "cuda_narrow_portfolio_v4") {
+      const bool v2 = selected_variant() == "cuda_register_tiled_v2_async";
+      const bool tiled = k_ > 0 && m_ % (v2 ? 32 : 64) == 0 && n_ % 32 == 0 && k_ % 16 == 0;
+      const bool vector = k_ > 0 && m_ % 16 == 0 && n_ % 16 == 0 && k_ % 16 == 0;
+      return {{"selected_variant", selected_variant()},
+              {"actual_path", tiled ? selected_variant() : std::string(vector ? "cuda_tiled_vector" : "cuda_tiled_scalar")},
+              {"selector", std::string("M>=256,N<=64,K<=256;v3_aligned_shape_required")},
+              {"runtime_status", std::string("benchmark_only_not_promoted")},
+              {"math_path", std::string("cuda_core_strict_fp32")}};
+    }
     if (variant_name_ == "cublaslt") {
       return {{"api", std::string("cublasLtMatmul")},
               {"heuristic_rank", static_cast<std::int64_t>(0)},
@@ -283,6 +297,14 @@ class DenseGemmAdapter final : public BenchmarkAdapter {
   }
 
  private:
+  std::string selected_variant() const {
+    if (variant_name_ != "cuda_narrow_portfolio_v4") return variant_name_;
+    // Adapter buffers are cudaMalloc-aligned. Preserve v3's existing tail
+    // fallback outside its aligned shape region; only tile geometry changes.
+    const bool select_v2 = m_ >= 256 && n_ > 0 && n_ <= 64 && k_ > 0 && k_ <= 256 &&
+                           m_ % 64 == 0 && n_ % 32 == 0 && k_ % 16 == 0;
+    return select_v2 ? "cuda_register_tiled_v2_async" : "cuda_register_tiled_v3_64x32_async";
+  }
   static void reject_unknown(const OptionMap& options) {
     const std::set<std::string> allowed = {"M", "N", "K"};
     for (const auto& [name, unused] : options) {

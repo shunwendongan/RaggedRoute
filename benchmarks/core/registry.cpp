@@ -153,6 +153,9 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
                                                      "shared_tile32_register_4x2_cp_async_2stage"));
     variants.push_back(optimized_dense_v2_descriptor(
         "cuda_register_tiled_v3_64x32_async", "shared_tile64x32_register_8x2_cp_async_2stage"));
+    variants.push_back(descriptor("cuda_narrow_portfolio_v4", "in_tree_cuda_research",
+                                  "raggedroute.dense.narrow_portfolio.v4", "not_applicable",
+                                  "narrow_aligned_v2_else_retained_v3"));
 #if RAGGEDROUTE_HAS_CUBLAS
     variants.push_back(descriptor("cublaslt", "nvidia_cuda_library", "cublasLtMatmul.v1",
                                   cuda_library_revision(), "cublaslt_heuristic_0"));

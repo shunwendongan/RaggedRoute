@@ -161,7 +161,18 @@ void run_histogram_candidate_matrix(cudaStream_t stream, std::uint64_t* seed) {
                       "cuda_candidate"},
                      stream, (*seed)++);
   }
-  for (const std::string& variant : {"cuda_candidate_v1", "cuda_candidate_v2"}) {
+  for (const std::string& variant : {"cuda_candidate_v1", "cuda_candidate_v2",
+                                     "cuda_candidate_v3", "cuda_candidate_v4"}) {
+    // Exercise both sides of each research CTA cap, including ragged tails.
+    // E=1 below only checks direct-write behavior, not the private-bin kernel.
+    for (const int route_count : {131073, 262145, 524289}) {
+      for (const std::string distribution : {"uniform", "single_hot"}) {
+        run_adapter_case({"histogram",
+                          {{"T", std::to_string(route_count)}, {"E", "64"},
+                           {"top_k", "1"}, {"distribution", distribution}}, variant},
+                         stream, (*seed)++, false);
+      }
+    }
     for (const int route_count : {1, 4096, 8192, 32768, 65536, 1048576}) {
       run_adapter_case({"histogram",
                         {{"T", std::to_string(route_count)},

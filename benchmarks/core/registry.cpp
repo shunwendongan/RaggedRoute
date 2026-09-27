@@ -197,6 +197,12 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     variants.push_back(descriptor("cuda_candidate_v2", "in_tree_cuda_candidate",
                                   "raggedroute.histogram.cuda_candidate.v2", "not_applicable",
                                   "single_bin_direct_write_else_v1"));
+    variants.push_back(descriptor("cuda_candidate_v3", "in_tree_cuda_research",
+                                  "raggedroute.histogram.cuda_candidate.v3", "not_applicable",
+                                  "block_private_256_cta_cap"));
+    variants.push_back(descriptor("cuda_candidate_v4", "in_tree_cuda_research",
+                                  "raggedroute.histogram.cuda_candidate.v4", "not_applicable",
+                                  "block_private_64_cta_cap"));
 #if RAGGEDROUTE_HAS_CCCL
     variants.push_back(descriptor("cub_device_histogram", "nvidia_cccl",
                                   "cub::DeviceHistogram::HistogramEven", cccl_revision(),

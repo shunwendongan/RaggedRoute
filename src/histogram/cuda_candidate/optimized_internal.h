@@ -8,8 +8,10 @@ namespace raggedroute::ops {
 
 constexpr std::uint32_t kHistogramCandidateV1Implementation = 101;
 constexpr std::uint32_t kHistogramCandidateV2Implementation = 102;
+constexpr std::uint32_t kHistogramCandidateV3Implementation = 103;
+constexpr std::uint32_t kHistogramCandidateV4Implementation = 104;
 // Keep the public/default dispatch pinned to the retained main implementation.
-// V2 remains available only through the benchmark adapter below.
+// V2 and rejected CTA-cap experiments V3/V4 are benchmark-only controls.
 constexpr std::uint32_t kHistogramCandidateImplementation = kHistogramCandidateV1Implementation;
 constexpr int kHistogramSingleCtaMaxRoutePairs = 4096;
 constexpr int kHistogramBlockPrivateMinRoutePairs = 32768;
@@ -21,12 +23,16 @@ inline bool is_histogram_optimized_implementation(std::uint32_t implementation_i
 
 inline bool is_histogram_benchmark_implementation(std::uint32_t implementation_id) noexcept {
   return implementation_id == kHistogramCandidateV1Implementation ||
-         implementation_id == kHistogramCandidateV2Implementation;
+         implementation_id == kHistogramCandidateV2Implementation ||
+         implementation_id == kHistogramCandidateV3Implementation ||
+         implementation_id == kHistogramCandidateV4Implementation;
 }
 
 inline bool histogram_optimized_overwrites_output(std::uint32_t implementation_id,
                                                   int route_pairs, int experts) noexcept {
-  return (implementation_id == kHistogramCandidateV2Implementation && experts == 1) ||
+  return ((implementation_id == kHistogramCandidateV2Implementation ||
+           implementation_id == kHistogramCandidateV3Implementation ||
+           implementation_id == kHistogramCandidateV4Implementation) && experts == 1) ||
          route_pairs <= kHistogramSingleCtaMaxRoutePairs;
 }
 

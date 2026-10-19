@@ -148,8 +148,12 @@ def main() -> int:
         case_id = case["id"]
         target = common.target_command(binary, case)
         base = reports / f"{case_id}.system"
+        # The audited Windows Nsight Systems build can return 0xc000013a when
+        # its default non-overwrite path is used for a freshly-created report
+        # directory.  The report target is unique per run, so force overwrite
+        # is safe and keeps the project-local profiler reproducible.
         run(f"{case_id}.nsys", [nsys, "profile", "--trace=cuda,nvtx", "--sample=none",
-            "--cpuctxsw=none", "--force-overwrite=false", f"--output={base}", *target])
+            "--cpuctxsw=none", "--force-overwrite=true", f"--output={base}", *target])
         kernel_csv = analysis / f"{case_id}.nsys_kernels.csv"
         for report_name in common.NSYS_STATS_REPORTS:
             outcome = run(f"{case_id}.nsys.{report_name}", [nsys, "stats", "--force-export=true",

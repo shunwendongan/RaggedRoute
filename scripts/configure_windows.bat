@@ -14,6 +14,8 @@ if errorlevel 1 (
 )
 
 where ninja.exe >nul 2>nul
+if errorlevel 1 if defined MSYS2_UCRT64 if exist "%MSYS2_UCRT64%\bin\ninja.exe" set "PATH=%MSYS2_UCRT64%\bin;%PATH%"
+where ninja.exe >nul 2>nul
 if errorlevel 1 (
   echo Ninja was not found on PATH. Install Ninja or add it to PATH and retry. 1>&2
   exit /b 6
@@ -21,6 +23,8 @@ if errorlevel 1 (
 
 set "RAGGEDROUTE_NVCC=%CUDACXX%"
 if not defined RAGGEDROUTE_NVCC if defined CUDA_PATH if exist "%CUDA_PATH%\bin\nvcc.exe" set "RAGGEDROUTE_NVCC=%CUDA_PATH%\bin\nvcc.exe"
+if not defined RAGGEDROUTE_NVCC if defined CUDA_TOOLKIT_ROOT_DIR if exist "%CUDA_TOOLKIT_ROOT_DIR%\bin\nvcc.exe" set "RAGGEDROUTE_NVCC=%CUDA_TOOLKIT_ROOT_DIR%\bin\nvcc.exe"
+if not defined RAGGEDROUTE_NVCC if defined CUDA_BIN_PATH if exist "%CUDA_BIN_PATH%\nvcc.exe" set "RAGGEDROUTE_NVCC=%CUDA_BIN_PATH%\nvcc.exe"
 if not defined RAGGEDROUTE_NVCC for /f "delims=" %%I in ('where nvcc.exe 2^>nul') do if not defined RAGGEDROUTE_NVCC set "RAGGEDROUTE_NVCC=%%I"
 if /i not "%PRESET:~0,4%"=="cpu-" if not defined RAGGEDROUTE_NVCC (
   echo CUDA nvcc.exe was not found. Set CUDACXX or CUDA_PATH and retry. 1>&2

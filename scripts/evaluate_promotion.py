@@ -162,6 +162,21 @@ def evaluate(
             }
             if len(configs) != 1:
                 evidence_failures.append(f"{case}: case_config mismatch")
+        if policy.get("require_same_math_semantics", False):
+            # This gate is independent of whole-case-config matching: policies
+            # may relax shape metadata matching, but a numerical contract still
+            # needs all four explicit fields and must agree in every process.
+            for section, fields in (
+                ("variant_config", ("math_mode",)),
+                ("case_config", ("dtype", "output_dtype", "accumulator_dtype")),
+            ):
+                for field in fields:
+                    values = [record.get(section, {}).get(field)
+                              for record in baseline_records + candidate_records]
+                    if any(not isinstance(value, str) or not value.strip() for value in values):
+                        evidence_failures.append(f"{case}: missing or invalid {section}.{field}")
+                    elif len(set(values)) != 1:
+                        evidence_failures.append(f"{case}: {section}.{field} mismatch")
         build_shas = {
             record.get("environment", {}).get("build_git_sha")
             for record in baseline_records + candidate_records

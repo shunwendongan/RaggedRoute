@@ -44,6 +44,14 @@ def main() -> int:
     args = parse_args()
     sanitizer = shutil.which("compute-sanitizer") or shutil.which("compute-sanitizer.bat")
     if sanitizer is None:
+        # Relocated Windows Toolkits keep this tool outside bin and PATH.
+        roots = [os.environ.get(name) for name in ("CUDA_PATH", "CUDA_TOOLKIT_ROOT_DIR")]
+        if os.environ.get("CUDA_BIN_PATH"):
+            roots.append(str(Path(os.environ["CUDA_BIN_PATH"]).parent))
+        sanitizer = next((str(Path(root) / "compute-sanitizer" / "compute-sanitizer.exe")
+                          for root in roots if root and
+                          (Path(root) / "compute-sanitizer" / "compute-sanitizer.exe").is_file()), None)
+    if sanitizer is None:
         print("Compute Sanitizer was not found on PATH", file=sys.stderr)
         return 2
     try:

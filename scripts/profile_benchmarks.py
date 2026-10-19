@@ -169,7 +169,16 @@ def load_config(path: pathlib.Path) -> dict[str, Any]:
 
 
 def find_tool(name: str) -> str | None:
-    return shutil.which(name) or shutil.which(f"{name}.bat") or shutil.which(f"{name}.exe")
+    found = shutil.which(name) or shutil.which(f"{name}.bat") or shutil.which(f"{name}.exe")
+    if found or name != "nvcc":
+        return found
+    candidates = [os.environ.get("CUDACXX", "")]
+    for variable in ("CUDA_PATH", "CUDA_TOOLKIT_ROOT_DIR"):
+        if os.environ.get(variable):
+            candidates.append(str(pathlib.Path(os.environ[variable]) / "bin" / "nvcc.exe"))
+    if os.environ.get("CUDA_BIN_PATH"):
+        candidates.append(str(pathlib.Path(os.environ["CUDA_BIN_PATH"]) / "nvcc.exe"))
+    return next((path for path in candidates if path and pathlib.Path(path).is_file()), None)
 
 
 def run_command(

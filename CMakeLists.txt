@@ -71,6 +71,7 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     src/dense_gemm/cuda_candidate/optimized.cu
     src/dense_gemm/cuda_candidate/optimized_v2.cu
     src/dense_gemm/cuda_candidate/optimized_v3.cu
+    src/dense_gemm/cuda_candidate/tensorcore.cu
     src/topk_gate/cuda_naive/baseline.cu
     src/topk_gate/cuda_candidate/optimized.cu
     src/histogram/cuda_naive/baseline.cu
@@ -85,6 +86,7 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     src/grouped_gemm/cuda_candidate/optimized_balanced_wide.cu
     src/grouped_gemm/cuda_candidate/optimized_descriptor.cu
     src/grouped_gemm/cuda_candidate/optimized_wide.cu
+    src/grouped_gemm/cuda_candidate/tensorcore.cu
     src/unpermute/cuda_naive/baseline.cu
     src/unpermute/cuda_candidate/optimized.cu)
   add_library(RaggedRoute::baseline_ops ALIAS raggedroute_baseline_ops)
@@ -111,6 +113,7 @@ if(RAGGEDROUTE_ENABLE_CUDA)
   if(RAGGEDROUTE_ENABLE_CUBLAS AND TARGET CUDA::cublas AND TARGET CUDA::cublasLt)
     list(APPEND _raggedroute_library_baseline_sources
       src/dense_gemm/library_baseline/cublas_gemm.cpp
+      src/dense_gemm/library_baseline/tensorcore_cublas.cpp
       src/grouped_gemm/library_baseline/cublas_grouped.cpp)
     list(APPEND _raggedroute_library_baseline_libraries CUDA::cublas CUDA::cublasLt)
     set(_raggedroute_has_cublas 1)
@@ -126,7 +129,8 @@ if(RAGGEDROUTE_ENABLE_CUDA)
   endif()
   if(TARGET RaggedRoute::cutlass)
     list(APPEND _raggedroute_library_baseline_sources
-      src/grouped_gemm/library_baseline/cutlass_grouped.cu)
+      src/grouped_gemm/library_baseline/cutlass_grouped.cu
+      src/grouped_gemm/library_baseline/tensorcore_cutlass.cu)
     list(APPEND _raggedroute_library_baseline_libraries RaggedRoute::cutlass)
     set(_raggedroute_has_cutlass 1)
   endif()
@@ -151,6 +155,28 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     CUDA_SEPARABLE_COMPILATION ${RAGGEDROUTE_ENABLE_RDC}
     POSITION_INDEPENDENT_CODE ON)
   raggedroute_apply_target_settings(raggedroute_library_baselines)
+
+  # Packaged Windows launchers can omit PATH from the DLL search path. Keep
+  # the CUDA libraries beside benchmark executables, from this exact Toolkit.
+  function(raggedroute_stage_benchmark_dlls target)
+    if(WIN32 AND _raggedroute_has_cublas)
+      get_filename_component(_rr_cuda_bin "${CMAKE_CUDA_COMPILER}" DIRECTORY)
+      string(REGEX MATCH "^[0-9]+" _rr_cuda_major "${CMAKE_CUDA_COMPILER_VERSION}")
+      foreach(_rr_dll IN ITEMS cublas cublasLt)
+        find_file(_rr_${_rr_dll}_dll
+          NAMES "${_rr_dll}64_${_rr_cuda_major}.dll"
+          PATHS "${_rr_cuda_bin}/x64" "${_rr_cuda_bin}"
+          NO_DEFAULT_PATH)
+        if(NOT _rr_${_rr_dll}_dll)
+          message(FATAL_ERROR "${_rr_dll} runtime DLL missing from selected CUDA Toolkit")
+        endif()
+        add_custom_command(TARGET ${target} POST_BUILD
+          COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "${_rr_${_rr_dll}_dll}" "$<TARGET_FILE_DIR:${target}>"
+          VERBATIM)
+      endforeach()
+    endif()
+  endfunction()
 
   # Public P0 operator layer. The low-level baseline launchers remain public
   # for L1 kernel-body studies; this target owns checked dispatch, workspace
@@ -206,6 +232,7 @@ if(RAGGEDROUTE_ENABLE_CUDA)
       benchmarks/core/registry.cpp
       benchmarks/core/runner.cpp
       benchmarks/adapters/dense_gemm_adapter.cpp
+      benchmarks/adapters/tensorcore_gemm_adapter.cpp
       benchmarks/adapters/topk_gate_adapter.cpp
       benchmarks/adapters/histogram_adapter.cpp
       benchmarks/adapters/exclusive_scan_adapter.cpp
@@ -243,14 +270,25 @@ if(RAGGEDROUTE_ENABLE_CUDA)
     add_executable(raggedroute_benchmark benchmarks/benchmark_main.cpp)
     target_link_libraries(raggedroute_benchmark PRIVATE raggedroute_benchmark_core)
     raggedroute_apply_target_settings(raggedroute_benchmark)
+    raggedroute_stage_benchmark_dlls(raggedroute_benchmark)
   endif()
 
   if(BUILD_TESTING)
+    add_executable(raggedroute_tensorcore_tests tests/tensorcore_gemm_tests.cpp)
+    target_include_directories(raggedroute_tensorcore_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_link_libraries(raggedroute_tensorcore_tests PRIVATE raggedroute_benchmark_core)
+    raggedroute_apply_target_settings(raggedroute_tensorcore_tests)
+    raggedroute_stage_benchmark_dlls(raggedroute_tensorcore_tests)
+    add_test(NAME raggedroute_tensorcore COMMAND raggedroute_tensorcore_tests)
+    set_tests_properties(raggedroute_tensorcore PROPERTIES
+      LABELS "tensorcore;correctness;sm86" SKIP_RETURN_CODE 77)
+
     add_executable(raggedroute_correctness_tests tests/correctness_tests.cpp)
     target_link_libraries(raggedroute_correctness_tests PRIVATE
       raggedroute_benchmark_core
       raggedroute_correctness_framework)
     raggedroute_apply_target_settings(raggedroute_correctness_tests)
+    raggedroute_stage_benchmark_dlls(raggedroute_correctness_tests)
     add_test(NAME raggedroute_correctness COMMAND raggedroute_correctness_tests)
     set_tests_properties(raggedroute_correctness PROPERTIES
       LABELS "correctness_smoke;correctness"

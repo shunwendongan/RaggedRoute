@@ -1,0 +1,705 @@
+{
+  "schema_version": "raggedroute.suite.v2",
+  "suite_id": "sm86_dense_portfolio_region_20260927",
+  "protocol": "release",
+  "process_runs": 5,
+  "common": {
+    "warmup": 20,
+    "samples": 30,
+    "kernel_repeats": 30,
+    "seed": 20260926,
+    "cache_mode": "warm"
+  },
+  "cases": [
+    {
+      "id": "dense.m256_n32_k16",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 256,
+        "N": 32,
+        "K": 16
+      }
+    },
+    {
+      "id": "dense.m256_n32_k128",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 256,
+        "N": 32,
+        "K": 128
+      }
+    },
+    {
+      "id": "dense.m256_n32_k256",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 256,
+        "N": 32,
+        "K": 256
+      }
+    },
+    {
+      "id": "dense.m256_n64_k16",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 256,
+        "N": 64,
+        "K": 16
+      }
+    },
+    {
+      "id": "dense.m256_n64_k128",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 256,
+        "N": 64,
+        "K": 128
+      }
+    },
+    {
+      "id": "dense.m256_n64_k256",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 256,
+        "N": 64,
+        "K": 256
+      }
+    },
+    {
+      "id": "dense.m512_n32_k16",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 512,
+        "N": 32,
+        "K": 16
+      }
+    },
+    {
+      "id": "dense.m512_n32_k128",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 512,
+        "N": 32,
+        "K": 128
+      }
+    },
+    {
+      "id": "dense.m512_n32_k256",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 512,
+        "N": 32,
+        "K": 256
+      }
+    },
+    {
+      "id": "dense.m512_n64_k16",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 512,
+        "N": 64,
+        "K": 16
+      }
+    },
+    {
+      "id": "dense.m512_n64_k128",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 512,
+        "N": 64,
+        "K": 128
+      }
+    },
+    {
+      "id": "dense.m512_n64_k256",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 512,
+        "N": 64,
+        "K": 256
+      }
+    },
+    {
+      "id": "dense.m2048_n32_k16",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 2048,
+        "N": 32,
+        "K": 16
+      }
+    },
+    {
+      "id": "dense.m2048_n32_k128",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 2048,
+        "N": 32,
+        "K": 128
+      }
+    },
+    {
+      "id": "dense.m2048_n32_k256",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 2048,
+        "N": 32,
+        "K": 256
+      }
+    },
+    {
+      "id": "dense.m2048_n64_k16",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 2048,
+        "N": 64,
+        "K": 16
+      }
+    },
+    {
+      "id": "dense.m2048_n64_k128",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 2048,
+        "N": 64,
+        "K": 128
+      }
+    },
+    {
+      "id": "dense.m2048_n64_k256",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 2048,
+        "N": 64,
+        "K": 256
+      }
+    },
+    {
+      "id": "dense.m4096_n32_k16",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 4096,
+        "N": 32,
+        "K": 16
+      }
+    },
+    {
+      "id": "dense.m4096_n32_k128",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 4096,
+        "N": 32,
+        "K": 128
+      }
+    },
+    {
+      "id": "dense.m4096_n32_k256",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 4096,
+        "N": 32,
+        "K": 256
+      }
+    },
+    {
+      "id": "dense.m4096_n64_k16",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 4096,
+        "N": 64,
+        "K": 16
+      }
+    },
+    {
+      "id": "dense.m4096_n64_k128",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 4096,
+        "N": 64,
+        "K": 128
+      }
+    },
+    {
+      "id": "dense.m4096_n64_k256",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 4096,
+        "N": 64,
+        "K": 256
+      }
+    },
+    {
+      "id": "control.m192_n64_k128",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 192,
+        "N": 64,
+        "K": 128
+      }
+    },
+    {
+      "id": "control.m320_n64_k128",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 320,
+        "N": 64,
+        "K": 128
+      }
+    },
+    {
+      "id": "control.m512_n96_k128",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 512,
+        "N": 96,
+        "K": 128
+      }
+    },
+    {
+      "id": "control.m512_n64_k272",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 512,
+        "N": 64,
+        "K": 272
+      }
+    },
+    {
+      "id": "control.m511_n64_k128",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 511,
+        "N": 64,
+        "K": 128
+      }
+    },
+    {
+      "id": "control.m512_n512_k512",
+      "operator": "dense_gemm",
+      "levels": [
+        "l1",
+        "l2"
+      ],
+      "variants": [
+        {
+          "name": "cuda_register_tiled_v3_64x32_async",
+          "promotion_baseline": true
+        },
+        {
+          "name": "cuda_narrow_portfolio_v4",
+          "promotion_baseline": false
+        }
+      ],
+      "params": {
+        "M": 512,
+        "N": 512,
+        "K": 512
+      }
+    }
+  ]
+}

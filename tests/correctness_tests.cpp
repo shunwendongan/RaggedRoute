@@ -161,7 +161,18 @@ void run_histogram_candidate_matrix(cudaStream_t stream, std::uint64_t* seed) {
                       "cuda_candidate"},
                      stream, (*seed)++);
   }
-  for (const std::string& variant : {"cuda_candidate_v1", "cuda_candidate_v2"}) {
+  for (const std::string& variant : {"cuda_candidate_v1", "cuda_candidate_v2",
+                                     "cuda_candidate_v3", "cuda_candidate_v4"}) {
+    // Exercise both sides of each research CTA cap, including ragged tails.
+    // E=1 below only checks direct-write behavior, not the private-bin kernel.
+    for (const int route_count : {131073, 262145, 524289}) {
+      for (const std::string distribution : {"uniform", "single_hot"}) {
+        run_adapter_case({"histogram",
+                          {{"T", std::to_string(route_count)}, {"E", "64"},
+                           {"top_k", "1"}, {"distribution", distribution}}, variant},
+                         stream, (*seed)++, false);
+      }
+    }
     for (const int route_count : {1, 4096, 8192, 32768, 65536, 1048576}) {
       run_adapter_case({"histogram",
                         {{"T", std::to_string(route_count)},
@@ -286,7 +297,8 @@ int main() {
 
   try {
     const auto operators = rr::available_operators();
-    require(operators.size() == 8, "registry must expose seven stages plus fused metadata API");
+    require(operators.size() == 10,
+            "registry must expose eight existing operators plus two Tensor Core research operators");
     require(rr::available_suites().size() == 3,
             "registry must expose token, logits, and post-route chain suites");
     const auto summary = rr::summarize_samples({1.0, 2.0, 3.0, 4.0, 5.0});
@@ -647,6 +659,25 @@ int main() {
           {{"M", "31"}, {"N", "33"}, {"K", "65"}},
           {{"M", "256"}, {"N", "256"}, {"K", "256"}},
       };
+      require(has_variant("dense_gemm", "cuda_narrow_portfolio_v4"),
+              "dense narrow portfolio must be registered explicitly");
+      for (const auto& shape : dense_tiled_edge_shapes) {
+        run_adapter_case({"dense_gemm", shape, "cuda_narrow_portfolio_v4"}, stream, seed++);
+      }
+      for (const int rows : {192, 256, 512, 4096}) {
+        for (const int depth : {16, 128, 256, 272}) {
+          run_adapter_case({"dense_gemm", {{"M", std::to_string(rows)}, {"N", "64"},
+                                          {"K", std::to_string(depth)}},
+                            "cuda_narrow_portfolio_v4"}, stream, seed++, false);
+        }
+      }
+      // Regression: cancellation at (759,1018) with this seed made the old FP32
+      // CPU oracle reject a valid pedantic cuBLASLt result. Keep the original
+      // tolerance and data; the benchmark reference must use double products/sums.
+      if (has_variant("dense_gemm", "cublaslt")) {
+        run_adapter_case({"dense_gemm", {{"M", "1024"}, {"N", "1024"}, {"K", "1024"}},
+                          "cublaslt"}, stream, 20260926);
+      }
       for (const std::string& variant :
            {"cuda_tiled_scalar", "cuda_2d_mapping", "cuda_tiled_vector", "cuda_combined",
             "cuda_register_tiled_v2_sync", "cuda_register_tiled_v2_async",

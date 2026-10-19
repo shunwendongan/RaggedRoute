@@ -1,4 +1,5 @@
 #include "raggedroute/benchmark/registry.h"
+#include "raggedroute/benchmark/tensorcore_adapter.h"
 
 #include <algorithm>
 #include <stdexcept>
@@ -133,10 +134,13 @@ std::vector<std::string> descriptor_names(const std::vector<VariantDescriptor>& 
 std::vector<std::string> available_operators() {
   return {
       "dense_gemm",    "topk_gate",    "histogram", "exclusive_scan", "histogram_exclusive_scan",
-      "token_permute", "grouped_gemm", "unpermute"};
+      "token_permute", "grouped_gemm", "unpermute", "dense_gemm_tc", "grouped_gemm_tc"};
 }
 
 std::vector<VariantDescriptor> available_variant_descriptors(const std::string& operator_name) {
+  if (operator_name == "dense_gemm_tc" || operator_name == "grouped_gemm_tc") {
+    return tensorcore_gemm_variant_descriptors(operator_name);
+  }
   if (operator_name == "dense_gemm") {
     std::vector<VariantDescriptor> variants = {naive_descriptor("thread_per_output")};
     variants.push_back(
@@ -153,6 +157,9 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
                                                      "shared_tile32_register_4x2_cp_async_2stage"));
     variants.push_back(optimized_dense_v2_descriptor(
         "cuda_register_tiled_v3_64x32_async", "shared_tile64x32_register_8x2_cp_async_2stage"));
+    variants.push_back(descriptor("cuda_narrow_portfolio_v4", "in_tree_cuda_research",
+                                  "raggedroute.dense.narrow_portfolio.v4", "not_applicable",
+                                  "narrow_aligned_v2_else_retained_v3"));
 #if RAGGEDROUTE_HAS_CUBLAS
     variants.push_back(descriptor("cublaslt", "nvidia_cuda_library", "cublasLtMatmul.v1",
                                   cuda_library_revision(), "cublaslt_heuristic_0"));
@@ -197,6 +204,12 @@ std::vector<VariantDescriptor> available_variant_descriptors(const std::string& 
     variants.push_back(descriptor("cuda_candidate_v2", "in_tree_cuda_candidate",
                                   "raggedroute.histogram.cuda_candidate.v2", "not_applicable",
                                   "single_bin_direct_write_else_v1"));
+    variants.push_back(descriptor("cuda_candidate_v3", "in_tree_cuda_research",
+                                  "raggedroute.histogram.cuda_candidate.v3", "not_applicable",
+                                  "block_private_256_cta_cap"));
+    variants.push_back(descriptor("cuda_candidate_v4", "in_tree_cuda_research",
+                                  "raggedroute.histogram.cuda_candidate.v4", "not_applicable",
+                                  "block_private_64_cta_cap"));
 #if RAGGEDROUTE_HAS_CCCL
     variants.push_back(descriptor("cub_device_histogram", "nvidia_cccl",
                                   "cub::DeviceHistogram::HistogramEven", cccl_revision(),
@@ -437,6 +450,9 @@ std::vector<std::string> available_variants(const std::string& operator_name) {
 }
 
 AdapterPtr make_adapter(const std::string& operator_name, const std::string& variant_name) {
+  if (operator_name == "dense_gemm_tc" || operator_name == "grouped_gemm_tc") {
+    return make_tensorcore_gemm_adapter(operator_name, variant_name);
+  }
   const auto descriptors = available_variant_descriptors(operator_name);
   if (descriptors.empty()) throw std::invalid_argument("unknown operator: " + operator_name);
   const VariantDescriptor descriptor = find_descriptor(descriptors, operator_name, variant_name);
@@ -498,6 +514,10 @@ std::vector<VariantDescriptor> available_suite_variant_descriptors(const std::st
           "cuda_postlogit_research_v3", "in_tree_cuda_research",
           "raggedroute.chain.postlogit_research_v3.v1", "not_applicable",
           "topk_v4_fused_hist_scan_v2_permute_v3_grouped_v3_unpermute_retained_v1"));
+      variants.push_back(descriptor(
+          "cuda_postlogit_grouped_v10", "in_tree_cuda_research",
+          "raggedroute.chain.postlogit_grouped_v10.v1", "not_applicable",
+          "topk_v4_fused_hist_scan_v2_permute_v2_grouped_sm86_v10_unpermute_retained_v1"));
       variants.push_back(descriptor(
           "cuda_postlogit_graph_fixed_v1", "in_tree_cuda_promoted_explicit_fixed_shape_only",
           "raggedroute.chain.postlogit.graph.fixed.v1", "not_applicable",

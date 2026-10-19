@@ -48,6 +48,8 @@ if defined RAGGEDROUTE_CACHED_CUDA if not exist "%RAGGEDROUTE_CACHED_CUDA%" set 
 set "RAGGEDROUTE_CURRENT_CUDA="
 if defined CUDACXX if exist "%CUDACXX%" set "RAGGEDROUTE_CURRENT_CUDA=%CUDACXX%"
 if not defined RAGGEDROUTE_CURRENT_CUDA if defined CUDA_PATH if exist "%CUDA_PATH%\bin\nvcc.exe" set "RAGGEDROUTE_CURRENT_CUDA=%CUDA_PATH%\bin\nvcc.exe"
+if not defined RAGGEDROUTE_CURRENT_CUDA if defined CUDA_TOOLKIT_ROOT_DIR if exist "%CUDA_TOOLKIT_ROOT_DIR%\bin\nvcc.exe" set "RAGGEDROUTE_CURRENT_CUDA=%CUDA_TOOLKIT_ROOT_DIR%\bin\nvcc.exe"
+if not defined RAGGEDROUTE_CURRENT_CUDA if defined CUDA_BIN_PATH if exist "%CUDA_BIN_PATH%\nvcc.exe" set "RAGGEDROUTE_CURRENT_CUDA=%CUDA_BIN_PATH%\nvcc.exe"
 if not defined RAGGEDROUTE_CURRENT_CUDA for /f "delims=" %%I in ('where nvcc.exe 2^>nul') do if not defined RAGGEDROUTE_CURRENT_CUDA set "RAGGEDROUTE_CURRENT_CUDA=%%I"
 if not defined RAGGEDROUTE_CURRENT_CUDA set "RAGGEDROUTE_RECONFIGURE=1"
 if defined RAGGEDROUTE_CACHED_CUDA if defined RAGGEDROUTE_CURRENT_CUDA call :compare_cuda_cache

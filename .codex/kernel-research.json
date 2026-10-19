@@ -7,44 +7,63 @@
     ],
     "correctness": [
       "ctest --preset test-rtx3080-sm86-release --output-on-failure",
-      "python scripts\\run_sanitizers.py --build-dir out\\build\\rtx3080-sm86-release --output-dir out\\sanitizer\\interview-portfolio"
+      "python scripts/run_sanitizers.py --build-dir out/build/rtx3080-sm86-release --output-dir out/tensorcore/sanitizer --executable out/build/rtx3080-sm86-release/raggedroute_tensorcore_tests.exe"
     ],
     "smoke": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\project\\benchmark\\smoke.json --output out\\interview-portfolio\\smoke.jsonl"
+      "out/build/rtx3080-sm86-release/raggedroute_benchmark.exe --list"
     ],
     "release": [
-      "python scripts\\run_benchmarks.py --binary out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe --config configs\\project\\benchmark\\interview_portfolio_release.json --output out\\interview-portfolio\\release.jsonl"
+      "python scripts/tensorcore_experiment.py run --binary out/build/rtx3080-sm86-release/raggedroute_benchmark.exe --config configs/project/benchmark/tensorcore/screening.json --output out/tensorcore/screening.jsonl",
+      "python scripts/tensorcore_experiment.py select --input out/tensorcore/screening.jsonl --output out/tensorcore/frozen.json",
+      "python scripts/tensorcore_experiment.py run --binary out/build/rtx3080-sm86-release/raggedroute_benchmark.exe --config configs/project/benchmark/tensorcore/full.json --selection out/tensorcore/frozen.json --output out/tensorcore/full.jsonl"
     ]
   },
   "benchmark": {
-    "binary": "out\\build\\rtx3080-sm86-release\\raggedroute_benchmark.exe",
+    "binary": "out/build/rtx3080-sm86-release/raggedroute_benchmark.exe",
     "profile_cases": [
       {
-        "name": "postlogit.uniform.t512_e64_k128_n128",
-        "arguments": ["--suite", "chain_from_logits", "--variant", "cuda_postlogit_integrated_latest", "--level", "l3", "--profile-once", "--warmup", "20", "--seed", "20260828", "--param", "T=512", "--param", "E=64", "--param", "K=128", "--param", "N=128", "--param", "distribution=uniform"],
-        "kernel_regex": "(topk_gate|histogram|exclusive_scan|token_permute|grouped_gemm|unpermute)_.*kernel"
-      },
-      {
-        "name": "postlogit.zipf14.t512_e64_k128_n128",
-        "arguments": ["--suite", "chain_from_logits", "--variant", "cuda_postlogit_integrated_latest", "--level", "l3", "--profile-once", "--warmup", "20", "--seed", "20260828", "--param", "T=512", "--param", "E=64", "--param", "K=128", "--param", "N=128", "--param", "distribution=zipf", "--param", "zipf_s=1.4"],
-        "kernel_regex": "(topk_gate|histogram|exclusive_scan|token_permute|grouped_gemm|unpermute)_.*kernel"
+        "name": "dense.fp16.1024cube",
+        "arguments": [
+          "--operator",
+          "dense_gemm_tc",
+          "--variant",
+          "cuda_mma_async",
+          "--level",
+          "l2",
+          "--profile-once",
+          "--warmup",
+          "20",
+          "--param",
+          "M=1024",
+          "--param",
+          "N=1024",
+          "--param",
+          "K=1024",
+          "--param",
+          "dtype=fp16"
+        ],
+        "kernel_regex": "dense_gemm_mma_kernel"
       }
     ],
-    "kernel_regex": "(dense_gemm|topk_gate|histogram|exclusive_scan|token_permute|grouped_gemm|unpermute)_.*kernel"
+    "kernel_regex": "(dense|grouped)_gemm_mma_kernel"
   },
   "variants": {
-    "baseline": "strongest-comparable-library-or-exact-naive-envelope",
-    "candidate": "strongest-in-tree-candidate-per-operator"
+    "baseline": "same_precision_fastest_supported_library",
+    "candidate": "frozen_mma_configuration_per_operator_dtype"
   },
   "output": {
-    "root": "out\\interview-portfolio",
+    "root": "out/tensorcore",
     "retention": {
-      "keep_raw_for": ["baseline", "promoted", "final"],
+      "keep_raw_for": [
+        "baseline",
+        "promoted",
+        "final"
+      ],
       "rejected_candidate": "metrics-and-reason"
     }
   },
   "promotion_policy": {
-    "version": "interview-portfolio-v1",
+    "version": "sm86-tensorcore-v1",
     "min_processes": 5,
     "median_speedup": 1.03,
     "p95_regression_tolerance": 0.03,

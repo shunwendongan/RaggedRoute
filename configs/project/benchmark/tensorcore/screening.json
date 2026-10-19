@@ -1,0 +1,226 @@
+{
+  "common": {
+    "cache_mode": "warm",
+    "samples": 30,
+    "seed": 20260926,
+    "warmup": 20
+  },
+  "configurations": {
+    "dense_gemm_tc": [
+      {
+        "asynchronous": false,
+        "tile_k": 32,
+        "tile_m": 64,
+        "tile_n": 32
+      },
+      {
+        "asynchronous": true,
+        "tile_k": 32,
+        "tile_m": 64,
+        "tile_n": 32
+      },
+      {
+        "asynchronous": false,
+        "tile_k": 64,
+        "tile_m": 64,
+        "tile_n": 32
+      },
+      {
+        "asynchronous": true,
+        "tile_k": 64,
+        "tile_m": 64,
+        "tile_n": 32
+      },
+      {
+        "asynchronous": false,
+        "tile_k": 32,
+        "tile_m": 64,
+        "tile_n": 64
+      },
+      {
+        "asynchronous": true,
+        "tile_k": 32,
+        "tile_m": 64,
+        "tile_n": 64
+      },
+      {
+        "asynchronous": false,
+        "tile_k": 64,
+        "tile_m": 64,
+        "tile_n": 64
+      },
+      {
+        "asynchronous": true,
+        "tile_k": 64,
+        "tile_m": 64,
+        "tile_n": 64
+      }
+    ],
+    "grouped_gemm_tc": [
+      {
+        "asynchronous": false,
+        "tile_k": 32,
+        "tile_m": 16,
+        "tile_n": 64
+      },
+      {
+        "asynchronous": true,
+        "tile_k": 32,
+        "tile_m": 16,
+        "tile_n": 64
+      },
+      {
+        "asynchronous": false,
+        "tile_k": 64,
+        "tile_m": 16,
+        "tile_n": 64
+      },
+      {
+        "asynchronous": true,
+        "tile_k": 64,
+        "tile_m": 16,
+        "tile_n": 64
+      },
+      {
+        "asynchronous": false,
+        "tile_k": 32,
+        "tile_m": 32,
+        "tile_n": 64
+      },
+      {
+        "asynchronous": true,
+        "tile_k": 32,
+        "tile_m": 32,
+        "tile_n": 64
+      },
+      {
+        "asynchronous": false,
+        "tile_k": 64,
+        "tile_m": 32,
+        "tile_n": 64
+      },
+      {
+        "asynchronous": true,
+        "tile_k": 64,
+        "tile_m": 32,
+        "tile_n": 64
+      }
+    ]
+  },
+  "dtypes": [
+    "fp16",
+    "bf16"
+  ],
+  "kernel_repeats": {
+    "dense_gemm_tc": 30,
+    "grouped_gemm_tc": 50
+  },
+  "process_runs": 5,
+  "promotion_policy": {
+    "maximum_all_samples_cv": 0.5,
+    "maximum_single_shape_p50_regression_fraction": 0.05,
+    "maximum_single_shape_p95_regression_fraction": 0.03,
+    "maximum_workspace_growth_bytes": 0,
+    "minimum_independent_process_runs": 5,
+    "minimum_ratio_of_sums_p50_speedup": 1.03,
+    "minimum_speedup_shape_coverage": 0.8,
+    "require_same_math_semantics": true
+  },
+  "protocol": "release",
+  "schema_version": "raggedroute.tensorcore.experiment.v1",
+  "selection_rule": "lowest equal-shape geometric mean of median-of-five-process p50; configuration_id breaks exact ties",
+  "shapes": [
+    {
+      "id": "dense.m1024_n1024_k1024",
+      "operator": "dense_gemm_tc",
+      "params": {
+        "K": 1024,
+        "M": 1024,
+        "N": 1024
+      },
+      "seed": 20260729
+    },
+    {
+      "id": "dense.m2048_n64_k128",
+      "operator": "dense_gemm_tc",
+      "params": {
+        "K": 128,
+        "M": 2048,
+        "N": 64
+      },
+      "seed": 20260926
+    },
+    {
+      "id": "grouped.uniform.t2048_e64_k128_n64",
+      "operator": "grouped_gemm_tc",
+      "params": {
+        "E": 64,
+        "K": 128,
+        "N": 64,
+        "T": 2048,
+        "distribution": "uniform",
+        "top_k": 2,
+        "zipf_s": 0.0
+      },
+      "seed": 20260830
+    },
+    {
+      "id": "grouped.uniform.t2048_e64_k128_n128",
+      "operator": "grouped_gemm_tc",
+      "params": {
+        "E": 64,
+        "K": 128,
+        "N": 128,
+        "T": 2048,
+        "distribution": "uniform",
+        "top_k": 2,
+        "zipf_s": 0.0
+      },
+      "seed": 20260830
+    },
+    {
+      "id": "grouped.zipf.t2048_e64_k128_n64",
+      "operator": "grouped_gemm_tc",
+      "params": {
+        "E": 64,
+        "K": 128,
+        "N": 64,
+        "T": 2048,
+        "distribution": "zipf",
+        "top_k": 2,
+        "zipf_s": 1.4
+      },
+      "seed": 20260830
+    },
+    {
+      "id": "grouped.zipf.t2048_e64_k128_n128",
+      "operator": "grouped_gemm_tc",
+      "params": {
+        "E": 64,
+        "K": 128,
+        "N": 128,
+        "T": 2048,
+        "distribution": "zipf",
+        "top_k": 2,
+        "zipf_s": 1.4
+      },
+      "seed": 20260830
+    }
+  ],
+  "source_matrices": [
+    {
+      "path": "configs/operators/dense_gemm/benchmark/candidate_v3_release.json",
+      "sha256": "1cf41d2501509266fc7631724ceda40515d4b3508d04795689dd0ec67210bc09"
+    },
+    {
+      "path": "configs/project/benchmark/rtx3080_dense_portfolio_region.json",
+      "sha256": "e5f52f847ac63131385d84e45ca3bca7f4fab3d20e50048c0e5c382efd53e1b2"
+    },
+    {
+      "path": "configs/operators/grouped_gemm/benchmark/candidate_v10_release.json",
+      "sha256": "cde9f1ec9e5384886e1427842d0350ae2824cffa23dcee8a5dd1437eaf289ce9"
+    }
+  ],
+  "stage": "screening",
+  "suite_id": "sm86_tensorcore_bounded_screening_v1"
+}

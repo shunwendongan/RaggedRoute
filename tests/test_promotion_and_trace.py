@@ -87,6 +87,90 @@ class PromotionAndTraceTests(unittest.TestCase):
         insufficient = promotion.evaluate(unstable, "base", "candidate", self.policy())
         self.assertEqual(insufficient["decision"], "insufficient_evidence")
 
+    def math_records(self, dtype: str = "fp16") -> list[dict]:
+        records = self.paired()
+        for record in records:
+            record["case_config"].update({
+                "dtype": dtype, "output_dtype": "fp32", "accumulator_dtype": "fp32",
+            })
+            record["variant_config"] = {"math_mode": f"{dtype}_acc_fp32"}
+        return records
+
+    def math_policy(self) -> dict:
+        # Exercise this gate independently of whole-case-config equality.
+        return self.policy() | {
+            "require_same_math_semantics": True,
+            "require_same_case_config": False,
+        }
+
+    def test_same_math_semantics_accepts_explicit_matching_contract(self) -> None:
+        for dtype in ("fp16", "bf16"):
+            with self.subTest(dtype=dtype):
+                decision = promotion.evaluate(self.math_records(dtype), "base", "candidate",
+                                              self.math_policy())
+                self.assertEqual(decision["decision"], "promote")
+
+    def test_same_math_semantics_requires_all_contract_fields_in_every_process(self) -> None:
+        fields = (
+            ("variant_config", "math_mode"),
+            ("case_config", "dtype"),
+            ("case_config", "output_dtype"),
+            ("case_config", "accumulator_dtype"),
+        )
+        for section, field in fields:
+            for invalid in (None, "", "  ", 16):
+                with self.subTest(section=section, field=field, invalid=invalid):
+                    records = self.math_records()
+                    records[-1][section][field] = invalid
+                    decision = promotion.evaluate(records, "base", "candidate", self.math_policy())
+                    self.assertEqual(decision["decision"], "insufficient_evidence")
+                    self.assertIn(f"shape: missing or invalid {section}.{field}",
+                                  decision["reasons"])
+            with self.subTest(section=section, field=field, missing=True):
+                records = self.math_records()
+                records[-1][section].pop(field)
+                decision = promotion.evaluate(records, "base", "candidate", self.math_policy())
+                self.assertEqual(decision["decision"], "insufficient_evidence")
+                self.assertIn(f"shape: missing or invalid {section}.{field}", decision["reasons"])
+
+    def test_same_math_semantics_rejects_different_math_and_tensor_types(self) -> None:
+        for section, field, changed in (
+            ("variant_config", "math_mode", "strict_fp32"),
+            ("case_config", "dtype", "bf16"),
+            ("case_config", "output_dtype", "fp16"),
+            ("case_config", "accumulator_dtype", "fp16"),
+        ):
+            for whole_variant in (False, True):
+                with self.subTest(section=section, field=field, whole_variant=whole_variant):
+                    records = self.math_records()
+                    for record in records:
+                        if record["variant"] == "candidate" and (
+                            whole_variant or record["process_run"] == 5
+                        ):
+                            record[section][field] = changed
+                    decision = promotion.evaluate(records, "base", "candidate", self.math_policy())
+                    self.assertEqual(decision["decision"], "insufficient_evidence")
+                    self.assertIn(f"shape: {section}.{field} mismatch", decision["reasons"])
+
+    def test_same_math_semantics_missing_metadata_and_legacy_policy(self) -> None:
+        missing = self.paired()
+        decision = promotion.evaluate(missing, "base", "candidate", self.math_policy())
+        self.assertEqual(decision["decision"], "insufficient_evidence")
+        self.assertIn("shape: missing or invalid variant_config.math_mode", decision["reasons"])
+        self.assertIn("shape: missing or invalid case_config.dtype", decision["reasons"])
+        for explicit_false in (False, True):
+            with self.subTest(explicit_false=explicit_false):
+                policy = self.policy() | {"require_same_case_config": False}
+                if explicit_false:
+                    policy["require_same_math_semantics"] = False
+                self.assertEqual(promotion.evaluate(missing, "base", "candidate", policy)["decision"],
+                                 "promote")
+                mismatched = self.math_records()
+                mismatched[-1]["variant_config"]["math_mode"] = "tf32"
+                mismatched[-1]["case_config"]["dtype"] = "bf16"
+                self.assertEqual(promotion.evaluate(mismatched, "base", "candidate", policy)["decision"],
+                                 "promote")
+
     def test_default_cv_policy_discloses_point_one_and_caps_at_point_five(self) -> None:
         policy = self.policy()
         policy.pop("maximum_all_samples_cv")

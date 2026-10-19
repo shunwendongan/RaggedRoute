@@ -1,4 +1,5 @@
 #include "raggedroute/benchmark/registry.h"
+#include "raggedroute/benchmark/tensorcore_adapter.h"
 
 #include <algorithm>
 #include <stdexcept>
@@ -133,10 +134,13 @@ std::vector<std::string> descriptor_names(const std::vector<VariantDescriptor>& 
 std::vector<std::string> available_operators() {
   return {
       "dense_gemm",    "topk_gate",    "histogram", "exclusive_scan", "histogram_exclusive_scan",
-      "token_permute", "grouped_gemm", "unpermute"};
+      "token_permute", "grouped_gemm", "unpermute", "dense_gemm_tc", "grouped_gemm_tc"};
 }
 
 std::vector<VariantDescriptor> available_variant_descriptors(const std::string& operator_name) {
+  if (operator_name == "dense_gemm_tc" || operator_name == "grouped_gemm_tc") {
+    return tensorcore_gemm_variant_descriptors(operator_name);
+  }
   if (operator_name == "dense_gemm") {
     std::vector<VariantDescriptor> variants = {naive_descriptor("thread_per_output")};
     variants.push_back(
@@ -446,6 +450,9 @@ std::vector<std::string> available_variants(const std::string& operator_name) {
 }
 
 AdapterPtr make_adapter(const std::string& operator_name, const std::string& variant_name) {
+  if (operator_name == "dense_gemm_tc" || operator_name == "grouped_gemm_tc") {
+    return make_tensorcore_gemm_adapter(operator_name, variant_name);
+  }
   const auto descriptors = available_variant_descriptors(operator_name);
   if (descriptors.empty()) throw std::invalid_argument("unknown operator: " + operator_name);
   const VariantDescriptor descriptor = find_descriptor(descriptors, operator_name, variant_name);

@@ -297,7 +297,8 @@ int main() {
 
   try {
     const auto operators = rr::available_operators();
-    require(operators.size() == 8, "registry must expose seven stages plus fused metadata API");
+    require(operators.size() == 10,
+            "registry must expose eight existing operators plus two Tensor Core research operators");
     require(rr::available_suites().size() == 3,
             "registry must expose token, logits, and post-route chain suites");
     const auto summary = rr::summarize_samples({1.0, 2.0, 3.0, 4.0, 5.0});

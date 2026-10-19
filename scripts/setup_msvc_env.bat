@@ -26,7 +26,7 @@ if not defined RAGGEDROUTE_RESOLVED_VSWHERE if exist "%ProgramFiles(x86)%\Micros
 if not defined RAGGEDROUTE_RESOLVED_VSWHERE if exist "%ProgramFiles%\Microsoft Visual Studio\Installer\vswhere.exe" set "RAGGEDROUTE_RESOLVED_VSWHERE=%ProgramFiles%\Microsoft Visual Studio\Installer\vswhere.exe"
 
 if not defined RAGGEDROUTE_RESOLVED_VSDEVCMD if defined RAGGEDROUTE_RESOLVED_VSWHERE (
-  for /f "usebackq delims=" %%I in (`"%RAGGEDROUTE_RESOLVED_VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "RAGGEDROUTE_RESOLVED_VSDEVCMD=%%I\Common7\Tools\VsDevCmd.bat"
+  for /f "usebackq delims=" %%I in (`"%RAGGEDROUTE_RESOLVED_VSWHERE%" -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do if not defined RAGGEDROUTE_RESOLVED_VSDEVCMD call :try_vs_root "%%I"
 )
 
 if not defined RAGGEDROUTE_RESOLVED_VSDEVCMD if exist "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat" set "RAGGEDROUTE_RESOLVED_VSDEVCMD=%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat"
@@ -63,7 +63,19 @@ exit /b 0
 
 :try_vs_root
 if "%~1"=="" exit /b 0
-if exist "%~1\Common7\Tools\VsDevCmd.bat" set "RAGGEDROUTE_RESOLVED_VSDEVCMD=%~1\Common7\Tools\VsDevCmd.bat"
+if exist "%~1\Common7\Tools\VsDevCmd.bat" call :validate_vs_root "%~1"
 if defined RAGGEDROUTE_RESOLVED_VSDEVCMD exit /b 0
-if exist "%~1\..\Common7\Tools\VsDevCmd.bat" for %%I in ("%~1\..") do set "RAGGEDROUTE_RESOLVED_VSDEVCMD=%%~fI\Common7\Tools\VsDevCmd.bat"
+if exist "%~1\..\Common7\Tools\VsDevCmd.bat" for %%I in ("%~1\..") do call :validate_vs_root "%%~fI"
+exit /b 0
+
+:validate_vs_root
+rem A relocated VS shell can exist while its default VC toolset is absent.
+rem Validate that toolset before selecting an automatically discovered root.
+set "RAGGEDROUTE_DEFAULT_VCTOOLS="
+if exist "%~1\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt" set /p RAGGEDROUTE_DEFAULT_VCTOOLS=<"%~1\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt"
+rem VsDevCmd honors an inherited VCToolsVersion before the install default.
+if defined VCToolsVersion set "RAGGEDROUTE_DEFAULT_VCTOOLS=%VCToolsVersion%"
+if not defined RAGGEDROUTE_DEFAULT_VCTOOLS exit /b 0
+if not exist "%~1\VC\Tools\MSVC\%RAGGEDROUTE_DEFAULT_VCTOOLS%\bin\Hostx64\x64\cl.exe" exit /b 0
+set "RAGGEDROUTE_RESOLVED_VSDEVCMD=%~1\Common7\Tools\VsDevCmd.bat"
 exit /b 0
